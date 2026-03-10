@@ -1,8 +1,12 @@
 const sequelize = require('../config/database');
 const User = require('./User');
 const Service = require('./Service');
+const Order = require('./Order');
 
-const models = { User, Service };
+User.hasMany(Order, { foreignKey: 'userId', as: 'orders' });
+Order.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+const models = { User, Service, Order };
 
 const syncDatabase = async () => {
   try {

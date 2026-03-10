@@ -8,8 +8,6 @@
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f5f5f5;min-height:100vh}
 :root{--primary:#B91C1C;--primary-dark:#991B1B;--primary-light:#FEE2E2;--text:#1a1a1a;--text-secondary:#666;--border:#e5e5e5;--card:#fff;--radius:12px}
-
-/* Auth Pages */
 .auth-container{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;background:linear-gradient(135deg,#1a1a1a 0%,#2d1b1b 100%)}
 .auth-card{background:var(--card);border-radius:16px;padding:40px 32px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
 .auth-logo{text-align:center;margin-bottom:32px}
@@ -34,20 +32,29 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .msg.error{display:block;background:#FEE2E2;color:#B91C1C}
 .msg.success{display:block;background:#D1FAE5;color:#065F46}
 
-/* Dashboard */
 .dashboard{display:none}
-.dash-header{background:#1a1a1a;color:#fff;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.dash-header{background:#1a1a1a;color:#fff;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
 .dash-header svg{width:80px;height:auto}
 .dash-user{display:flex;align-items:center;gap:12px}
 .dash-user span{font-size:14px;color:rgba(255,255,255,.8)}
 .dash-logout{padding:6px 16px;background:rgba(255,255,255,.1);color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;transition:background .2s}
 .dash-logout:hover{background:rgba(255,255,255,.2)}
+
+.dash-nav{background:var(--card);border-bottom:1px solid var(--border);display:flex;padding:0 24px;max-width:1000px;margin:0 auto}
+.dash-nav-item{padding:14px 20px;font-size:14px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;color:var(--text-secondary);transition:all .2s}
+.dash-nav-item.active{color:var(--primary);border-bottom-color:var(--primary)}
+.dash-nav-item:hover{color:var(--primary)}
+
 .dash-body{max-width:1000px;margin:0 auto;padding:24px}
-.dash-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px}
-.stat-card{background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.dash-page{display:none}
+.dash-page.active{display:block}
+.dash-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:24px}
+.stat-card{background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:0 1px 3px rgba(0,0,0,.06);cursor:default}
 .stat-card h3{font-size:13px;color:var(--text-secondary);font-weight:500;margin-bottom:8px}
 .stat-card .val{font-size:28px;font-weight:700;color:var(--text)}
 .stat-card .sub{font-size:12px;color:var(--primary);margin-top:4px}
+.stat-card.clickable{cursor:pointer;transition:box-shadow .2s}
+.stat-card.clickable:hover{box-shadow:0 4px 12px rgba(0,0,0,.1)}
 .dash-section{background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:0 1px 3px rgba(0,0,0,.06);margin-bottom:16px}
 .dash-section h3{font-size:16px;font-weight:600;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)}
 .info-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f5f5f5;font-size:14px}
@@ -57,11 +64,37 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .role-tag{display:inline-block;padding:2px 10px;border-radius:4px;font-size:12px;font-weight:500}
 .role-tag.admin{background:#FEE2E2;color:#B91C1C}
 .role-tag.user{background:#DBEAFE;color:#1E40AF}
+
+.order-filters{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.filter-btn{padding:6px 16px;border:1.5px solid var(--border);border-radius:20px;font-size:13px;cursor:pointer;background:var(--card);color:var(--text-secondary);transition:all .2s}
+.filter-btn.active{border-color:var(--primary);color:var(--primary);background:var(--primary-light)}
+.filter-btn:hover{border-color:var(--primary)}
+
+.order-table{width:100%;border-collapse:collapse;font-size:13px}
+.order-table th{text-align:left;padding:10px 12px;border-bottom:2px solid var(--border);font-weight:600;color:var(--text-secondary);font-size:12px;white-space:nowrap}
+.order-table td{padding:12px;border-bottom:1px solid #f5f5f5;vertical-align:middle}
+.order-table tr:hover td{background:#fafafa}
+.status-badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:500}
+.status-badge.pending{background:#FEF3C7;color:#92400E}
+.status-badge.paid,.status-badge.processing{background:#DBEAFE;color:#1E40AF}
+.status-badge.completed{background:#D1FAE5;color:#065F46}
+.status-badge.cancelled{background:#F3F4F6;color:#6B7280}
+.status-select{padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer;outline:none}
+.status-select:focus{border-color:var(--primary)}
+.order-empty{text-align:center;padding:40px 0;color:var(--text-secondary)}
+.pagination{display:flex;justify-content:center;align-items:center;gap:12px;margin-top:16px}
+.page-btn{padding:6px 14px;border:1px solid var(--border);border-radius:6px;font-size:13px;cursor:pointer;background:var(--card);transition:all .2s}
+.page-btn:hover{border-color:var(--primary);color:var(--primary)}
+.page-btn:disabled{opacity:.5;cursor:not-allowed}
+.page-info{font-size:13px;color:var(--text-secondary)}
+.refresh-btn{padding:6px 16px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;transition:opacity .2s}
+.refresh-btn:hover{opacity:.9}
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.section-header h3{margin:0;padding:0;border:none;font-size:16px;font-weight:600}
 </style>
 </head>
 <body>
 
-<!-- Auth -->
 <div class="auth-container" id="authPage">
   <div class="auth-card">
     <div class="auth-logo">
@@ -76,58 +109,27 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       </svg>
       <p>管理后台</p>
     </div>
-
     <div class="auth-tabs">
       <button class="auth-tab active" onclick="switchTab('login')">登录</button>
       <button class="auth-tab" onclick="switchTab('register')">注册</button>
     </div>
-
     <div id="msgBox" class="msg"></div>
-
-    <!-- Login Form -->
     <form id="loginForm" onsubmit="handleLogin(event)">
-      <div class="form-group">
-        <label>用户名</label>
-        <input class="form-input" id="loginUser" placeholder="请输入用户名" required autocomplete="username">
-      </div>
-      <div class="form-group">
-        <label>密码</label>
-        <input class="form-input" id="loginPass" type="password" placeholder="请输入密码" required autocomplete="current-password">
-      </div>
+      <div class="form-group"><label>用户名</label><input class="form-input" id="loginUser" placeholder="请输入用户名" required autocomplete="username"></div>
+      <div class="form-group"><label>密码</label><input class="form-input" id="loginPass" type="password" placeholder="请输入密码" required autocomplete="current-password"></div>
       <button class="submit-btn" type="submit" id="loginBtn">登录</button>
     </form>
-
-    <!-- Register Form -->
     <form id="registerForm" style="display:none" onsubmit="handleRegister(event)">
-      <div class="form-group">
-        <label>用户名</label>
-        <input class="form-input" id="regUser" placeholder="2-50个字符" required autocomplete="username">
-      </div>
-      <div class="form-group">
-        <label>邮箱</label>
-        <input class="form-input" id="regEmail" type="email" placeholder="用于接收验证码" required autocomplete="email">
-      </div>
-      <div class="form-group">
-        <label>验证码</label>
-        <div class="code-row">
-          <input class="form-input" id="regCode" placeholder="6位验证码" required maxlength="6">
-          <button class="code-btn" type="button" id="sendCodeBtn" onclick="handleSendCode()">获取验证码</button>
-        </div>
-      </div>
-      <div class="form-group">
-        <label>密码</label>
-        <input class="form-input" id="regPass" type="password" placeholder="至少6位" required autocomplete="new-password">
-      </div>
-      <div class="form-group">
-        <label>确认密码</label>
-        <input class="form-input" id="regPass2" type="password" placeholder="再次输入密码" required autocomplete="new-password">
-      </div>
+      <div class="form-group"><label>用户名</label><input class="form-input" id="regUser" placeholder="2-50个字符" required autocomplete="username"></div>
+      <div class="form-group"><label>邮箱</label><input class="form-input" id="regEmail" type="email" placeholder="用于接收验证码" required autocomplete="email"></div>
+      <div class="form-group"><label>验证码</label><div class="code-row"><input class="form-input" id="regCode" placeholder="6位验证码" required maxlength="6"><button class="code-btn" type="button" id="sendCodeBtn" onclick="handleSendCode()">获取验证码</button></div></div>
+      <div class="form-group"><label>密码</label><input class="form-input" id="regPass" type="password" placeholder="至少6位" required autocomplete="new-password"></div>
+      <div class="form-group"><label>确认密码</label><input class="form-input" id="regPass2" type="password" placeholder="再次输入密码" required autocomplete="new-password"></div>
       <button class="submit-btn" type="submit" id="regBtn">注册</button>
     </form>
   </div>
 </div>
 
-<!-- Dashboard -->
 <div class="dashboard" id="dashboard">
   <div class="dash-header">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 200">
@@ -142,44 +144,60 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <button class="dash-logout" onclick="handleLogout()">退出登录</button>
     </div>
   </div>
+
+  <div class="dash-nav" id="dashNav">
+    <div class="dash-nav-item active" onclick="switchPage('overview')">概览</div>
+    <div class="dash-nav-item" onclick="switchPage('orders')">订单管理</div>
+  </div>
+
   <div class="dash-body">
-    <div class="dash-stats">
-      <div class="stat-card">
-        <h3>系统状态</h3>
-        <div class="val" style="color:#059669">运行中</div>
-        <div class="sub">所有服务正常</div>
+    <!-- Overview Page -->
+    <div class="dash-page active" id="page-overview">
+      <div class="dash-stats" id="overviewStats">
+        <div class="stat-card"><h3>系统状态</h3><div class="val" style="color:#059669">运行中</div><div class="sub">所有服务正常</div></div>
+        <div class="stat-card"><h3>总订单</h3><div class="val" id="statTotal">-</div><div class="sub">全部订单</div></div>
+        <div class="stat-card"><h3>待处理</h3><div class="val" id="statPending" style="color:#D97706">-</div><div class="sub">等待支付/处理</div></div>
+        <div class="stat-card"><h3>已完成</h3><div class="val" id="statCompleted" style="color:#059669">-</div><div class="sub">完成的订单</div></div>
       </div>
-      <div class="stat-card">
-        <h3>API 端口</h3>
-        <div class="val">5202</div>
-        <div class="sub">后端服务</div>
+      <div class="dash-section">
+        <h3>个人信息</h3>
+        <div class="info-row"><span class="label">用户名</span><span class="value" id="infoUsername">-</span></div>
+        <div class="info-row"><span class="label">邮箱</span><span class="value" id="infoEmail">-</span></div>
+        <div class="info-row"><span class="label">昵称</span><span class="value" id="infoNickname">-</span></div>
+        <div class="info-row"><span class="label">角色</span><span class="value" id="infoRole">-</span></div>
+        <div class="info-row"><span class="label">状态</span><span class="value" id="infoStatus">-</span></div>
+        <div class="info-row"><span class="label">注册时间</span><span class="value" id="infoCreated">-</span></div>
       </div>
-      <div class="stat-card">
-        <h3>前端端口</h3>
-        <div class="val">5201</div>
-        <div class="sub">用户端入口</div>
+      <div class="dash-section">
+        <h3>快捷链接</h3>
+        <div class="info-row"><span class="label">用户前端</span><a class="value" id="frontendLink" target="_blank" style="color:var(--primary);text-decoration:none">-</a></div>
+        <div class="info-row"><span class="label">API 健康检查</span><a class="value" id="healthLink" target="_blank" style="color:var(--primary);text-decoration:none">-</a></div>
       </div>
     </div>
 
-    <div class="dash-section">
-      <h3>个人信息</h3>
-      <div class="info-row"><span class="label">用户名</span><span class="value" id="infoUsername">-</span></div>
-      <div class="info-row"><span class="label">邮箱</span><span class="value" id="infoEmail">-</span></div>
-      <div class="info-row"><span class="label">昵称</span><span class="value" id="infoNickname">-</span></div>
-      <div class="info-row"><span class="label">角色</span><span class="value" id="infoRole">-</span></div>
-      <div class="info-row"><span class="label">状态</span><span class="value" id="infoStatus">-</span></div>
-      <div class="info-row"><span class="label">注册时间</span><span class="value" id="infoCreated">-</span></div>
-    </div>
-
-    <div class="dash-section">
-      <h3>快捷链接</h3>
-      <div class="info-row">
-        <span class="label">用户前端</span>
-        <a class="value" id="frontendLink" target="_blank" style="color:var(--primary);text-decoration:none">-</a>
-      </div>
-      <div class="info-row">
-        <span class="label">API 健康检查</span>
-        <a class="value" id="healthLink" target="_blank" style="color:var(--primary);text-decoration:none">-</a>
+    <!-- Orders Page -->
+    <div class="dash-page" id="page-orders">
+      <div class="dash-stats" id="orderStats"></div>
+      <div class="dash-section">
+        <div class="section-header">
+          <h3>全部订单</h3>
+          <button class="refresh-btn" onclick="loadOrders()">刷新</button>
+        </div>
+        <div class="order-filters" id="orderFilters">
+          <button class="filter-btn active" onclick="filterOrders('all')">全部</button>
+          <button class="filter-btn" onclick="filterOrders('pending')">待支付</button>
+          <button class="filter-btn" onclick="filterOrders('processing')">进行中</button>
+          <button class="filter-btn" onclick="filterOrders('completed')">已完成</button>
+          <button class="filter-btn" onclick="filterOrders('cancelled')">已取消</button>
+        </div>
+        <div id="orderTableWrap">
+          <table class="order-table">
+            <thead><tr><th>订单号</th><th>用户</th><th>服务</th><th>金额</th><th>状态</th><th>联系人</th><th>时间</th><th>操作</th></tr></thead>
+            <tbody id="orderTableBody"></tbody>
+          </table>
+          <div class="order-empty" id="orderEmpty" style="display:none">暂无订单数据</div>
+        </div>
+        <div class="pagination" id="orderPagination"></div>
       </div>
     </div>
   </div>
@@ -188,6 +206,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 <script>
 const API = window.location.origin + '/api';
 let token = localStorage.getItem('vino_admin_token');
+let currentUser = null;
+let orderPage = 1;
+let orderFilter = 'all';
 
 function switchTab(tab) {
   document.querySelectorAll('.auth-tab').forEach((t, i) => {
@@ -197,52 +218,34 @@ function switchTab(tab) {
   document.getElementById('registerForm').style.display = tab === 'register' ? '' : 'none';
   clearMsg();
 }
+function showMsg(text, type) { const b = document.getElementById('msgBox'); b.textContent = text; b.className = 'msg ' + type; }
+function clearMsg() { const b = document.getElementById('msgBox'); b.className = 'msg'; b.textContent = ''; }
 
-function showMsg(text, type) {
-  const box = document.getElementById('msgBox');
-  box.textContent = text;
-  box.className = 'msg ' + type;
-}
-function clearMsg() {
-  const box = document.getElementById('msgBox');
-  box.className = 'msg';
-  box.textContent = '';
-}
-
-async function api(path, data) {
+async function api(path, options = {}) {
   const headers = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = 'Bearer ' + token;
-  const res = await fetch(API + path, {
-    method: data ? 'POST' : 'GET',
-    headers,
-    body: data ? JSON.stringify(data) : undefined,
-  });
+  const res = await fetch(API + path, { headers, ...options, body: options.body ? JSON.stringify(options.body) : undefined });
   return res.json();
 }
 
+function switchPage(page) {
+  document.querySelectorAll('.dash-nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.dash-page').forEach(p => p.classList.remove('active'));
+  const idx = page === 'overview' ? 0 : 1;
+  document.querySelectorAll('.dash-nav-item')[idx].classList.add('active');
+  document.getElementById('page-' + page).classList.add('active');
+  if (page === 'orders') loadOrders();
+}
+
 async function handleLogin(e) {
-  e.preventDefault();
-  clearMsg();
-  const btn = document.getElementById('loginBtn');
-  btn.disabled = true;
-  btn.textContent = '登录中...';
+  e.preventDefault(); clearMsg();
+  const btn = document.getElementById('loginBtn'); btn.disabled = true; btn.textContent = '登录中...';
   try {
-    const res = await api('/auth/login', {
-      username: document.getElementById('loginUser').value.trim(),
-      password: document.getElementById('loginPass').value,
-    });
-    if (res.code === 0) {
-      token = res.data.token;
-      localStorage.setItem('vino_admin_token', token);
-      showDashboard(res.data.user);
-    } else {
-      showMsg(res.message || '登录失败', 'error');
-    }
-  } catch (err) {
-    showMsg('网络错误', 'error');
-  }
-  btn.disabled = false;
-  btn.textContent = '登录';
+    const res = await api('/auth/login', { method: 'POST', body: { username: document.getElementById('loginUser').value.trim(), password: document.getElementById('loginPass').value } });
+    if (res.code === 0) { token = res.data.token; localStorage.setItem('vino_admin_token', token); showDashboard(res.data.user); }
+    else showMsg(res.message || '登录失败', 'error');
+  } catch { showMsg('网络错误', 'error'); }
+  btn.disabled = false; btn.textContent = '登录';
 }
 
 let countdown = 0;
@@ -250,109 +253,145 @@ async function handleSendCode() {
   const email = document.getElementById('regEmail').value.trim();
   if (!email) { showMsg('请输入邮箱', 'error'); return; }
   clearMsg();
-  const btn = document.getElementById('sendCodeBtn');
-  btn.disabled = true;
+  const btn = document.getElementById('sendCodeBtn'); btn.disabled = true;
   try {
-    const res = await api('/auth/send-code', { email });
+    const res = await api('/auth/send-code', { method: 'POST', body: { email } });
     if (res.code === 0) {
       showMsg('验证码已发送，请查收邮箱', 'success');
       countdown = 60;
-      const timer = setInterval(() => {
-        countdown--;
-        btn.textContent = countdown + 's';
-        if (countdown <= 0) {
-          clearInterval(timer);
-          btn.textContent = '获取验证码';
-          btn.disabled = false;
-        }
-      }, 1000);
-    } else {
-      showMsg(res.message || '发送失败', 'error');
-      btn.disabled = false;
-    }
-  } catch (err) {
-    showMsg('网络错误', 'error');
-    btn.disabled = false;
-  }
+      const timer = setInterval(() => { countdown--; btn.textContent = countdown + 's'; if (countdown <= 0) { clearInterval(timer); btn.textContent = '获取验证码'; btn.disabled = false; } }, 1000);
+    } else { showMsg(res.message || '发送失败', 'error'); btn.disabled = false; }
+  } catch { showMsg('网络错误', 'error'); btn.disabled = false; }
 }
 
 async function handleRegister(e) {
-  e.preventDefault();
-  clearMsg();
+  e.preventDefault(); clearMsg();
   const pass = document.getElementById('regPass').value;
-  const pass2 = document.getElementById('regPass2').value;
-  if (pass !== pass2) { showMsg('两次密码不一致', 'error'); return; }
-  const btn = document.getElementById('regBtn');
-  btn.disabled = true;
-  btn.textContent = '注册中...';
+  if (pass !== document.getElementById('regPass2').value) { showMsg('两次密码不一致', 'error'); return; }
+  const btn = document.getElementById('regBtn'); btn.disabled = true; btn.textContent = '注册中...';
   try {
-    const res = await api('/auth/register', {
-      username: document.getElementById('regUser').value.trim(),
-      email: document.getElementById('regEmail').value.trim(),
-      code: document.getElementById('regCode').value.trim(),
-      password: pass,
-    });
-    if (res.code === 0) {
-      token = res.data.token;
-      localStorage.setItem('vino_admin_token', token);
-      showDashboard(res.data.user);
-    } else {
-      showMsg(res.message || '注册失败', 'error');
-    }
-  } catch (err) {
-    showMsg('网络错误', 'error');
-  }
-  btn.disabled = false;
-  btn.textContent = '注册';
+    const res = await api('/auth/register', { method: 'POST', body: { username: document.getElementById('regUser').value.trim(), email: document.getElementById('regEmail').value.trim(), code: document.getElementById('regCode').value.trim(), password: pass } });
+    if (res.code === 0) { token = res.data.token; localStorage.setItem('vino_admin_token', token); showDashboard(res.data.user); }
+    else showMsg(res.message || '注册失败', 'error');
+  } catch { showMsg('网络错误', 'error'); }
+  btn.disabled = false; btn.textContent = '注册';
 }
 
 function showDashboard(user) {
+  currentUser = user;
   document.getElementById('authPage').style.display = 'none';
   document.getElementById('dashboard').style.display = '';
   document.getElementById('dashUsername').textContent = user.nickname || user.username;
   document.getElementById('infoUsername').textContent = user.username;
   document.getElementById('infoEmail').textContent = user.email || '-';
   document.getElementById('infoNickname').textContent = user.nickname || '-';
-  const roleEl = document.getElementById('infoRole');
-  roleEl.innerHTML = user.role === 'admin'
-    ? '<span class="role-tag admin">管理员</span>'
-    : '<span class="role-tag user">普通用户</span>';
+  document.getElementById('infoRole').innerHTML = user.role === 'admin' ? '<span class="role-tag admin">管理员</span>' : '<span class="role-tag user">普通用户</span>';
   document.getElementById('infoStatus').textContent = user.status === 'active' ? '正常' : '已禁用';
   document.getElementById('infoCreated').textContent = user.createdAt ? new Date(user.createdAt).toLocaleString('zh-CN') : '-';
-
   const host = window.location.hostname;
   document.getElementById('frontendLink').href = 'http://' + host + ':5201';
   document.getElementById('frontendLink').textContent = 'http://' + host + ':5201';
   document.getElementById('healthLink').href = 'http://' + host + ':5202/api/health';
   document.getElementById('healthLink').textContent = 'http://' + host + ':5202/api/health';
+  loadOrderStats();
 }
 
 function handleLogout() {
-  token = null;
+  token = null; currentUser = null;
   localStorage.removeItem('vino_admin_token');
   document.getElementById('authPage').style.display = '';
   document.getElementById('dashboard').style.display = 'none';
-  document.getElementById('loginUser').value = '';
-  document.getElementById('loginPass').value = '';
   switchTab('login');
+}
+
+async function loadOrderStats() {
+  try {
+    const res = await api('/orders/admin/stats');
+    if (res.code === 0) {
+      const d = res.data;
+      document.getElementById('statTotal').textContent = d.total;
+      document.getElementById('statPending').textContent = d.pending;
+      document.getElementById('statCompleted').textContent = d.completed;
+      document.getElementById('orderStats').innerHTML = `
+        <div class="stat-card clickable" onclick="filterOrders('all')"><h3>全部订单</h3><div class="val">${d.total}</div></div>
+        <div class="stat-card clickable" onclick="filterOrders('pending')"><h3>待支付</h3><div class="val" style="color:#D97706">${d.pending}</div></div>
+        <div class="stat-card clickable" onclick="filterOrders('processing')"><h3>进行中</h3><div class="val" style="color:#2563EB">${d.processing}</div></div>
+        <div class="stat-card clickable" onclick="filterOrders('completed')"><h3>已完成</h3><div class="val" style="color:#059669">${d.completed}</div></div>
+        <div class="stat-card clickable" onclick="filterOrders('cancelled')"><h3>已取消</h3><div class="val" style="color:#6B7280">${d.cancelled}</div></div>`;
+    }
+  } catch {}
+}
+
+function filterOrders(status) {
+  orderFilter = status;
+  orderPage = 1;
+  document.querySelectorAll('#orderFilters .filter-btn').forEach(b => {
+    b.classList.toggle('active', b.textContent.includes(
+      status === 'all' ? '全部' : status === 'pending' ? '待支付' : status === 'processing' ? '进行中' : status === 'completed' ? '已完成' : '已取消'
+    ));
+  });
+  loadOrders();
+}
+
+function fmtTime(t) { return t ? new Date(t).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-'; }
+
+const statusLabels = { pending: '待支付', paid: '已支付', processing: '进行中', completed: '已完成', cancelled: '已取消' };
+
+async function loadOrders() {
+  loadOrderStats();
+  const tbody = document.getElementById('orderTableBody');
+  const empty = document.getElementById('orderEmpty');
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:#999">加载中...</td></tr>';
+  try {
+    const params = new URLSearchParams({ page: orderPage, pageSize: 15 });
+    if (orderFilter !== 'all') params.set('status', orderFilter);
+    const res = await api('/orders/admin/list?' + params);
+    if (res.code === 0) {
+      const { list, total, page, pageSize } = res.data;
+      if (!list.length) { tbody.innerHTML = ''; empty.style.display = ''; } 
+      else {
+        empty.style.display = 'none';
+        tbody.innerHTML = list.map(o => `<tr>
+          <td style="font-size:12px;color:var(--text-secondary)">${o.orderNo}</td>
+          <td>${o.user ? o.user.nickname || o.user.username : 'ID:' + o.userId}</td>
+          <td><strong>${o.serviceTitle}</strong></td>
+          <td style="color:var(--primary);font-weight:600">¥${o.price}</td>
+          <td><span class="status-badge ${o.status}">${statusLabels[o.status] || o.status}</span></td>
+          <td style="font-size:12px">${o.contactName || '-'}<br>${o.contactPhone || ''}</td>
+          <td style="font-size:12px">${fmtTime(o.createdAt)}</td>
+          <td><select class="status-select" onchange="updateOrderStatus(${o.id}, this.value)" ${o.status === 'cancelled' ? 'disabled' : ''}>
+            <option value="pending" ${o.status === 'pending' ? 'selected' : ''}>待支付</option>
+            <option value="paid" ${o.status === 'paid' ? 'selected' : ''}>已支付</option>
+            <option value="processing" ${o.status === 'processing' ? 'selected' : ''}>进行中</option>
+            <option value="completed" ${o.status === 'completed' ? 'selected' : ''}>已完成</option>
+            <option value="cancelled" ${o.status === 'cancelled' ? 'selected' : ''}>已取消</option>
+          </select></td>
+        </tr>`).join('');
+      }
+      const totalPages = Math.ceil(total / pageSize);
+      document.getElementById('orderPagination').innerHTML = totalPages > 1 ? `
+        <button class="page-btn" onclick="orderPage--;loadOrders()" ${page <= 1 ? 'disabled' : ''}>上一页</button>
+        <span class="page-info">${page} / ${totalPages}（共 ${total} 条）</span>
+        <button class="page-btn" onclick="orderPage++;loadOrders()" ${page >= totalPages ? 'disabled' : ''}>下一页</button>` : `<span class="page-info">共 ${total} 条</span>`;
+    }
+  } catch { tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:#B91C1C">加载失败，请检查权限</td></tr>'; }
+}
+
+async function updateOrderStatus(id, status) {
+  try {
+    const res = await api('/orders/admin/' + id + '/status', { method: 'PUT', body: { status } });
+    if (res.code === 0) { loadOrders(); } else { alert(res.message || '更新失败'); loadOrders(); }
+  } catch { alert('网络错误'); loadOrders(); }
 }
 
 async function checkSession() {
   if (!token) return;
   try {
     const res = await api('/auth/profile');
-    if (res.code === 0) {
-      showDashboard(res.data);
-    } else {
-      localStorage.removeItem('vino_admin_token');
-      token = null;
-    }
-  } catch {
-    localStorage.removeItem('vino_admin_token');
-    token = null;
-  }
+    if (res.code === 0) showDashboard(res.data);
+    else { localStorage.removeItem('vino_admin_token'); token = null; }
+  } catch { localStorage.removeItem('vino_admin_token'); token = null; }
 }
-
 checkSession();
 </script>
 </body>

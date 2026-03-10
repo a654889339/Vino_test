@@ -46,22 +46,57 @@
 
       <div class="detail-footer">
         <van-button icon="chat-o" type="default" size="small">咨询</van-button>
-        <van-button type="primary" color="#B91C1C" block round @click="onOrder">
+        <van-button type="primary" color="#B91C1C" block round @click="showOrderPopup = true">
           立即预约
         </van-button>
       </div>
+
+      <!-- 下单弹窗 -->
+      <van-popup v-model:show="showOrderPopup" position="bottom" round :style="{ maxHeight: '85%' }">
+        <div class="order-popup">
+          <h3>预约服务</h3>
+          <div class="order-service-info">
+            <div class="order-service-icon" :style="{ background: coverBg }">
+              <van-icon :name="serviceIcon" size="24" color="#fff" />
+            </div>
+            <div>
+              <h4>{{ serviceData.title }}</h4>
+              <span class="order-service-price">¥{{ serviceData.price }}</span>
+            </div>
+          </div>
+          <van-cell-group inset>
+            <van-field v-model="orderForm.contactName" label="联系人" placeholder="请输入联系人姓名" />
+            <van-field v-model="orderForm.contactPhone" label="联系电话" type="tel" placeholder="请输入联系电话" />
+            <van-field v-model="orderForm.address" label="服务地址" placeholder="请输入服务地址" />
+            <van-field v-model="orderForm.remark" label="备注" type="textarea" rows="2" placeholder="其他需要说明的事项（选填）" />
+          </van-cell-group>
+          <div class="order-submit-area">
+            <div class="order-total">
+              <span>合计：</span>
+              <span class="order-total-price">¥{{ serviceData.price }}</span>
+            </div>
+            <van-button type="primary" color="#B91C1C" block round :loading="submitting" @click="submitOrder">
+              确认预约
+            </van-button>
+          </div>
+        </div>
+      </van-popup>
     </template>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
-import { serviceApi } from '@/api';
-import { showToast } from 'vant';
+import { ref, reactive, onMounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { serviceApi, orderApi } from '@/api';
+import { showToast, showDialog } from 'vant';
 
 const route = useRoute();
+const router = useRouter();
 const loading = ref(true);
+const showOrderPopup = ref(false);
+const submitting = ref(false);
+const orderForm = reactive({ contactName: '', contactPhone: '', address: '', remark: '' });
 
 const fallbackServices = {
   1: { title: '设备维修', description: '专业工程师提供全方位维修服务，品质保障，售后无忧。', price: '99', originPrice: '159', icon: 'setting-o', bg: 'linear-gradient(135deg, #B91C1C, #991B1B)' },
@@ -101,8 +136,37 @@ onMounted(async () => {
   }
 });
 
-const onOrder = () => {
-  showToast('预约功能开发中');
+const submitOrder = async () => {
+  const token = localStorage.getItem('vino_token');
+  if (!token) {
+    showToast('请先登录');
+    router.push('/login');
+    return;
+  }
+  if (!orderForm.contactName.trim()) { showToast('请输入联系人'); return; }
+  if (!orderForm.contactPhone.trim()) { showToast('请输入联系电话'); return; }
+  if (!orderForm.address.trim()) { showToast('请输入服务地址'); return; }
+  submitting.value = true;
+  try {
+    await orderApi.create({
+      serviceId: Number(route.params.id) || null,
+      serviceTitle: serviceData.value.title,
+      serviceIcon: serviceIcon.value,
+      price: serviceData.value.price,
+      contactName: orderForm.contactName.trim(),
+      contactPhone: orderForm.contactPhone.trim(),
+      address: orderForm.address.trim(),
+      remark: orderForm.remark.trim(),
+    });
+    showOrderPopup.value = false;
+    showDialog({ title: '预约成功', message: '您的服务已预约成功，我们会尽快安排工程师。' }).then(() => {
+      router.push('/orders');
+    });
+  } catch (err) {
+    showToast(err.message || '下单失败');
+  } finally {
+    submitting.value = false;
+  }
 };
 </script>
 
@@ -212,5 +276,66 @@ const onOrder = () => {
 
 .detail-footer .van-button--primary {
   flex: 1;
+}
+
+.order-popup {
+  padding: 20px 16px 24px;
+}
+
+.order-popup h3 {
+  font-size: 17px;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.order-service-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--vino-bg, #f5f5f5);
+  border-radius: 10px;
+  margin-bottom: 16px;
+}
+
+.order-service-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.order-service-info h4 {
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+
+.order-service-price {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--vino-primary, #B91C1C);
+}
+
+.order-submit-area {
+  padding: 16px 0 0;
+}
+
+.order-total {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.order-total-price {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--vino-primary, #B91C1C);
+  margin-left: 4px;
 }
 </style>
