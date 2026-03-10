@@ -32,20 +32,55 @@ scp -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedKeyTypes=+ssh-rsa -o StrictHo
 
 ## Project Location on Server
 - **Path**: `/root/Vino_test`
+- **GitHub Repo**: `https://github.com/a654889339/Vino_test`
 - **Note**: Requires `sudo` to access /root directory
+
+## Deployment Flow (Git Clone)
+
+### First-time deployment
+```bash
+# 1. Local: push code to GitHub
+git push origin main
+
+# 2. SSH to server and clone via mirror (server cannot access GitHub directly)
+ssh ... ubuntu@106.54.50.88 "sudo bash -c 'cd /root && git clone https://ghfast.top/https://github.com/a654889339/Vino_test.git Vino_test'"
+
+# 3. Build and start containers
+ssh ... ubuntu@106.54.50.88 "sudo bash -c 'cd /root/Vino_test && docker-compose up -d --build'"
+```
+
+### Update deployment (pull latest code)
+```bash
+# 1. Local: push code to GitHub
+git push origin main
+
+# 2. SSH to server and pull latest via mirror
+ssh ... ubuntu@106.54.50.88 "sudo git -C /root/Vino_test pull"
+
+# 3. Rebuild and restart containers
+ssh ... ubuntu@106.54.50.88 "sudo bash -c 'cd /root/Vino_test && docker-compose down && docker-compose up -d --build'"
+```
+
+## GitHub Mirror Configuration
+- Server cannot access GitHub directly; use `ghfast.top` as a mirror proxy
+- Remote URL on server: `https://ghfast.top/https://github.com/a654889339/Vino_test.git`
+- Already configured via: `git remote set-url origin https://ghfast.top/https://github.com/a654889339/Vino_test.git`
 
 ## Docker Operations
 ```bash
 # Check containers
 ssh ... ubuntu@106.54.50.88 "sudo docker ps --filter 'name=vino'"
 
-# Rebuild and restart
-ssh ... ubuntu@106.54.50.88 "sudo bash -c 'cd /root/Vino_test && docker compose down && docker compose up -d --build'"
+# Rebuild and restart (use docker-compose v1 on this server)
+ssh ... ubuntu@106.54.50.88 "sudo bash -c 'cd /root/Vino_test && docker-compose down && docker-compose up -d --build'"
 
 # View logs
 ssh ... ubuntu@106.54.50.88 "sudo docker logs vino-backend"
 ssh ... ubuntu@106.54.50.88 "sudo docker logs vino-frontend"
 ssh ... ubuntu@106.54.50.88 "sudo docker logs vino-mysql"
+
+# Health check
+ssh ... ubuntu@106.54.50.88 "curl -s http://localhost:5202/api/health"
 ```
 
 ## Port Allocation (避免冲突)
@@ -56,7 +91,8 @@ ssh ... ubuntu@106.54.50.88 "sudo docker logs vino-mysql"
 | **Vino_test** | **5201** | **5202** | **3308** |
 
 ## Important Notes
-1. The server has network issues accessing GitHub directly - use SCP to transfer files
-2. Always use `sudo` when accessing files in `/root/`
-3. SSH options are required for RSA key compatibility
-4. Container names use `vino-` prefix to avoid conflicts with other projects
+1. Server uses `docker-compose` v1 (command: `docker-compose`, NOT `docker compose`)
+2. Server cannot access GitHub directly - git remote is configured to use `ghfast.top` mirror
+3. Always use `sudo` when accessing files in `/root/`
+4. SSH options are required for RSA key compatibility
+5. Container names use `vino-` prefix to avoid conflicts with other projects
