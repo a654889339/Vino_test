@@ -46,7 +46,7 @@
 
       <div class="detail-footer">
         <van-button icon="chat-o" type="default" size="small">咨询</van-button>
-        <van-button type="primary" color="#B91C1C" block round @click="showOrderPopup = true">
+        <van-button type="primary" color="#B91C1C" block round @click="onBookClick">
           立即预约
         </van-button>
       </div>
@@ -67,9 +67,55 @@
           <van-cell-group inset>
             <van-field v-model="orderForm.contactName" label="联系人" placeholder="请输入联系人姓名" />
             <van-field v-model="orderForm.contactPhone" label="联系电话" type="tel" placeholder="请输入联系电话" />
-            <van-field v-model="orderForm.address" label="服务地址" placeholder="请输入服务地址" />
+
+            <van-field
+              v-model="countryDisplay"
+              is-link
+              readonly
+              label="国家/地区"
+              placeholder="请选择国家/地区"
+              @click="showCountryPicker = true"
+            />
+            <van-field
+              v-if="orderForm.country === '其他'"
+              v-model="orderForm.customCountry"
+              label="自定义国家"
+              placeholder="请输入国家/地区名称"
+            />
+
+            <van-field
+              v-if="orderForm.country === '中国大陆'"
+              v-model="areaDisplay"
+              is-link
+              readonly
+              label="省/市/区"
+              placeholder="请选择省市区"
+              @click="showAreaPicker = true"
+            />
+
+            <van-field v-model="orderForm.detailAddress" label="详细地址" placeholder="请输入小区/街道等具体地址" />
             <van-field v-model="orderForm.remark" label="备注" type="textarea" rows="2" placeholder="其他需要说明的事项（选填）" />
           </van-cell-group>
+
+          <!-- 国家选择器 -->
+          <van-popup v-model:show="showCountryPicker" position="bottom" round>
+            <van-picker
+              :columns="countryColumns"
+              @confirm="onCountryConfirm"
+              @cancel="showCountryPicker = false"
+              title="选择国家/地区"
+            />
+          </van-popup>
+
+          <!-- 省市区选择器 -->
+          <van-popup v-model:show="showAreaPicker" position="bottom" round>
+            <van-area
+              :area-list="areaList"
+              @confirm="onAreaConfirm"
+              @cancel="showAreaPicker = false"
+              title="选择省市区"
+            />
+          </van-popup>
           <div class="order-submit-area">
             <div class="order-total">
               <span>合计：</span>
@@ -86,17 +132,91 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { serviceApi, orderApi } from '@/api';
 import { showToast, showDialog } from 'vant';
+import { areaList } from '@vant/area-data';
 
 const route = useRoute();
 const router = useRouter();
 const loading = ref(true);
 const showOrderPopup = ref(false);
 const submitting = ref(false);
-const orderForm = reactive({ contactName: '', contactPhone: '', address: '', remark: '' });
+const showCountryPicker = ref(false);
+const showAreaPicker = ref(false);
+
+const countryColumns = [
+  '中国大陆', '中国香港', '中国澳门', '中国台湾',
+  '美国', '英国', '日本', '韩国', '新加坡', '澳大利亚',
+  '加拿大', '德国', '法国', '马来西亚', '泰国', '其他',
+];
+
+const orderForm = reactive({
+  contactName: '',
+  contactPhone: '',
+  country: '',
+  customCountry: '',
+  province: '',
+  city: '',
+  district: '',
+  areaCode: '',
+  detailAddress: '',
+  remark: '',
+});
+
+const countryDisplay = computed(() => {
+  if (orderForm.country === '其他' && orderForm.customCountry) return `其他 - ${orderForm.customCountry}`;
+  return orderForm.country || '';
+});
+
+const areaDisplay = computed(() => {
+  if (orderForm.province) return `${orderForm.province} ${orderForm.city} ${orderForm.district}`.trim();
+  return '';
+});
+
+const onCountryConfirm = ({ selectedValues, selectedOptions }) => {
+  orderForm.country = selectedOptions[0]?.text || selectedValues[0] || '';
+  orderForm.province = '';
+  orderForm.city = '';
+  orderForm.district = '';
+  orderForm.areaCode = '';
+  orderForm.customCountry = '';
+  showCountryPicker.value = false;
+};
+
+const onAreaConfirm = ({ selectedOptions }) => {
+  orderForm.province = selectedOptions[0]?.text || '';
+  orderForm.city = selectedOptions[1]?.text || '';
+  orderForm.district = selectedOptions[2]?.text || '';
+  orderForm.areaCode = selectedOptions[2]?.value || '';
+  showAreaPicker.value = false;
+};
+
+const buildFullAddress = () => {
+  let parts = [];
+  if (orderForm.country === '其他') {
+    parts.push(orderForm.customCountry || '其他');
+  } else if (orderForm.country) {
+    parts.push(orderForm.country);
+  }
+  if (orderForm.country === '中国大陆' && orderForm.province) {
+    parts.push(orderForm.province, orderForm.city, orderForm.district);
+  }
+  if (orderForm.detailAddress) parts.push(orderForm.detailAddress);
+  return parts.filter(Boolean).join(' ');
+};
+
+const onBookClick = () => {
+  const token = localStorage.getItem('vino_token');
+  if (!token) {
+    showDialog({ title: '未登录', message: '请先登录后再预约服务' }).then(() => {
+      router.push('/login');
+    });
+    return;
+  }
+  showOrderPopup.value = true;
+};
 
 const fallbackServices = {
   1: { title: '设备维修', description: '专业工程师提供全方位维修服务，品质保障，售后无忧。', price: '99', originPrice: '159', icon: 'setting-o', bg: 'linear-gradient(135deg, #B91C1C, #991B1B)' },
@@ -137,15 +257,14 @@ onMounted(async () => {
 });
 
 const submitOrder = async () => {
-  const token = localStorage.getItem('vino_token');
-  if (!token) {
-    showToast('请先登录');
-    router.push('/login');
-    return;
-  }
   if (!orderForm.contactName.trim()) { showToast('请输入联系人'); return; }
   if (!orderForm.contactPhone.trim()) { showToast('请输入联系电话'); return; }
-  if (!orderForm.address.trim()) { showToast('请输入服务地址'); return; }
+  if (!orderForm.country) { showToast('请选择国家/地区'); return; }
+  if (orderForm.country === '其他' && !orderForm.customCountry.trim()) { showToast('请输入国家/地区名称'); return; }
+  if (orderForm.country === '中国大陆' && !orderForm.province) { showToast('请选择省市区'); return; }
+  if (!orderForm.detailAddress.trim()) { showToast('请输入详细地址'); return; }
+
+  const fullAddress = buildFullAddress();
   submitting.value = true;
   try {
     await orderApi.create({
@@ -155,7 +274,7 @@ const submitOrder = async () => {
       price: serviceData.value.price,
       contactName: orderForm.contactName.trim(),
       contactPhone: orderForm.contactPhone.trim(),
-      address: orderForm.address.trim(),
+      address: fullAddress,
       remark: orderForm.remark.trim(),
     });
     showOrderPopup.value = false;
