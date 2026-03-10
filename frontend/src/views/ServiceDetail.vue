@@ -73,19 +73,24 @@
 
             <!-- 国家/地区 -->
             <van-cell-group inset class="mt12">
-              <div class="picker-trigger" @click="showInlineCountry = !showInlineCountry">
+              <div class="picker-trigger" @click="showInlineCountry = !showInlineCountry; showInlineArea = false">
                 <span class="picker-label">国家/地区</span>
                 <span :class="['picker-value', { placeholder: !orderForm.country }]">
                   {{ countryDisplay || '请选择国家/地区' }}
                 </span>
                 <van-icon :name="showInlineCountry ? 'arrow-up' : 'arrow-down'" class="picker-arrow" />
               </div>
-              <div v-show="showInlineCountry" class="inline-picker">
-                <van-picker
-                  :columns="countryColumns"
-                  @confirm="onCountryConfirm"
-                  @cancel="showInlineCountry = false"
-                />
+              <div v-if="showInlineCountry" class="select-list">
+                <div
+                  v-for="c in countryColumns"
+                  :key="c"
+                  class="select-item"
+                  :class="{ active: orderForm.country === c }"
+                  @click="selectCountry(c)"
+                >
+                  <span>{{ c }}</span>
+                  <van-icon v-if="orderForm.country === c" name="success" color="#B91C1C" size="16" />
+                </div>
               </div>
 
               <van-field
@@ -97,14 +102,14 @@
 
               <!-- 省/市/区（仅中国大陆） -->
               <template v-if="orderForm.country === '中国大陆'">
-                <div class="picker-trigger" @click="showInlineArea = !showInlineArea">
+                <div class="picker-trigger" @click="showInlineArea = !showInlineArea; showInlineCountry = false">
                   <span class="picker-label">省/市/区</span>
                   <span :class="['picker-value', { placeholder: !orderForm.province }]">
                     {{ areaDisplay || '请选择省市区' }}
                   </span>
                   <van-icon :name="showInlineArea ? 'arrow-up' : 'arrow-down'" class="picker-arrow" />
                 </div>
-                <div v-show="showInlineArea" class="inline-picker">
+                <div v-if="showInlineArea" class="area-picker-wrap">
                   <van-area
                     :area-list="areaList"
                     @confirm="onAreaConfirm"
@@ -179,8 +184,8 @@ const areaDisplay = computed(() => {
   return '';
 });
 
-const onCountryConfirm = ({ selectedValues, selectedOptions }) => {
-  orderForm.country = selectedOptions[0]?.text || selectedValues[0] || '';
+const selectCountry = (c) => {
+  orderForm.country = c;
   orderForm.province = '';
   orderForm.city = '';
   orderForm.district = '';
@@ -494,8 +499,38 @@ const submitOrder = async () => {
   flex-shrink: 0;
 }
 
-.inline-picker {
+.select-list {
+  max-height: 200px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   border-bottom: 1px solid #f0f0f0;
+}
+
+.select-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  font-size: 14px;
+  color: #323233;
+  border-bottom: 1px solid #fafafa;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.select-item:active {
+  background: #f5f5f5;
+}
+
+.select-item.active {
+  color: #B91C1C;
+  font-weight: 500;
+}
+
+.area-picker-wrap {
+  border-bottom: 1px solid #f0f0f0;
+  height: 260px;
+  overflow: hidden;
 }
 
 .order-submit-area {
