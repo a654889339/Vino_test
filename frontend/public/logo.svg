@@ -1,11 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 160" fill="none">
-  <rect width="400" height="160" rx="8" fill="#000"/>
-  <g transform="translate(30, 20)">
-    <path d="M10 30 L50 120 L65 120 L105 30 L88 30 L57.5 105 L27 30 Z" fill="#B91C1C"/>
-    <path d="M90 30 L90 120 L105 120 L105 30 Z" fill="#B91C1C"/>
-    <path d="M120 30 L120 120 L135 120 L135 55 L195 120 L210 120 L210 30 L195 30 L195 95 L135 30 Z" fill="#B91C1C"/>
-    <circle cx="270" cy="75" r="45" stroke="#B91C1C" stroke-width="14" fill="none"/>
-    <path d="M255 55 C260 45, 280 42, 285 55 C290 68, 270 75, 265 85 C260 95, 275 105, 285 95 C275 108, 255 100, 255 88 C255 76, 270 72, 275 62 C278 55, 265 52, 260 60Z" fill="#B91C1C"/>
-  </g>
-  <text x="355" y="40" font-family="serif" font-size="14" fill="#666">®</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 80" fill="none">
+  <rect width="200" height="80" rx="8" fill="#111"/>
+  <text x="20" y="58" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="48" fill="#B91C1C" letter-spacing="2">VINO</text>
+  <circle cx="170" cy="38" r="14" stroke="#B91C1C" stroke-width="4" fill="none"/>
+  <path d="M165 32 C167 28, 175 27, 176 32 C177 37, 170 40, 168 44 C166 48, 172 51, 176 48 C173 53, 164 50, 164 45 C164 40, 170 38, 172 34 C173 31, 168 30, 166 34Z" fill="#B91C1C"/>
 </svg>

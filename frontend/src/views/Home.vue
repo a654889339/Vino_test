@@ -3,7 +3,7 @@
     <!-- Header -->
     <div class="header">
       <div class="header-inner">
-        <img src="/logo.svg" alt="Vino" class="logo" />
+        <img src="https://itsyourturnmy-1256887166.cos.ap-singapore.myqcloud.com/vino/logo.svg" alt="Vino" class="logo" />
         <van-search
           v-model="searchText"
           shape="round"

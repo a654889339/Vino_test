@@ -3,7 +3,7 @@
     <van-nav-bar title="登录" left-arrow @click-left="$router.back()" />
 
     <div class="login-header">
-      <img src="/logo.svg" alt="Vino" class="login-logo" />
+      <img src="https://itsyourturnmy-1256887166.cos.ap-singapore.myqcloud.com/vino/logo.svg" alt="Vino" class="login-logo" />
       <h2>欢迎使用 Vino 服务</h2>
     </div>
 
