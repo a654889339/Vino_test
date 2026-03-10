@@ -13,6 +13,7 @@ const Region = 'ap-singapore';
 const files = [
   { local: 'frontend/public/logo.svg', remote: 'vino/logo.svg', type: 'image/svg+xml' },
   { local: 'frontend/public/favicon.svg', remote: 'vino/favicon.svg', type: 'image/svg+xml' },
+  { local: 'frontend/public/splash-logo.svg', remote: 'vino/splash-logo.svg', type: 'image/svg+xml' },
 ];
 
 async function upload(file) {

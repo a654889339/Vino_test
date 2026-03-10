@@ -1,4 +1,5 @@
 <template>
+  <SplashScreen v-if="showSplash" />
   <router-view />
   <van-tabbar v-if="showTabbar" v-model="activeTab" route active-color="var(--vino-primary)">
     <van-tabbar-item to="/" icon="wap-home-o">首页</van-tabbar-item>
@@ -9,8 +10,9 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
+import SplashScreen from '@/components/SplashScreen.vue';
 
 const route = useRoute();
 const activeTab = ref(0);
@@ -18,6 +20,18 @@ const activeTab = ref(0);
 const hiddenTabRoutes = ['/login', '/service/'];
 const showTabbar = computed(() => {
   return !hiddenTabRoutes.some((r) => route.path.startsWith(r));
+});
+
+const showSplash = ref(false);
+
+onMounted(() => {
+  if (!sessionStorage.getItem('vino_splash_shown')) {
+    showSplash.value = true;
+    sessionStorage.setItem('vino_splash_shown', '1');
+    setTimeout(() => {
+      showSplash.value = false;
+    }, 3500);
+  }
 });
 </script>
 
