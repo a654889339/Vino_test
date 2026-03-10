@@ -52,7 +52,7 @@
       </div>
 
       <!-- 下单弹窗 -->
-      <van-popup v-model:show="showOrderPopup" position="bottom" round :style="{ maxHeight: '85%', overflowY: 'auto' }" :lock-scroll="false">
+      <van-popup v-model:show="showOrderPopup" position="bottom" round :style="{ maxHeight: '90%' }">
         <div class="order-popup">
           <h3>预约服务</h3>
           <div class="order-service-info">
@@ -64,24 +64,61 @@
               <span class="order-service-price">¥{{ serviceData.price }}</span>
             </div>
           </div>
-          <van-cell-group inset>
-            <van-field v-model="orderForm.contactName" label="联系人" placeholder="请输入联系人姓名" />
-            <van-field v-model="orderForm.contactPhone" label="联系电话" type="tel" placeholder="请输入联系电话" />
 
-            <van-cell title="国家/地区" is-link :value="countryDisplay || '请选择国家/地区'" :class="{ 'cell-placeholder': !countryDisplay }" @click="openCountryPicker" />
+          <div class="order-form-scroll">
+            <van-cell-group inset>
+              <van-field v-model="orderForm.contactName" label="联系人" placeholder="请输入联系人姓名" />
+              <van-field v-model="orderForm.contactPhone" label="联系电话" type="tel" placeholder="请输入联系电话" />
+            </van-cell-group>
 
-            <van-field
-              v-if="orderForm.country === '其他'"
-              v-model="orderForm.customCountry"
-              label="自定义国家"
-              placeholder="请输入国家/地区名称"
-            />
+            <!-- 国家/地区 -->
+            <van-cell-group inset class="mt12">
+              <div class="picker-trigger" @click="showInlineCountry = !showInlineCountry">
+                <span class="picker-label">国家/地区</span>
+                <span :class="['picker-value', { placeholder: !orderForm.country }]">
+                  {{ countryDisplay || '请选择国家/地区' }}
+                </span>
+                <van-icon :name="showInlineCountry ? 'arrow-up' : 'arrow-down'" class="picker-arrow" />
+              </div>
+              <div v-show="showInlineCountry" class="inline-picker">
+                <van-picker
+                  :columns="countryColumns"
+                  @confirm="onCountryConfirm"
+                  @cancel="showInlineCountry = false"
+                />
+              </div>
 
-            <van-cell v-if="orderForm.country === '中国大陆'" title="省/市/区" is-link :value="areaDisplay || '请选择省市区'" :class="{ 'cell-placeholder': !areaDisplay }" @click="openAreaPicker" />
+              <van-field
+                v-if="orderForm.country === '其他'"
+                v-model="orderForm.customCountry"
+                label="自定义国家"
+                placeholder="请输入国家/地区名称"
+              />
 
-            <van-field v-model="orderForm.detailAddress" label="详细地址" placeholder="请输入小区/街道等具体地址" />
-            <van-field v-model="orderForm.remark" label="备注" type="textarea" rows="2" placeholder="其他需要说明的事项（选填）" />
-          </van-cell-group>
+              <!-- 省/市/区（仅中国大陆） -->
+              <template v-if="orderForm.country === '中国大陆'">
+                <div class="picker-trigger" @click="showInlineArea = !showInlineArea">
+                  <span class="picker-label">省/市/区</span>
+                  <span :class="['picker-value', { placeholder: !orderForm.province }]">
+                    {{ areaDisplay || '请选择省市区' }}
+                  </span>
+                  <van-icon :name="showInlineArea ? 'arrow-up' : 'arrow-down'" class="picker-arrow" />
+                </div>
+                <div v-show="showInlineArea" class="inline-picker">
+                  <van-area
+                    :area-list="areaList"
+                    @confirm="onAreaConfirm"
+                    @cancel="showInlineArea = false"
+                  />
+                </div>
+              </template>
+            </van-cell-group>
+
+            <van-cell-group inset class="mt12">
+              <van-field v-model="orderForm.detailAddress" label="详细地址" placeholder="请输入小区/街道等具体地址" />
+              <van-field v-model="orderForm.remark" label="备注" type="textarea" rows="2" placeholder="其他需要说明的事项（选填）" />
+            </van-cell-group>
+          </div>
 
           <div class="order-submit-area">
             <div class="order-total">
@@ -95,26 +132,6 @@
         </div>
       </van-popup>
     </template>
-
-    <!-- 国家选择器 -->
-    <van-popup v-model:show="showCountryPicker" position="bottom" round>
-      <van-picker
-        :columns="countryColumns"
-        @confirm="onCountryConfirm"
-        @cancel="onCountryCancel"
-        title="选择国家/地区"
-      />
-    </van-popup>
-
-    <!-- 省市区选择器 -->
-    <van-popup v-model:show="showAreaPicker" position="bottom" round>
-      <van-area
-        :area-list="areaList"
-        @confirm="onAreaConfirm"
-        @cancel="onAreaCancel"
-        title="选择省市区"
-      />
-    </van-popup>
   </div>
 </template>
 
@@ -130,8 +147,8 @@ const router = useRouter();
 const loading = ref(true);
 const showOrderPopup = ref(false);
 const submitting = ref(false);
-const showCountryPicker = ref(false);
-const showAreaPicker = ref(false);
+const showInlineCountry = ref(false);
+const showInlineArea = ref(false);
 
 const countryColumns = [
   '中国大陆', '中国香港', '中国澳门', '中国台湾',
@@ -162,16 +179,6 @@ const areaDisplay = computed(() => {
   return '';
 });
 
-const openCountryPicker = () => {
-  showOrderPopup.value = false;
-  setTimeout(() => { showCountryPicker.value = true; }, 300);
-};
-
-const openAreaPicker = () => {
-  showOrderPopup.value = false;
-  setTimeout(() => { showAreaPicker.value = true; }, 300);
-};
-
 const onCountryConfirm = ({ selectedValues, selectedOptions }) => {
   orderForm.country = selectedOptions[0]?.text || selectedValues[0] || '';
   orderForm.province = '';
@@ -179,13 +186,7 @@ const onCountryConfirm = ({ selectedValues, selectedOptions }) => {
   orderForm.district = '';
   orderForm.areaCode = '';
   orderForm.customCountry = '';
-  showCountryPicker.value = false;
-  setTimeout(() => { showOrderPopup.value = true; }, 300);
-};
-
-const onCountryCancel = () => {
-  showCountryPicker.value = false;
-  setTimeout(() => { showOrderPopup.value = true; }, 300);
+  showInlineCountry.value = false;
 };
 
 const onAreaConfirm = ({ selectedOptions }) => {
@@ -193,17 +194,11 @@ const onAreaConfirm = ({ selectedOptions }) => {
   orderForm.city = selectedOptions[1]?.text || '';
   orderForm.district = selectedOptions[2]?.text || '';
   orderForm.areaCode = selectedOptions[2]?.value || '';
-  showAreaPicker.value = false;
-  setTimeout(() => { showOrderPopup.value = true; }, 300);
-};
-
-const onAreaCancel = () => {
-  showAreaPicker.value = false;
-  setTimeout(() => { showOrderPopup.value = true; }, 300);
+  showInlineArea.value = false;
 };
 
 const buildFullAddress = () => {
-  let parts = [];
+  const parts = [];
   if (orderForm.country === '其他') {
     parts.push(orderForm.customCountry || '其他');
   } else if (orderForm.country) {
@@ -224,6 +219,8 @@ const onBookClick = () => {
     });
     return;
   }
+  showInlineCountry.value = false;
+  showInlineArea.value = false;
   showOrderPopup.value = true;
 };
 
@@ -408,6 +405,9 @@ const submitOrder = async () => {
 
 .order-popup {
   padding: 20px 16px 24px;
+  display: flex;
+  flex-direction: column;
+  max-height: 85vh;
 }
 
 .order-popup h3 {
@@ -415,6 +415,7 @@ const submitOrder = async () => {
   font-weight: 600;
   text-align: center;
   margin-bottom: 16px;
+  flex-shrink: 0;
 }
 
 .order-service-info {
@@ -425,6 +426,7 @@ const submitOrder = async () => {
   background: var(--vino-bg, #f5f5f5);
   border-radius: 10px;
   margin-bottom: 16px;
+  flex-shrink: 0;
 }
 
 .order-service-icon {
@@ -448,8 +450,57 @@ const submitOrder = async () => {
   color: var(--vino-primary, #B91C1C);
 }
 
+.order-form-scroll {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mt12 {
+  margin-top: 12px;
+}
+
+.picker-trigger {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  min-height: 44px;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.picker-label {
+  font-size: 14px;
+  color: #323233;
+  width: 6.2em;
+  flex-shrink: 0;
+  margin-right: 12px;
+}
+
+.picker-value {
+  flex: 1;
+  font-size: 14px;
+  color: #323233;
+  text-align: right;
+}
+
+.picker-value.placeholder {
+  color: #c8c9cc;
+}
+
+.picker-arrow {
+  margin-left: 4px;
+  color: #969799;
+  flex-shrink: 0;
+}
+
+.inline-picker {
+  border-bottom: 1px solid #f0f0f0;
+}
+
 .order-submit-area {
   padding: 16px 0 0;
+  flex-shrink: 0;
 }
 
 .order-total {
@@ -465,9 +516,5 @@ const submitOrder = async () => {
   font-weight: 700;
   color: var(--vino-primary, #B91C1C);
   margin-left: 4px;
-}
-
-.cell-placeholder :deep(.van-cell__value) {
-  color: var(--van-field-placeholder-text-color, #c8c9cc);
 }
 </style>
