@@ -69,7 +69,7 @@
             <van-field v-model="orderForm.contactPhone" label="联系电话" type="tel" placeholder="请输入联系电话" />
 
             <van-field
-              v-model="countryDisplay"
+              :model-value="countryDisplay"
               is-link
               readonly
               label="国家/地区"
@@ -85,7 +85,7 @@
 
             <van-field
               v-if="orderForm.country === '中国大陆'"
-              v-model="areaDisplay"
+              :model-value="areaDisplay"
               is-link
               readonly
               label="省/市/区"
@@ -97,25 +97,6 @@
             <van-field v-model="orderForm.remark" label="备注" type="textarea" rows="2" placeholder="其他需要说明的事项（选填）" />
           </van-cell-group>
 
-          <!-- 国家选择器 -->
-          <van-popup v-model:show="showCountryPicker" position="bottom" round>
-            <van-picker
-              :columns="countryColumns"
-              @confirm="onCountryConfirm"
-              @cancel="showCountryPicker = false"
-              title="选择国家/地区"
-            />
-          </van-popup>
-
-          <!-- 省市区选择器 -->
-          <van-popup v-model:show="showAreaPicker" position="bottom" round>
-            <van-area
-              :area-list="areaList"
-              @confirm="onAreaConfirm"
-              @cancel="showAreaPicker = false"
-              title="选择省市区"
-            />
-          </van-popup>
           <div class="order-submit-area">
             <div class="order-total">
               <span>合计：</span>
@@ -126,6 +107,26 @@
             </van-button>
           </div>
         </div>
+      </van-popup>
+
+      <!-- 国家选择器（独立于订单弹窗） -->
+      <van-popup v-model:show="showCountryPicker" position="bottom" round teleport="body" :z-index="3000">
+        <van-picker
+          :columns="countryColumns"
+          @confirm="onCountryConfirm"
+          @cancel="showCountryPicker = false"
+          title="选择国家/地区"
+        />
+      </van-popup>
+
+      <!-- 省市区选择器（独立于订单弹窗） -->
+      <van-popup v-model:show="showAreaPicker" position="bottom" round teleport="body" :z-index="3000">
+        <van-area
+          :area-list="areaList"
+          @confirm="onAreaConfirm"
+          @cancel="showAreaPicker = false"
+          title="选择省市区"
+        />
       </van-popup>
     </template>
   </div>
