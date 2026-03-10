@@ -109,7 +109,7 @@
                   </span>
                   <van-icon :name="showInlineArea ? 'arrow-up' : 'arrow-down'" class="picker-arrow" />
                 </div>
-                <div v-if="showInlineArea" class="area-picker-wrap">
+                <div v-if="showInlineArea" class="area-picker-wrap" @touchmove.stop @mousewheel.stop>
                   <van-area
                     :area-list="areaList"
                     @confirm="onAreaConfirm"
