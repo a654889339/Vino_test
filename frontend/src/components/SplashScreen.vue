@@ -3,11 +3,18 @@
     <div v-if="visible" class="splash-screen" @click="dismiss">
       <div class="splash-content">
         <div class="splash-logo-wrapper">
-          <img
-            src="https://itsyourturnmy-1256887166.cos.ap-singapore.myqcloud.com/vino/splash-logo.svg"
-            alt="VINO"
-            class="splash-logo"
-          />
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 200" class="splash-logo">
+            <rect width="520" height="200" fill="#000"/>
+            <path d="M18 35 L58 35 L100 145 L142 35 L160 35 L108 170 L92 170 Z" fill="#B91C1C"/>
+            <path d="M38 35 L55 35 L55 60 L45 35 Z" fill="#000" opacity="0.2"/>
+            <path d="M165 35 L195 35 L195 170 L165 170 Z" fill="#B91C1C"/>
+            <path d="M172 35 L180 35 L180 170 L172 170 Z" fill="#000" opacity="0.15"/>
+            <path d="M210 35 L240 35 L320 140 L320 35 L350 35 L350 170 L320 170 L240 65 L240 170 L210 170 Z" fill="#B91C1C"/>
+            <circle cx="420" cy="102" r="68" stroke="#B91C1C" stroke-width="28" fill="none"/>
+            <path d="M405 72 C410 58, 435 55, 440 72 C445 89, 420 98, 415 112 C410 126, 430 138, 445 125 C435 145, 405 138, 400 120 C395 102, 418 95, 425 80 C430 70, 412 65, 408 75Z" fill="#B91C1C"/>
+            <circle cx="498" cy="38" r="10" stroke="#666" stroke-width="1.5" fill="none"/>
+            <text x="498" y="43" font-family="Arial" font-size="14" fill="#666" text-anchor="middle" font-weight="bold">R</text>
+          </svg>
         </div>
         <div class="splash-text">
           <span v-for="(char, i) in textChars" :key="i" class="splash-char" :style="{ animationDelay: `${1.2 + i * 0.08}s` }">{{ char }}</span>
