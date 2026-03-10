@@ -1,0 +1,11 @@
+{
+  "enableAppxNg": true,
+  "miniprogramRoot": ".",
+  "pluginRoot": "",
+  "compileType": "mini",
+  "axmlStrictCheck": true,
+  "enableNodeModuleBabelTransform": true,
+  "format": 2,
+  "enableParallelLoader": true,
+  "enableDistFileMinify": true
+}

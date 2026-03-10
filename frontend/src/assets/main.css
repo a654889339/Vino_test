@@ -1,0 +1,36 @@
+:root {
+  --vino-primary: #B91C1C;
+  --vino-primary-light: #DC2626;
+  --vino-dark: #111111;
+  --vino-bg: #F5F5F5;
+  --vino-card: #FFFFFF;
+  --vino-text: #333333;
+  --vino-text-secondary: #999999;
+  --vino-border: #EEEEEE;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  background-color: var(--vino-bg);
+  color: var(--vino-text);
+  -webkit-font-smoothing: antialiased;
+  max-width: 750px;
+  margin: 0 auto;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}

@@ -1,0 +1,24 @@
+<view class="page">
+  <view class="tabs">
+    <view
+      class="tab-item {{activeTab === index ? 'active' : ''}}"
+      a:for="{{tabs}}"
+      a:key="key"
+      data-index="{{index}}"
+      onTap="switchTab"
+    >
+      <text>{{item.name}}</text>
+    </view>
+  </view>
+
+  <view class="service-grid">
+    <view class="grid-item" a:for="{{currentServices}}" a:key="id">
+      <view class="grid-icon" style="background: {{item.bg}}">
+        <text class="grid-emoji">{{item.emoji}}</text>
+      </view>
+      <text class="grid-name">{{item.title}}</text>
+      <text class="grid-desc">{{item.desc}}</text>
+      <text class="grid-price">¥{{item.price}}起</text>
+    </view>
+  </view>
+</view>

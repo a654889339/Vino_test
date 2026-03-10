@@ -1,0 +1,75 @@
+.page {
+  min-height: 100vh;
+}
+
+.tabs {
+  display: flex;
+  background: #fff;
+  padding: 0 20rpx;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.tab-item {
+  flex: 1;
+  text-align: center;
+  padding: 24rpx 0;
+  font-size: 28rpx;
+  color: #666;
+  border-bottom: 4rpx solid transparent;
+}
+
+.tab-item.active {
+  color: #B91C1C;
+  font-weight: 600;
+  border-bottom-color: #B91C1C;
+}
+
+.service-grid {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 20rpx;
+  gap: 16rpx;
+}
+
+.grid-item {
+  width: calc(50% - 8rpx);
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+}
+
+.grid-icon {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16rpx;
+}
+
+.grid-emoji {
+  font-size: 44rpx;
+}
+
+.grid-name {
+  font-size: 30rpx;
+  font-weight: 500;
+  display: block;
+  margin-bottom: 6rpx;
+}
+
+.grid-desc {
+  font-size: 22rpx;
+  color: #999;
+  display: block;
+  margin-bottom: 12rpx;
+}
+
+.grid-price {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #B91C1C;
+}

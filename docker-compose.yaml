@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  vino-mysql:
+    image: mysql:8.0
+    container_name: vino-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: vino_secret_2024
+      MYSQL_DATABASE: vino_db
+      MYSQL_CHARSET: utf8mb4
+    ports:
+      - "3308:3306"
+    volumes:
+      - vino-mysql-data:/var/lib/mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  vino-backend:
+    build: ./backend
+    container_name: vino-backend
+    restart: always
+    ports:
+      - "5202:5202"
+    environment:
+      NODE_ENV: production
+      PORT: 5202
+      DB_HOST: vino-mysql
+      DB_PORT: 3306
+      DB_NAME: vino_db
+      DB_USER: root
+      DB_PASSWORD: vino_secret_2024
+      JWT_SECRET: vino_jwt_production_secret_2024
+    depends_on:
+      vino-mysql:
+        condition: service_healthy
+
+  vino-frontend:
+    build: ./frontend
+    container_name: vino-frontend
+    restart: always
+    ports:
+      - "5201:5201"
+    depends_on:
+      - vino-backend
+
+volumes:
+  vino-mysql-data:

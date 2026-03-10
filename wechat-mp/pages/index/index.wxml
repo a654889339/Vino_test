@@ -1,0 +1,57 @@
+<view class="page">
+  <!-- Banner -->
+  <swiper class="banner" autoplay circular indicator-dots indicator-color="rgba(255,255,255,0.5)" indicator-active-color="#fff">
+    <swiper-item wx:for="{{banners}}" wx:key="id">
+      <view class="banner-item" style="background: {{item.bg}}">
+        <view class="banner-text">
+          <text class="banner-title">{{item.title}}</text>
+          <text class="banner-desc">{{item.desc}}</text>
+        </view>
+      </view>
+    </swiper-item>
+  </swiper>
+
+  <!-- Nav Grid -->
+  <view class="nav-grid">
+    <view class="nav-item" wx:for="{{navItems}}" wx:key="title" bindtap="goService">
+      <view class="nav-icon" style="background: {{item.color}}">
+        <text class="nav-icon-text">{{item.emoji}}</text>
+      </view>
+      <text class="nav-label">{{item.title}}</text>
+    </view>
+  </view>
+
+  <!-- Hot Services -->
+  <view class="card">
+    <view class="section-header">
+      <text class="section-title">热门服务</text>
+      <text class="section-more" bindtap="goServiceList">查看全部 ›</text>
+    </view>
+    <scroll-view scroll-x class="service-scroll">
+      <view class="service-card" wx:for="{{hotServices}}" wx:key="id">
+        <view class="service-cover" style="background: {{item.bg}}">
+          <text class="service-icon-text">{{item.emoji}}</text>
+        </view>
+        <view class="service-info">
+          <text class="service-name">{{item.title}}</text>
+          <text class="service-desc">{{item.desc}}</text>
+          <text class="service-price">¥{{item.price}}</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- Recommend -->
+  <view class="card">
+    <text class="section-title">为你推荐</text>
+    <view class="recommend-grid">
+      <view class="recommend-item" wx:for="{{recommends}}" wx:key="id">
+        <view class="recommend-icon" style="background: {{item.bg}}">
+          <text class="recommend-emoji">{{item.emoji}}</text>
+        </view>
+        <text class="recommend-name">{{item.title}}</text>
+        <text class="recommend-desc">{{item.desc}}</text>
+      </view>
+    </view>
+  </view>
+</view>
