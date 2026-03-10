@@ -280,7 +280,7 @@ async function handleRegister(e) {
 function showDashboard(user) {
   currentUser = user;
   document.getElementById('authPage').style.display = 'none';
-  document.getElementById('dashboard').style.display = '';
+  document.getElementById('dashboard').style.display = 'block';
   document.getElementById('dashUsername').textContent = user.nickname || user.username;
   document.getElementById('infoUsername').textContent = user.username;
   document.getElementById('infoEmail').textContent = user.email || '-';
@@ -293,6 +293,9 @@ function showDashboard(user) {
   document.getElementById('frontendLink').textContent = 'http://' + host + ':5201';
   document.getElementById('healthLink').href = 'http://' + host + ':5202/api/health';
   document.getElementById('healthLink').textContent = 'http://' + host + ':5202/api/health';
+  const navItems = document.querySelectorAll('.dash-nav-item');
+  if (user.role !== 'admin' && navItems[1]) { navItems[1].style.display = 'none'; }
+  else if (navItems[1]) { navItems[1].style.display = ''; }
   loadOrderStats();
 }
 
@@ -305,21 +308,33 @@ function handleLogout() {
 }
 
 async function loadOrderStats() {
+  const isAdmin = currentUser && currentUser.role === 'admin';
   try {
-    const res = await api('/orders/admin/stats');
-    if (res.code === 0) {
-      const d = res.data;
-      document.getElementById('statTotal').textContent = d.total;
-      document.getElementById('statPending').textContent = d.pending;
-      document.getElementById('statCompleted').textContent = d.completed;
-      document.getElementById('orderStats').innerHTML = `
-        <div class="stat-card clickable" onclick="filterOrders('all')"><h3>全部订单</h3><div class="val">${d.total}</div></div>
-        <div class="stat-card clickable" onclick="filterOrders('pending')"><h3>待支付</h3><div class="val" style="color:#D97706">${d.pending}</div></div>
-        <div class="stat-card clickable" onclick="filterOrders('processing')"><h3>进行中</h3><div class="val" style="color:#2563EB">${d.processing}</div></div>
-        <div class="stat-card clickable" onclick="filterOrders('completed')"><h3>已完成</h3><div class="val" style="color:#059669">${d.completed}</div></div>
-        <div class="stat-card clickable" onclick="filterOrders('cancelled')"><h3>已取消</h3><div class="val" style="color:#6B7280">${d.cancelled}</div></div>`;
+    if (isAdmin) {
+      const res = await api('/orders/admin/stats');
+      if (res.code === 0) {
+        const d = res.data;
+        document.getElementById('statTotal').textContent = d.total;
+        document.getElementById('statPending').textContent = d.pending;
+        document.getElementById('statCompleted').textContent = d.completed;
+        document.getElementById('orderStats').innerHTML = `
+          <div class="stat-card clickable" onclick="filterOrders('all')"><h3>全部订单</h3><div class="val">${d.total}</div></div>
+          <div class="stat-card clickable" onclick="filterOrders('pending')"><h3>待支付</h3><div class="val" style="color:#D97706">${d.pending}</div></div>
+          <div class="stat-card clickable" onclick="filterOrders('processing')"><h3>进行中</h3><div class="val" style="color:#2563EB">${d.processing}</div></div>
+          <div class="stat-card clickable" onclick="filterOrders('completed')"><h3>已完成</h3><div class="val" style="color:#059669">${d.completed}</div></div>
+          <div class="stat-card clickable" onclick="filterOrders('cancelled')"><h3>已取消</h3><div class="val" style="color:#6B7280">${d.cancelled}</div></div>`;
+      }
+    } else {
+      document.getElementById('statTotal').textContent = '-';
+      document.getElementById('statPending').textContent = '-';
+      document.getElementById('statCompleted').textContent = '-';
+      document.getElementById('orderStats').innerHTML = '<div class="stat-card"><h3>权限提示</h3><div class="val" style="font-size:16px;color:var(--text-secondary)">需要管理员权限查看订单统计</div></div>';
     }
-  } catch {}
+  } catch {
+    document.getElementById('statTotal').textContent = '0';
+    document.getElementById('statPending').textContent = '0';
+    document.getElementById('statCompleted').textContent = '0';
+  }
 }
 
 function filterOrders(status) {
@@ -348,7 +363,7 @@ async function loadOrders() {
     const res = await api('/orders/admin/list?' + params);
     if (res.code === 0) {
       const { list, total, page, pageSize } = res.data;
-      if (!list.length) { tbody.innerHTML = ''; empty.style.display = ''; } 
+      if (!list.length) { tbody.innerHTML = ''; empty.style.display = 'block'; } 
       else {
         empty.style.display = 'none';
         tbody.innerHTML = list.map(o => `<tr>

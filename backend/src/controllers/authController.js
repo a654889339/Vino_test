@@ -56,6 +56,9 @@ exports.register = async (req, res) => {
       return res.status(400).json({ code: 400, message: verify.message });
     }
 
+    if (String(username).trim().toLowerCase() === 'admin') {
+      return res.status(400).json({ code: 400, message: '该用户名为系统保留，不可注册' });
+    }
     const existingUser = await User.findOne({ where: { username: String(username).trim() } });
     if (existingUser) {
       return res.status(400).json({ code: 400, message: '用户名已存在' });
