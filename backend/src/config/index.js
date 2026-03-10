@@ -14,4 +14,13 @@ module.exports = {
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || 'vino_secret_2024',
   },
+  email: {
+    enabled: process.env.EMAIL_ENABLED === 'true',
+    host: process.env.EMAIL_HOST || 'smtp.qq.com',
+    port: parseInt(process.env.EMAIL_PORT || '587'),
+    username: process.env.EMAIL_USERNAME || '',
+    password: process.env.EMAIL_PASSWORD || '',
+    from: process.env.EMAIL_FROM || '',
+    fromName: process.env.EMAIL_FROM_NAME || 'Vino服务',
+  },
 };

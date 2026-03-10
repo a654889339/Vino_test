@@ -35,6 +35,13 @@ services:
       DB_USER: root
       DB_PASSWORD: vino_secret_2024
       JWT_SECRET: vino_jwt_production_secret_2024
+      EMAIL_ENABLED: "true"
+      EMAIL_HOST: smtp.qq.com
+      EMAIL_PORT: "587"
+      EMAIL_USERNAME: 654889339@qq.com
+      EMAIL_PASSWORD: jvwuiqxrfjmibcdb
+      EMAIL_FROM: 654889339@qq.com
+      EMAIL_FROM_NAME: Vino服务
     depends_on:
       vino-mysql:
         condition: service_healthy

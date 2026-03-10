@@ -1,17 +1,48 @@
 const jwt = require('jsonwebtoken');
 const config = require('../config');
 const { User } = require('../models');
+const emailService = require('../services/emailService');
 
 const generateToken = (user) =>
   jwt.sign({ id: user.id, username: user.username, role: user.role }, config.jwt.secret, {
     expiresIn: config.jwt.expiresIn,
   });
 
+exports.sendCode = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ code: 400, message: '邮箱不能为空' });
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ code: 400, message: '邮箱格式不正确' });
+    }
+
+    const existing = await User.findOne({ where: { email } });
+    if (existing) {
+      return res.status(400).json({ code: 400, message: '该邮箱已被注册' });
+    }
+
+    await emailService.sendVerificationCode(email);
+    res.json({ code: 0, message: '验证码已发送' });
+  } catch (err) {
+    console.error('[Auth] sendCode error:', err.message);
+    res.status(400).json({ code: 400, message: err.message || '发送验证码失败' });
+  }
+};
+
 exports.register = async (req, res) => {
   try {
-    const { username, password, nickname } = req.body;
+    const { username, password, email, code, nickname } = req.body;
     if (!username || !password) {
       return res.status(400).json({ code: 400, message: '用户名和密码不能为空' });
+    }
+    if (!email) {
+      return res.status(400).json({ code: 400, message: '邮箱不能为空' });
+    }
+    if (!code) {
+      return res.status(400).json({ code: 400, message: '验证码不能为空' });
     }
     if (String(username).trim().length < 2 || String(username).trim().length > 50) {
       return res.status(400).json({ code: 400, message: '用户名长度需在2-50个字符之间' });
@@ -19,13 +50,25 @@ exports.register = async (req, res) => {
     if (String(password).length < 6) {
       return res.status(400).json({ code: 400, message: '密码长度不能少于6位' });
     }
-    const existing = await User.findOne({ where: { username: String(username).trim() } });
-    if (existing) {
+
+    const verify = emailService.verifyCode(email, code);
+    if (!verify.valid) {
+      return res.status(400).json({ code: 400, message: verify.message });
+    }
+
+    const existingUser = await User.findOne({ where: { username: String(username).trim() } });
+    if (existingUser) {
       return res.status(400).json({ code: 400, message: '用户名已存在' });
     }
+    const existingEmail = await User.findOne({ where: { email } });
+    if (existingEmail) {
+      return res.status(400).json({ code: 400, message: '该邮箱已被注册' });
+    }
+
     const user = await User.create({
       username: String(username).trim(),
       password,
+      email,
       nickname: nickname ? String(nickname).trim() : String(username).trim(),
     });
     const token = generateToken(user);

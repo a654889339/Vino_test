@@ -8,7 +8,7 @@ const syncDatabase = async () => {
   try {
     await sequelize.authenticate();
     console.log('[DB] Connection established successfully.');
-    await sequelize.sync({ alter: process.env.NODE_ENV === 'development' });
+    await sequelize.sync({ alter: true });
     console.log('[DB] All models synchronized.');
     return true;
   } catch (error) {
