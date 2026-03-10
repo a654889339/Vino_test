@@ -10,8 +10,43 @@
           placeholder="搜索服务"
           class="search"
         />
+        <div class="share-btn" @click="showShare = true">
+          <van-icon name="share-o" size="20" color="#fff" />
+        </div>
       </div>
     </div>
+
+    <!-- Share QR Popup -->
+    <van-overlay :show="showShare" @click="showShare = false">
+      <div class="share-popup" @click.stop>
+        <div class="share-card">
+          <div class="share-card-header">
+            <img
+              src="https://itsyourturnmy-1256887166.cos.ap-singapore.myqcloud.com/vino/splash-logo.svg"
+              alt="VINO"
+              class="share-logo"
+            />
+          </div>
+          <div class="share-qr">
+            <canvas ref="qrCanvas"></canvas>
+          </div>
+          <p class="share-hint">扫描二维码，打开 Vino 服务站</p>
+          <div class="share-url">{{ shareUrl }}</div>
+          <van-button
+            size="small"
+            round
+            plain
+            type="primary"
+            color="#B91C1C"
+            class="share-copy-btn"
+            @click="copyUrl"
+          >
+            复制链接
+          </van-button>
+        </div>
+        <van-icon name="close" size="28" color="rgba(255,255,255,0.6)" class="share-close" @click="showShare = false" />
+      </div>
+    </van-overlay>
 
     <!-- Banner Swiper -->
     <van-swipe :autoplay="4000" indicator-color="#B91C1C" class="banner">
@@ -90,9 +125,36 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, watch, nextTick } from 'vue';
+import QRCode from 'qrcode';
+import { showToast } from 'vant';
 
 const searchText = ref('');
+const showShare = ref(false);
+const qrCanvas = ref(null);
+const shareUrl = window.location.origin;
+
+watch(showShare, async (val) => {
+  if (val) {
+    await nextTick();
+    if (qrCanvas.value) {
+      QRCode.toCanvas(qrCanvas.value, shareUrl, {
+        width: 180,
+        margin: 2,
+        color: { dark: '#1a1a1a', light: '#ffffff' },
+      });
+    }
+  }
+});
+
+const copyUrl = async () => {
+  try {
+    await navigator.clipboard.writeText(shareUrl);
+    showToast('链接已复制');
+  } catch {
+    showToast('复制失败，请手动复制');
+  }
+};
 
 const banners = [
   { id: 1, title: 'Vino 品质服务', desc: '专业·高效·可信赖', bg: 'linear-gradient(135deg, #B91C1C, #7F1D1D)' },
@@ -325,5 +387,96 @@ const recommends = [
 
 .footer-space {
   height: 20px;
+}
+
+.share-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.share-btn:active {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.share-popup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 24px;
+}
+
+.share-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px 20px;
+  width: 280px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.share-card-header {
+  width: 160px;
+  height: 50px;
+  background: #000;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  padding: 8px 16px;
+}
+
+.share-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.share-qr {
+  padding: 12px;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+.share-qr canvas {
+  display: block;
+}
+
+.share-hint {
+  font-size: 14px;
+  color: var(--vino-text);
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+.share-url {
+  font-size: 11px;
+  color: var(--vino-text-secondary);
+  margin-bottom: 14px;
+  word-break: break-all;
+  text-align: center;
+}
+
+.share-copy-btn {
+  width: 120px;
+}
+
+.share-close {
+  margin-top: 20px;
+  cursor: pointer;
 }
 </style>
