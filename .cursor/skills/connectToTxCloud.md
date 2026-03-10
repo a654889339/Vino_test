@@ -58,7 +58,7 @@ git push origin main
 ssh ... ubuntu@106.54.50.88 "sudo git -C /root/Vino_test pull"
 
 # 3. Rebuild and restart containers
-ssh ... ubuntu@106.54.50.88 "sudo bash -c 'cd /root/Vino_test && docker-compose down && docker-compose up -d --build'"
+ssh ... ubuntu@106.54.50.88 "sudo bash -c 'cd /root/Vino_test && docker compose down && docker compose up -d --build'"
 ```
 
 ## GitHub Mirror Configuration
@@ -72,7 +72,7 @@ ssh ... ubuntu@106.54.50.88 "sudo bash -c 'cd /root/Vino_test && docker-compose 
 ssh ... ubuntu@106.54.50.88 "sudo docker ps --filter 'name=vino'"
 
 # Rebuild and restart (use docker-compose v1 on this server)
-ssh ... ubuntu@106.54.50.88 "sudo bash -c 'cd /root/Vino_test && docker-compose down && docker-compose up -d --build'"
+ssh ... ubuntu@106.54.50.88 "sudo bash -c 'cd /root/Vino_test && docker compose down && docker compose up -d --build'"
 
 # View logs
 ssh ... ubuntu@106.54.50.88 "sudo docker logs vino-backend"
@@ -91,7 +91,7 @@ ssh ... ubuntu@106.54.50.88 "curl -s http://localhost:5202/api/health"
 | **Vino_test** | **5201** | **5202** | **3308** |
 
 ## Important Notes
-1. Server uses `docker-compose` v1 (command: `docker-compose`, NOT `docker compose`)
+1. Server now has `docker compose` v2 (use `docker compose`, the old `docker-compose` v1 has compatibility issues)
 2. Server cannot access GitHub directly - git remote is configured to use `ghfast.top` mirror
 3. Always use `sudo` when accessing files in `/root/`
 4. SSH options are required for RSA key compatibility
