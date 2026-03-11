@@ -4,6 +4,7 @@ Page({
   data: {
     userInfo: null,
     isLoggedIn: false,
+    avatarInitial: 'V',
     stats: [
       { label: '待支付', value: 0 },
       { label: '进行中', value: 0 },
@@ -36,16 +37,20 @@ Page({
         .then(res => {
           const user = res.data || {};
           app.globalData.userInfo = user;
-          this.setData({ userInfo: user, isLoggedIn: true });
+          const initial = (user.nickname || user.username || 'V').charAt(0);
+          this.setData({ userInfo: user, isLoggedIn: true, avatarInitial: initial });
         })
         .catch(() => {
           app.clearToken();
           this.setData({ userInfo: null, isLoggedIn: false });
         });
     } else {
+      const user = app.globalData.userInfo || null;
+      const initial = user ? (user.nickname || user.username || 'V').charAt(0) : 'V';
       this.setData({
-        userInfo: app.globalData.userInfo || null,
+        userInfo: user,
         isLoggedIn,
+        avatarInitial: initial,
       });
     }
   },

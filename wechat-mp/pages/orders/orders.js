@@ -52,6 +52,7 @@ Page({
           ...o,
           statusText: (statusMap[o.status] || {}).text || o.status,
           statusType: (statusMap[o.status] || {}).type || 'default',
+          timeText: this.formatTime(o.createdAt),
         }));
         this.setData({ orders: data, loading: false });
       })
