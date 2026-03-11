@@ -45,29 +45,12 @@
         </div>
       </div>
 
-      <!-- Tags -->
-      <div v-if="tags.length" class="section-card">
-        <h3 class="section-title">服务项目</h3>
-        <div class="tag-list">
-          <van-tag v-for="t in tags" :key="t" size="large" round color="var(--vino-primary-light, #FEE2E2)" text-color="var(--vino-primary, #B91C1C)" style="margin:4px">{{ t }}</van-tag>
-        </div>
-      </div>
-
-      <!-- Electronic Manual -->
-      <div v-if="helpItems.length" class="section-card">
+      <!-- Electronic Manual & Maintenance Tips -->
+      <div v-if="helpItems.length || sections.length" class="section-card">
         <van-cell-group inset :border="false">
-          <van-cell title="电子说明书" icon="description" is-link @click="$router.push(`/guide/${guide.id}/manual`)" />
+          <van-cell v-if="helpItems.length" title="电子说明书" icon="description" is-link @click="$router.push(`/guide/${guide.id}/manual`)" />
+          <van-cell v-if="sections.length" title="常见问题与保养建议" icon="info-o" is-link @click="$router.push(`/guide/${guide.id}/maintenance`)" />
         </van-cell-group>
-      </div>
-
-      <!-- Sections (maintenance tips) -->
-      <div v-if="sections.length" class="section-card">
-        <div v-for="(sec, i) in sections" :key="i" class="tip-block">
-          <h3 class="section-title"><van-icon :name="sec.icon || 'info-o'" style="margin-right:6px" />{{ sec.title }}</h3>
-          <ul class="tip-list">
-            <li v-for="(tip, j) in sec.tips" :key="j">{{ tip }}</li>
-          </ul>
-        </div>
       </div>
 
       <!-- Service Entry -->
@@ -118,10 +101,6 @@ const guide = ref({});
 const playShowcase = ref(false);
 const currentVideoUrl = ref('');
 
-const tags = computed(() => {
-  const t = guide.value.tags;
-  return Array.isArray(t) ? t : [];
-});
 const sections = computed(() => {
   const s = guide.value.sections;
   return Array.isArray(s) ? s : [];
@@ -228,13 +207,6 @@ onMounted(async () => {
 .media-play { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 36px; height: 36px; background: rgba(0,0,0,0.5); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 .media-label { font-size: 12px; color: #333; margin-top: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.tag-list { display: flex; flex-wrap: wrap; }
-
-.tip-block { margin-bottom: 16px; }
-.tip-block:last-child { margin-bottom: 0; }
-.tip-list { list-style: none; padding: 0; margin: 0; }
-.tip-list li { font-size: 13px; color: #666; line-height: 2; padding-left: 16px; position: relative; }
-.tip-list li::before { content: ''; position: absolute; left: 4px; top: 50%; transform: translateY(-50%); width: 5px; height: 5px; border-radius: 50%; background: #B91C1C; }
 
 .service-entry-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 .entry-item { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; }

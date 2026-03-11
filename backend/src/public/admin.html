@@ -282,8 +282,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
             <div class="form-group"><label>排序</label><input class="form-input" id="gSort" type="number" value="0" /></div>
           </div>
           <div class="form-group"><label>渐变色</label><input class="form-input" id="gGradient" placeholder="linear-gradient(135deg, #3B82F6, #1D4ED8)" /></div>
-          <div class="form-group"><label>标签 (逗号分隔)</label><input class="form-input" id="gTags" placeholder="制冷维修,清洗保养" /></div>
-
           <h4 style="margin:20px 0 12px;color:var(--primary)">展示媒体</h4>
           <div class="form-group">
             <label>展示大图 <span style="font-weight:normal;color:#999;font-size:12px">（前端页面顶部横幅图片，建议 750×400 以上）</span></label>
@@ -955,7 +953,6 @@ function openGuideEditor(guide) {
   document.getElementById('gBadge').value = guide ? (guide.badge||'') : '';
   document.getElementById('gSort').value = guide ? guide.sortOrder : 0;
   document.getElementById('gGradient').value = guide ? guide.gradient : 'linear-gradient(135deg, #3B82F6, #1D4ED8)';
-  document.getElementById('gTags').value = (parseJSON(guide&&guide.tags)).join(',');
   document.getElementById('gSections').value = JSON.stringify(parseJSON(guide&&guide.sections), null, 2);
   document.getElementById('gStatus').value = guide ? guide.status : 'active';
   document.getElementById('gCoverImage').value = guide ? (guide.coverImage||'') : '';
@@ -978,7 +975,6 @@ function editGuide(id) {
 
 async function saveGuide() {
   const id = document.getElementById('guideEditId').value;
-  const tagsStr = document.getElementById('gTags').value.trim();
   let sections = [];
   try { sections = JSON.parse(document.getElementById('gSections').value || '[]'); } catch { alert('维护说明段落JSON格式错误'); return; }
   const videosNoThumb = guideMediaItems.filter(m => m.type === 'video' && !isImageFile(m.thumb));
@@ -995,7 +991,6 @@ async function saveGuide() {
     badge: document.getElementById('gBadge').value,
     sortOrder: parseInt(document.getElementById('gSort').value) || 0,
     gradient: document.getElementById('gGradient').value,
-    tags: tagsStr ? tagsStr.split(',').map(s => s.trim()).filter(Boolean) : [],
     sections,
     status: document.getElementById('gStatus').value,
     coverImage: document.getElementById('gCoverImage').value,

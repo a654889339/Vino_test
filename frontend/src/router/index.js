@@ -27,6 +27,11 @@ const routes = [
     component: () => import('@/views/ManualPage.vue'),
   },
   {
+    path: '/guide/:id/maintenance',
+    name: 'MaintenancePage',
+    component: () => import('@/views/MaintenancePage.vue'),
+  },
+  {
     path: '/orders',
     name: 'Orders',
     component: () => import('@/views/Orders.vue'),
