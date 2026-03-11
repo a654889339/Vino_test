@@ -23,7 +23,10 @@
                 {{ msg.sender === 'admin' ? '客' : (userInitial || '我') }}
               </div>
               <div class="chat-bubble-wrap">
-                <div :class="['chat-bubble', msg.sender === 'admin' ? 'bubble-admin' : 'bubble-user']">{{ msg.content }}</div>
+                <div v-if="msg.type === 'image'" :class="['chat-bubble', 'bubble-img', msg.sender === 'admin' ? 'bubble-admin' : 'bubble-user']">
+                  <img :src="msg.content" class="chat-img" @click="previewImage(msg.content)" />
+                </div>
+                <div v-else :class="['chat-bubble', msg.sender === 'admin' ? 'bubble-admin' : 'bubble-user']">{{ msg.content }}</div>
                 <div class="chat-time">{{ formatTime(msg.createdAt) }}</div>
               </div>
             </div>
@@ -32,6 +35,10 @@
 
         <div class="chat-footer">
           <div class="chat-input-wrap">
+            <button class="chat-img-btn" @click="triggerImagePick" :disabled="sending || !isLoggedIn" title="发送图片">
+              <van-icon name="photo-o" size="22" color="#666" />
+            </button>
+            <input type="file" ref="fileInput" accept="image/*" style="display:none" @change="onImageSelected" />
             <input
               v-model="inputText"
               class="chat-input"
@@ -64,7 +71,7 @@
  */
 import { ref, computed, nextTick, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
-import { showToast } from 'vant';
+import { showToast, showImagePreview } from 'vant';
 import { messageApi } from '@/api';
 import { useUserStore } from '@/stores/user';
 
@@ -77,6 +84,7 @@ const loading = ref(false);
 const sending = ref(false);
 const unreadCount = ref(0);
 const chatBody = ref(null);
+const fileInput = ref(null);
 
 const isLoggedIn = computed(() => !!userStore.token);
 // 用户昵称首字，用于聊天头像显示
@@ -187,6 +195,36 @@ const toggleChat = () => {
 const openWithAutoMessage = (msg) => {
   pendingAutoMsg = msg || '';
   showChat.value = true;
+};
+
+const previewImage = (url) => {
+  showImagePreview({ images: [url], closeable: true });
+};
+
+const triggerImagePick = () => {
+  if (fileInput.value) fileInput.value.click();
+};
+
+const onImageSelected = async (e) => {
+  const file = e.target.files?.[0];
+  if (!file || !isLoggedIn.value) return;
+  if (fileInput.value) fileInput.value.value = '';
+  sending.value = true;
+  try {
+    const uploadRes = await messageApi.uploadImage(file);
+    if (uploadRes.code === 0 && uploadRes.data?.url) {
+      const sendRes = await messageApi.send({ content: uploadRes.data.url, type: 'image' });
+      if (sendRes.code === 0) {
+        messages.value.push(sendRes.data);
+        scrollToBottom();
+      }
+    } else {
+      showToast('图片上传失败');
+    }
+  } catch {
+    showToast('图片上传失败');
+  }
+  sending.value = false;
 };
 
 defineExpose({ openWithAutoMessage });
@@ -321,8 +359,36 @@ onBeforeUnmount(() => {
 }
 .chat-msg-right .chat-time { text-align: right; }
 
+.chat-img {
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: block;
+}
+.bubble-img {
+  padding: 4px !important;
+  background: transparent !important;
+  border: none !important;
+}
+
 .chat-footer { padding: 12px 16px; border-top: 1px solid #f0f0f0; background: #fff; }
-.chat-input-wrap { display: flex; gap: 8px; }
+.chat-input-wrap { display: flex; gap: 8px; align-items: center; }
+.chat-img-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid #e5e5e5;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+.chat-img-btn:active { background: #f5f5f5; }
+.chat-img-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .chat-input {
   flex: 1;
   border: 1px solid #e5e5e5;

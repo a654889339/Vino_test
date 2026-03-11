@@ -27,16 +27,36 @@ exports.myMessages = async (req, res) => {
  */
 exports.send = async (req, res) => {
   try {
-    const { content } = req.body;
+    const { content, type } = req.body;
     if (!content || !content.trim()) return res.status(400).json({ code: 1, message: '消息不能为空' });
     const msg = await Message.create({
       userId: req.user.id,
       sender: 'user',
       content: content.trim(),
+      type: type === 'image' ? 'image' : 'text',
     });
     res.json({ code: 0, data: msg });
   } catch (e) {
     res.status(500).json({ code: 1, message: e.message });
+  }
+};
+
+/**
+ * 用户上传聊天图片到 COS，返回图片 URL
+ */
+exports.uploadImage = async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ code: 1, message: '请选择图片' });
+    const cosUpload = require('../utils/cosUpload');
+    const crypto = require('crypto');
+    const path = require('path');
+    const ext = path.extname(req.file.originalname) || '.png';
+    const filename = `chat_${Date.now()}_${crypto.randomBytes(4).toString('hex')}${ext}`;
+    const url = await cosUpload.upload(req.file.buffer, filename, req.file.mimetype);
+    res.json({ code: 0, data: { url } });
+  } catch (e) {
+    console.error('[Message] uploadImage error:', e.message);
+    res.status(500).json({ code: 1, message: '上传失败' });
   }
 };
 
@@ -67,7 +87,7 @@ exports.adminConversations = async (req, res) => {
       include: [{
         model: Message,
         as: 'messages',
-        attributes: ['id', 'content', 'sender', 'read', 'createdAt'],
+        attributes: ['id', 'content', 'sender', 'read', 'type', 'createdAt'],
         order: [['createdAt', 'DESC']],
         limit: 1,
       }],
@@ -85,6 +105,7 @@ exports.adminConversations = async (req, res) => {
           lastMessage: last.content,
           lastTime: last.createdAt,
           lastSender: last.sender,
+          lastType: last.type || 'text',
         };
       })
       .sort((a, b) => new Date(b.lastTime) - new Date(a.lastTime));
@@ -132,12 +153,13 @@ exports.adminGetMessages = async (req, res) => {
 exports.adminReply = async (req, res) => {
   try {
     const { userId } = req.params;
-    const { content } = req.body;
+    const { content, type } = req.body;
     if (!content || !content.trim()) return res.status(400).json({ code: 1, message: '消息不能为空' });
     const msg = await Message.create({
       userId: parseInt(userId),
       sender: 'admin',
       content: content.trim(),
+      type: type === 'image' ? 'image' : 'text',
     });
     res.json({ code: 0, data: msg });
   } catch (e) {

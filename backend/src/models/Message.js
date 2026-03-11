@@ -21,6 +21,11 @@ const Message = sequelize.define('Message', {
     type: DataTypes.TEXT,
     allowNull: false,
   },
+  // 'text' = 普通文本, 'image' = 图片消息（content 存图片 URL）
+  type: {
+    type: DataTypes.STRING(10),
+    defaultValue: 'text',
+  },
   // 已读标记：用户查看时标记 admin 消息已读，管理员查看时标记 user 消息已读
   read: {
     type: DataTypes.BOOLEAN,

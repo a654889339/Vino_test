@@ -107,6 +107,62 @@ Page({
     this.setData({ inputText: e.detail.value });
   },
 
+  previewImage(e) {
+    const url = e.currentTarget.dataset.url;
+    if (url) wx.previewImage({ current: url, urls: [url] });
+  },
+
+  chooseImage() {
+    if (!this.data.isLoggedIn) {
+      wx.showToast({ title: '请先登录', icon: 'none' });
+      return;
+    }
+    wx.chooseMedia({
+      count: 1,
+      mediaType: ['image'],
+      sourceType: ['album', 'camera'],
+      success: (res) => {
+        const file = res.tempFiles[0];
+        if (!file) return;
+        wx.showLoading({ title: '发送中...' });
+        wx.uploadFile({
+          url: app.globalData.baseUrl + '/messages/upload-image',
+          filePath: file.tempFilePath,
+          name: 'image',
+          header: { Authorization: 'Bearer ' + (wx.getStorageSync('token') || '') },
+          success: (uploadRes) => {
+            try {
+              const data = JSON.parse(uploadRes.data);
+              if (data.code === 0 && data.data && data.data.url) {
+                app.request({
+                  method: 'POST',
+                  url: '/messages/send',
+                  data: { content: data.data.url, type: 'image' },
+                }).then(sendRes => {
+                  if (sendRes.code === 0 && sendRes.data) {
+                    const msg = { ...sendRes.data, timeStr: this.formatTime(sendRes.data.createdAt) };
+                    this.setData({ messages: this.data.messages.concat([msg]) });
+                    this.scrollBottom();
+                  }
+                });
+              } else {
+                wx.showToast({ title: '发送失败', icon: 'none' });
+              }
+            } catch {
+              wx.showToast({ title: '发送失败', icon: 'none' });
+            }
+          },
+          fail: () => {
+            wx.showToast({ title: '上传失败', icon: 'none' });
+          },
+          complete: () => {
+            wx.hideLoading();
+          },
+        });
+      },
+    });
+  },
+
   sendMessage() {
     const content = (this.data.inputText || '').trim();
     if (!content || !this.data.isLoggedIn) return;

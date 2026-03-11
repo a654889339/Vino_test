@@ -107,6 +107,62 @@ Page({
     this.setData({ inputText: e.detail.value });
   },
 
+  previewImage(e) {
+    const url = e.currentTarget.dataset.url;
+    if (url) my.previewImage({ current: 0, urls: [url] });
+  },
+
+  chooseImage() {
+    if (!this.data.isLoggedIn) {
+      my.showToast({ content: '请先登录', type: 'none' });
+      return;
+    }
+    my.chooseImage({
+      count: 1,
+      sourceType: ['camera', 'album'],
+      success: (res) => {
+        const filePath = res.apFilePaths && res.apFilePaths[0];
+        if (!filePath) return;
+        my.showLoading({ content: '发送中...' });
+        my.uploadFile({
+          url: app.globalData.baseUrl + '/messages/upload-image',
+          fileType: 'image',
+          fileName: 'image',
+          filePath,
+          header: { Authorization: 'Bearer ' + (my.getStorageSync({ key: 'token' }).data || '') },
+          success: (uploadRes) => {
+            try {
+              const data = JSON.parse(uploadRes.data);
+              if (data.code === 0 && data.data && data.data.url) {
+                app.request({
+                  method: 'POST',
+                  url: '/messages/send',
+                  data: { content: data.data.url, type: 'image' },
+                }).then(sendRes => {
+                  if (sendRes.code === 0 && sendRes.data) {
+                    const msg = { ...sendRes.data, timeStr: this.formatTime(sendRes.data.createdAt) };
+                    this.setData({ messages: this.data.messages.concat([msg]) });
+                    this.scrollBottom();
+                  }
+                });
+              } else {
+                my.showToast({ content: '发送失败', type: 'none' });
+              }
+            } catch {
+              my.showToast({ content: '发送失败', type: 'none' });
+            }
+          },
+          fail: () => {
+            my.showToast({ content: '上传失败', type: 'none' });
+          },
+          complete: () => {
+            my.hideLoading();
+          },
+        });
+      },
+    });
+  },
+
   sendMessage() {
     const content = (this.data.inputText || '').trim();
     if (!content || !this.data.isLoggedIn) return;

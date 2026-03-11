@@ -95,6 +95,17 @@
   text-align: right;
 }
 
+.chat-img {
+  max-width: 360rpx;
+  border-radius: 12rpx;
+}
+
+.bubble-img {
+  padding: 8rpx !important;
+  background: transparent !important;
+  border: none !important;
+}
+
 .chat-input-bar {
   display: flex;
   align-items: center;
@@ -103,6 +114,16 @@
   background: #fff;
   border-top: 1rpx solid #f0f0f0;
   gap: 16rpx;
+}
+
+.chat-img-btn {
+  width: 64rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+  flex-shrink: 0;
 }
 
 .chat-input {

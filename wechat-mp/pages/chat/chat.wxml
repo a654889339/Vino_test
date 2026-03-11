@@ -17,7 +17,10 @@
         <text>{{item.sender === 'user' ? userInitial : '客'}}</text>
       </view>
       <view class="msg-bubble-wrap">
-        <view class="msg-bubble {{item.sender === 'user' ? 'bubble-user' : 'bubble-admin'}}">
+        <view wx:if="{{item.type === 'image'}}" class="msg-bubble bubble-img">
+          <image src="{{item.content}}" class="chat-img" mode="widthFix" bindtap="previewImage" data-url="{{item.content}}" />
+        </view>
+        <view wx:else class="msg-bubble {{item.sender === 'user' ? 'bubble-user' : 'bubble-admin'}}">
           <text>{{item.content}}</text>
         </view>
         <text class="msg-time">{{item.timeStr}}</text>
@@ -27,6 +30,7 @@
   </scroll-view>
 
   <view class="chat-input-bar">
+    <view class="chat-img-btn" bindtap="chooseImage">📷</view>
     <input
       class="chat-input"
       placeholder="{{isLoggedIn ? '输入消息...' : '请先登录后发送消息'}}"
