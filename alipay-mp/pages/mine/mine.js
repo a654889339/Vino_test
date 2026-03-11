@@ -19,7 +19,7 @@ Page({
       { title: '优惠券', emoji: '🎫', url: '' },
       { title: '帮助中心', emoji: '❓', url: '' },
       { title: '意见反馈', emoji: '💬', url: '' },
-      { title: '关于Vino', emoji: 'ℹ️', url: '' },
+      { title: '关于Vino', emoji: 'ℹ️', url: '', webUrl: 'https://www.samyou.cn/' },
     ],
   },
 
@@ -118,9 +118,12 @@ Page({
   },
 
   onMenuTap(e) {
-    const url = e.currentTarget.dataset.url;
-    if (url) {
-      my.switchTab({ url });
+    const idx = parseInt(e.currentTarget.dataset.index, 10);
+    const item = this.data.menus[idx] || {};
+    if (item.webUrl) {
+      my.navigateTo({ url: '/pages/webview/webview?url=' + encodeURIComponent(item.webUrl) });
+    } else if (item.url) {
+      my.switchTab({ url: item.url });
     } else {
       my.showToast({ content: '功能开发中', type: 'none' });
     }

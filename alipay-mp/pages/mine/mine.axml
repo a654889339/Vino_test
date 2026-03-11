@@ -34,7 +34,7 @@
       class="menu-item"
       a:for="{{menus}}"
       a:key="title"
-      data-url="{{item.url}}"
+      data-index="{{index}}"
       onTap="onMenuTap"
     >
       <text class="menu-emoji">{{item.emoji}}</text>

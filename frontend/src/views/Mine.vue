@@ -31,7 +31,7 @@
     <van-cell-group inset class="menu-group">
       <van-cell title="帮助中心" icon="question-o" is-link />
       <van-cell title="意见反馈" icon="comment-o" is-link @click="openFeedback" />
-      <van-cell title="关于Vino" icon="info-o" is-link />
+      <van-cell title="关于Vino" icon="info-o" is-link @click="openAbout" />
     </van-cell-group>
 
     <div class="logout-area" v-if="userStore.isLoggedIn">
@@ -55,6 +55,10 @@ const openFeedback = () => {
   if (chatWidgetRef.value) {
     chatWidgetRef.value.openWithAutoMessage('');
   }
+};
+
+const openAbout = () => {
+  window.open('https://www.samyou.cn/', '_blank');
 };
 
 const stats = [

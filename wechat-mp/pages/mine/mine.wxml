@@ -36,7 +36,7 @@
       class="menu-item"
       wx:for="{{menus}}"
       wx:key="title"
-      data-url="{{item.url}}"
+      data-index="{{index}}"
       bindtap="onMenuTap"
     >
       <text class="menu-emoji">{{item.emoji}}</text>
