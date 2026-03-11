@@ -37,9 +37,7 @@ Page({
         if (list.length) {
           this.setData({ deviceGuides: list.map(g => ({
             id: g.id, name: g.name, model: g.subtitle || '', emoji: g.emoji || '',
-            gradient: g.gradient || '', badge: g.badge || '',
-            tags: typeof g.tags === 'string' ? JSON.parse(g.tags || '[]') : (g.tags || []),
-            sections: typeof g.sections === 'string' ? JSON.parse(g.sections || '[]') : (g.sections || []),
+            gradient: g.gradient || '', badge: g.badge || '', iconUrl: g.iconUrl || '',
           }))});
         }
       })

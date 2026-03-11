@@ -5,8 +5,9 @@
     </view>
     <scroll-view scroll-x class="guide-scroll">
       <view class="guide-card" a:for="{{deviceGuides}}" a:key="id" onTap="showGuide" data-index="{{index}}">
-        <view class="guide-icon" style="background: {{item.gradient}}">
-          <text class="guide-emoji">{{item.emoji}}</text>
+        <view class="guide-icon" style="background: {{item.iconUrl ? '#fff' : item.gradient}}">
+          <image a:if="{{item.iconUrl}}" src="{{item.iconUrl}}" class="guide-icon-img" mode="aspectFit" />
+          <text a:else class="guide-emoji">{{item.emoji}}</text>
           <text class="guide-badge" a:if="{{item.badge}}">{{item.badge}}</text>
         </view>
         <text class="guide-name">{{item.name}}</text>

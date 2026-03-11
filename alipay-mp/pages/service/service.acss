@@ -113,6 +113,12 @@
   position: relative;
 }
 
+.guide-icon-img {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 12rpx;
+}
+
 .guide-emoji {
   font-size: 44rpx;
 }
