@@ -24,6 +24,10 @@ export const guideApi = {
   detail: (id) => request.get(`/guides/${id}`),
 };
 
+export const homeConfigApi = {
+  list: () => request.get('/home-config'),
+};
+
 export const addressApi = {
   list: () => request.get('/addresses'),
   create: (data) => request.post('/addresses', data),

@@ -5,6 +5,7 @@ const Order = require('./Order');
 const OrderLog = require('./OrderLog');
 const Address = require('./Address');
 const DeviceGuide = require('./DeviceGuide');
+const HomeConfig = require('./HomeConfig');
 
 User.hasMany(Order, { foreignKey: 'userId', as: 'orders' });
 Order.belongsTo(User, { foreignKey: 'userId', as: 'user' });
@@ -13,7 +14,7 @@ OrderLog.belongsTo(Order, { foreignKey: 'orderId', as: 'order' });
 User.hasMany(Address, { foreignKey: 'userId', as: 'addresses' });
 Address.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
-const models = { User, Service, Order, OrderLog, Address, DeviceGuide };
+const models = { User, Service, Order, OrderLog, Address, DeviceGuide, HomeConfig };
 
 const ADMIN_PASSWORD = 'Vino@2024admin';
 
@@ -63,6 +64,33 @@ const syncDatabase = async () => {
         await DeviceGuide.create({ ...seedGuides[i], tags: tagsData[i], sections: sectionsData[i] });
       }
       console.log('[DB] Default device guides created.');
+    }
+
+    const hcCount = await HomeConfig.count();
+    if (hcCount === 0) {
+      const seed = [
+        { section:'banner', title:'Vino 品质服务', desc:'专业·高效·可信赖', color:'linear-gradient(135deg, #B91C1C, #7F1D1D)', sortOrder:1 },
+        { section:'banner', title:'新用户专享', desc:'首单立减 20 元', color:'linear-gradient(135deg, #1E40AF, #1E3A5F)', sortOrder:2 },
+        { section:'banner', title:'企业解决方案', desc:'定制化一站式服务', color:'linear-gradient(135deg, #065F46, #064E3B)', sortOrder:3 },
+        { section:'nav', title:'全部服务', icon:'apps-o', path:'/services', color:'#B91C1C', sortOrder:1 },
+        { section:'nav', title:'预约', icon:'calendar-o', path:'/services', color:'#D97706', sortOrder:2 },
+        { section:'nav', title:'维修', icon:'setting-o', path:'/services', color:'#2563EB', sortOrder:3 },
+        { section:'nav', title:'咨询', icon:'chat-o', path:'/services', color:'#7C3AED', sortOrder:4 },
+        { section:'nav', title:'安装', icon:'logistics', path:'/services', color:'#059669', sortOrder:5 },
+        { section:'nav', title:'保养', icon:'shield-o', path:'/services', color:'#DC2626', sortOrder:6 },
+        { section:'nav', title:'检测', icon:'scan', path:'/services', color:'#EA580C', sortOrder:7 },
+        { section:'nav', title:'更多', icon:'more-o', path:'/services', color:'#6B7280', sortOrder:8 },
+        { section:'hotService', title:'设备维修', desc:'专业工程师上门服务', price:'99', icon:'setting-o', color:'linear-gradient(135deg, #B91C1C, #991B1B)', path:'/service/1', sortOrder:1 },
+        { section:'hotService', title:'深度清洁', desc:'全方位清洁保养', price:'149', icon:'brush-o', color:'linear-gradient(135deg, #2563EB, #1D4ED8)', path:'/service/2', sortOrder:2 },
+        { section:'hotService', title:'系统检测', desc:'全面检测评估', price:'49', icon:'scan', color:'linear-gradient(135deg, #059669, #047857)', path:'/service/3', sortOrder:3 },
+        { section:'hotService', title:'数据恢复', desc:'专业数据找回', price:'199', icon:'replay', color:'linear-gradient(135deg, #7C3AED, #6D28D9)', path:'/service/4', sortOrder:4 },
+        { section:'recommend', title:'会员权益', desc:'专属折扣', icon:'vip-card-o', color:'linear-gradient(135deg, #F59E0B, #D97706)', sortOrder:1 },
+        { section:'recommend', title:'服务保障', desc:'无忧售后', icon:'shield-o', color:'linear-gradient(135deg, #10B981, #059669)', sortOrder:2 },
+        { section:'recommend', title:'积分商城', desc:'好礼兑换', icon:'gift-o', color:'linear-gradient(135deg, #EC4899, #DB2777)', sortOrder:3 },
+        { section:'recommend', title:'邀请有礼', desc:'分享得佣金', icon:'friends-o', color:'linear-gradient(135deg, #6366F1, #4F46E5)', sortOrder:4 },
+      ];
+      await HomeConfig.bulkCreate(seed);
+      console.log('[DB] Default home configs created.');
     }
 
     return true;

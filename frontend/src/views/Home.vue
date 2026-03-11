@@ -101,7 +101,7 @@
           v-for="item in hotServices"
           :key="item.id"
           class="service-card"
-          @click="$router.push(`/service/${item.id}`)"
+          @click="$router.push(item.path)"
         >
           <div class="service-cover" :style="{ background: item.coverBg }">
             <van-icon :name="item.icon" size="40" color="#fff" />
@@ -140,14 +140,36 @@
 </template>
 
 <script setup>
-import { ref, watch, nextTick } from 'vue';
+import { ref, watch, nextTick, onMounted, computed } from 'vue';
 import QRCode from 'qrcode';
 import { showToast } from 'vant';
+import { homeConfigApi } from '@/api';
 
 const searchText = ref('');
 const showShare = ref(false);
 const qrCanvas = ref(null);
 const shareUrl = window.location.origin;
+const allItems = ref([]);
+
+onMounted(async () => {
+  try {
+    const res = await homeConfigApi.list();
+    allItems.value = res.data || [];
+  } catch { /* use empty */ }
+});
+
+const banners = computed(() =>
+  allItems.value.filter(i => i.section === 'banner').map(i => ({ id: i.id, title: i.title, desc: i.desc, bg: i.color }))
+);
+const navItems = computed(() =>
+  allItems.value.filter(i => i.section === 'nav').map(i => ({ title: i.title, icon: i.icon, path: i.path || '/services', color: i.color }))
+);
+const hotServices = computed(() =>
+  allItems.value.filter(i => i.section === 'hotService').map(i => ({ id: i.id, title: i.title, desc: i.desc, price: i.price, icon: i.icon, coverBg: i.color, path: i.path || '/services' }))
+);
+const recommends = computed(() =>
+  allItems.value.filter(i => i.section === 'recommend').map(i => ({ id: i.id, title: i.title, desc: i.desc, icon: i.icon, bg: i.color }))
+);
 
 watch(showShare, async (val) => {
   if (val) {
@@ -170,37 +192,6 @@ const copyUrl = async () => {
     showToast('复制失败，请手动复制');
   }
 };
-
-const banners = [
-  { id: 1, title: 'Vino 品质服务', desc: '专业·高效·可信赖', bg: 'linear-gradient(135deg, #B91C1C, #7F1D1D)' },
-  { id: 2, title: '新用户专享', desc: '首单立减 20 元', bg: 'linear-gradient(135deg, #1E40AF, #1E3A5F)' },
-  { id: 3, title: '企业解决方案', desc: '定制化一站式服务', bg: 'linear-gradient(135deg, #065F46, #064E3B)' },
-];
-
-const navItems = [
-  { title: '全部服务', icon: 'apps-o', path: '/services', color: '#B91C1C' },
-  { title: '预约', icon: 'calendar-o', path: '/services', color: '#D97706' },
-  { title: '维修', icon: 'setting-o', path: '/services', color: '#2563EB' },
-  { title: '咨询', icon: 'chat-o', path: '/services', color: '#7C3AED' },
-  { title: '安装', icon: 'logistics', path: '/services', color: '#059669' },
-  { title: '保养', icon: 'shield-o', path: '/services', color: '#DC2626' },
-  { title: '检测', icon: 'scan', path: '/services', color: '#EA580C' },
-  { title: '更多', icon: 'more-o', path: '/services', color: '#6B7280' },
-];
-
-const hotServices = [
-  { id: 1, title: '设备维修', desc: '专业工程师上门服务', price: '99', icon: 'setting-o', coverBg: 'linear-gradient(135deg, #B91C1C, #991B1B)' },
-  { id: 2, title: '深度清洁', desc: '全方位清洁保养', price: '149', icon: 'brush-o', coverBg: 'linear-gradient(135deg, #2563EB, #1D4ED8)' },
-  { id: 3, title: '系统检测', desc: '全面检测评估', price: '49', icon: 'scan', coverBg: 'linear-gradient(135deg, #059669, #047857)' },
-  { id: 4, title: '数据恢复', desc: '专业数据找回', price: '199', icon: 'replay', coverBg: 'linear-gradient(135deg, #7C3AED, #6D28D9)' },
-];
-
-const recommends = [
-  { id: 1, title: '会员权益', desc: '专属折扣', icon: 'vip-card-o', bg: 'linear-gradient(135deg, #F59E0B, #D97706)' },
-  { id: 2, title: '服务保障', desc: '无忧售后', icon: 'shield-o', bg: 'linear-gradient(135deg, #10B981, #059669)' },
-  { id: 3, title: '积分商城', desc: '好礼兑换', icon: 'gift-o', bg: 'linear-gradient(135deg, #EC4899, #DB2777)' },
-  { id: 4, title: '邀请有礼', desc: '分享得佣金', icon: 'friends-o', bg: 'linear-gradient(135deg, #6366F1, #4F46E5)' },
-];
 </script>
 
 <style scoped>
