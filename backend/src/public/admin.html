@@ -788,28 +788,35 @@ async function loadGuides() {
 let guideMediaItems = [];
 let guideHelpItems = [];
 
+function isImageFile(url) { return url && /\.(jpg|jpeg|png|gif|webp|svg|bmp)/i.test(url); }
+
 function renderMediaItems() {
   const c = document.getElementById('mediaItemsList');
   c.innerHTML = guideMediaItems.map((m,i) => {
-    const typeLabel = m.type === 'video' ? '🎬 视频' : '🖼️ 图片';
-    const typeBg = m.type === 'video' ? '#EDE9FE' : '#DBEAFE';
-    const thumbPreview = (m.thumb && /\.(jpg|jpeg|png|gif|webp|svg)/i.test(m.thumb)) ? `<img src="${m.thumb}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;border:1px solid #eee" />` : '';
-    return `<div style="border:1px solid #e5e5e5;border-radius:8px;padding:12px;margin-bottom:8px;position:relative">
+    const isVid = m.type === 'video';
+    const typeLabel = isVid ? '🎬 视频' : '🖼️ 图片';
+    const typeBg = isVid ? '#EDE9FE' : '#DBEAFE';
+    const hasThumb = isImageFile(m.thumb);
+    const thumbPreview = hasThumb ? `<img src="${m.thumb}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid #ddd" />` : '';
+    const thumbWarn = isVid && !hasThumb ? `<div style="color:#DC2626;font-size:11px;margin-top:4px;font-weight:500">⚠ 视频必须上传封面图</div>` : '';
+    const thumbBorder = isVid && !hasThumb ? 'border:2px solid #FCA5A5' : 'border:1px solid #e5e5e5';
+    return `<div style="${thumbBorder};border-radius:8px;padding:12px;margin-bottom:10px;position:relative;${isVid && !hasThumb ? 'background:#FFF5F5' : ''}">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
       <span style="font-size:12px;padding:2px 8px;border-radius:4px;background:${typeBg};font-weight:500">${typeLabel}</span>
       <span style="cursor:pointer;color:#999;font-size:18px" onclick="removeMediaItem(${i})">&times;</span>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
       <div class="form-group" style="margin-bottom:8px"><label style="font-size:12px">标题</label><input class="form-input" value="${m.title||''}" onchange="guideMediaItems[${i}].title=this.value" /></div>
-      <div class="form-group" style="margin-bottom:8px"><label style="font-size:12px">类型</label><select class="form-input" onchange="guideMediaItems[${i}].type=this.value"><option value="video" ${m.type==='video'?'selected':''}>视频</option><option value="image" ${m.type==='image'?'selected':''}>图片</option></select></div>
+      <div class="form-group" style="margin-bottom:8px"><label style="font-size:12px">类型</label><select class="form-input" onchange="guideMediaItems[${i}].type=this.value;renderMediaItems()"><option value="video" ${isVid?'selected':''}>视频</option><option value="image" ${!isVid?'selected':''}>图片</option></select></div>
     </div>
-    <div class="form-group" style="margin-bottom:8px"><label style="font-size:12px">封面图 (仅图片格式)</label>
-      <div style="display:flex;gap:6px;align-items:center">${thumbPreview}<input class="form-input" value="${m.thumb||''}" onchange="guideMediaItems[${i}].thumb=this.value" style="flex:1" />
-      <label style="padding:6px 12px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:12px;white-space:nowrap">传<input type="file" accept="image/*" style="display:none" onchange="uploadMediaThumb(this,${i})" /></label></div>
+    <div class="form-group" style="margin-bottom:8px"><label style="font-size:12px">资源文件 <span style="color:#999">(上传后自动识别类型)</span></label>
+      <div style="display:flex;gap:6px"><input class="form-input" value="${m.url||''}" onchange="guideMediaItems[${i}].url=this.value" placeholder="上传视频或图片文件" style="flex:1" />
+      <label style="padding:6px 12px;background:#059669;color:#fff;border-radius:6px;cursor:pointer;font-size:12px;white-space:nowrap">上传文件<input type="file" accept="image/*,video/*" style="display:none" onchange="uploadMediaUrl(this,${i})" /></label></div>
     </div>
-    <div class="form-group" style="margin-bottom:0"><label style="font-size:12px">资源文件 (上传后自动识别类型)</label>
-      <div style="display:flex;gap:6px"><input class="form-input" value="${m.url||''}" onchange="guideMediaItems[${i}].url=this.value" placeholder="上传视频或图片" style="flex:1" />
-      <label style="padding:6px 12px;background:#059669;color:#fff;border-radius:6px;cursor:pointer;font-size:12px;white-space:nowrap">上传<input type="file" accept="image/*,video/*" style="display:none" onchange="uploadMediaUrl(this,${i})" /></label></div>
+    <div class="form-group" style="margin-bottom:0;${isVid ? 'padding:8px;background:#FEFCE8;border-radius:6px' : ''}"><label style="font-size:12px;font-weight:${isVid?'600':'400'}">${isVid ? '⭐ 视频封面图（必填）' : '缩略图（可选）'}</label>
+      <div style="display:flex;gap:6px;align-items:center;margin-top:4px">${thumbPreview}<input class="form-input" value="${m.thumb||''}" onchange="guideMediaItems[${i}].thumb=this.value" style="flex:1" placeholder="${isVid ? '请上传视频封面图片' : '可选，不填则用资源图片'}" />
+      <label style="padding:6px 12px;background:${isVid ? '#DC2626' : 'var(--primary)'};color:#fff;border-radius:6px;cursor:pointer;font-size:12px;white-space:nowrap">${isVid ? '上传封面' : '上传'}<input type="file" accept="image/*" style="display:none" onchange="uploadMediaThumb(this,${i})" /></label></div>
+      ${thumbWarn}
     </div>
   </div>`;
   }).join('');
@@ -935,6 +942,11 @@ async function saveGuide() {
   const tagsStr = document.getElementById('gTags').value.trim();
   let sections = [];
   try { sections = JSON.parse(document.getElementById('gSections').value || '[]'); } catch { alert('维护说明段落JSON格式错误'); return; }
+  const videosNoThumb = guideMediaItems.filter(m => m.type === 'video' && !isImageFile(m.thumb));
+  if (videosNoThumb.length > 0) {
+    const names = videosNoThumb.map(m => m.title || '未命名').join('、');
+    if (!confirm('以下视频缺少封面图：' + names + '\n\n没有封面图的视频将在前端显示为灰色占位。确定保存吗？')) return;
+  }
   const body = {
     name: document.getElementById('gName').value,
     subtitle: document.getElementById('gSubtitle').value,
