@@ -1447,7 +1447,7 @@ function showGuideQR(id, name, existingUrl) {
   currentQRName = name;
   currentQRGuideId = id;
   document.getElementById('qrModalTitle').textContent = name + ' - 二维码';
-  document.getElementById('qrUrlText').textContent = currentQRUrl;
+  document.getElementById('qrUrlText').textContent = name;
   document.getElementById('qrModal').style.display = '';
   if (existingUrl) {
     document.getElementById('qrImage').src = existingUrl;
