@@ -126,14 +126,16 @@
 .recommend-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 16rpx;
+  justify-content: space-between;
 }
 
 .recommend-item {
-  width: calc(50% - 8rpx);
+  width: 48%;
   background: #f5f5f5;
   border-radius: 16rpx;
   padding: 24rpx;
+  box-sizing: border-box;
+  margin-bottom: 16rpx;
 }
 
 .recommend-icon {
