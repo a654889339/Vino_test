@@ -16,7 +16,10 @@ exports.list = async (req, res) => {
 
 exports.detail = async (req, res) => {
   try {
-    const guide = await DeviceGuide.findByPk(req.params.id);
+    const param = req.params.id;
+    const guide = /^\d+$/.test(param)
+      ? await DeviceGuide.findByPk(param)
+      : await DeviceGuide.findOne({ where: { slug: param } });
     if (!guide) return res.status(404).json({ code: 404, message: '不存在' });
     res.json({ code: 0, data: guide });
   } catch (err) {
@@ -38,18 +41,22 @@ exports.adminList = async (req, res) => {
 };
 
 const GUIDE_FIELDS = [
-  'name','subtitle','icon','iconUrl','emoji','gradient','badge',
+  'name','slug','subtitle','icon','iconUrl','emoji','gradient','badge',
   'tags','sections','sortOrder','status',
   'coverImage','showcaseVideo','description','mediaItems','helpItems',
 ];
 
 exports.create = async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, slug } = req.body;
     if (!name || !name.trim()) return res.status(400).json({ code: 400, message: '名称不能为空' });
+    if (!slug || !slug.trim()) return res.status(400).json({ code: 400, message: '英文描述不能为空' });
+    const existing = await DeviceGuide.findOne({ where: { slug: slug.trim() } });
+    if (existing) return res.status(400).json({ code: 400, message: '英文描述 "' + slug + '" 已被使用' });
     const data = {};
     GUIDE_FIELDS.forEach(f => { if (req.body[f] !== undefined) data[f] = req.body[f]; });
     data.name = name.trim();
+    data.slug = slug.trim();
     if (data.subtitle) data.subtitle = data.subtitle.trim();
     if (data.badge) data.badge = data.badge.trim();
     const guide = await DeviceGuide.create(data);
@@ -67,6 +74,12 @@ exports.update = async (req, res) => {
     const data = {};
     GUIDE_FIELDS.forEach(f => { if (req.body[f] !== undefined) data[f] = req.body[f]; });
     if (data.name) data.name = data.name.trim();
+    if (data.slug) {
+      data.slug = data.slug.trim();
+      const { Op } = require('sequelize');
+      const dup = await DeviceGuide.findOne({ where: { slug: data.slug, id: { [Op.ne]: guide.id } } });
+      if (dup) return res.status(400).json({ code: 400, message: '英文描述 "' + data.slug + '" 已被使用' });
+    }
     if (data.subtitle) data.subtitle = data.subtitle.trim();
     if (data.badge !== undefined) data.badge = (data.badge || '').trim();
     await guide.update(data);
@@ -112,7 +125,7 @@ exports.generateQRCode = async (req, res) => {
     const forceRegen = req.body && req.body.force;
     if (guide.qrcodeUrl && !forceRegen) return res.json({ code: 0, data: { url: guide.qrcodeUrl } });
     const frontendBase = process.env.FRONTEND_URL || 'http://106.54.50.88:5201';
-    const pageUrl = frontendBase + '/guide/' + guide.id;
+    const pageUrl = frontendBase + '/guide/' + (guide.slug || guide.id);
     const buffer = await QRCode.toBuffer(pageUrl, { width: 400, margin: 2, type: 'png' });
     const filename = `qrcode_guide_${guide.id}_${Date.now()}.png`;
     const cosUrl = await cosUpload.upload(buffer, filename, 'image/png');

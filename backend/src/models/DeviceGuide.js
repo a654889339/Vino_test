@@ -11,6 +11,11 @@ const DeviceGuide = sequelize.define('DeviceGuide', {
     type: DataTypes.STRING(100),
     allowNull: false,
   },
+  slug: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+    unique: true,
+  },
   subtitle: {
     type: DataTypes.STRING(200),
     defaultValue: '',

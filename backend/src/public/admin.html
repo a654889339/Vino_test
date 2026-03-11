@@ -244,7 +244,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           </div>
         </div>
         <table class="order-table">
-          <thead><tr><th>排序</th><th>名称</th><th>副标题</th><th>图标</th><th>Emoji</th><th>角标</th><th>状态</th><th>二维码</th><th>操作</th></tr></thead>
+          <thead><tr><th>排序</th><th>名称</th><th>英文描述</th><th>副标题</th><th>图标</th><th>Emoji</th><th>角标</th><th>状态</th><th>二维码</th><th>操作</th></tr></thead>
           <tbody id="guideTableBody"></tbody>
         </table>
         <div class="order-empty" id="guideEmpty" style="display:none">暂无服务指南</div>
@@ -398,6 +398,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <h4 style="margin:0 0 12px;color:var(--primary)">基本信息</h4>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
             <div class="form-group"><label>名称 *</label><input class="form-input" id="gName" placeholder="如：空调" /></div>
+            <div class="form-group"><label>英文描述 * <span style="font-weight:normal;color:#999;font-size:12px">（唯一标识，用于链接路径，如 aircondition）</span></label><input class="form-input" id="gSlug" placeholder="如：aircondition" oninput="this.value=this.value.replace(/[^a-zA-Z0-9_-]/g,'')" /></div>
             <div class="form-group"><label>副标题</label><input class="form-input" id="gSubtitle" placeholder="如：家用/商用中央空调" /></div>
             <div class="form-group"><label>自定义图标 <span style="font-weight:normal;color:#999;font-size:12px">（上传后替代默认图标）</span></label>
               <div style="display:flex;gap:8px;align-items:center">
@@ -895,7 +896,7 @@ let allGuides = [];
 async function loadGuides() {
   const tbody = document.getElementById('guideTableBody');
   const empty = document.getElementById('guideEmpty');
-  tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#999">加载中...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:#999">加载中...</td></tr>';
   try {
     const res = await api('/guides/admin/list');
     if (res.code === 0) {
@@ -905,6 +906,7 @@ async function loadGuides() {
       tbody.innerHTML = allGuides.map(g => `<tr>
         <td>${g.sortOrder}</td>
         <td><strong>${g.name}</strong></td>
+        <td style="font-size:12px;color:#6366F1;font-family:monospace">${g.slug || '<span style="color:#ccc">-</span>'}</td>
         <td style="font-size:12px;color:#666">${g.subtitle || '-'}</td>
         <td>${g.iconUrl ? '<img src="'+g.iconUrl+'" style="width:36px;height:36px;object-fit:contain;border-radius:8px;background:#f5f5f5;padding:2px">' : (g.icon || '-')}</td>
         <td>${g.emoji || '-'}</td>
@@ -920,7 +922,7 @@ async function loadGuides() {
         </td>
       </tr>`).join('');
     }
-  } catch { tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#B91C1C">加载失败</td></tr>'; }
+  } catch { tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:#B91C1C">加载失败</td></tr>'; }
 }
 
 let guideMediaItems = [];
@@ -1077,6 +1079,7 @@ function openGuideEditor(guide) {
   document.getElementById('guideEditId').value = guide ? guide.id : '';
   document.getElementById('guideModalTitle').textContent = guide ? '编辑服务指南' : '新增服务指南';
   document.getElementById('gName').value = guide ? guide.name : '';
+  document.getElementById('gSlug').value = guide ? (guide.slug||'') : '';
   document.getElementById('gSubtitle').value = guide ? (guide.subtitle||'') : '';
   document.getElementById('gIcon').value = guide ? guide.icon : 'setting-o';
   document.getElementById('gIconUrl').value = guide ? (guide.iconUrl||'') : '';
@@ -1114,8 +1117,15 @@ async function saveGuide() {
     const names = videosNoThumb.map(m => m.title || '未命名').join('、');
     if (!confirm('以下视频缺少封面图：' + names + '\n\n没有封面图的视频将在前端显示为灰色占位。确定保存吗？')) return;
   }
+  const slug = document.getElementById('gSlug').value.trim();
+  if (!slug) { alert('英文描述不能为空'); return; }
+  if (!/^[a-zA-Z0-9_-]+$/.test(slug)) { alert('英文描述只能包含英文字母、数字、下划线和连字符'); return; }
+  const editId = id ? parseInt(id) : 0;
+  const dup = allGuides.find(g => g.slug === slug && g.id !== editId);
+  if (dup) { alert('英文描述 "' + slug + '" 已被 "' + dup.name + '" 使用，请更换'); return; }
   const body = {
     name: document.getElementById('gName').value,
+    slug,
     subtitle: document.getElementById('gSubtitle').value,
     icon: document.getElementById('gIcon').value,
     iconUrl: document.getElementById('gIconUrl').value,
@@ -1431,7 +1441,9 @@ let currentQRGuideId = 0;
 
 function showGuideQR(id, name, existingUrl) {
   const baseUrl = window.location.origin.replace(':5202', ':5201');
-  currentQRUrl = baseUrl + '/guide/' + id;
+  const g = allGuides.find(x => x.id === id);
+  const slug = (g && g.slug) ? g.slug : id;
+  currentQRUrl = baseUrl + '/guide/' + slug;
   currentQRName = name;
   currentQRGuideId = id;
   document.getElementById('qrModalTitle').textContent = name + ' - 二维码';
@@ -1457,7 +1469,7 @@ async function generateQR() {
   btn.textContent = '生成中...';
   btn.disabled = true;
   try {
-    const res = await api('/guides/' + currentQRGuideId + '/qrcode', { method: 'POST' });
+    const res = await api('/guides/' + currentQRGuideId + '/qrcode', { method: 'POST', body: { force: true } });
     if (res.code === 0 && res.data && res.data.url) {
       document.getElementById('qrImage').src = res.data.url;
       document.getElementById('qrPlaceholder').style.display = 'none';
