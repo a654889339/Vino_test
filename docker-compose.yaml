@@ -42,6 +42,8 @@ services:
       EMAIL_PASSWORD: jvwuiqxrfjmibcdb
       EMAIL_FROM: 654889339@qq.com
       EMAIL_FROM_NAME: Vino服务
+      WECHAT_APPID: wxf6fdff25c117e86d
+      WECHAT_SECRET: ${WECHAT_SECRET:-}
     depends_on:
       vino-mysql:
         condition: service_healthy

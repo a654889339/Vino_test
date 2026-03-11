@@ -14,6 +14,10 @@ module.exports = {
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || 'vino_secret_2024',
   },
+  wechat: {
+    appId: process.env.WECHAT_APPID || '',
+    appSecret: process.env.WECHAT_SECRET || '',
+  },
   email: {
     enabled: process.env.EMAIL_ENABLED === 'true',
     host: process.env.EMAIL_HOST || 'smtp.qq.com',

@@ -136,6 +136,95 @@ exports.adminGetUsers = async (req, res) => {
   }
 };
 
+exports.wxLogin = async (req, res) => {
+  try {
+    const { code } = req.body;
+    if (!code) return res.status(400).json({ code: 400, message: 'code不能为空' });
+
+    const { appId, appSecret } = config.wechat || {};
+    if (!appId || !appSecret) {
+      return res.status(500).json({ code: 500, message: '微信配置缺失，请联系管理员' });
+    }
+
+    const https = require('https');
+    const wxUrl = `https://api.weixin.qq.com/sns/jscode2session?appid=${appId}&secret=${appSecret}&js_code=${code}&grant_type=authorization_code`;
+    const wxData = await new Promise((resolve, reject) => {
+      https.get(wxUrl, (resp) => {
+        let data = '';
+        resp.on('data', c => (data += c));
+        resp.on('end', () => {
+          try { resolve(JSON.parse(data)); } catch { reject(new Error('微信接口返回格式错误')); }
+        });
+      }).on('error', reject);
+    });
+
+    if (wxData.errcode) {
+      console.error('[Auth] wx jscode2session error:', wxData);
+      return res.status(400).json({ code: 400, message: wxData.errmsg || '微信登录失败' });
+    }
+
+    const openid = wxData.openid;
+    if (!openid) return res.status(400).json({ code: 400, message: '获取openid失败' });
+
+    let user = await User.findOne({ where: { openid } });
+    let isNew = false;
+    if (!user) {
+      const crypto = require('crypto');
+      const shortId = crypto.randomBytes(4).toString('hex');
+      const randomPwd = crypto.randomBytes(16).toString('hex');
+      user = await User.create({
+        username: `wx_${shortId}`,
+        password: randomPwd,
+        nickname: '微信用户',
+        openid,
+        email: null,
+      });
+      isNew = true;
+    }
+
+    const token = generateToken(user);
+    res.json({ code: 0, data: { token, user, isNew } });
+  } catch (err) {
+    console.error('[Auth] wxLogin error:', err.message);
+    res.status(500).json({ code: 500, message: '微信登录失败' });
+  }
+};
+
+exports.updateProfile = async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id);
+    if (!user) return res.status(404).json({ code: 404, message: '用户不存在' });
+
+    const { nickname, avatar } = req.body;
+    if (nickname !== undefined) user.nickname = String(nickname).trim() || user.nickname;
+    if (avatar !== undefined) user.avatar = String(avatar).trim();
+    await user.save({ hooks: false });
+
+    res.json({ code: 0, data: user });
+  } catch (err) {
+    console.error('[Auth] updateProfile error:', err.message);
+    res.status(500).json({ code: 500, message: '更新失败' });
+  }
+};
+
+exports.uploadAvatar = async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ code: 400, message: '请选择图片' });
+    const avatarUrl = `/uploads/${req.file.filename}`;
+
+    const user = await User.findByPk(req.user.id);
+    if (user) {
+      user.avatar = avatarUrl;
+      await user.save({ hooks: false });
+    }
+
+    res.json({ code: 0, data: { url: avatarUrl } });
+  } catch (err) {
+    console.error('[Auth] uploadAvatar error:', err.message);
+    res.status(500).json({ code: 500, message: '上传失败' });
+  }
+};
+
 exports.getProfile = async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id);

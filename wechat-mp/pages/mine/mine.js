@@ -5,6 +5,7 @@ Page({
     userInfo: null,
     isLoggedIn: false,
     avatarInitial: 'V',
+    avatarUrl: '',
     stats: [
       { label: '待支付', value: 0 },
       { label: '进行中', value: 0 },
@@ -37,22 +38,33 @@ Page({
         .then(res => {
           const user = res.data || {};
           app.globalData.userInfo = user;
-          const initial = (user.nickname || user.username || 'V').charAt(0);
-          this.setData({ userInfo: user, isLoggedIn: true, avatarInitial: initial });
+          this.applyUserData(user);
         })
         .catch(() => {
           app.clearToken();
-          this.setData({ userInfo: null, isLoggedIn: false });
+          this.setData({ userInfo: null, isLoggedIn: false, avatarUrl: '', avatarInitial: 'V' });
         });
     } else {
       const user = app.globalData.userInfo || null;
-      const initial = user ? (user.nickname || user.username || 'V').charAt(0) : 'V';
-      this.setData({
-        userInfo: user,
-        isLoggedIn,
-        avatarInitial: initial,
-      });
+      if (user) {
+        this.applyUserData(user);
+      } else {
+        this.setData({ userInfo: null, isLoggedIn: isLoggedIn, avatarUrl: '', avatarInitial: 'V' });
+      }
     }
+  },
+
+  applyUserData(user) {
+    const initial = (user.nickname || user.username || 'V').charAt(0);
+    let avatarUrl = '';
+    if (user.avatar) {
+      if (user.avatar.startsWith('http')) {
+        avatarUrl = user.avatar;
+      } else {
+        avatarUrl = app.globalData.baseUrl.replace('/api', '') + user.avatar;
+      }
+    }
+    this.setData({ userInfo: user, isLoggedIn: true, avatarInitial: initial, avatarUrl });
   },
 
   onProfileTap() {
@@ -61,10 +73,61 @@ Page({
     }
   },
 
+  onUpdateAvatar(e) {
+    const tempUrl = e.detail.avatarUrl;
+    if (!tempUrl) return;
+    wx.showLoading({ title: '上传中...' });
+    wx.uploadFile({
+      url: app.globalData.baseUrl + '/auth/upload-avatar',
+      filePath: tempUrl,
+      name: 'avatar',
+      header: { Authorization: 'Bearer ' + app.globalData.token },
+      success: (uploadRes) => {
+        wx.hideLoading();
+        try {
+          const data = JSON.parse(uploadRes.data);
+          if (data.code === 0) {
+            const serverUrl = data.data.url;
+            const fullUrl = app.globalData.baseUrl.replace('/api', '') + serverUrl;
+            if (app.globalData.userInfo) app.globalData.userInfo.avatar = serverUrl;
+            this.setData({ avatarUrl: fullUrl });
+            wx.showToast({ title: '头像已更新', icon: 'success' });
+          } else {
+            wx.showToast({ title: '上传失败', icon: 'none' });
+          }
+        } catch {
+          wx.showToast({ title: '上传失败', icon: 'none' });
+        }
+      },
+      fail: () => {
+        wx.hideLoading();
+        wx.showToast({ title: '上传失败', icon: 'none' });
+      },
+    });
+  },
+
+  onUpdateNickname(e) {
+    const nickname = (e.detail.value || '').trim();
+    if (!nickname || nickname === (this.data.userInfo && this.data.userInfo.nickname)) return;
+    app.request({
+      method: 'PUT',
+      url: '/auth/profile',
+      data: { nickname },
+    }).then(res => {
+      app.globalData.userInfo = res.data;
+      this.applyUserData(res.data);
+      wx.showToast({ title: '昵称已更新', icon: 'success' });
+    }).catch(() => {
+      wx.showToast({ title: '更新失败', icon: 'none' });
+    });
+  },
+
   onMenuTap(e) {
     const url = e.currentTarget.dataset.url;
     if (url) {
       wx.switchTab({ url });
+    } else {
+      wx.showToast({ title: '功能开发中', icon: 'none' });
     }
   },
 
@@ -75,7 +138,7 @@ Page({
       success: res => {
         if (res.confirm) {
           app.clearToken();
-          this.setData({ userInfo: null, isLoggedIn: false });
+          this.setData({ userInfo: null, isLoggedIn: false, avatarUrl: '', avatarInitial: 'V' });
           wx.showToast({ title: '已退出', icon: 'success' });
         }
       },

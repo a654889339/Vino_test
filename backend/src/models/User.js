@@ -26,6 +26,11 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING(100),
     defaultValue: '',
   },
+  openid: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+    unique: true,
+  },
   avatar: {
     type: DataTypes.STRING(500),
     defaultValue: '',

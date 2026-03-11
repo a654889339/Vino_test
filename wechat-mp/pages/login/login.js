@@ -2,175 +2,133 @@ const app = getApp();
 
 Page({
   data: {
-    isRegister: false,
-    username: '',
-    password: '',
-    email: '',
-    code: '',
-    nickname: '',
-    codeCountdown: 0,
-    loading: false,
+    logging: false,
+    saving: false,
+    isLoggedIn: false,
+    showProfile: false,
+    tempAvatarUrl: '',
+    tempNickname: '',
   },
 
-  switchMode() {
-    this.setData({
-      isRegister: !this.data.isRegister,
-      username: '',
-      password: '',
-      email: '',
-      code: '',
-      nickname: '',
+  wxLogin() {
+    this.setData({ logging: true });
+    wx.login({
+      success: (loginRes) => {
+        if (!loginRes.code) {
+          wx.showToast({ title: '获取登录凭证失败', icon: 'none' });
+          this.setData({ logging: false });
+          return;
+        }
+        app.request({
+          method: 'POST',
+          url: '/auth/wx-login',
+          data: { code: loginRes.code },
+        })
+          .then((res) => {
+            const { token, user, isNew } = res.data;
+            app.setToken(token);
+            app.globalData.userInfo = user;
+            if (isNew) {
+              this.setData({ isLoggedIn: true, showProfile: true, logging: false });
+            } else {
+              this.setData({ logging: false });
+              this.goBack();
+            }
+          })
+          .catch((err) => {
+            wx.showToast({ title: err.message || '登录失败', icon: 'none' });
+            this.setData({ logging: false });
+          });
+      },
+      fail: () => {
+        wx.showToast({ title: '微信登录失败', icon: 'none' });
+        this.setData({ logging: false });
+      },
     });
   },
 
-  inputUsername(e) {
-    this.setData({ username: e.detail.value });
-  },
-  inputPassword(e) {
-    this.setData({ password: e.detail.value });
-  },
-  inputEmail(e) {
-    this.setData({ email: e.detail.value });
-  },
-  inputCode(e) {
-    this.setData({ code: e.detail.value });
-  },
-  inputNickname(e) {
-    this.setData({ nickname: e.detail.value });
+  onChooseAvatar(e) {
+    const url = e.detail.avatarUrl;
+    if (url) {
+      this.setData({ tempAvatarUrl: url });
+    }
   },
 
-  sendCode() {
-    const { email, codeCountdown } = this.data;
-    if (!email || !email.trim()) {
-      wx.showToast({ title: '请输入邮箱', icon: 'none' });
-      return;
-    }
-    if (codeCountdown > 0) return;
-    app
-      .request({
-        method: 'POST',
-        url: '/auth/send-code',
-        data: { email: email.trim() },
-      })
-      .then(() => {
-        wx.showToast({ title: '验证码已发送', icon: 'success' });
-        this.setData({ codeCountdown: 60 });
-        this.startCountdown();
-      })
-      .catch(err => {
-        wx.showToast({ title: err.message || '发送失败', icon: 'none' });
-      });
+  onNicknameInput(e) {
+    this.setData({ tempNickname: e.detail.value });
   },
 
-  startCountdown() {
-    const t = setInterval(() => {
-      const n = this.data.codeCountdown - 1;
-      this.setData({ codeCountdown: n });
-      if (n <= 0) clearInterval(t);
-    }, 1000);
-  },
+  saveProfile() {
+    const { tempAvatarUrl, tempNickname } = this.data;
+    this.setData({ saving: true });
 
-  handleLogin() {
-    const { username, password } = this.data;
-    if (!username || !username.trim()) {
-      wx.showToast({ title: '请输入用户名', icon: 'none' });
-      return;
-    }
-    if (!password || !password.trim()) {
-      wx.showToast({ title: '请输入密码', icon: 'none' });
-      return;
-    }
-    this.setData({ loading: true });
-    app
-      .request({
-        method: 'POST',
-        url: '/auth/login',
-        data: { username: username.trim(), password: password.trim() },
-      })
-      .then(res => {
-        const token = res.data && res.data.token;
-        const user = res.data && res.data.user;
-        if (token) {
-          app.setToken(token);
-          app.globalData.userInfo = user || {};
-        }
-        this.setData({ loading: false });
-        wx.showToast({ title: '登录成功', icon: 'success' });
-        setTimeout(() => {
-          const pages = getCurrentPages();
-          if (pages.length > 1) {
-            wx.navigateBack();
-          } else {
-            wx.switchTab({ url: '/pages/index/index' });
-          }
-        }, 500);
-      })
-      .catch(err => {
-        this.setData({ loading: false });
-        wx.showToast({ title: err.message || '登录失败', icon: 'none' });
-      });
-  },
+    const doSave = (avatarServerUrl) => {
+      const updateData = {};
+      if (tempNickname.trim()) updateData.nickname = tempNickname.trim();
+      if (avatarServerUrl) updateData.avatar = avatarServerUrl;
 
-  handleRegister() {
-    const { username, password, email, code, nickname } = this.data;
-    if (!username || !username.trim()) {
-      wx.showToast({ title: '请输入用户名', icon: 'none' });
-      return;
-    }
-    if (!password || !password.trim()) {
-      wx.showToast({ title: '请输入密码', icon: 'none' });
-      return;
-    }
-    if (!email || !email.trim()) {
-      wx.showToast({ title: '请输入邮箱', icon: 'none' });
-      return;
-    }
-    if (!code || !code.trim()) {
-      wx.showToast({ title: '请输入验证码', icon: 'none' });
-      return;
-    }
-    this.setData({ loading: true });
-    app
-      .request({
-        method: 'POST',
-        url: '/auth/register',
-        data: {
-          username: username.trim(),
-          password: password.trim(),
-          email: email.trim(),
-          code: code.trim(),
-          nickname: (nickname || username).trim(),
+      if (!Object.keys(updateData).length) {
+        this.setData({ saving: false });
+        this.goBack();
+        return;
+      }
+
+      app.request({
+        method: 'PUT',
+        url: '/auth/profile',
+        data: updateData,
+      })
+        .then((res) => {
+          app.globalData.userInfo = res.data;
+          this.setData({ saving: false });
+          wx.showToast({ title: '设置成功', icon: 'success' });
+          setTimeout(() => this.goBack(), 800);
+        })
+        .catch(() => {
+          this.setData({ saving: false });
+          this.goBack();
+        });
+    };
+
+    if (tempAvatarUrl && tempAvatarUrl.startsWith('http')) {
+      doSave(tempAvatarUrl);
+    } else if (tempAvatarUrl) {
+      wx.uploadFile({
+        url: app.globalData.baseUrl + '/auth/upload-avatar',
+        filePath: tempAvatarUrl,
+        name: 'avatar',
+        header: {
+          Authorization: 'Bearer ' + app.globalData.token,
         },
-      })
-      .then(res => {
-        const token = res.data && res.data.token;
-        const user = res.data && res.data.user;
-        if (token) {
-          app.setToken(token);
-          app.globalData.userInfo = user || {};
-        }
-        this.setData({ loading: false });
-        wx.showToast({ title: '注册成功', icon: 'success' });
-        setTimeout(() => {
-          const pages = getCurrentPages();
-          if (pages.length > 1) {
-            wx.navigateBack();
-          } else {
-            wx.switchTab({ url: '/pages/index/index' });
+        success: (uploadRes) => {
+          try {
+            const data = JSON.parse(uploadRes.data);
+            if (data.code === 0) {
+              doSave(data.data.url);
+            } else {
+              doSave('');
+            }
+          } catch {
+            doSave('');
           }
-        }, 500);
-      })
-      .catch(err => {
-        this.setData({ loading: false });
-        wx.showToast({ title: err.message || '注册失败', icon: 'none' });
+        },
+        fail: () => doSave(''),
       });
+    } else {
+      doSave('');
+    }
   },
 
-  submit() {
-    if (this.data.isRegister) {
-      this.handleRegister();
+  skipProfile() {
+    this.goBack();
+  },
+
+  goBack() {
+    const pages = getCurrentPages();
+    if (pages.length > 1) {
+      wx.navigateBack();
     } else {
-      this.handleLogin();
+      wx.switchTab({ url: '/pages/index/index' });
     }
   },
 });

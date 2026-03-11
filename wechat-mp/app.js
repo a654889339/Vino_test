@@ -9,10 +9,20 @@ App({
     const token = wx.getStorageSync('vino_token');
     if (token) {
       this.globalData.token = token;
+      this.fetchProfile();
     }
   },
 
-  // Request helper - use getApp().request()
+  fetchProfile() {
+    this.request({ url: '/auth/profile' })
+      .then(res => {
+        this.globalData.userInfo = res.data;
+      })
+      .catch(() => {
+        this.clearToken();
+      });
+  },
+
   request(options) {
     const app = this;
     const { baseUrl, token } = app.globalData;
@@ -23,7 +33,7 @@ App({
         data: options.data,
         header: {
           'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(token ? { Authorization: 'Bearer ' + token } : {}),
         },
         success: (res) => {
           if (res.statusCode === 401) {
