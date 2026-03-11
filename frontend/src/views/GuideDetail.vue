@@ -53,11 +53,10 @@
         </div>
       </div>
 
-      <!-- Help Items -->
+      <!-- Electronic Manual -->
       <div v-if="helpItems.length" class="section-card">
-        <h3 class="section-title">使用帮助</h3>
-        <van-cell-group inset>
-          <van-cell v-for="(h, i) in helpItems" :key="i" :title="h.title" :icon="h.icon || 'description'" is-link @click="openHelp(h)" />
+        <van-cell-group inset :border="false">
+          <van-cell title="电子说明书" icon="description" is-link :label="`共 ${helpItems.length} 个章节`" @click="$router.push(`/guide/${guide.id}/manual`)" />
         </van-cell-group>
       </div>
 
@@ -193,12 +192,6 @@ const openMedia = (m) => {
       .map(item => getMediaUrl(item));
     const idx = images.indexOf(url);
     showImagePreview({ images, startPosition: idx >= 0 ? idx : 0, closeable: true });
-  }
-};
-
-const openHelp = (h) => {
-  if (h.content && (h.content.startsWith('http') || h.content.startsWith('/'))) {
-    window.open(h.content, '_blank');
   }
 };
 

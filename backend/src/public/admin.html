@@ -313,9 +313,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <div id="mediaItemsList"></div>
           <button type="button" class="refresh-btn" style="background:#059669;margin-top:8px" onclick="addMediaItem()">+ 添加媒体</button>
 
-          <h4 style="margin:20px 0 12px;color:var(--primary)">使用帮助</h4>
+          <h4 style="margin:20px 0 12px;color:var(--primary)">📖 电子说明书 <span style="font-weight:normal;font-size:12px;color:#999">（章节内容支持 HTML 格式）</span></h4>
           <div id="helpItemsList"></div>
-          <button type="button" class="refresh-btn" style="background:#059669;margin-top:8px" onclick="addHelpItem()">+ 添加帮助项</button>
+          <button type="button" class="refresh-btn" style="background:#059669;margin-top:8px" onclick="addHelpItem()">+ 添加章节</button>
 
           <h4 style="margin:20px 0 12px;color:var(--primary)">维护说明段落</h4>
           <textarea class="form-input" id="gSections" rows="4" style="resize:vertical;font-family:monospace;font-size:12px" placeholder='[{"title":"常见故障","icon":"warning-o","tips":["不制冷","漏水"]}]'></textarea>
@@ -834,17 +834,46 @@ function removeMediaItem(i) { guideMediaItems.splice(i,1); renderMediaItems(); }
 
 function renderHelpItems() {
   const c = document.getElementById('helpItemsList');
-  c.innerHTML = guideHelpItems.map((h,i) => `<div style="border:1px solid #e5e5e5;border-radius:8px;padding:12px;margin-bottom:8px;position:relative">
-    <span style="position:absolute;top:8px;right:8px;cursor:pointer;color:#999;font-size:18px" onclick="removeHelpItem(${i})">&times;</span>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-      <div class="form-group" style="margin-bottom:8px"><label style="font-size:12px">标题</label><input class="form-input" value="${h.title||''}" onchange="guideHelpItems[${i}].title=this.value" /></div>
-      <div class="form-group" style="margin-bottom:8px"><label style="font-size:12px">图标(Vant)</label><input class="form-input" value="${h.icon||''}" onchange="guideHelpItems[${i}].icon=this.value" placeholder="description" /></div>
+  c.innerHTML = guideHelpItems.map((h,i) => {
+    const escapedContent = (h.content||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    return `<div style="border:1px solid #e5e5e5;border-radius:8px;padding:12px;margin-bottom:10px;position:relative">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <span style="font-size:12px;padding:2px 8px;border-radius:4px;background:#DBEAFE;font-weight:500">📄 第 ${i+1} 章</span>
+      <span style="cursor:pointer;color:#999;font-size:18px" onclick="removeHelpItem(${i})">&times;</span>
     </div>
-    <div class="form-group" style="margin-bottom:0"><label style="font-size:12px">内容/链接</label><input class="form-input" value="${h.content||''}" onchange="guideHelpItems[${i}].content=this.value" /></div>
-  </div>`).join('');
+    <div class="form-group" style="margin-bottom:8px"><label style="font-size:12px;font-weight:600">章节标题</label><input class="form-input" value="${h.title||''}" onchange="guideHelpItems[${i}].title=this.value" placeholder="如：产品概述、安装指南、使用方法" /></div>
+    <div class="form-group" style="margin-bottom:4px"><label style="font-size:12px;font-weight:600">章节内容 <span style="font-weight:normal;color:#999">（支持 HTML，如 &lt;p&gt; &lt;h3&gt; &lt;ul&gt; &lt;img&gt; &lt;table&gt; 等标签）</span></label>
+      <textarea class="form-input" rows="6" style="resize:vertical;font-family:monospace;font-size:12px;line-height:1.6" onchange="guideHelpItems[${i}].content=this.value" placeholder="输入说明书内容，支持HTML格式。&#10;例如：&#10;&lt;p&gt;本产品适用于...&lt;/p&gt;&#10;&lt;h4&gt;注意事项&lt;/h4&gt;&#10;&lt;ul&gt;&lt;li&gt;请勿...&lt;/li&gt;&lt;/ul&gt;&#10;&lt;div class=&quot;warning&quot;&gt;警告内容&lt;/div&gt;">${escapedContent}</textarea>
+    </div>
+    <div style="display:flex;gap:6px;margin-top:4px">
+      <button type="button" style="font-size:11px;padding:3px 8px;border:1px solid #ddd;border-radius:4px;background:#f9f9f9;cursor:pointer" onclick="insertHtmlSnippet(${i},'p')">段落</button>
+      <button type="button" style="font-size:11px;padding:3px 8px;border:1px solid #ddd;border-radius:4px;background:#f9f9f9;cursor:pointer" onclick="insertHtmlSnippet(${i},'h4')">子标题</button>
+      <button type="button" style="font-size:11px;padding:3px 8px;border:1px solid #ddd;border-radius:4px;background:#f9f9f9;cursor:pointer" onclick="insertHtmlSnippet(${i},'ul')">列表</button>
+      <button type="button" style="font-size:11px;padding:3px 8px;border:1px solid #ddd;border-radius:4px;background:#f9f9f9;cursor:pointer" onclick="insertHtmlSnippet(${i},'table')">表格</button>
+      <button type="button" style="font-size:11px;padding:3px 8px;border:1px solid #ddd;border-radius:4px;background:#FFF7ED;cursor:pointer" onclick="insertHtmlSnippet(${i},'warning')">警告</button>
+      <button type="button" style="font-size:11px;padding:3px 8px;border:1px solid #ddd;border-radius:4px;background:#FEF2F2;cursor:pointer" onclick="insertHtmlSnippet(${i},'danger')">危险</button>
+      <button type="button" style="font-size:11px;padding:3px 8px;border:1px solid #ddd;border-radius:4px;background:#f9f9f9;cursor:pointer" onclick="insertHtmlSnippet(${i},'img')">图片</button>
+    </div>
+  </div>`;
+  }).join('');
 }
 
-function addHelpItem() { guideHelpItems.push({title:'',icon:'description',content:''}); renderHelpItems(); }
+function insertHtmlSnippet(idx, type) {
+  const snippets = {
+    p: '<p>在此输入段落内容</p>',
+    h4: '<h4>子标题</h4>',
+    ul: '<ul>\\n  <li>项目一</li>\\n  <li>项目二</li>\\n</ul>',
+    table: '<table>\\n  <tr><th>参数</th><th>值</th></tr>\\n  <tr><td>名称</td><td>值</td></tr>\\n</table>',
+    warning: '<div class="warning">⚠️ 注意事项内容</div>',
+    danger: '<div class="danger">🚫 危险警告内容</div>',
+    img: '<img src="图片URL" alt="说明" />',
+  };
+  const snippet = snippets[type] || '';
+  guideHelpItems[idx].content = (guideHelpItems[idx].content || '') + '\\n' + snippet;
+  renderHelpItems();
+}
+
+function addHelpItem() { guideHelpItems.push({title:'',content:''}); renderHelpItems(); }
 function removeHelpItem(i) { guideHelpItems.splice(i,1); renderHelpItems(); }
 
 function showUploadLoading(filename) {
