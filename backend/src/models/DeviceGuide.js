@@ -33,7 +33,7 @@ const DeviceGuide = sequelize.define('DeviceGuide', {
   },
   tags: {
     type: DataTypes.TEXT,
-    defaultValue: '[]',
+    allowNull: true,
     get() {
       const raw = this.getDataValue('tags');
       try { return JSON.parse(raw || '[]'); } catch { return []; }
@@ -44,7 +44,7 @@ const DeviceGuide = sequelize.define('DeviceGuide', {
   },
   sections: {
     type: DataTypes.TEXT('long'),
-    defaultValue: '[]',
+    allowNull: true,
     get() {
       const raw = this.getDataValue('sections');
       try { return JSON.parse(raw || '[]'); } catch { return []; }
