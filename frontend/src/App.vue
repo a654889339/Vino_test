@@ -17,7 +17,7 @@ import SplashScreen from '@/components/SplashScreen.vue';
 const route = useRoute();
 const activeTab = ref(0);
 
-const hiddenTabRoutes = ['/login', '/service/', '/address'];
+const hiddenTabRoutes = ['/login', '/register', '/service/', '/address'];
 const showTabbar = computed(() => {
   return !hiddenTabRoutes.some((r) => route.path.startsWith(r));
 });

@@ -16,6 +16,11 @@ export const useUserStore = defineStore('user', {
       this.userInfo = res.data.user;
       localStorage.setItem('vino_token', res.data.token);
     },
+    setAuth(token, user) {
+      this.token = token;
+      this.userInfo = user;
+      localStorage.setItem('vino_token', token);
+    },
     async fetchProfile() {
       const res = await authApi.getProfile();
       this.userInfo = res.data;

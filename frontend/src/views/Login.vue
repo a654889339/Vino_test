@@ -82,7 +82,7 @@ const handleLogin = async () => {
 };
 
 const handleRegister = () => {
-  showToast('注册功能开发中');
+  router.push('/register');
 };
 </script>
 
