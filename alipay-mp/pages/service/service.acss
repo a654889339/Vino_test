@@ -30,15 +30,16 @@
   display: flex;
   flex-wrap: wrap;
   padding: 20rpx;
-  gap: 16rpx;
+  justify-content: space-between;
 }
 
 .grid-item {
-  width: calc(50% - 8rpx);
+  width: 48%;
   background: #fff;
   border-radius: 16rpx;
   padding: 24rpx;
   box-sizing: border-box;
+  margin-bottom: 16rpx;
 }
 
 .grid-icon {
