@@ -160,6 +160,9 @@
   background: #fff;
   border: 1rpx solid #ddd;
   border-radius: 12rpx;
+  text-align: center;
+  padding: 0;
+  margin: 0;
 }
 
 .tab-bar-placeholder {

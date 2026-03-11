@@ -60,6 +60,8 @@
   border-radius: 48rpx;
   border: none;
   margin-top: 40rpx;
+  text-align: center;
+  padding: 0;
 }
 
 .btn-wx-login::after {
@@ -164,6 +166,8 @@
   font-weight: 600;
   border-radius: 44rpx;
   border: none;
+  text-align: center;
+  padding: 0;
 }
 
 .btn-save::after {

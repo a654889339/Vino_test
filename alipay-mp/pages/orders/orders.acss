@@ -141,6 +141,7 @@
   color: #666;
   border: 1rpx solid #ddd;
   background: #fff;
+  text-align: center;
 }
 
 .login-tip {
