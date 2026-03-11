@@ -2,29 +2,15 @@
   <div class="services-page">
     <van-nav-bar title="全部服务" />
 
-    <!-- 服务指南 -->
-    <div class="guide-section">
-      <div class="guide-header">
-        <h3>服务指南</h3>
-        <span class="guide-more" @click="showAllGuides = true">查看全部 ›</span>
-      </div>
-      <div class="guide-scroll">
-        <div
+    <!-- 产品导航 Apple 风格 -->
+    <div class="product-nav">
+      <div class="product-nav-scroll">
+        <a
           v-for="device in deviceGuides"
           :key="device.id"
-          class="guide-card"
+          class="product-nav-item"
           @click="openGuide(device)"
-        >
-          <div class="guide-icon-wrapper" :style="{ background: device.iconUrl ? '#fff' : device.gradient }">
-            <img v-if="device.iconUrl" :src="device.iconUrl" class="guide-icon-img" />
-            <van-icon v-else :name="device.icon" size="28" color="#fff" />
-            <span v-if="device.badge" class="guide-badge">{{ device.badge }}</span>
-          </div>
-          <div class="guide-info">
-            <h4>{{ device.name }}</h4>
-            <p>{{ device.model }}</p>
-          </div>
-        </div>
+        >{{ device.name }}</a>
       </div>
     </div>
 
@@ -217,111 +203,52 @@ onMounted(async () => {
   color: var(--vino-dark);
 }
 
-/* ===== Guide Section ===== */
-.guide-section {
+/* ===== Product Nav (Apple Style) ===== */
+.product-nav {
   background: var(--vino-card);
-  padding: 20px 20px 16px;
-  margin-bottom: 8px;
-  animation: fadeInUp 0.4s var(--vino-transition) both;
+  border-bottom: 0.5px solid rgba(0, 0, 0, 0.08);
 }
 
-.guide-header {
+.product-nav-scroll {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
-}
-
-.guide-header h3 {
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-
-.guide-more {
-  font-size: 14px;
-  color: var(--vino-primary);
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.guide-scroll {
-  display: flex;
-  gap: 12px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  padding-bottom: 4px;
+  padding: 0 20px;
 }
 
-.guide-scroll::-webkit-scrollbar { display: none; }
+.product-nav-scroll::-webkit-scrollbar { display: none; }
 
-.guide-card {
-  min-width: 135px;
+.product-nav-item {
   flex-shrink: 0;
-  background: var(--vino-bg);
-  border-radius: var(--vino-radius);
-  padding: 16px 14px;
-  cursor: pointer;
-  transition: transform 0.25s var(--vino-transition);
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.guide-card:active {
-  transform: scale(0.95);
-}
-
-.guide-icon-wrapper {
-  width: 65px;
-  height: 65px;
-  border-radius: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 12px;
-  position: relative;
-  overflow: hidden;
-}
-
-.guide-icon-img { width: 100%; height: 100%; object-fit: contain; }
-.guide-icon-img-sm { width: 100%; height: 100%; object-fit: contain; }
-
-.guide-badge {
-  position: absolute;
-  top: -6px;
-  right: -10px;
-  background: var(--vino-primary);
-  color: #fff;
-  font-size: 10px;
-  font-weight: 600;
-  padding: 2px 6px;
-  border-radius: 6px;
-  white-space: nowrap;
-}
-
-.guide-info {
-  text-align: center;
-}
-
-.guide-info h4 {
+  padding: 14px 18px;
   font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 4px;
+  font-weight: 400;
+  color: var(--vino-dark);
+  cursor: pointer;
   white-space: nowrap;
+  transition: color 0.2s, opacity 0.2s;
+  position: relative;
+  letter-spacing: 0;
+  opacity: 0.88;
+}
+
+.product-nav-item:first-child {
+  padding-left: 0;
+}
+
+.product-nav-item:hover,
+.product-nav-item:active {
+  opacity: 1;
   color: var(--vino-dark);
 }
 
-.guide-info p {
-  font-size: 12px;
-  color: var(--vino-text-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 120px;
+.product-nav-item:active {
+  opacity: 0.6;
 }
+
+.guide-icon-img-sm { width: 100%; height: 100%; object-fit: contain; }
 
 /* ===== Tabs ===== */
 .services-page :deep(.van-tabs__nav) {
