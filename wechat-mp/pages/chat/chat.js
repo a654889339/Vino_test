@@ -129,7 +129,7 @@ Page({
           url: app.globalData.baseUrl + '/messages/upload-image',
           filePath: file.tempFilePath,
           name: 'image',
-          header: { Authorization: 'Bearer ' + (wx.getStorageSync('token') || '') },
+          header: { Authorization: 'Bearer ' + (wx.getStorageSync('vino_token') || '') },
           success: (uploadRes) => {
             try {
               const data = JSON.parse(uploadRes.data);

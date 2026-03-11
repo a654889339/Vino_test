@@ -129,7 +129,7 @@ Page({
           fileType: 'image',
           fileName: 'image',
           filePath,
-          header: { Authorization: 'Bearer ' + (my.getStorageSync({ key: 'token' }).data || '') },
+          header: { Authorization: 'Bearer ' + (my.getStorageSync({ key: 'vino_token' }).data || '') },
           success: (uploadRes) => {
             try {
               const data = JSON.parse(uploadRes.data);
