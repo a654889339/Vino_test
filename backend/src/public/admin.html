@@ -283,9 +283,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <!-- Messages Page -->
     <div class="dash-page" id="page-messages">
       <div class="dash-section" style="display:flex;gap:16px;height:calc(100vh - 160px);min-height:500px">
-        <div id="msgConvList" style="width:280px;flex-shrink:0;background:#fff;border-radius:12px;overflow-y:auto;border:1px solid #eee">
+        <div id="msgConvList" style="width:280px;flex-shrink:0;background:#fff;border-radius:12px;overflow-y:auto;border:1px solid #eee;display:flex;flex-direction:column">
           <div style="padding:14px 16px;border-bottom:1px solid #f0f0f0;font-weight:600;font-size:15px;color:#1a1a1a">用户会话</div>
-          <div id="convListBody"></div>
+          <div style="padding:8px 12px;border-bottom:1px solid #f0f0f0">
+            <input class="form-input" id="convSearchInput" placeholder="搜索用户名..." oninput="renderConvList()" style="width:100%;padding:6px 10px;font-size:13px;border-radius:8px" />
+          </div>
+          <div id="convListBody" style="flex:1;overflow-y:auto"></div>
           <div id="convEmpty" style="display:none;text-align:center;padding:40px 16px;color:#999;font-size:13px">暂无留言</div>
         </div>
         <div id="msgChatArea" style="flex:1;background:#fff;border-radius:12px;display:flex;flex-direction:column;border:1px solid #eee">
@@ -1275,9 +1278,13 @@ async function loadConversations() {
 function renderConvList() {
   const body = document.getElementById('convListBody');
   const empty = document.getElementById('convEmpty');
-  if (!conversations.length) { body.innerHTML = ''; empty.style.display = 'block'; return; }
+  const keyword = (document.getElementById('convSearchInput')?.value || '').trim().toLowerCase();
+  const filtered = keyword
+    ? conversations.filter(c => (c.nickname || '').toLowerCase().includes(keyword) || (c.username || '').toLowerCase().includes(keyword))
+    : conversations;
+  if (!filtered.length) { body.innerHTML = ''; empty.style.display = 'block'; empty.textContent = keyword ? '无匹配用户' : '暂无留言'; return; }
   empty.style.display = 'none';
-  body.innerHTML = conversations.map(c => {
+  body.innerHTML = filtered.map(c => {
     const active = c.userId === currentChatUserId;
     const initial = (c.nickname || c.username || '?')[0].toUpperCase();
     const time = c.lastTime ? new Date(c.lastTime).toLocaleString('zh-CN', {month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
