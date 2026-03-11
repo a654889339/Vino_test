@@ -95,6 +95,10 @@ const DeviceGuide = sequelize.define('DeviceGuide', {
     type: DataTypes.INTEGER,
     defaultValue: 0,
   },
+  qrcodeUrl: {
+    type: DataTypes.STRING(500),
+    defaultValue: '',
+  },
   status: {
     type: DataTypes.ENUM('active', 'inactive'),
     defaultValue: 'active',

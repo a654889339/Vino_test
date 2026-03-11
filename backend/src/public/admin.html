@@ -910,7 +910,10 @@ async function loadGuides() {
         <td>${g.emoji || '-'}</td>
         <td>${g.badge ? '<span style="background:#FEE2E2;color:#B91C1C;padding:2px 8px;border-radius:4px;font-size:11px">'+g.badge+'</span>' : '-'}</td>
         <td><span style="display:inline-block;padding:4px 14px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:500;transition:all .2s;${g.status==='active'?'background:#D1FAE5;color:#059669':'background:#F3F4F6;color:#999'}" onclick="toggleGuideStatus(${g.id},'${g.status}')">${g.status==='active'?'启用':'禁用'}</span></td>
-        <td><button class="detail-btn" onclick="showGuideQR(${g.id},'${escapeHtml(g.name)}')">查看</button></td>
+        <td>${g.qrcodeUrl
+          ? '<img src="'+g.qrcodeUrl+'" style="width:48px;height:48px;cursor:pointer;border:1px solid #eee;border-radius:6px" onclick="showGuideQR('+g.id+',\''+escapeHtml(g.name)+'\',\''+g.qrcodeUrl+'\')" title="点击查看大图" />'
+          : '<button class="detail-btn" onclick="showGuideQR('+g.id+',\''+escapeHtml(g.name)+'\',\'\')">生成</button>'
+        }</td>
         <td>
           <button class="detail-btn" onclick='editGuide(${g.id})'>编辑</button>
           <button class="history-btn" style="color:#B91C1C;border-color:#FCA5A5" onclick="deleteGuide(${g.id})">删除</button>
@@ -1424,17 +1427,29 @@ async function sendAdminReply() {
 /* ===== Guide QR Code ===== */
 let currentQRUrl = '';
 let currentQRName = '';
-function showGuideQR(id, name) {
+let currentQRGuideId = 0;
+
+function showGuideQR(id, name, existingUrl) {
   const baseUrl = window.location.origin.replace(':5202', ':5201');
   currentQRUrl = baseUrl + '/guide/' + id;
   currentQRName = name;
+  currentQRGuideId = id;
   document.getElementById('qrModalTitle').textContent = name + ' - 二维码';
   document.getElementById('qrUrlText').textContent = currentQRUrl;
-  document.getElementById('qrPlaceholder').style.display = '';
-  document.getElementById('qrImageWrap').style.display = 'none';
-  document.getElementById('qrGenBtn').style.display = '';
-  document.getElementById('qrDownloadBtn').style.display = 'none';
   document.getElementById('qrModal').style.display = '';
+  if (existingUrl) {
+    document.getElementById('qrImage').src = existingUrl;
+    document.getElementById('qrPlaceholder').style.display = 'none';
+    document.getElementById('qrImageWrap').style.display = '';
+    document.getElementById('qrGenBtn').textContent = '重新生成';
+    document.getElementById('qrDownloadBtn').style.display = '';
+  } else {
+    document.getElementById('qrPlaceholder').style.display = '';
+    document.getElementById('qrImageWrap').style.display = 'none';
+    document.getElementById('qrGenBtn').textContent = '生成二维码';
+    document.getElementById('qrGenBtn').style.display = '';
+    document.getElementById('qrDownloadBtn').style.display = 'none';
+  }
 }
 
 async function generateQR() {
@@ -1442,14 +1457,14 @@ async function generateQR() {
   btn.textContent = '生成中...';
   btn.disabled = true;
   try {
-    const res = await api('/qrcode?url=' + encodeURIComponent(currentQRUrl));
-    if (res.code === 0 && res.data && res.data.dataUrl) {
-      const img = document.getElementById('qrImage');
-      img.src = res.data.dataUrl;
+    const res = await api('/guides/' + currentQRGuideId + '/qrcode', { method: 'POST' });
+    if (res.code === 0 && res.data && res.data.url) {
+      document.getElementById('qrImage').src = res.data.url;
       document.getElementById('qrPlaceholder').style.display = 'none';
       document.getElementById('qrImageWrap').style.display = '';
       btn.textContent = '重新生成';
       document.getElementById('qrDownloadBtn').style.display = '';
+      loadGuides();
     } else {
       alert(res.message || '生成失败');
       btn.textContent = '生成二维码';
