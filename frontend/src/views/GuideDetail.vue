@@ -5,37 +5,37 @@
     <van-loading v-if="loading" size="36" style="text-align:center;padding:60px 0" />
 
     <template v-else-if="guide.id">
-      <!-- Hero: cover / video -->
-      <div class="hero-section">
-        <div v-if="guide.showcaseVideo" class="hero-video-wrap" @click="playVideo(fullUrl(guide.showcaseVideo))">
-          <img v-if="guide.coverImage" :src="fullUrl(guide.coverImage)" class="hero-img" />
-          <div v-else class="hero-placeholder" :style="{ background: guide.gradient }">
+      <!-- Hero + Media -->
+      <div class="hero-block">
+        <div class="hero-section">
+          <div v-if="guide.showcaseVideo" class="hero-video-wrap" @click="playVideo(fullUrl(guide.showcaseVideo))">
+            <img v-if="guide.coverImage" :src="fullUrl(guide.coverImage)" class="hero-img" />
+            <div v-else class="hero-placeholder" :style="{ background: guide.gradient }">
+              <img v-if="guide.iconUrl" :src="guide.iconUrl" style="width:64px;height:64px;object-fit:contain" />
+              <van-icon v-else :name="guide.icon" size="64" color="#fff" />
+            </div>
+            <div class="hero-play-btn"><van-icon name="play-circle" size="48" color="#fff" /></div>
+          </div>
+          <div v-else-if="guide.coverImage" class="hero-img-wrap" @click="previewImage(fullUrl(guide.coverImage))">
+            <img :src="fullUrl(guide.coverImage)" class="hero-img" />
+          </div>
+          <div v-else class="hero-gradient" :style="{ background: guide.gradient }">
             <img v-if="guide.iconUrl" :src="guide.iconUrl" style="width:64px;height:64px;object-fit:contain" />
             <van-icon v-else :name="guide.icon" size="64" color="#fff" />
+            <h2>{{ guide.name }}</h2>
           </div>
-          <div class="hero-play-btn"><van-icon name="play-circle" size="48" color="#fff" /></div>
         </div>
-        <div v-else-if="guide.coverImage" class="hero-img-wrap" @click="previewImage(fullUrl(guide.coverImage))">
-          <img :src="fullUrl(guide.coverImage)" class="hero-img" />
-        </div>
-        <div v-else class="hero-gradient" :style="{ background: guide.gradient }">
-          <img v-if="guide.iconUrl" :src="guide.iconUrl" style="width:64px;height:64px;object-fit:contain" />
-          <van-icon v-else :name="guide.icon" size="64" color="#fff" />
-          <h2>{{ guide.name }}</h2>
-        </div>
-      </div>
-
-      <!-- Media Carousel -->
-      <div v-if="mediaItems.length" class="section-card">
-        <h3 class="section-title">产品展示</h3>
-        <div class="media-scroll">
-          <div v-for="(m, i) in mediaItems" :key="i" class="media-card" @click="openMedia(m)">
-            <div class="media-thumb">
-              <img v-if="getThumbUrl(m)" :src="getThumbUrl(m)" />
-              <div v-else class="media-thumb-placeholder"><van-icon :name="isVideo(m) ? 'video-o' : 'photo-o'" size="28" color="#999" /></div>
-              <div v-if="isVideo(m)" class="media-play"><van-icon name="play-circle-o" size="28" color="#fff" /></div>
+        <div v-if="mediaItems.length" class="hero-media">
+          <h3 class="hero-media-title">{{ guide.name }}</h3>
+          <div class="media-scroll">
+            <div v-for="(m, i) in mediaItems" :key="i" class="media-card" @click="openMedia(m)">
+              <div class="media-thumb">
+                <img v-if="getThumbUrl(m)" :src="getThumbUrl(m)" />
+                <div v-else class="media-thumb-placeholder"><van-icon :name="isVideo(m) ? 'video-o' : 'photo-o'" size="28" color="#999" /></div>
+                <div v-if="isVideo(m)" class="media-play"><van-icon name="play-circle-o" size="28" color="#fff" /></div>
+              </div>
+              <p class="media-label">{{ m.title }}</p>
             </div>
-            <p class="media-label">{{ m.title }}</p>
           </div>
         </div>
       </div>
@@ -182,6 +182,7 @@ onMounted(async () => {
 <style scoped>
 .guide-detail-page { background: #f5f5f5; min-height: 100vh; }
 
+.hero-block { background: #fff; margin-bottom: 10px; }
 .hero-section { position: relative; }
 .hero-video-wrap, .hero-img-wrap { position: relative; cursor: pointer; }
 .hero-img { width: 100%; height: 240px; object-fit: cover; display: block; }
@@ -190,9 +191,11 @@ onMounted(async () => {
 .hero-gradient h2 { font-size: 22px; font-weight: 600; }
 .hero-placeholder { width: 100%; height: 240px; display: flex; align-items: center; justify-content: center; }
 
+.hero-media { padding: 16px; }
+.hero-media-title { font-size: 16px; font-weight: 600; color: #1a1a1a; margin-bottom: 12px; }
+
 .section-card { background: #fff; margin: 10px 12px; border-radius: 12px; padding: 16px; }
 .section-title { font-size: 16px; font-weight: 600; color: #1a1a1a; margin-bottom: 12px; display: flex; align-items: center; }
-.desc-text { font-size: 14px; color: #666; line-height: 1.8; white-space: pre-wrap; }
 
 .media-scroll { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; -webkit-overflow-scrolling: touch; }
 .media-scroll::-webkit-scrollbar { display: none; }
