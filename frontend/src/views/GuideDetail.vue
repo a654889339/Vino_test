@@ -56,7 +56,7 @@
       <!-- Electronic Manual -->
       <div v-if="helpItems.length" class="section-card">
         <van-cell-group inset :border="false">
-          <van-cell title="电子说明书" icon="description" is-link :label="`共 ${helpItems.length} 个章节`" @click="$router.push(`/guide/${guide.id}/manual`)" />
+          <van-cell title="电子说明书" icon="description" is-link @click="$router.push(`/guide/${guide.id}/manual`)" />
         </van-cell-group>
       </div>
 
