@@ -1,4 +1,4 @@
-const { Order, User } = require('../models');
+const { Order, User, OrderLog } = require('../models');
 
 function generateOrderNo() {
   const now = new Date();
@@ -134,6 +134,16 @@ exports.adminUpdateStatus = async (req, res) => {
     }
     const order = await Order.findByPk(req.params.id);
     if (!order) return res.status(404).json({ code: 404, message: '订单不存在' });
+    const oldStatus = order.status;
+    if (oldStatus !== status) {
+      await OrderLog.create({
+        orderId: order.id,
+        changeType: 'status',
+        oldValue: STATUS_MAP[oldStatus]?.text || oldStatus,
+        newValue: STATUS_MAP[status]?.text || status,
+        operator: req.user.username || 'admin',
+      });
+    }
     order.status = status;
     await order.save();
     const s = STATUS_MAP[order.status];
@@ -155,5 +165,70 @@ exports.adminStats = async (req, res) => {
   } catch (err) {
     console.error('[Order] adminStats error:', err.message);
     res.status(500).json({ code: 500, message: '获取统计失败' });
+  }
+};
+
+exports.adminUpdatePrice = async (req, res) => {
+  try {
+    const { price } = req.body;
+    if (price === undefined || price === null || isNaN(Number(price)) || Number(price) < 0) {
+      return res.status(400).json({ code: 400, message: '无效金额' });
+    }
+    const order = await Order.findByPk(req.params.id);
+    if (!order) return res.status(404).json({ code: 404, message: '订单不存在' });
+    const oldPrice = order.price;
+    if (Number(oldPrice) !== Number(price)) {
+      await OrderLog.create({
+        orderId: order.id,
+        changeType: 'price',
+        oldValue: `¥${Number(oldPrice).toFixed(2)}`,
+        newValue: `¥${Number(price).toFixed(2)}`,
+        operator: req.user.username || 'admin',
+      });
+    }
+    order.price = price;
+    await order.save();
+    res.json({ code: 0, data: order });
+  } catch (err) {
+    console.error('[Order] adminUpdatePrice error:', err.message);
+    res.status(500).json({ code: 500, message: '更新金额失败' });
+  }
+};
+
+exports.adminAddRemark = async (req, res) => {
+  try {
+    const { remark } = req.body;
+    if (!remark || !remark.trim()) {
+      return res.status(400).json({ code: 400, message: '备注不能为空' });
+    }
+    const order = await Order.findByPk(req.params.id);
+    if (!order) return res.status(404).json({ code: 404, message: '订单不存在' });
+    await OrderLog.create({
+      orderId: order.id,
+      changeType: 'admin_remark',
+      oldValue: '',
+      newValue: remark.trim(),
+      operator: req.user.username || 'admin',
+    });
+    order.adminRemark = remark.trim();
+    await order.save();
+    res.json({ code: 0, message: '备注已添加' });
+  } catch (err) {
+    console.error('[Order] adminAddRemark error:', err.message);
+    res.status(500).json({ code: 500, message: '添加备注失败' });
+  }
+};
+
+exports.adminLogs = async (req, res) => {
+  try {
+    const logs = await OrderLog.findAll({
+      where: { orderId: req.params.id },
+      order: [['createdAt', 'DESC']],
+    });
+    const order = await Order.findByPk(req.params.id, { attributes: ['id', 'orderNo', 'adminRemark'] });
+    res.json({ code: 0, data: { logs, adminRemark: order?.adminRemark || '' } });
+  } catch (err) {
+    console.error('[Order] adminLogs error:', err.message);
+    res.status(500).json({ code: 500, message: '获取变更记录失败' });
   }
 };

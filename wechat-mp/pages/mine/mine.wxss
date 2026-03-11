@@ -91,3 +91,22 @@
   font-size: 28rpx;
   color: #ccc;
 }
+
+.logout-area {
+  padding: 40rpx 32rpx;
+}
+
+.btn-logout {
+  width: 100%;
+  height: 88rpx;
+  line-height: 88rpx;
+  font-size: 30rpx;
+  color: #666;
+  background: #fff;
+  border: 1rpx solid #ddd;
+  border-radius: 12rpx;
+}
+
+.tab-bar-placeholder {
+  height: 120rpx;
+}

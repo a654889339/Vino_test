@@ -2,7 +2,10 @@
   "pages": [
     "pages/index/index",
     "pages/service/service",
-    "pages/mine/mine"
+    "pages/orders/orders",
+    "pages/mine/mine",
+    "pages/service-detail/service-detail",
+    "pages/login/login"
   ],
   "window": {
     "defaultTitle": "Vino服务",
@@ -24,6 +27,12 @@
         "name": "服务",
         "icon": "assets/tab-service.png",
         "activeIcon": "assets/tab-service-active.png"
+      },
+      {
+        "pagePath": "pages/orders/orders",
+        "name": "订单",
+        "icon": "assets/tab-orders.png",
+        "activeIcon": "assets/tab-orders-active.png"
       },
       {
         "pagePath": "pages/mine/mine",

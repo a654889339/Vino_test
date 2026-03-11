@@ -1,4 +1,20 @@
 <view class="page">
+  <view class="guide-section">
+    <view class="guide-header">
+      <text class="guide-title">服务指南</text>
+    </view>
+    <scroll-view scroll-x class="guide-scroll">
+      <view class="guide-card" wx:for="{{deviceGuides}}" wx:key="id" bindtap="showGuide" data-device="{{item}}">
+        <view class="guide-icon" style="background: {{item.gradient}}">
+          <text class="guide-emoji">{{item.emoji}}</text>
+          <text class="guide-badge" wx:if="{{item.badge}}">{{item.badge}}</text>
+        </view>
+        <text class="guide-name">{{item.name}}</text>
+        <text class="guide-model">{{item.model}}</text>
+      </view>
+    </scroll-view>
+  </view>
+
   <view class="tabs">
     <view
       class="tab-item {{activeTab === index ? 'active' : ''}}"
@@ -11,8 +27,11 @@
     </view>
   </view>
 
-  <view class="service-grid">
-    <view class="grid-item" wx:for="{{currentServices}}" wx:key="id">
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <text>加载中...</text>
+  </view>
+  <view class="service-grid" wx:else>
+    <view class="grid-item" wx:for="{{services}}" wx:key="id" bindtap="goServiceDetail" data-id="{{item.id}}">
       <view class="grid-icon" style="background: {{item.bg}}">
         <text class="grid-emoji">{{item.emoji}}</text>
       </view>
@@ -21,4 +40,6 @@
       <text class="grid-price">¥{{item.price}}起</text>
     </view>
   </view>
+
+  <view class="tab-bar-placeholder"></view>
 </view>

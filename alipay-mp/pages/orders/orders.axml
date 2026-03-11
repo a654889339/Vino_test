@@ -1,0 +1,47 @@
+<view class="page">
+  <view class="tabs">
+    <view
+      class="tab-item {{activeTab === index ? 'active' : ''}}"
+      a:for="{{tabs}}"
+      a:key="key"
+      data-index="{{index}}"
+      onTap="switchTab"
+    >
+      <text>{{item.name}}</text>
+    </view>
+  </view>
+
+  <view class="loading-wrap" a:if="{{loading}}">
+    <text>加载中...</text>
+  </view>
+  <view class="empty-wrap" a:elif="{{isLoggedIn && !orders.length}}">
+    <text>暂无订单</text>
+  </view>
+  <view class="order-list" a:else>
+    <view class="order-card" a:for="{{orders}}" a:key="id">
+      <view class="order-header">
+        <text class="order-no">{{item.orderNo || item.id}}</text>
+        <text class="order-status status-{{item.status}}">{{item.statusText}}</text>
+      </view>
+      <view class="order-body">
+        <view class="order-icon">🔧</view>
+        <view class="order-info">
+          <text class="order-title">{{item.serviceTitle}}</text>
+          <text class="order-time">{{item.createdAt ? (item.createdAt.split('T')[0] + ' ' + (item.createdAt.split('T')[1] || '').substring(0,5)) : ''}}</text>
+          <text class="order-contact" a:if="{{item.contactName}}">{{item.contactName}} {{item.contactPhone}}</text>
+        </view>
+        <text class="order-price">¥{{item.price}}</text>
+      </view>
+      <view class="order-actions" a:if="{{item.status === 'pending'}}">
+        <button class="btn-cancel" size="mini" onTap="cancelOrder" data-id="{{item.id}}">取消订单</button>
+      </view>
+    </view>
+  </view>
+
+  <view class="login-tip" a:if="{{!isLoggedIn && !loading}}">
+    <text>请先登录查看订单</text>
+    <navigator url="/pages/login/login" class="link-login">去登录</navigator>
+  </view>
+
+  <view class="tab-bar-placeholder"></view>
+</view>

@@ -1,14 +1,12 @@
-# Tab Bar Icons
+# Assets
 
-请在此目录放置以下图标文件（建议尺寸 81x81 px，PNG 格式）：
+## Tab Bar (Custom)
 
-| 文件名 | 用途 |
-|--------|------|
-| tab-home.png | 首页（未选中） |
-| tab-home-active.png | 首页（选中，红色 #B91C1C） |
-| tab-service.png | 服务（未选中） |
-| tab-service-active.png | 服务（选中，红色 #B91C1C） |
-| tab-mine.png | 我的（未选中） |
-| tab-mine-active.png | 我的（选中，红色 #B91C1C） |
+本项目使用 **自定义 tabBar**，无需放置 tab 图标文件。图标以 emoji 形式显示在 `custom-tab-bar` 组件中。
 
-可使用 [iconfont](https://www.iconfont.cn/) 或 [iconpark](https://iconpark.oceanengine.com/) 下载图标。
+## 请求域名配置
+
+发布前请在 [微信公众平台](https://mp.weixin.qq.com) → 开发 → 开发设置 → 服务器域名 中，将 `request合法域名` 添加：
+
+- `https://106.54.50.88:5202` （若 API 使用 HTTPS）
+- 或 `http://106.54.50.88:5202` （开发阶段可关闭 URL 校验）

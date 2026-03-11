@@ -56,6 +56,10 @@ const Order = sequelize.define('Order', {
     type: DataTypes.DATE,
     allowNull: true,
   },
+  adminRemark: {
+    type: DataTypes.TEXT,
+    defaultValue: '',
+  },
 }, {
   tableName: 'orders',
   timestamps: true,

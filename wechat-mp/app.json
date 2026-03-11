@@ -2,7 +2,10 @@
   "pages": [
     "pages/index/index",
     "pages/service/service",
-    "pages/mine/mine"
+    "pages/orders/orders",
+    "pages/mine/mine",
+    "pages/service-detail/service-detail",
+    "pages/login/login"
   ],
   "window": {
     "backgroundTextStyle": "light",
@@ -11,30 +14,30 @@
     "navigationBarTextStyle": "white"
   },
   "tabBar": {
+    "custom": true,
     "color": "#999999",
     "selectedColor": "#B91C1C",
     "backgroundColor": "#ffffff",
     "list": [
       {
         "pagePath": "pages/index/index",
-        "text": "首页",
-        "iconPath": "assets/tab-home.png",
-        "selectedIconPath": "assets/tab-home-active.png"
+        "text": "首页"
       },
       {
         "pagePath": "pages/service/service",
-        "text": "服务",
-        "iconPath": "assets/tab-service.png",
-        "selectedIconPath": "assets/tab-service-active.png"
+        "text": "服务"
+      },
+      {
+        "pagePath": "pages/orders/orders",
+        "text": "订单"
       },
       {
         "pagePath": "pages/mine/mine",
-        "text": "我的",
-        "iconPath": "assets/tab-mine.png",
-        "selectedIconPath": "assets/tab-mine-active.png"
+        "text": "我的"
       }
     ]
   },
+  "usingComponents": {},
   "style": "v2",
   "sitemapLocation": "sitemap.json"
 }

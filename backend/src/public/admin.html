@@ -91,6 +91,32 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .refresh-btn:hover{opacity:.9}
 .section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)}
 .section-header h3{margin:0;padding:0;border:none;font-size:16px;font-weight:600}
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);z-index:1000;display:flex;align-items:center;justify-content:center}
+.modal-content{background:#fff;border-radius:12px;width:560px;max-width:90vw;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid #f0f0f0}
+.modal-header h3{margin:0;font-size:16px}
+.modal-close{font-size:24px;cursor:pointer;color:#999;line-height:1}
+.modal-close:hover{color:#333}
+.modal-body{padding:20px;overflow-y:auto;flex:1}
+.admin-remark-section h4{font-size:14px;font-weight:600;margin:0 0 8px;color:#333}
+.log-list{display:flex;flex-direction:column;gap:0}
+.log-item{padding:12px 0;border-bottom:1px solid #f5f5f5;font-size:13px}
+.log-item:last-child{border-bottom:none}
+.log-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.log-type{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500;color:#fff}
+.log-type.status{background:#2563EB}
+.log-type.price{background:#D97706}
+.log-type.admin_remark{background:#7C3AED}
+.log-time{font-size:11px;color:#999}
+.log-operator{font-size:11px;color:#999;margin-left:8px}
+.log-detail{color:#333}
+.log-change{display:flex;align-items:center;gap:6px}
+.log-old{color:#999;text-decoration:line-through}
+.log-arrow{color:#ccc}
+.log-new{color:#B91C1C;font-weight:500}
+.log-empty{text-align:center;color:#999;padding:30px 0;font-size:13px}
+.history-btn{padding:2px 8px;font-size:11px;background:#f0f0f0;border:1px solid #ddd;border-radius:4px;cursor:pointer;color:#666;margin-left:4px}
+.history-btn:hover{background:#e0e0e0}
 </style>
 </head>
 <body>
@@ -199,6 +225,36 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         </div>
         <div class="pagination" id="orderPagination"></div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- 订单历史记录弹窗 -->
+<div class="modal-overlay" id="logModal" style="display:none" onclick="if(event.target===this)closeLogModal()">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>订单变更记录</h3>
+      <span class="modal-close" onclick="closeLogModal()">&times;</span>
+    </div>
+    <div class="modal-body">
+      <div class="admin-remark-section">
+        <h4>后台备注</h4>
+        <div id="adminRemarkDisplay" style="color:#666;font-size:13px;margin-bottom:8px"></div>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="adminRemarkInput" placeholder="输入后台备注..." style="flex:1;padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px" />
+          <button onclick="submitAdminRemark()" style="padding:6px 16px;background:#B91C1C;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px">添加</button>
+        </div>
+      </div>
+      <div class="admin-remark-section" style="margin-top:16px">
+        <h4>修改金额</h4>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span style="font-size:13px;color:#666">¥</span>
+          <input type="number" id="priceInput" placeholder="新金额" step="0.01" min="0" style="width:120px;padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px" />
+          <button onclick="submitPriceChange()" style="padding:6px 16px;background:#D97706;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px">修改</button>
+        </div>
+      </div>
+      <h4 style="margin-top:16px">变更历史</h4>
+      <div id="logList" class="log-list"></div>
     </div>
   </div>
 </div>
@@ -375,13 +431,16 @@ async function loadOrders() {
           <td style="font-size:12px">${o.contactName || '-'}<br>${o.contactPhone || ''}</td>
           <td style="font-size:12px;max-width:200px;word-break:break-all">${o.address || '-'}</td>
           <td style="font-size:12px">${fmtTime(o.createdAt)}</td>
-          <td><select class="status-select" onchange="updateOrderStatus(${o.id}, this.value)" ${o.status === 'cancelled' ? 'disabled' : ''}>
-            <option value="pending" ${o.status === 'pending' ? 'selected' : ''}>待支付</option>
-            <option value="paid" ${o.status === 'paid' ? 'selected' : ''}>已支付</option>
-            <option value="processing" ${o.status === 'processing' ? 'selected' : ''}>进行中</option>
-            <option value="completed" ${o.status === 'completed' ? 'selected' : ''}>已完成</option>
-            <option value="cancelled" ${o.status === 'cancelled' ? 'selected' : ''}>已取消</option>
-          </select></td>
+          <td>
+            <select class="status-select" onchange="updateOrderStatus(${o.id}, this.value)" ${o.status === 'cancelled' ? 'disabled' : ''}>
+              <option value="pending" ${o.status === 'pending' ? 'selected' : ''}>待支付</option>
+              <option value="paid" ${o.status === 'paid' ? 'selected' : ''}>已支付</option>
+              <option value="processing" ${o.status === 'processing' ? 'selected' : ''}>进行中</option>
+              <option value="completed" ${o.status === 'completed' ? 'selected' : ''}>已完成</option>
+              <option value="cancelled" ${o.status === 'cancelled' ? 'selected' : ''}>已取消</option>
+            </select>
+            <button class="history-btn" onclick="openLogModal(${o.id}, '${o.price}')">历史</button>
+          </td>
         </tr>`).join('');
       }
       const totalPages = Math.ceil(total / pageSize);
@@ -409,6 +468,75 @@ async function checkSession() {
   } catch { localStorage.removeItem('vino_admin_token'); token = null; }
 }
 checkSession();
+
+let currentLogOrderId = null;
+const typeLabels = { status: '状态变更', price: '金额变更', admin_remark: '后台备注' };
+
+function openLogModal(orderId, price) {
+  currentLogOrderId = orderId;
+  document.getElementById('priceInput').value = price;
+  document.getElementById('adminRemarkInput').value = '';
+  document.getElementById('logModal').style.display = 'flex';
+  loadOrderLogs(orderId);
+}
+
+function closeLogModal() {
+  document.getElementById('logModal').style.display = 'none';
+  currentLogOrderId = null;
+}
+
+async function loadOrderLogs(orderId) {
+  try {
+    const res = await api(`/orders/admin/${orderId}/logs`);
+    const { logs, adminRemark } = res.data;
+    document.getElementById('adminRemarkDisplay').textContent = adminRemark || '（暂无备注）';
+    const listEl = document.getElementById('logList');
+    if (!logs.length) {
+      listEl.innerHTML = '<div class="log-empty">暂无变更记录</div>';
+      return;
+    }
+    listEl.innerHTML = logs.map(l => {
+      const typeClass = l.changeType;
+      const typeText = typeLabels[l.changeType] || l.changeType;
+      const time = new Date(l.createdAt).toLocaleString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+      let detail = '';
+      if (l.changeType === 'admin_remark') {
+        detail = `<div class="log-detail">${l.newValue}</div>`;
+      } else {
+        detail = `<div class="log-change"><span class="log-old">${l.oldValue}</span><span class="log-arrow">→</span><span class="log-new">${l.newValue}</span></div>`;
+      }
+      return `<div class="log-item">
+        <div class="log-meta">
+          <span><span class="log-type ${typeClass}">${typeText}</span><span class="log-operator">操作人: ${l.operator}</span></span>
+          <span class="log-time">${time}</span>
+        </div>
+        ${detail}
+      </div>`;
+    }).join('');
+  } catch (e) {
+    document.getElementById('logList').innerHTML = '<div class="log-empty">加载失败</div>';
+  }
+}
+
+async function submitAdminRemark() {
+  const remark = document.getElementById('adminRemarkInput').value.trim();
+  if (!remark) return;
+  try {
+    await api(`/orders/admin/${currentLogOrderId}/remark`, 'POST', { remark });
+    document.getElementById('adminRemarkInput').value = '';
+    loadOrderLogs(currentLogOrderId);
+  } catch (e) { alert(e.message || '添加备注失败'); }
+}
+
+async function submitPriceChange() {
+  const price = document.getElementById('priceInput').value;
+  if (!price || isNaN(Number(price)) || Number(price) < 0) { alert('请输入有效金额'); return; }
+  try {
+    await api(`/orders/admin/${currentLogOrderId}/price`, 'PUT', { price: Number(price) });
+    loadOrderLogs(currentLogOrderId);
+    loadOrders();
+  } catch (e) { alert(e.message || '修改金额失败'); }
+}
 </script>
 </body>
 </html>

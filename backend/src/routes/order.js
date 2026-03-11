@@ -11,5 +11,8 @@ router.get('/admin/stats', authMiddleware, adminMiddleware, orderController.admi
 router.get('/:id', authMiddleware, orderController.detail);
 router.put('/:id/cancel', authMiddleware, orderController.cancel);
 router.put('/admin/:id/status', authMiddleware, adminMiddleware, orderController.adminUpdateStatus);
+router.put('/admin/:id/price', authMiddleware, adminMiddleware, orderController.adminUpdatePrice);
+router.post('/admin/:id/remark', authMiddleware, adminMiddleware, orderController.adminAddRemark);
+router.get('/admin/:id/logs', authMiddleware, adminMiddleware, orderController.adminLogs);
 
 module.exports = router;

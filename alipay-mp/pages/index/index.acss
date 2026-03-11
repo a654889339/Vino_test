@@ -161,3 +161,7 @@
   font-size: 22rpx;
   color: #999;
 }
+
+.tab-bar-placeholder {
+  height: 120rpx;
+}

@@ -1,3 +1,5 @@
+const app = getApp();
+
 Page({
   data: {
     banners: [
@@ -15,12 +17,7 @@ Page({
       { title: '检测', emoji: '🔍', color: '#EA580C' },
       { title: '更多', emoji: '···', color: '#6B7280' },
     ],
-    hotServices: [
-      { id: 1, title: '设备维修', desc: '专业工程师', price: '99', emoji: '🔧', bg: 'linear-gradient(135deg, #B91C1C, #991B1B)' },
-      { id: 2, title: '深度清洁', desc: '全方位保养', price: '149', emoji: '✨', bg: 'linear-gradient(135deg, #2563EB, #1D4ED8)' },
-      { id: 3, title: '系统检测', desc: '全面评估', price: '49', emoji: '🔍', bg: 'linear-gradient(135deg, #059669, #047857)' },
-      { id: 4, title: '数据恢复', desc: '专业找回', price: '199', emoji: '💾', bg: 'linear-gradient(135deg, #7C3AED, #6D28D9)' },
-    ],
+    hotServices: [],
     recommends: [
       { id: 1, title: '会员权益', desc: '专属折扣', emoji: '🏅', bg: 'linear-gradient(135deg, #F59E0B, #D97706)' },
       { id: 2, title: '服务保障', desc: '无忧售后', emoji: '🛡️', bg: 'linear-gradient(135deg, #10B981, #059669)' },
@@ -29,11 +26,51 @@ Page({
     ],
   },
 
+  onShow() {
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().setData({ selected: 0 });
+    }
+    this.loadHotServices();
+  },
+
+  loadHotServices() {
+    app.request({ url: '/services' })
+      .then(res => {
+        const data = (res.data || []).slice(0, 8);
+        const hotServices = data.map(s => ({
+          id: s.id,
+          title: s.title || '服务',
+          desc: s.description || '专业服务',
+          price: s.price || 0,
+          emoji: '🔧',
+          bg: 'linear-gradient(135deg, #B91C1C, #991B1B)',
+        }));
+        this.setData({ hotServices: hotServices.length ? hotServices : this.getFallbackHotServices() });
+      })
+      .catch(() => {
+        this.setData({ hotServices: this.getFallbackHotServices() });
+      });
+  },
+
+  getFallbackHotServices() {
+    return [
+      { id: 1, title: '设备维修', desc: '专业工程师', price: '99', emoji: '🔧', bg: 'linear-gradient(135deg, #B91C1C, #991B1B)' },
+      { id: 2, title: '深度清洁', desc: '全方位保养', price: '149', emoji: '✨', bg: 'linear-gradient(135deg, #2563EB, #1D4ED8)' },
+      { id: 3, title: '系统检测', desc: '全面评估', price: '49', emoji: '🔍', bg: 'linear-gradient(135deg, #059669, #047857)' },
+      { id: 4, title: '数据恢复', desc: '专业找回', price: '199', emoji: '💾', bg: 'linear-gradient(135deg, #7C3AED, #6D28D9)' },
+    ];
+  },
+
   goService() {
     wx.switchTab({ url: '/pages/service/service' });
   },
 
   goServiceList() {
     wx.switchTab({ url: '/pages/service/service' });
+  },
+
+  goServiceDetail(e) {
+    const id = e.currentTarget.dataset.id;
+    wx.navigateTo({ url: `/pages/service-detail/service-detail?id=${id}` });
   },
 });

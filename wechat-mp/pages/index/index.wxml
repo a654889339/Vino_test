@@ -1,5 +1,4 @@
 <view class="page">
-  <!-- Banner -->
   <swiper class="banner" autoplay circular indicator-dots indicator-color="rgba(255,255,255,0.5)" indicator-active-color="#fff">
     <swiper-item wx:for="{{banners}}" wx:key="id">
       <view class="banner-item" style="background: {{item.bg}}">
@@ -11,7 +10,6 @@
     </swiper-item>
   </swiper>
 
-  <!-- Nav Grid -->
   <view class="nav-grid">
     <view class="nav-item" wx:for="{{navItems}}" wx:key="title" bindtap="goService">
       <view class="nav-icon" style="background: {{item.color}}">
@@ -21,14 +19,13 @@
     </view>
   </view>
 
-  <!-- Hot Services -->
   <view class="card">
     <view class="section-header">
       <text class="section-title">热门服务</text>
       <text class="section-more" bindtap="goServiceList">查看全部 ›</text>
     </view>
     <scroll-view scroll-x class="service-scroll">
-      <view class="service-card" wx:for="{{hotServices}}" wx:key="id">
+      <view class="service-card" wx:for="{{hotServices}}" wx:key="id" bindtap="goServiceDetail" data-id="{{item.id}}">
         <view class="service-cover" style="background: {{item.bg}}">
           <text class="service-icon-text">{{item.emoji}}</text>
         </view>
@@ -41,7 +38,6 @@
     </scroll-view>
   </view>
 
-  <!-- Recommend -->
   <view class="card">
     <text class="section-title">为你推荐</text>
     <view class="recommend-grid">
@@ -54,4 +50,6 @@
       </view>
     </view>
   </view>
+
+  <view class="tab-bar-placeholder"></view>
 </view>
