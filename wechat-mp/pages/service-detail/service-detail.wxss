@@ -132,6 +132,9 @@
   font-weight: 600;
   border-radius: 44rpx;
   border: none;
+  text-align: center;
+  padding: 0;
+  margin: 0;
 }
 
 /* Modal */
@@ -275,5 +278,8 @@
   font-size: 32rpx;
   font-weight: 600;
   border-radius: 44rpx;
+  text-align: center;
+  padding: 0;
+  margin: 0;
   border: none;
 }
