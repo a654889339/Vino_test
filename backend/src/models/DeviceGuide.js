@@ -19,6 +19,10 @@ const DeviceGuide = sequelize.define('DeviceGuide', {
     type: DataTypes.STRING(100),
     defaultValue: 'setting-o',
   },
+  iconUrl: {
+    type: DataTypes.STRING(500),
+    defaultValue: '',
+  },
   emoji: {
     type: DataTypes.STRING(20),
     defaultValue: '',

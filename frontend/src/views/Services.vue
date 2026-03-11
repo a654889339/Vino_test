@@ -15,8 +15,9 @@
           class="guide-card"
           @click="openGuide(device)"
         >
-          <div class="guide-icon-wrapper" :style="{ background: device.gradient }">
-            <van-icon :name="device.icon" size="28" color="#fff" />
+          <div class="guide-icon-wrapper" :style="{ background: device.iconUrl ? '#fff' : device.gradient }">
+            <img v-if="device.iconUrl" :src="device.iconUrl" class="guide-icon-img" />
+            <van-icon v-else :name="device.icon" size="28" color="#fff" />
             <span v-if="device.badge" class="guide-badge">{{ device.badge }}</span>
           </div>
           <div class="guide-info">
@@ -97,8 +98,9 @@
             class="all-guide-item"
             @click="showAllGuides = false; openGuide(device)"
           >
-            <div class="all-guide-icon" :style="{ background: device.gradient }">
-              <van-icon :name="device.icon" size="24" color="#fff" />
+            <div class="all-guide-icon" :style="{ background: device.iconUrl ? '#fff' : device.gradient }">
+              <img v-if="device.iconUrl" :src="device.iconUrl" class="guide-icon-img-sm" />
+              <van-icon v-else :name="device.icon" size="24" color="#fff" />
             </div>
             <div class="all-guide-info">
               <h4>{{ device.name }}</h4>
@@ -328,7 +330,10 @@ onMounted(async () => {
   justify-content: center;
   margin-bottom: 10px;
   position: relative;
+  overflow: hidden;
 }
+.guide-icon-img { width: 100%; height: 100%; object-fit: contain; }
+.guide-icon-img-sm { width: 100%; height: 100%; object-fit: contain; }
 
 .guide-badge {
   position: absolute;

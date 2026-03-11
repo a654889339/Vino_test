@@ -38,7 +38,7 @@ exports.adminList = async (req, res) => {
 };
 
 const GUIDE_FIELDS = [
-  'name','subtitle','icon','emoji','gradient','badge',
+  'name','subtitle','icon','iconUrl','emoji','gradient','badge',
   'tags','sections','sortOrder','status',
   'coverImage','showcaseVideo','description','mediaItems','helpItems',
 ];

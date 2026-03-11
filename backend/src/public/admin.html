@@ -269,7 +269,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
             <div class="form-group"><label>名称 *</label><input class="form-input" id="gName" placeholder="如：空调" /></div>
             <div class="form-group"><label>副标题</label><input class="form-input" id="gSubtitle" placeholder="如：家用/商用中央空调" /></div>
-            <div class="form-group"><label>Vant图标</label><input class="form-input" id="gIcon" placeholder="cluster-o" /></div>
+            <div class="form-group"><label>自定义图标 <span style="font-weight:normal;color:#999;font-size:12px">（上传后替代默认图标）</span></label>
+              <div style="display:flex;gap:8px;align-items:center">
+                <img id="gIconPreview" style="width:44px;height:44px;object-fit:contain;border-radius:10px;border:1px solid #eee;display:none;background:#f5f5f5" />
+                <input class="form-input" id="gIconUrl" placeholder="上传自定义图标图片" style="flex:1" onchange="var p=document.getElementById('gIconPreview');if(this.value){p.src=this.value;p.style.display='block'}else{p.style.display='none'}" />
+                <label style="padding:8px 14px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">上传图标<input type="file" accept="image/*" style="display:none" onchange="uploadGuideFile(this,'gIconUrl')" /></label>
+              </div>
+            </div>
+            <div class="form-group"><label>备用Vant图标 <span style="font-weight:normal;color:#999;font-size:12px">（无自定义图标时使用）</span></label><input class="form-input" id="gIcon" placeholder="cluster-o" /></div>
             <div class="form-group"><label>Emoji</label><input class="form-input" id="gEmoji" placeholder="❄️" /></div>
             <div class="form-group"><label>角标</label><input class="form-input" id="gBadge" placeholder="热门、新" /></div>
             <div class="form-group"><label>排序</label><input class="form-input" id="gSort" type="number" value="0" /></div>
@@ -772,7 +779,7 @@ async function loadGuides() {
         <td>${g.sortOrder}</td>
         <td><strong>${g.name}</strong></td>
         <td style="font-size:12px;color:#666">${g.subtitle || '-'}</td>
-        <td>${g.coverImage ? '<img src="'+g.coverImage+'" style="width:40px;height:40px;object-fit:cover;border-radius:4px">' : (g.icon || '-')}</td>
+        <td>${g.iconUrl ? '<img src="'+g.iconUrl+'" style="width:36px;height:36px;object-fit:contain;border-radius:8px;background:#f5f5f5;padding:2px">' : (g.icon || '-')}</td>
         <td>${g.emoji || '-'}</td>
         <td>${g.badge ? '<span style="background:#FEE2E2;color:#B91C1C;padding:2px 8px;border-radius:4px;font-size:11px">'+g.badge+'</span>' : '-'}</td>
         <td><span style="display:inline-block;padding:4px 14px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:500;transition:all .2s;${g.status==='active'?'background:#D1FAE5;color:#059669':'background:#F3F4F6;color:#999'}" onclick="toggleGuideStatus(${g.id},'${g.status}')">${g.status==='active'?'启用':'禁用'}</span></td>
@@ -863,8 +870,8 @@ async function uploadGuideFile(input, targetId) {
     const res = await doUpload(file);
     if (res.code === 0) {
       el.value = res.data.url;
-      const preview = document.getElementById('gCoverPreview');
-      if (targetId === 'gCoverImage' && preview) { preview.src = res.data.url; preview.style.display = 'block'; }
+      if (targetId === 'gCoverImage') { const p = document.getElementById('gCoverPreview'); if(p){p.src=res.data.url;p.style.display='block';} }
+      if (targetId === 'gIconUrl') { const p = document.getElementById('gIconPreview'); if(p){p.src=res.data.url;p.style.display='block';} }
     } else { el.value = ''; alert(res.message||'上传失败'); }
   } catch { el.value = ''; alert('上传失败'); }
   hideUploadLoading();
@@ -912,6 +919,9 @@ function openGuideEditor(guide) {
   document.getElementById('gName').value = guide ? guide.name : '';
   document.getElementById('gSubtitle').value = guide ? (guide.subtitle||'') : '';
   document.getElementById('gIcon').value = guide ? guide.icon : 'setting-o';
+  document.getElementById('gIconUrl').value = guide ? (guide.iconUrl||'') : '';
+  const iconPrev = document.getElementById('gIconPreview');
+  if (guide && guide.iconUrl) { iconPrev.src = guide.iconUrl; iconPrev.style.display = 'block'; } else { iconPrev.style.display = 'none'; }
   document.getElementById('gEmoji').value = guide ? (guide.emoji||'') : '';
   document.getElementById('gBadge').value = guide ? (guide.badge||'') : '';
   document.getElementById('gSort').value = guide ? guide.sortOrder : 0;
@@ -951,6 +961,7 @@ async function saveGuide() {
     name: document.getElementById('gName').value,
     subtitle: document.getElementById('gSubtitle').value,
     icon: document.getElementById('gIcon').value,
+    iconUrl: document.getElementById('gIconUrl').value,
     emoji: document.getElementById('gEmoji').value,
     badge: document.getElementById('gBadge').value,
     sortOrder: parseInt(document.getElementById('gSort').value) || 0,
