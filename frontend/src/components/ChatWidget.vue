@@ -51,6 +51,17 @@
 </template>
 
 <script setup>
+/**
+ * ChatWidget - 全局聊天悬浮组件
+ *
+ * 功能：
+ * 1. 右下角显示红色悬浮按钮，带未读消息红点
+ * 2. 点击弹出底部聊天面板，显示完整历史聊天记录
+ * 3. 用户消息（右侧红色气泡）与客服回复（左侧白色气泡）
+ * 4. 未登录时禁用输入框并提示登录
+ * 5. 支持外部调用 openWithAutoMessage() 自动打开并发送预设消息（如商品咨询）
+ * 6. 每 30 秒轮询未读消息数用于红点提示
+ */
 import { ref, computed, nextTick, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { showToast } from 'vant';
@@ -68,13 +79,16 @@ const unreadCount = ref(0);
 const chatBody = ref(null);
 
 const isLoggedIn = computed(() => !!userStore.token);
+// 用户昵称首字，用于聊天头像显示
 const userInitial = computed(() => {
   const n = userStore.userInfo?.nickname || userStore.userInfo?.username || '';
   return n ? n[0] : '我';
 });
 
+// 未读消息轮询定时器
 let pollTimer = null;
 
+// 格式化消息时间：当天只显示时分，非当天显示月/日 时分
 const formatTime = (t) => {
   if (!t) return '';
   const d = new Date(t);
@@ -89,6 +103,7 @@ const scrollToBottom = async () => {
   if (chatBody.value) chatBody.value.scrollTop = chatBody.value.scrollHeight;
 };
 
+// 加载当前用户的全部聊天记录，同时清零未读计数（服务端会标记已读）
 const loadMessages = async () => {
   if (!isLoggedIn.value) return;
   try {
@@ -99,6 +114,7 @@ const loadMessages = async () => {
   } catch { /* ignore */ }
 };
 
+// 轮询检查未读消息数，用于悬浮按钮红点显示
 const checkUnread = async () => {
   if (!isLoggedIn.value) return;
   try {
@@ -107,6 +123,7 @@ const checkUnread = async () => {
   } catch { /* ignore */ }
 };
 
+// 发送消息：调用 API 后追加到消息列表并滚动到底部
 const sendMessage = async () => {
   const content = inputText.value.trim();
   if (!content || sending.value || !isLoggedIn.value) return;
@@ -126,8 +143,10 @@ const sendMessage = async () => {
   sending.value = false;
 };
 
+// 待发送的自动消息（由 openWithAutoMessage 设置，面板打开后自动发送）
 let pendingAutoMsg = '';
 
+// 面板打开时加载消息，若有待发自动消息则立即发送
 const onOpen = async () => {
   await loadMessages();
   if (pendingAutoMsg && isLoggedIn.value) {
@@ -142,6 +161,10 @@ const toggleChat = () => {
   showChat.value = !showChat.value;
 };
 
+/**
+ * 外部调用接口：打开聊天面板并自动发送一条消息
+ * 用于"咨询"按钮场景，自动发送商品简介
+ */
 const openWithAutoMessage = (msg) => {
   pendingAutoMsg = msg || '';
   showChat.value = true;

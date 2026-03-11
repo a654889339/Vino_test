@@ -24,10 +24,11 @@ export const guideApi = {
   detail: (id) => request.get(`/guides/${id}`),
 };
 
+// 聊天消息 API（用户端）
 export const messageApi = {
-  mine: () => request.get('/messages/mine'),
-  send: (data) => request.post('/messages/send', data),
-  unread: () => request.get('/messages/unread'),
+  mine: () => request.get('/messages/mine'),       // 获取我的聊天记录
+  send: (data) => request.post('/messages/send', data), // 发送消息给客服
+  unread: () => request.get('/messages/unread'),   // 获取未读消息数（轮询用）
 };
 
 export const homeConfigApi = {

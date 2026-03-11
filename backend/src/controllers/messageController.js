@@ -2,12 +2,17 @@ const Message = require('../models/Message');
 const User = require('../models/User');
 const { Op } = require('sequelize');
 
+/**
+ * 获取当前用户的所有聊天记录（按时间正序）
+ * 同时将管理员发来的未读消息标记为已读
+ */
 exports.myMessages = async (req, res) => {
   try {
     const messages = await Message.findAll({
       where: { userId: req.user.id },
       order: [['createdAt', 'ASC']],
     });
+    // 标记管理员发来的消息为已读
     await Message.update({ read: true }, {
       where: { userId: req.user.id, sender: 'admin', read: false },
     });
@@ -17,6 +22,9 @@ exports.myMessages = async (req, res) => {
   }
 };
 
+/**
+ * 用户发送消息给客服
+ */
 exports.send = async (req, res) => {
   try {
     const { content } = req.body;
@@ -32,6 +40,10 @@ exports.send = async (req, res) => {
   }
 };
 
+/**
+ * 获取当前用户的未读消息数（仅统计管理员发来的未读消息）
+ * 前端每 30 秒轮询此接口，用于悬浮按钮红点提示
+ */
 exports.unreadCount = async (req, res) => {
   try {
     const count = await Message.count({
@@ -43,6 +55,11 @@ exports.unreadCount = async (req, res) => {
   }
 };
 
+/**
+ * [管理员] 获取会话列表
+ * 查询所有有消息的用户，返回每个用户的最后一条消息、未读数等摘要信息
+ * 按最后消息时间降序排列
+ */
 exports.adminConversations = async (req, res) => {
   try {
     const users = await User.findAll({
@@ -55,6 +72,7 @@ exports.adminConversations = async (req, res) => {
         limit: 1,
       }],
     });
+    // 过滤出有消息的用户，组装会话摘要
     const list = users
       .filter(u => u.messages && u.messages.length > 0)
       .map(u => {
@@ -71,6 +89,7 @@ exports.adminConversations = async (req, res) => {
       })
       .sort((a, b) => new Date(b.lastTime) - new Date(a.lastTime));
 
+    // 统计每个用户的未读消息数（用户发来的未读消息）
     const unreadCounts = await Message.findAll({
       attributes: ['userId', [require('sequelize').fn('COUNT', require('sequelize').col('id')), 'cnt']],
       where: { sender: 'user', read: false },
@@ -87,6 +106,10 @@ exports.adminConversations = async (req, res) => {
   }
 };
 
+/**
+ * [管理员] 获取指定用户的完整聊天记录
+ * 同时将该用户发来的未读消息标记为已读
+ */
 exports.adminGetMessages = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -103,6 +126,9 @@ exports.adminGetMessages = async (req, res) => {
   }
 };
 
+/**
+ * [管理员] 回复指定用户的消息
+ */
 exports.adminReply = async (req, res) => {
   try {
     const { userId } = req.params;
