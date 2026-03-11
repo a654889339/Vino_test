@@ -3,13 +3,16 @@ const User = require('./User');
 const Service = require('./Service');
 const Order = require('./Order');
 const OrderLog = require('./OrderLog');
+const Address = require('./Address');
 
 User.hasMany(Order, { foreignKey: 'userId', as: 'orders' });
 Order.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 Order.hasMany(OrderLog, { foreignKey: 'orderId', as: 'logs' });
 OrderLog.belongsTo(Order, { foreignKey: 'orderId', as: 'order' });
+User.hasMany(Address, { foreignKey: 'userId', as: 'addresses' });
+Address.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
-const models = { User, Service, Order, OrderLog };
+const models = { User, Service, Order, OrderLog, Address };
 
 const ADMIN_PASSWORD = 'Vino@2024admin';
 

@@ -66,6 +66,28 @@
           </div>
 
           <div class="order-form-scroll">
+            <div v-if="savedAddresses.length" class="saved-addr-section">
+              <div class="saved-addr-title">
+                <span>从已保存地址选取</span>
+                <span class="saved-addr-clear" v-if="selectedAddrId" @click="clearSelectedAddr">清除选择</span>
+              </div>
+              <div class="saved-addr-list">
+                <div
+                  v-for="addr in savedAddresses"
+                  :key="addr.id"
+                  class="saved-addr-item"
+                  :class="{ active: selectedAddrId === addr.id }"
+                  @click="applyAddress(addr)"
+                >
+                  <div class="saved-addr-name">
+                    {{ addr.contactName }} {{ addr.contactPhone }}
+                    <van-tag v-if="addr.isDefault" type="primary" color="#B91C1C" size="mini">默认</van-tag>
+                  </div>
+                  <div class="saved-addr-detail">{{ formatSavedAddr(addr) }}</div>
+                </div>
+              </div>
+            </div>
+
             <van-cell-group inset>
               <van-field v-model="orderForm.contactName" label="联系人" placeholder="请输入联系人姓名" />
               <van-field v-model="orderForm.contactPhone" label="联系电话" type="tel" placeholder="请输入联系电话" />
@@ -143,7 +165,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { serviceApi, orderApi } from '@/api';
+import { serviceApi, orderApi, addressApi } from '@/api';
 import { showToast, showDialog } from 'vant';
 import { areaList } from '@vant/area-data';
 
@@ -154,6 +176,8 @@ const showOrderPopup = ref(false);
 const submitting = ref(false);
 const showInlineCountry = ref(false);
 const showInlineArea = ref(false);
+const savedAddresses = ref([]);
+const selectedAddrId = ref(null);
 
 const countryColumns = [
   '中国大陆', '中国香港', '中国澳门', '中国台湾',
@@ -216,6 +240,53 @@ const buildFullAddress = () => {
   return parts.filter(Boolean).join(' ');
 };
 
+const formatSavedAddr = (addr) => {
+  const parts = [];
+  if (addr.country === '其他') parts.push(addr.customCountry || '其他');
+  else if (addr.country) parts.push(addr.country);
+  if (addr.country === '中国大陆') {
+    if (addr.province) parts.push(addr.province);
+    if (addr.city) parts.push(addr.city);
+    if (addr.district) parts.push(addr.district);
+  }
+  if (addr.detailAddress) parts.push(addr.detailAddress);
+  return parts.join(' ');
+};
+
+const applyAddress = (addr) => {
+  selectedAddrId.value = addr.id;
+  orderForm.contactName = addr.contactName;
+  orderForm.contactPhone = addr.contactPhone;
+  orderForm.country = addr.country;
+  orderForm.customCountry = addr.customCountry || '';
+  orderForm.province = addr.province || '';
+  orderForm.city = addr.city || '';
+  orderForm.district = addr.district || '';
+  orderForm.detailAddress = addr.detailAddress || '';
+  showInlineCountry.value = false;
+  showInlineArea.value = false;
+};
+
+const clearSelectedAddr = () => {
+  selectedAddrId.value = null;
+  orderForm.contactName = '';
+  orderForm.contactPhone = '';
+  orderForm.country = '';
+  orderForm.customCountry = '';
+  orderForm.province = '';
+  orderForm.city = '';
+  orderForm.district = '';
+  orderForm.areaCode = '';
+  orderForm.detailAddress = '';
+};
+
+const loadSavedAddresses = async () => {
+  try {
+    const res = await addressApi.list();
+    savedAddresses.value = res.data || [];
+  } catch {}
+};
+
 const onBookClick = () => {
   const token = localStorage.getItem('vino_token');
   if (!token) {
@@ -226,6 +297,7 @@ const onBookClick = () => {
   }
   showInlineCountry.value = false;
   showInlineArea.value = false;
+  loadSavedAddresses();
   showOrderPopup.value = true;
 };
 
@@ -531,6 +603,54 @@ const submitOrder = async () => {
   border-bottom: 1px solid #f0f0f0;
   height: 260px;
   overflow: hidden;
+}
+
+.saved-addr-section {
+  padding: 0 16px 8px;
+}
+.saved-addr-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 8px;
+  padding-top: 4px;
+}
+.saved-addr-clear {
+  font-size: 12px;
+  color: #B91C1C;
+  cursor: pointer;
+}
+.saved-addr-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.saved-addr-item {
+  background: #f9f9f9;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: border-color .15s;
+}
+.saved-addr-item.active {
+  border-color: #B91C1C;
+  background: #fff5f5;
+}
+.saved-addr-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+.saved-addr-detail {
+  font-size: 12px;
+  color: #666;
+  line-height: 1.4;
 }
 
 .order-submit-area {

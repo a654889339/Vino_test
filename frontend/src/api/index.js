@@ -17,3 +17,11 @@ export const orderApi = {
   detail: (id) => request.get(`/orders/${id}`),
   cancel: (id) => request.put(`/orders/${id}/cancel`),
 };
+
+export const addressApi = {
+  list: () => request.get('/addresses'),
+  create: (data) => request.post('/addresses', data),
+  update: (id, data) => request.put(`/addresses/${id}`, data),
+  remove: (id) => request.delete(`/addresses/${id}`),
+  setDefault: (id) => request.put(`/addresses/${id}/default`),
+};
