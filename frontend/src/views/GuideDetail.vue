@@ -25,11 +25,6 @@
         </div>
       </div>
 
-      <!-- Description -->
-      <div v-if="guide.description" class="section-card">
-        <p class="desc-text">{{ guide.description }}</p>
-      </div>
-
       <!-- Media Carousel -->
       <div v-if="mediaItems.length" class="section-card">
         <h3 class="section-title">产品展示</h3>
