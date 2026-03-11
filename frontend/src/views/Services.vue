@@ -264,6 +264,10 @@ onMounted(async () => {
   padding: 16px 14px;
   cursor: pointer;
   transition: transform 0.25s var(--vino-transition);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .guide-card:active {
@@ -271,9 +275,9 @@ onMounted(async () => {
 }
 
 .guide-icon-wrapper {
-  width: 50px;
-  height: 50px;
-  border-radius: 16px;
+  width: 65px;
+  height: 65px;
+  border-radius: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -298,6 +302,10 @@ onMounted(async () => {
   white-space: nowrap;
 }
 
+.guide-info {
+  text-align: center;
+}
+
 .guide-info h4 {
   font-size: 14px;
   font-weight: 600;
@@ -312,7 +320,7 @@ onMounted(async () => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 110px;
+  max-width: 120px;
 }
 
 /* ===== Tabs ===== */
