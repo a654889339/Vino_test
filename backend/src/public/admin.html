@@ -790,24 +790,32 @@ let guideHelpItems = [];
 
 function renderMediaItems() {
   const c = document.getElementById('mediaItemsList');
-  c.innerHTML = guideMediaItems.map((m,i) => `<div style="border:1px solid #e5e5e5;border-radius:8px;padding:12px;margin-bottom:8px;position:relative">
-    <span style="position:absolute;top:8px;right:8px;cursor:pointer;color:#999;font-size:18px" onclick="removeMediaItem(${i})">&times;</span>
+  c.innerHTML = guideMediaItems.map((m,i) => {
+    const typeLabel = m.type === 'video' ? '🎬 视频' : '🖼️ 图片';
+    const typeBg = m.type === 'video' ? '#EDE9FE' : '#DBEAFE';
+    const thumbPreview = (m.thumb && /\.(jpg|jpeg|png|gif|webp|svg)/i.test(m.thumb)) ? `<img src="${m.thumb}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;border:1px solid #eee" />` : '';
+    return `<div style="border:1px solid #e5e5e5;border-radius:8px;padding:12px;margin-bottom:8px;position:relative">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <span style="font-size:12px;padding:2px 8px;border-radius:4px;background:${typeBg};font-weight:500">${typeLabel}</span>
+      <span style="cursor:pointer;color:#999;font-size:18px" onclick="removeMediaItem(${i})">&times;</span>
+    </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
       <div class="form-group" style="margin-bottom:8px"><label style="font-size:12px">标题</label><input class="form-input" value="${m.title||''}" onchange="guideMediaItems[${i}].title=this.value" /></div>
       <div class="form-group" style="margin-bottom:8px"><label style="font-size:12px">类型</label><select class="form-input" onchange="guideMediaItems[${i}].type=this.value"><option value="video" ${m.type==='video'?'selected':''}>视频</option><option value="image" ${m.type==='image'?'selected':''}>图片</option></select></div>
     </div>
-    <div class="form-group" style="margin-bottom:8px"><label style="font-size:12px">封面图</label>
-      <div style="display:flex;gap:6px"><input class="form-input" value="${m.thumb||''}" onchange="guideMediaItems[${i}].thumb=this.value" style="flex:1" />
+    <div class="form-group" style="margin-bottom:8px"><label style="font-size:12px">封面图 (仅图片格式)</label>
+      <div style="display:flex;gap:6px;align-items:center">${thumbPreview}<input class="form-input" value="${m.thumb||''}" onchange="guideMediaItems[${i}].thumb=this.value" style="flex:1" />
       <label style="padding:6px 12px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:12px;white-space:nowrap">传<input type="file" accept="image/*" style="display:none" onchange="uploadMediaThumb(this,${i})" /></label></div>
     </div>
-    <div class="form-group" style="margin-bottom:0"><label style="font-size:12px">资源URL</label>
-      <div style="display:flex;gap:6px"><input class="form-input" value="${m.url||''}" onchange="guideMediaItems[${i}].url=this.value" placeholder="视频或图片地址" style="flex:1" />
-      <label style="padding:6px 12px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:12px;white-space:nowrap">传<input type="file" accept="image/*,video/*" style="display:none" onchange="uploadMediaUrl(this,${i})" /></label></div>
+    <div class="form-group" style="margin-bottom:0"><label style="font-size:12px">资源文件 (上传后自动识别类型)</label>
+      <div style="display:flex;gap:6px"><input class="form-input" value="${m.url||''}" onchange="guideMediaItems[${i}].url=this.value" placeholder="上传视频或图片" style="flex:1" />
+      <label style="padding:6px 12px;background:#059669;color:#fff;border-radius:6px;cursor:pointer;font-size:12px;white-space:nowrap">上传<input type="file" accept="image/*,video/*" style="display:none" onchange="uploadMediaUrl(this,${i})" /></label></div>
     </div>
-  </div>`).join('');
+  </div>`;
+  }).join('');
 }
 
-function addMediaItem() { guideMediaItems.push({title:'',type:'video',thumb:'',url:''}); renderMediaItems(); }
+function addMediaItem() { guideMediaItems.push({title:'',type:'image',thumb:'',url:''}); renderMediaItems(); }
 function removeMediaItem(i) { guideMediaItems.splice(i,1); renderMediaItems(); }
 
 function renderHelpItems() {
@@ -866,6 +874,12 @@ async function uploadMediaThumb(input, idx) {
   hideUploadLoading();
 }
 
+function detectMediaType(filename) {
+  const ext = (filename||'').split('.').pop().toLowerCase();
+  if (['mp4','webm','ogg','mov','avi','mkv','flv'].includes(ext)) return 'video';
+  return 'image';
+}
+
 async function uploadMediaUrl(input, idx) {
   if (!input.files[0]) return;
   const file = input.files[0];
@@ -873,7 +887,11 @@ async function uploadMediaUrl(input, idx) {
   showUploadLoading(file.name);
   try {
     const res = await doUpload(file);
-    if (res.code === 0) { guideMediaItems[idx].url = res.data.url; renderMediaItems(); }
+    if (res.code === 0) {
+      guideMediaItems[idx].url = res.data.url;
+      guideMediaItems[idx].type = detectMediaType(file.name);
+      renderMediaItems();
+    }
     else alert(res.message||'上传失败');
   } catch { alert('上传失败'); }
   hideUploadLoading();

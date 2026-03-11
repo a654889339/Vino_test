@@ -34,9 +34,9 @@
         <div class="media-scroll">
           <div v-for="(m, i) in mediaItems" :key="i" class="media-card" @click="openMedia(m)">
             <div class="media-thumb">
-              <img v-if="m.thumb" :src="fullUrl(m.thumb)" />
-              <div v-else class="media-thumb-placeholder"><van-icon :name="m.type==='video' ? 'video-o' : 'photo-o'" size="28" color="#999" /></div>
-              <div v-if="m.type==='video'" class="media-play"><van-icon name="play-circle-o" size="28" color="#fff" /></div>
+              <img v-if="getThumbUrl(m)" :src="getThumbUrl(m)" />
+              <div v-else class="media-thumb-placeholder"><van-icon :name="isVideo(m) ? 'video-o' : 'photo-o'" size="28" color="#999" /></div>
+              <div v-if="isVideo(m)" class="media-play"><van-icon name="play-circle-o" size="28" color="#fff" /></div>
             </div>
             <p class="media-label">{{ m.title }}</p>
           </div>
@@ -140,6 +140,31 @@ const fullUrl = (url) => {
   return BASE.replace('/api', '') + url;
 };
 
+const VIDEO_EXTS = /\.(mp4|webm|ogg|mov|avi|mkv)(\?|$)/i;
+const IMAGE_EXTS = /\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?|$)/i;
+
+const isVideoUrl = (url) => url && VIDEO_EXTS.test(url);
+const isImageUrl = (url) => url && IMAGE_EXTS.test(url);
+
+const isVideo = (m) => {
+  if (m.url && isVideoUrl(m.url)) return true;
+  if (m.thumb && isVideoUrl(m.thumb)) return true;
+  return m.type === 'video' && !isImageUrl(m.url || m.thumb || '');
+};
+
+const getMediaUrl = (m) => {
+  if (m.url) return fullUrl(m.url);
+  if (m.thumb) return fullUrl(m.thumb);
+  return '';
+};
+
+const getThumbUrl = (m) => {
+  if (m.thumb && isImageUrl(m.thumb)) return fullUrl(m.thumb);
+  if (m.url && isImageUrl(m.url)) return fullUrl(m.url);
+  if (m.thumb && !isVideoUrl(m.thumb)) return fullUrl(m.thumb);
+  return '';
+};
+
 const playVideo = (url) => {
   currentVideoUrl.value = url;
   playShowcase.value = true;
@@ -151,10 +176,18 @@ const closeVideo = () => {
 };
 
 const openMedia = (m) => {
-  if (m.type === 'video' && m.url) {
-    playVideo(fullUrl(m.url));
-  } else if (m.url) {
-    window.open(fullUrl(m.url), '_blank');
+  const url = getMediaUrl(m);
+  if (!url) return;
+  if (isVideo(m)) {
+    playVideo(url);
+  } else {
+    import('vant').then(({ showImagePreview }) => {
+      const images = mediaItems.value
+        .filter(item => !isVideo(item) && getMediaUrl(item))
+        .map(item => getMediaUrl(item));
+      const idx = images.indexOf(url);
+      showImagePreview({ images, startPosition: idx >= 0 ? idx : 0 });
+    });
   }
 };
 
