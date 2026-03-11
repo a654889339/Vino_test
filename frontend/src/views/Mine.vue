@@ -30,7 +30,7 @@
 
     <van-cell-group inset class="menu-group">
       <van-cell title="帮助中心" icon="question-o" is-link />
-      <van-cell title="意见反馈" icon="comment-o" is-link />
+      <van-cell title="意见反馈" icon="comment-o" is-link @click="openFeedback" />
       <van-cell title="关于Vino" icon="info-o" is-link />
     </van-cell-group>
 
@@ -43,12 +43,19 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue';
+import { ref, inject, onMounted } from 'vue';
 import { useUserStore } from '@/stores/user';
 import { useRouter } from 'vue-router';
 
 const userStore = useUserStore();
 const router = useRouter();
+const chatWidgetRef = inject('chatWidget', ref(null));
+
+const openFeedback = () => {
+  if (chatWidgetRef.value) {
+    chatWidgetRef.value.openWithAutoMessage('');
+  }
+};
 
 const stats = [
   { label: '待支付', value: 0 },
