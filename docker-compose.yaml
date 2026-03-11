@@ -47,6 +47,8 @@ services:
       ALIPAY_APPID: ${ALIPAY_APPID:-}
       ALIPAY_PRIVATE_KEY: ${ALIPAY_PRIVATE_KEY:-}
       ALIPAY_PUBLIC_KEY: ${ALIPAY_PUBLIC_KEY:-}
+      COS_SECRET_ID: ${COS_SECRET_ID:-}
+      COS_SECRET_KEY: ${COS_SECRET_KEY:-}
     depends_on:
       vino-mysql:
         condition: service_healthy

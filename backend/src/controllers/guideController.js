@@ -89,13 +89,16 @@ exports.remove = async (req, res) => {
   }
 };
 
-exports.uploadImage = async (req, res) => {
+exports.uploadFile = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ code: 400, message: '未选择文件' });
-    const url = `/uploads/${req.file.filename}`;
+    const cosUpload = require('../utils/cosUpload');
+    const ext = path.extname(req.file.originalname) || '.bin';
+    const filename = `guide-${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`;
+    const url = await cosUpload.upload(req.file.buffer, filename, req.file.mimetype);
     res.json({ code: 0, data: { url } });
   } catch (err) {
-    console.error('[Guide] uploadImage error:', err.message);
-    res.status(500).json({ code: 500, message: '上传失败' });
+    console.error('[Guide] uploadFile error:', err.message);
+    res.status(500).json({ code: 500, message: '上传失败: ' + err.message });
   }
 };

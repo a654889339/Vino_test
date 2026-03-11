@@ -282,8 +282,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
             <img id="gCoverPreview" style="max-width:200px;max-height:120px;margin-top:8px;border-radius:8px;display:none" />
           </div>
           <div class="form-group">
-            <label>展示视频URL</label>
-            <input class="form-input" id="gShowcaseVideo" placeholder="视频链接 (mp4)" />
+            <label>展示视频</label>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input class="form-input" id="gShowcaseVideo" placeholder="视频链接或点击上传" style="flex:1" />
+              <label style="padding:8px 16px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">
+                上传<input type="file" accept="video/*" style="display:none" onchange="uploadGuideFile(this,'gShowcaseVideo')" />
+              </label>
+            </div>
           </div>
           <div class="form-group">
             <label>产品描述</label>
@@ -788,7 +793,10 @@ function renderMediaItems() {
       <div style="display:flex;gap:6px"><input class="form-input" value="${m.thumb||''}" onchange="guideMediaItems[${i}].thumb=this.value" style="flex:1" />
       <label style="padding:6px 12px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:12px;white-space:nowrap">传<input type="file" accept="image/*" style="display:none" onchange="uploadMediaThumb(this,${i})" /></label></div>
     </div>
-    <div class="form-group" style="margin-bottom:0"><label style="font-size:12px">资源URL</label><input class="form-input" value="${m.url||''}" onchange="guideMediaItems[${i}].url=this.value" placeholder="视频或图片地址" /></div>
+    <div class="form-group" style="margin-bottom:0"><label style="font-size:12px">资源URL</label>
+      <div style="display:flex;gap:6px"><input class="form-input" value="${m.url||''}" onchange="guideMediaItems[${i}].url=this.value" placeholder="视频或图片地址" style="flex:1" />
+      <label style="padding:6px 12px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:12px;white-space:nowrap">传<input type="file" accept="image/*,video/*" style="display:none" onchange="uploadMediaUrl(this,${i})" /></label></div>
+    </div>
   </div>`).join('');
 }
 
@@ -812,16 +820,20 @@ function removeHelpItem(i) { guideHelpItems.splice(i,1); renderHelpItems(); }
 
 async function uploadGuideFile(input, targetId) {
   if (!input.files[0]) return;
-  const fd = new FormData(); fd.append('file', input.files[0]);
+  const file = input.files[0];
+  if (file.size > 100*1024*1024) { alert('文件不能超过100MB'); return; }
+  const el = document.getElementById(targetId);
+  el.value = '上传中...';
+  const fd = new FormData(); fd.append('file', file);
   try {
     const r = await fetch('/api/guides/admin/upload', { method:'POST', headers:{'Authorization':'Bearer '+token}, body:fd });
     const res = await r.json();
     if (res.code === 0) {
-      document.getElementById(targetId).value = res.data.url;
-      const preview = document.getElementById(targetId.replace('Image','Preview').replace('image','Preview'));
-      if (preview) { preview.src = res.data.url; preview.style.display = 'block'; }
-    } else alert(res.message||'上传失败');
-  } catch { alert('上传失败'); }
+      el.value = res.data.url;
+      const preview = document.getElementById('gCoverPreview');
+      if (targetId === 'gCoverImage' && preview) { preview.src = res.data.url; preview.style.display = 'block'; }
+    } else { el.value = ''; alert(res.message||'上传失败'); }
+  } catch { el.value = ''; alert('上传失败'); }
 }
 
 async function uploadMediaThumb(input, idx) {
@@ -831,6 +843,19 @@ async function uploadMediaThumb(input, idx) {
     const r = await fetch('/api/guides/admin/upload', { method:'POST', headers:{'Authorization':'Bearer '+token}, body:fd });
     const res = await r.json();
     if (res.code === 0) { guideMediaItems[idx].thumb = res.data.url; renderMediaItems(); }
+    else alert(res.message||'上传失败');
+  } catch { alert('上传失败'); }
+}
+
+async function uploadMediaUrl(input, idx) {
+  if (!input.files[0]) return;
+  const file = input.files[0];
+  if (file.size > 100*1024*1024) { alert('文件不能超过100MB'); return; }
+  const fd = new FormData(); fd.append('file', file);
+  try {
+    const r = await fetch('/api/guides/admin/upload', { method:'POST', headers:{'Authorization':'Bearer '+token}, body:fd });
+    const res = await r.json();
+    if (res.code === 0) { guideMediaItems[idx].url = res.data.url; renderMediaItems(); }
     else alert(res.message||'上传失败');
   } catch { alert('上传失败'); }
 }
