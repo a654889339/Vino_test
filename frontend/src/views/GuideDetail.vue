@@ -7,7 +7,7 @@
     <template v-else-if="guide.id">
       <!-- Hero: cover / video -->
       <div class="hero-section">
-        <div v-if="guide.showcaseVideo" class="hero-video-wrap" @click="playShowcase = true">
+        <div v-if="guide.showcaseVideo" class="hero-video-wrap" @click="playVideo(fullUrl(guide.showcaseVideo))">
           <img v-if="guide.coverImage" :src="fullUrl(guide.coverImage)" class="hero-img" />
           <div v-else class="hero-placeholder" :style="{ background: guide.gradient }">
             <van-icon :name="guide.icon" size="64" color="#fff" />
@@ -96,12 +96,12 @@
     </template>
 
     <!-- Video Player Overlay -->
-    <van-overlay :show="playShowcase" @click="playShowcase = false" z-index="200">
-      <div class="video-overlay" @click.stop>
-        <video v-if="playShowcase && currentVideoUrl" :src="currentVideoUrl" controls autoplay class="overlay-video" />
-        <van-icon name="cross" class="video-close" @click="playShowcase = false; currentVideoUrl = ''" />
+    <div v-if="playShowcase" class="video-backdrop" @click.self="closeVideo()">
+      <div class="video-overlay">
+        <video v-if="currentVideoUrl" :src="currentVideoUrl" controls autoplay playsinline class="overlay-video" />
+        <div class="video-close" @click="closeVideo()"><van-icon name="cross" size="24" color="#fff" /></div>
       </div>
-    </van-overlay>
+    </div>
   </div>
 </template>
 
@@ -140,10 +140,19 @@ const fullUrl = (url) => {
   return BASE.replace('/api', '') + url;
 };
 
+const playVideo = (url) => {
+  currentVideoUrl.value = url;
+  playShowcase.value = true;
+};
+
+const closeVideo = () => {
+  playShowcase.value = false;
+  currentVideoUrl.value = '';
+};
+
 const openMedia = (m) => {
   if (m.type === 'video' && m.url) {
-    currentVideoUrl.value = fullUrl(m.url);
-    playShowcase.value = true;
+    playVideo(fullUrl(m.url));
   } else if (m.url) {
     window.open(fullUrl(m.url), '_blank');
   }
@@ -201,7 +210,8 @@ onMounted(async () => {
 .entry-icon { width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; }
 .entry-item span { font-size: 12px; color: #666; }
 
-.video-overlay { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 90vw; max-width: 480px; }
-.overlay-video { width: 100%; border-radius: 12px; background: #000; max-height: 70vh; }
-.video-close { position: fixed; top: 24px; right: 24px; font-size: 28px; color: #fff; cursor: pointer; z-index: 201; }
+.video-backdrop { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 200; display: flex; align-items: center; justify-content: center; }
+.video-overlay { position: relative; width: 90vw; max-width: 480px; }
+.overlay-video { width: 100%; border-radius: 12px; background: #000; max-height: 70vh; display: block; }
+.video-close { position: absolute; top: -40px; right: 0; width: 32px; height: 32px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
 </style>
