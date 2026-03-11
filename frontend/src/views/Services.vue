@@ -115,19 +115,23 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import { guideApi, serviceApi } from '@/api';
 
 const activeTab = ref(0);
 const showGuideDetail = ref(false);
 const showAllGuides = ref(false);
 const currentGuide = ref(null);
 
+const deviceGuides = ref([]);
+const categories = ref([]);
+
 const openGuide = (device) => {
   currentGuide.value = device;
   showGuideDetail.value = true;
 };
 
-const deviceGuides = [
+const fallbackGuides = [
   {
     id: 1,
     name: '空调',
@@ -200,41 +204,60 @@ const deviceGuides = [
   },
 ];
 
-const categories = [
-  {
-    key: 'repair',
-    name: '维修',
-    items: [
-      { id: 1, title: '设备维修', desc: '专业工程师', icon: 'setting-o', price: '99', bg: '#B91C1C' },
-      { id: 2, title: '上门维修', desc: '快速响应', icon: 'location-o', price: '149', bg: '#DC2626' },
-      { id: 3, title: '远程支持', desc: '在线指导', icon: 'phone-o', price: '29', bg: '#EF4444' },
-    ],
-  },
-  {
-    key: 'clean',
-    name: '清洁',
-    items: [
-      { id: 4, title: '深度清洁', desc: '全方位保养', icon: 'brush-o', price: '149', bg: '#2563EB' },
-      { id: 5, title: '日常清洁', desc: '基础维护', icon: 'smile-o', price: '69', bg: '#3B82F6' },
-    ],
-  },
-  {
-    key: 'inspect',
-    name: '检测',
-    items: [
-      { id: 6, title: '全面检测', desc: '系统评估', icon: 'scan', price: '49', bg: '#059669' },
-      { id: 7, title: '性能优化', desc: '提速升级', icon: 'fire-o', price: '79', bg: '#10B981' },
-    ],
-  },
-  {
-    key: 'data',
-    name: '数据',
-    items: [
-      { id: 8, title: '数据恢复', desc: '专业找回', icon: 'replay', price: '199', bg: '#7C3AED' },
-      { id: 9, title: '数据备份', desc: '安全迁移', icon: 'description', price: '59', bg: '#8B5CF6' },
-    ],
-  },
+const fallbackCategories = [
+  { key: 'repair', name: '维修', items: [
+    { id: 1, title: '设备维修', desc: '专业工程师', icon: 'setting-o', price: '99', bg: '#B91C1C' },
+    { id: 2, title: '上门维修', desc: '快速响应', icon: 'location-o', price: '149', bg: '#DC2626' },
+    { id: 3, title: '远程支持', desc: '在线指导', icon: 'phone-o', price: '29', bg: '#EF4444' },
+  ]},
+  { key: 'clean', name: '清洁', items: [
+    { id: 4, title: '深度清洁', desc: '全方位保养', icon: 'brush-o', price: '149', bg: '#2563EB' },
+    { id: 5, title: '日常清洁', desc: '基础维护', icon: 'smile-o', price: '69', bg: '#3B82F6' },
+  ]},
+  { key: 'inspect', name: '检测', items: [
+    { id: 6, title: '全面检测', desc: '系统评估', icon: 'scan', price: '49', bg: '#059669' },
+    { id: 7, title: '性能优化', desc: '提速升级', icon: 'fire-o', price: '79', bg: '#10B981' },
+  ]},
+  { key: 'data', name: '数据', items: [
+    { id: 8, title: '数据恢复', desc: '专业找回', icon: 'replay', price: '199', bg: '#7C3AED' },
+    { id: 9, title: '数据备份', desc: '安全迁移', icon: 'description', price: '59', bg: '#8B5CF6' },
+  ]},
 ];
+
+const categoryColors = { repair: '#B91C1C', clean: '#2563EB', inspect: '#059669', data: '#7C3AED' };
+
+onMounted(async () => {
+  try {
+    const res = await guideApi.list();
+    const list = res.data || [];
+    deviceGuides.value = list.map(g => ({
+      ...g,
+      model: g.subtitle,
+      tags: Array.isArray(g.tags) ? g.tags : JSON.parse(g.tags || '[]'),
+      sections: Array.isArray(g.sections) ? g.sections : JSON.parse(g.sections || '[]'),
+    }));
+  } catch {
+    deviceGuides.value = fallbackGuides;
+  }
+
+  try {
+    const res = await serviceApi.list();
+    const services = res.data?.list || res.data || [];
+    if (services.length) {
+      const catMap = {};
+      services.forEach(s => {
+        const cat = s.category || 'repair';
+        if (!catMap[cat]) catMap[cat] = { key: cat, name: cat === 'repair' ? '维修' : cat === 'clean' ? '清洁' : cat === 'inspect' ? '检测' : cat === 'data' ? '数据' : cat, items: [] };
+        catMap[cat].items.push({ id: s.id, title: s.title, desc: s.description || '', icon: s.icon || 'setting-o', price: s.price || 0, bg: categoryColors[cat] || '#B91C1C' });
+      });
+      categories.value = Object.values(catMap);
+    } else {
+      categories.value = fallbackCategories;
+    }
+  } catch {
+    categories.value = fallbackCategories;
+  }
+});
 </script>
 
 <style scoped>

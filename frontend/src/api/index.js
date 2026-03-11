@@ -18,6 +18,10 @@ export const orderApi = {
   cancel: (id) => request.put(`/orders/${id}/cancel`),
 };
 
+export const guideApi = {
+  list: () => request.get('/guides'),
+};
+
 export const addressApi = {
   list: () => request.get('/addresses'),
   create: (data) => request.post('/addresses', data),
