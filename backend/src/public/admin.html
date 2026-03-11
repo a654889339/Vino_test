@@ -1140,7 +1140,7 @@ function renderHCTable() {
     <td style="font-size:12px">${h.path||'-'}</td>
     <td>${h.price ? '¥'+h.price : '-'}</td>
     <td>${h.sortOrder}</td>
-    <td>${h.status==='active' ? '<span style="color:#059669">启用</span>' : '<span style="color:#999">禁用</span>'}</td>
+    <td><span style="display:inline-block;padding:4px 14px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:500;transition:all .2s;${h.status==='active'?'background:#D1FAE5;color:#059669':'background:#F3F4F6;color:#999'}" onclick="toggleHCStatus(${h.id},'${h.status}')">${h.status==='active'?'启用':'禁用'}</span></td>
     <td style="white-space:nowrap">
       <button class="btn btn-sm" onclick="openHCEditor(${h.id})" style="background:#2563EB;color:#fff;margin-right:4px">编辑</button>
       <button class="btn btn-sm" onclick="deleteHC(${h.id})" style="background:#DC2626;color:#fff">删除</button>
@@ -1195,6 +1195,15 @@ async function saveHC() {
     if (res.code === 0) { closeHCEditor(); loadHomeConfig(); }
     else alert(res.message || '保存失败');
   } catch { alert('保存失败'); }
+}
+
+async function toggleHCStatus(id, current) {
+  const newStatus = current === 'active' ? 'inactive' : 'active';
+  try {
+    const res = await api('/home-config/' + id, { method: 'PUT', body: { status: newStatus } });
+    if (res.code === 0) loadHomeConfig();
+    else alert(res.message || '切换失败');
+  } catch { alert('切换失败'); }
 }
 
 async function deleteHC(id) {
