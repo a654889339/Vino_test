@@ -1,0 +1,65 @@
+<view class="page">
+  <view a:if="{{loading}}" class="loading">加载中...</view>
+
+  <block a:elif="{{guide.id}}">
+    <view class="hero" style="background:{{guide.gradient || '#333'}}">
+      <image a:if="{{guide.coverImage}}" src="{{guide.coverImage}}" class="hero-img" mode="aspectFill" />
+      <view a:else class="hero-fallback">
+        <text class="hero-emoji">{{guide.emoji}}</text>
+        <text class="hero-name">{{guide.name}}</text>
+      </view>
+      <view a:if="{{guide.showcaseVideo}}" class="play-btn" onTap="playShowcase">▶</view>
+    </view>
+
+    <view a:if="{{guide.description}}" class="card">
+      <text class="desc">{{guide.description}}</text>
+    </view>
+
+    <view a:if="{{mediaItems.length}}" class="card">
+      <text class="title">产品展示</text>
+      <scroll-view scroll-x class="media-scroll">
+        <view a:for="{{mediaItems}}" a:for-index="idx" a:for-item="item" class="media-card" onTap="openMedia" data-idx="{{idx}}">
+          <image a:if="{{item.thumb}}" src="{{item.thumb}}" class="media-thumb" mode="aspectFill" />
+          <view a:else class="media-placeholder">{{item.type === 'video' ? '🎬' : '🖼'}}</view>
+          <view a:if="{{item.type === 'video'}}" class="media-play">▶</view>
+          <text class="media-label">{{item.title}}</text>
+        </view>
+      </scroll-view>
+    </view>
+
+    <view a:if="{{tags.length}}" class="card">
+      <text class="title">服务项目</text>
+      <view class="tag-wrap">
+        <text a:for="{{tags}}" a:for-item="t" class="tag">{{t}}</text>
+      </view>
+    </view>
+
+    <view a:if="{{helpItems.length}}" class="card">
+      <text class="title">使用帮助</text>
+      <view a:for="{{helpItems}}" a:for-index="idx" a:for-item="h" class="help-row" onTap="openHelp" data-idx="{{idx}}">
+        <text class="help-title">{{h.title}}</text>
+        <text class="help-arrow">›</text>
+      </view>
+    </view>
+
+    <view a:if="{{sections.length}}" class="card">
+      <view a:for="{{sections}}" a:for-item="sec" class="section-block">
+        <text class="title">{{sec.title}}</text>
+        <view a:for="{{sec.tips}}" a:for-item="tip" class="tip-row">
+          <text class="tip-dot">·</text>
+          <text class="tip-text">{{tip}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="card">
+      <text class="title">服务入口</text>
+      <view class="entry-grid">
+        <view class="entry-item" onTap="goServices"><view class="entry-icon" style="background:#EDE9FE"><text>🔧</text></view><text>自助服务</text></view>
+        <view class="entry-item" onTap="goServices"><view class="entry-icon" style="background:#DBEAFE"><text>📍</text></view><text>服务网点</text></view>
+        <view class="entry-item" onTap="goServices"><view class="entry-icon" style="background:#D1FAE5"><text>🛡</text></view><text>售后政策</text></view>
+        <view class="entry-item" onTap="goServices"><view class="entry-icon" style="background:#FEF3C7"><text>💰</text></view><text>维修报价</text></view>
+      </view>
+    </view>
+  </block>
+</view>

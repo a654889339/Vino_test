@@ -20,6 +20,7 @@ export const orderApi = {
 
 export const guideApi = {
   list: () => request.get('/guides'),
+  detail: (id) => request.get(`/guides/${id}`),
 };
 
 export const addressApi = {

@@ -116,8 +116,10 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { guideApi, serviceApi } from '@/api';
 
+const router = useRouter();
 const activeTab = ref(0);
 const showGuideDetail = ref(false);
 const showAllGuides = ref(false);
@@ -127,8 +129,7 @@ const deviceGuides = ref([]);
 const categories = ref([]);
 
 const openGuide = (device) => {
-  currentGuide.value = device;
-  showGuideDetail.value = true;
+  router.push(`/guide/${device.id}`);
 };
 
 const fallbackGuides = [

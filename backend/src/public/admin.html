@@ -251,28 +251,57 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
     <!-- Guide Editor Modal -->
     <div class="modal-overlay" id="guideModal" style="display:none" onclick="if(event.target===this)closeGuideEditor()">
-      <div class="modal-content" style="width:640px">
+      <div class="modal-content" style="width:760px">
         <div class="modal-header">
           <h3 id="guideModalTitle">新增服务指南</h3>
           <span class="modal-close" onclick="closeGuideEditor()">&times;</span>
         </div>
-        <div class="modal-body" style="max-height:70vh;overflow-y:auto">
+        <div class="modal-body" style="max-height:75vh;overflow-y:auto">
           <input type="hidden" id="guideEditId" />
+          <h4 style="margin:0 0 12px;color:var(--primary)">基本信息</h4>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
             <div class="form-group"><label>名称 *</label><input class="form-input" id="gName" placeholder="如：空调" /></div>
             <div class="form-group"><label>副标题</label><input class="form-input" id="gSubtitle" placeholder="如：家用/商用中央空调" /></div>
-            <div class="form-group"><label>Vant图标 (Web用)</label><input class="form-input" id="gIcon" placeholder="如：cluster-o" /></div>
-            <div class="form-group"><label>Emoji (小程序用)</label><input class="form-input" id="gEmoji" placeholder="如：❄️" /></div>
-            <div class="form-group"><label>角标</label><input class="form-input" id="gBadge" placeholder="如：热门、新" /></div>
-            <div class="form-group"><label>排序 (数字越小越前)</label><input class="form-input" id="gSort" type="number" value="0" /></div>
+            <div class="form-group"><label>Vant图标</label><input class="form-input" id="gIcon" placeholder="cluster-o" /></div>
+            <div class="form-group"><label>Emoji</label><input class="form-input" id="gEmoji" placeholder="❄️" /></div>
+            <div class="form-group"><label>角标</label><input class="form-input" id="gBadge" placeholder="热门、新" /></div>
+            <div class="form-group"><label>排序</label><input class="form-input" id="gSort" type="number" value="0" /></div>
           </div>
           <div class="form-group"><label>渐变色</label><input class="form-input" id="gGradient" placeholder="linear-gradient(135deg, #3B82F6, #1D4ED8)" /></div>
-          <div class="form-group"><label>标签 (逗号分隔)</label><input class="form-input" id="gTags" placeholder="制冷维修,清洗保养,安装移机" /></div>
+          <div class="form-group"><label>标签 (逗号分隔)</label><input class="form-input" id="gTags" placeholder="制冷维修,清洗保养" /></div>
+
+          <h4 style="margin:20px 0 12px;color:var(--primary)">展示媒体</h4>
           <div class="form-group">
-            <label>详情段落 (JSON格式)</label>
-            <textarea class="form-input" id="gSections" rows="5" style="resize:vertical;font-family:monospace;font-size:12px" placeholder='[{"title":"常见故障","icon":"warning-o","tips":["不制冷","漏水"]}]'></textarea>
+            <label>封面图</label>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input class="form-input" id="gCoverImage" placeholder="图片URL或点击上传" style="flex:1" />
+              <label style="padding:8px 16px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">
+                上传<input type="file" accept="image/*" style="display:none" onchange="uploadGuideFile(this,'gCoverImage')" />
+              </label>
+            </div>
+            <img id="gCoverPreview" style="max-width:200px;max-height:120px;margin-top:8px;border-radius:8px;display:none" />
           </div>
           <div class="form-group">
+            <label>展示视频URL</label>
+            <input class="form-input" id="gShowcaseVideo" placeholder="视频链接 (mp4)" />
+          </div>
+          <div class="form-group">
+            <label>产品描述</label>
+            <textarea class="form-input" id="gDescription" rows="3" style="resize:vertical" placeholder="产品介绍文字"></textarea>
+          </div>
+
+          <h4 style="margin:20px 0 12px;color:var(--primary)">媒体列表 (视频/图片卡片)</h4>
+          <div id="mediaItemsList"></div>
+          <button type="button" class="refresh-btn" style="background:#059669;margin-top:8px" onclick="addMediaItem()">+ 添加媒体</button>
+
+          <h4 style="margin:20px 0 12px;color:var(--primary)">使用帮助</h4>
+          <div id="helpItemsList"></div>
+          <button type="button" class="refresh-btn" style="background:#059669;margin-top:8px" onclick="addHelpItem()">+ 添加帮助项</button>
+
+          <h4 style="margin:20px 0 12px;color:var(--primary)">维护说明段落</h4>
+          <textarea class="form-input" id="gSections" rows="4" style="resize:vertical;font-family:monospace;font-size:12px" placeholder='[{"title":"常见故障","icon":"warning-o","tips":["不制冷","漏水"]}]'></textarea>
+
+          <div class="form-group" style="margin-top:16px">
             <label>状态</label>
             <select class="form-input" id="gStatus"><option value="active">启用</option><option value="inactive">禁用</option></select>
           </div>
@@ -722,7 +751,7 @@ async function loadGuides() {
   const empty = document.getElementById('guideEmpty');
   tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:#999">加载中...</td></tr>';
   try {
-    const res = await api('/guides/admin');
+    const res = await api('/guides/admin/list');
     if (res.code === 0) {
       allGuides = res.data || [];
       if (!allGuides.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
@@ -731,9 +760,9 @@ async function loadGuides() {
         <td>${g.sortOrder}</td>
         <td><strong>${g.name}</strong></td>
         <td style="font-size:12px;color:#666">${g.subtitle || '-'}</td>
-        <td style="font-size:12px">${g.icon || '-'}</td>
+        <td>${g.coverImage ? '<img src="'+g.coverImage+'" style="width:40px;height:40px;object-fit:cover;border-radius:4px">' : (g.icon || '-')}</td>
         <td>${g.emoji || '-'}</td>
-        <td>${g.badge ? '<span style="background:#FEE2E2;color:#B91C1C;padding:2px 8px;border-radius:4px;font-size:11px">' + g.badge + '</span>' : '-'}</td>
+        <td>${g.badge ? '<span style="background:#FEE2E2;color:#B91C1C;padding:2px 8px;border-radius:4px;font-size:11px">'+g.badge+'</span>' : '-'}</td>
         <td><span style="color:${g.status==='active'?'#059669':'#999'}">${g.status==='active'?'启用':'禁用'}</span></td>
         <td>
           <button class="detail-btn" onclick='editGuide(${g.id})'>编辑</button>
@@ -744,21 +773,91 @@ async function loadGuides() {
   } catch { tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:#B91C1C">加载失败</td></tr>'; }
 }
 
+let guideMediaItems = [];
+let guideHelpItems = [];
+
+function renderMediaItems() {
+  const c = document.getElementById('mediaItemsList');
+  c.innerHTML = guideMediaItems.map((m,i) => `<div style="border:1px solid #e5e5e5;border-radius:8px;padding:12px;margin-bottom:8px;position:relative">
+    <span style="position:absolute;top:8px;right:8px;cursor:pointer;color:#999;font-size:18px" onclick="removeMediaItem(${i})">&times;</span>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div class="form-group" style="margin-bottom:8px"><label style="font-size:12px">标题</label><input class="form-input" value="${m.title||''}" onchange="guideMediaItems[${i}].title=this.value" /></div>
+      <div class="form-group" style="margin-bottom:8px"><label style="font-size:12px">类型</label><select class="form-input" onchange="guideMediaItems[${i}].type=this.value"><option value="video" ${m.type==='video'?'selected':''}>视频</option><option value="image" ${m.type==='image'?'selected':''}>图片</option></select></div>
+    </div>
+    <div class="form-group" style="margin-bottom:8px"><label style="font-size:12px">封面图</label>
+      <div style="display:flex;gap:6px"><input class="form-input" value="${m.thumb||''}" onchange="guideMediaItems[${i}].thumb=this.value" style="flex:1" />
+      <label style="padding:6px 12px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:12px;white-space:nowrap">传<input type="file" accept="image/*" style="display:none" onchange="uploadMediaThumb(this,${i})" /></label></div>
+    </div>
+    <div class="form-group" style="margin-bottom:0"><label style="font-size:12px">资源URL</label><input class="form-input" value="${m.url||''}" onchange="guideMediaItems[${i}].url=this.value" placeholder="视频或图片地址" /></div>
+  </div>`).join('');
+}
+
+function addMediaItem() { guideMediaItems.push({title:'',type:'video',thumb:'',url:''}); renderMediaItems(); }
+function removeMediaItem(i) { guideMediaItems.splice(i,1); renderMediaItems(); }
+
+function renderHelpItems() {
+  const c = document.getElementById('helpItemsList');
+  c.innerHTML = guideHelpItems.map((h,i) => `<div style="border:1px solid #e5e5e5;border-radius:8px;padding:12px;margin-bottom:8px;position:relative">
+    <span style="position:absolute;top:8px;right:8px;cursor:pointer;color:#999;font-size:18px" onclick="removeHelpItem(${i})">&times;</span>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div class="form-group" style="margin-bottom:8px"><label style="font-size:12px">标题</label><input class="form-input" value="${h.title||''}" onchange="guideHelpItems[${i}].title=this.value" /></div>
+      <div class="form-group" style="margin-bottom:8px"><label style="font-size:12px">图标(Vant)</label><input class="form-input" value="${h.icon||''}" onchange="guideHelpItems[${i}].icon=this.value" placeholder="description" /></div>
+    </div>
+    <div class="form-group" style="margin-bottom:0"><label style="font-size:12px">内容/链接</label><input class="form-input" value="${h.content||''}" onchange="guideHelpItems[${i}].content=this.value" /></div>
+  </div>`).join('');
+}
+
+function addHelpItem() { guideHelpItems.push({title:'',icon:'description',content:''}); renderHelpItems(); }
+function removeHelpItem(i) { guideHelpItems.splice(i,1); renderHelpItems(); }
+
+async function uploadGuideFile(input, targetId) {
+  if (!input.files[0]) return;
+  const fd = new FormData(); fd.append('file', input.files[0]);
+  try {
+    const r = await fetch('/api/guides/admin/upload', { method:'POST', headers:{'Authorization':'Bearer '+token}, body:fd });
+    const res = await r.json();
+    if (res.code === 0) {
+      document.getElementById(targetId).value = res.data.url;
+      const preview = document.getElementById(targetId.replace('Image','Preview').replace('image','Preview'));
+      if (preview) { preview.src = res.data.url; preview.style.display = 'block'; }
+    } else alert(res.message||'上传失败');
+  } catch { alert('上传失败'); }
+}
+
+async function uploadMediaThumb(input, idx) {
+  if (!input.files[0]) return;
+  const fd = new FormData(); fd.append('file', input.files[0]);
+  try {
+    const r = await fetch('/api/guides/admin/upload', { method:'POST', headers:{'Authorization':'Bearer '+token}, body:fd });
+    const res = await r.json();
+    if (res.code === 0) { guideMediaItems[idx].thumb = res.data.url; renderMediaItems(); }
+    else alert(res.message||'上传失败');
+  } catch { alert('上传失败'); }
+}
+
+function parseJSON(val) { try { return Array.isArray(val) ? val : JSON.parse(val||'[]'); } catch { return []; } }
+
 function openGuideEditor(guide) {
   document.getElementById('guideEditId').value = guide ? guide.id : '';
   document.getElementById('guideModalTitle').textContent = guide ? '编辑服务指南' : '新增服务指南';
   document.getElementById('gName').value = guide ? guide.name : '';
-  document.getElementById('gSubtitle').value = guide ? guide.subtitle : '';
+  document.getElementById('gSubtitle').value = guide ? (guide.subtitle||'') : '';
   document.getElementById('gIcon').value = guide ? guide.icon : 'setting-o';
-  document.getElementById('gEmoji').value = guide ? guide.emoji : '';
-  document.getElementById('gBadge').value = guide ? guide.badge : '';
+  document.getElementById('gEmoji').value = guide ? (guide.emoji||'') : '';
+  document.getElementById('gBadge').value = guide ? (guide.badge||'') : '';
   document.getElementById('gSort').value = guide ? guide.sortOrder : 0;
   document.getElementById('gGradient').value = guide ? guide.gradient : 'linear-gradient(135deg, #3B82F6, #1D4ED8)';
-  const tags = guide && guide.tags ? (Array.isArray(guide.tags) ? guide.tags : JSON.parse(guide.tags || '[]')) : [];
-  document.getElementById('gTags').value = tags.join(',');
-  const secs = guide && guide.sections ? (Array.isArray(guide.sections) ? guide.sections : JSON.parse(guide.sections || '[]')) : [];
-  document.getElementById('gSections').value = JSON.stringify(secs, null, 2);
+  document.getElementById('gTags').value = (parseJSON(guide&&guide.tags)).join(',');
+  document.getElementById('gSections').value = JSON.stringify(parseJSON(guide&&guide.sections), null, 2);
   document.getElementById('gStatus').value = guide ? guide.status : 'active';
+  document.getElementById('gCoverImage').value = guide ? (guide.coverImage||'') : '';
+  document.getElementById('gShowcaseVideo').value = guide ? (guide.showcaseVideo||'') : '';
+  document.getElementById('gDescription').value = guide ? (guide.description||'') : '';
+  const preview = document.getElementById('gCoverPreview');
+  if (guide && guide.coverImage) { preview.src = guide.coverImage; preview.style.display = 'block'; } else { preview.style.display = 'none'; }
+  guideMediaItems = parseJSON(guide&&guide.mediaItems).map(m=>({...m}));
+  guideHelpItems = parseJSON(guide&&guide.helpItems).map(h=>({...h}));
+  renderMediaItems(); renderHelpItems();
   document.getElementById('guideModal').style.display = 'flex';
 }
 
@@ -773,7 +872,7 @@ async function saveGuide() {
   const id = document.getElementById('guideEditId').value;
   const tagsStr = document.getElementById('gTags').value.trim();
   let sections = [];
-  try { sections = JSON.parse(document.getElementById('gSections').value || '[]'); } catch { alert('详情段落JSON格式错误'); return; }
+  try { sections = JSON.parse(document.getElementById('gSections').value || '[]'); } catch { alert('维护说明段落JSON格式错误'); return; }
   const body = {
     name: document.getElementById('gName').value,
     subtitle: document.getElementById('gSubtitle').value,
@@ -785,6 +884,11 @@ async function saveGuide() {
     tags: tagsStr ? tagsStr.split(',').map(s => s.trim()).filter(Boolean) : [],
     sections,
     status: document.getElementById('gStatus').value,
+    coverImage: document.getElementById('gCoverImage').value,
+    showcaseVideo: document.getElementById('gShowcaseVideo').value,
+    description: document.getElementById('gDescription').value,
+    mediaItems: guideMediaItems,
+    helpItems: guideHelpItems,
   };
   try {
     const res = id

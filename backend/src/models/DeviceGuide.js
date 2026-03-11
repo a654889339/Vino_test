@@ -53,6 +53,40 @@ const DeviceGuide = sequelize.define('DeviceGuide', {
       this.setDataValue('sections', JSON.stringify(val || []));
     },
   },
+  coverImage: {
+    type: DataTypes.STRING(500),
+    defaultValue: '',
+  },
+  showcaseVideo: {
+    type: DataTypes.STRING(500),
+    defaultValue: '',
+  },
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  mediaItems: {
+    type: DataTypes.TEXT('long'),
+    allowNull: true,
+    get() {
+      const raw = this.getDataValue('mediaItems');
+      try { return JSON.parse(raw || '[]'); } catch { return []; }
+    },
+    set(val) {
+      this.setDataValue('mediaItems', JSON.stringify(val || []));
+    },
+  },
+  helpItems: {
+    type: DataTypes.TEXT('long'),
+    allowNull: true,
+    get() {
+      const raw = this.getDataValue('helpItems');
+      try { return JSON.parse(raw || '[]'); } catch { return []; }
+    },
+    set(val) {
+      this.setDataValue('helpItems', JSON.stringify(val || []));
+    },
+  },
   sortOrder: {
     type: DataTypes.INTEGER,
     defaultValue: 0,

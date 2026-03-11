@@ -1,0 +1,84 @@
+<view class="page">
+  <view wx:if="{{loading}}" class="loading">加载中...</view>
+
+  <block wx:elif="{{guide.id}}">
+    <!-- Hero -->
+    <view class="hero" style="background:{{guide.gradient || '#333'}}">
+      <image wx:if="{{guide.coverImage}}" src="{{guide.coverImage}}" class="hero-img" mode="aspectFill" />
+      <view wx:else class="hero-fallback">
+        <text class="hero-emoji">{{guide.emoji}}</text>
+        <text class="hero-name">{{guide.name}}</text>
+      </view>
+      <view wx:if="{{guide.showcaseVideo}}" class="play-btn" bindtap="playShowcase">▶</view>
+    </view>
+
+    <!-- Description -->
+    <view wx:if="{{guide.description}}" class="card">
+      <text class="desc">{{guide.description}}</text>
+    </view>
+
+    <!-- Media -->
+    <view wx:if="{{mediaItems.length}}" class="card">
+      <text class="title">产品展示</text>
+      <scroll-view scroll-x class="media-scroll">
+        <view wx:for="{{mediaItems}}" wx:key="index" class="media-card" bindtap="openMedia" data-item="{{item}}">
+          <image wx:if="{{item.thumb}}" src="{{item.thumb}}" class="media-thumb" mode="aspectFill" />
+          <view wx:else class="media-placeholder">{{item.type === 'video' ? '🎬' : '🖼'}}</view>
+          <view wx:if="{{item.type === 'video'}}" class="media-play">▶</view>
+          <text class="media-label">{{item.title}}</text>
+        </view>
+      </scroll-view>
+    </view>
+
+    <!-- Tags -->
+    <view wx:if="{{tags.length}}" class="card">
+      <text class="title">服务项目</text>
+      <view class="tag-wrap">
+        <text wx:for="{{tags}}" wx:key="*this" class="tag">{{item}}</text>
+      </view>
+    </view>
+
+    <!-- Help -->
+    <view wx:if="{{helpItems.length}}" class="card">
+      <text class="title">使用帮助</text>
+      <view wx:for="{{helpItems}}" wx:key="index" class="help-row" bindtap="openHelp" data-item="{{item}}">
+        <text class="help-title">{{item.title}}</text>
+        <text class="help-arrow">›</text>
+      </view>
+    </view>
+
+    <!-- Sections -->
+    <view wx:if="{{sections.length}}" class="card">
+      <view wx:for="{{sections}}" wx:key="index" class="section-block">
+        <text class="title">{{item.title}}</text>
+        <view wx:for="{{item.tips}}" wx:for-item="tip" wx:key="*this" class="tip-row">
+          <text class="tip-dot">·</text>
+          <text class="tip-text">{{tip}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- Service entries -->
+    <view class="card">
+      <text class="title">服务入口</text>
+      <view class="entry-grid">
+        <view class="entry-item" bindtap="goServices">
+          <view class="entry-icon" style="background:#EDE9FE"><text>🔧</text></view>
+          <text>自助服务</text>
+        </view>
+        <view class="entry-item" bindtap="goServices">
+          <view class="entry-icon" style="background:#DBEAFE"><text>📍</text></view>
+          <text>服务网点</text>
+        </view>
+        <view class="entry-item" bindtap="goServices">
+          <view class="entry-icon" style="background:#D1FAE5"><text>🛡</text></view>
+          <text>售后政策</text>
+        </view>
+        <view class="entry-item" bindtap="goServices">
+          <view class="entry-icon" style="background:#FEF3C7"><text>💰</text></view>
+          <text>维修报价</text>
+        </view>
+      </view>
+    </view>
+  </block>
+</view>

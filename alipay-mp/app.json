@@ -5,6 +5,7 @@
     "pages/orders/orders",
     "pages/mine/mine",
     "pages/service-detail/service-detail",
+    "pages/guide-detail/guide-detail",
     "pages/login/login"
   ],
   "window": {

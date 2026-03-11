@@ -22,6 +22,7 @@ const syncDatabase = async () => {
     await sequelize.authenticate();
     console.log('[DB] Connection established successfully.');
     await sequelize.sync();
+    await DeviceGuide.sync({ alter: true });
     console.log('[DB] All models synchronized.');
 
     const admin = await User.findOne({ where: { username: 'admin' } });

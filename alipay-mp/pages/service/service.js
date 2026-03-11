@@ -104,16 +104,8 @@ Page({
   showGuide(e) {
     const index = parseInt(e.currentTarget.dataset.index, 10);
     const device = this.data.deviceGuides[index] || {};
-    let content = device.model + '\n';
-    const sections = device.sections || [];
-    if (sections.length) {
-      sections.forEach(sec => {
-        content += '\n【' + sec.title + '】\n';
-        (sec.tips || []).forEach(t => { content += '· ' + t + '\n'; });
-      });
-    } else {
-      content += '\n设备服务指南，详情请咨询客服。';
+    if (device.id) {
+      my.navigateTo({ url: `/pages/guide-detail/guide-detail?id=${device.id}` });
     }
-    my.alert({ title: device.name, content });
   },
 });
