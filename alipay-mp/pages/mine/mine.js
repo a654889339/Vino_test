@@ -18,7 +18,7 @@ Page({
       { title: '地址管理', emoji: '📍', url: '' },
       { title: '优惠券', emoji: '🎫', url: '' },
       { title: '帮助中心', emoji: '❓', url: '' },
-      { title: '意见反馈', emoji: '💬', url: '' },
+      { title: '意见反馈', emoji: '💬', url: '', chat: true },
       { title: '关于Vino', emoji: 'ℹ️', url: '', webUrl: 'https://www.samyou.cn/' },
     ],
   },
@@ -120,7 +120,9 @@ Page({
   onMenuTap(e) {
     const idx = parseInt(e.currentTarget.dataset.index, 10);
     const item = this.data.menus[idx] || {};
-    if (item.webUrl) {
+    if (item.chat) {
+      my.navigateTo({ url: '/pages/chat/chat' });
+    } else if (item.webUrl) {
       my.navigateTo({ url: '/pages/webview/webview?url=' + encodeURIComponent(item.webUrl) });
     } else if (item.url) {
       my.switchTab({ url: item.url });
