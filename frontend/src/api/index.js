@@ -24,6 +24,12 @@ export const guideApi = {
   detail: (id) => request.get(`/guides/${id}`),
 };
 
+export const messageApi = {
+  mine: () => request.get('/messages/mine'),
+  send: (data) => request.post('/messages/send', data),
+  unread: () => request.get('/messages/unread'),
+};
+
 export const homeConfigApi = {
   list: () => request.get('/home-config'),
 };

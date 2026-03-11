@@ -6,6 +6,7 @@ const OrderLog = require('./OrderLog');
 const Address = require('./Address');
 const DeviceGuide = require('./DeviceGuide');
 const HomeConfig = require('./HomeConfig');
+const Message = require('./Message');
 
 User.hasMany(Order, { foreignKey: 'userId', as: 'orders' });
 Order.belongsTo(User, { foreignKey: 'userId', as: 'user' });
@@ -14,7 +15,10 @@ OrderLog.belongsTo(Order, { foreignKey: 'orderId', as: 'order' });
 User.hasMany(Address, { foreignKey: 'userId', as: 'addresses' });
 Address.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
-const models = { User, Service, Order, OrderLog, Address, DeviceGuide, HomeConfig };
+User.hasMany(Message, { foreignKey: 'userId', as: 'messages' });
+Message.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+const models = { User, Service, Order, OrderLog, Address, DeviceGuide, HomeConfig, Message };
 
 const ADMIN_PASSWORD = 'Vino@2024admin';
 
