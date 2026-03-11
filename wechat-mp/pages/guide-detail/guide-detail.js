@@ -4,10 +4,10 @@ Page({
   data: {
     loading: true,
     guide: {},
-    tags: [],
     sections: [],
     mediaItems: [],
     helpItems: [],
+    firstMediaTitle: '',
   },
 
   onLoad(options) {
@@ -26,18 +26,26 @@ Page({
         }
         const mediaItems = parse(g.mediaItems).map(m => {
           if (m.thumb && !m.thumb.startsWith('http')) m.thumb = app.globalData.baseUrl.replace('/api', '') + m.thumb;
+          if (m.url && !m.url.startsWith('http')) m.url = app.globalData.baseUrl.replace('/api', '') + m.url;
           return m;
         });
+        const helpItems = parse(g.helpItems);
+        const sections = parse(g.sections);
         this.setData({
           guide: g,
-          tags: parse(g.tags),
-          sections: parse(g.sections),
+          sections,
           mediaItems,
-          helpItems: parse(g.helpItems),
+          helpItems,
+          firstMediaTitle: mediaItems.length ? (mediaItems[0].title || g.name) : g.name,
           loading: false,
         });
       })
       .catch(() => this.setData({ loading: false }));
+  },
+
+  previewCover() {
+    const url = this.data.guide.coverImage;
+    if (url) wx.previewImage({ current: url, urls: [url] });
   },
 
   playShowcase() {
@@ -47,18 +55,29 @@ Page({
 
   openMedia(e) {
     const item = e.currentTarget.dataset.item;
-    if (item.type === 'video' && item.url) {
-      wx.previewMedia({ sources: [{ url: item.url, type: 'video' }] });
-    } else if (item.url) {
-      wx.previewImage({ current: item.url, urls: [item.url] });
+    if (!item) return;
+    const mediaUrl = item.url || item.thumb;
+    if (!mediaUrl) return;
+    if (item.type === 'video') {
+      wx.previewMedia({ sources: [{ url: mediaUrl, type: 'video' }] });
+    } else {
+      const images = this.data.mediaItems
+        .filter(m => m.type !== 'video')
+        .map(m => m.url || m.thumb)
+        .filter(Boolean);
+      const idx = images.indexOf(mediaUrl);
+      wx.previewImage({ current: mediaUrl, urls: images.length ? images : [mediaUrl] });
     }
   },
 
-  openHelp(e) {
-    const item = e.currentTarget.dataset.item;
-    if (item.content) {
-      wx.showModal({ title: item.title, content: item.content, showCancel: false });
-    }
+  goManual() {
+    const id = this.data.guide.id;
+    wx.navigateTo({ url: `/pages/manual/manual?id=${id}` });
+  },
+
+  goMaintenance() {
+    const id = this.data.guide.id;
+    wx.navigateTo({ url: `/pages/maintenance/maintenance?id=${id}` });
   },
 
   goServices() {

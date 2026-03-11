@@ -2,59 +2,44 @@
   <view wx:if="{{loading}}" class="loading">加载中...</view>
 
   <block wx:elif="{{guide.id}}">
-    <!-- Hero -->
-    <view class="hero" style="background:{{guide.gradient || '#333'}}">
-      <image wx:if="{{guide.coverImage}}" src="{{guide.coverImage}}" class="hero-img" mode="aspectFill" />
-      <view wx:else class="hero-fallback">
-        <text class="hero-emoji">{{guide.emoji}}</text>
-        <text class="hero-name">{{guide.name}}</text>
-      </view>
-      <view wx:if="{{guide.showcaseVideo}}" class="play-btn" bindtap="playShowcase">▶</view>
-    </view>
-
-    <!-- Description -->
-    <view wx:if="{{guide.description}}" class="card">
-      <text class="desc">{{guide.description}}</text>
-    </view>
-
-    <!-- Media -->
-    <view wx:if="{{mediaItems.length}}" class="card">
-      <text class="title">产品展示</text>
-      <scroll-view scroll-x class="media-scroll">
-        <view wx:for="{{mediaItems}}" wx:key="index" class="media-card" bindtap="openMedia" data-item="{{item}}">
-          <image wx:if="{{item.thumb}}" src="{{item.thumb}}" class="media-thumb" mode="aspectFill" />
-          <view wx:else class="media-placeholder">{{item.type === 'video' ? '🎬' : '🖼'}}</view>
-          <view wx:if="{{item.type === 'video'}}" class="media-play">▶</view>
-          <text class="media-label">{{item.title}}</text>
+    <!-- Hero + Media merged block -->
+    <view class="hero-block">
+      <view class="hero" style="background:{{guide.gradient || '#333'}}">
+        <image wx:if="{{guide.coverImage}}" src="{{guide.coverImage}}" class="hero-img" mode="aspectFill" bindtap="previewCover" />
+        <view wx:else class="hero-fallback">
+          <image wx:if="{{guide.iconUrl}}" src="{{guide.iconUrl}}" class="hero-icon-img" />
+          <text wx:else class="hero-emoji">{{guide.emoji}}</text>
+          <text class="hero-name">{{guide.name}}</text>
         </view>
-      </scroll-view>
-    </view>
-
-    <!-- Tags -->
-    <view wx:if="{{tags.length}}" class="card">
-      <text class="title">服务项目</text>
-      <view class="tag-wrap">
-        <text wx:for="{{tags}}" wx:key="*this" class="tag">{{item}}</text>
+        <view wx:if="{{guide.showcaseVideo}}" class="play-btn" bindtap="playShowcase">▶</view>
+      </view>
+      <view wx:if="{{mediaItems.length}}" class="hero-media">
+        <text class="hero-media-title">{{firstMediaTitle}}</text>
+        <scroll-view scroll-x class="media-scroll">
+          <view wx:for="{{mediaItems}}" wx:key="index" class="media-card" bindtap="openMedia" data-item="{{item}}" data-index="{{index}}">
+            <view class="media-thumb-wrap">
+              <image wx:if="{{item.thumb}}" src="{{item.thumb}}" class="media-thumb" mode="aspectFill" />
+              <view wx:else class="media-placeholder">{{item.type === 'video' ? '🎬' : '🖼'}}</view>
+              <view wx:if="{{item.type === 'video'}}" class="media-play">▶</view>
+              <view class="media-label-overlay">
+                <text>{{item.title}}</text>
+              </view>
+            </view>
+          </view>
+        </scroll-view>
       </view>
     </view>
 
-    <!-- Help -->
-    <view wx:if="{{helpItems.length}}" class="card">
+    <!-- Help Links -->
+    <view wx:if="{{helpItems.length || sections.length}}" class="card">
       <text class="title">使用帮助</text>
-      <view wx:for="{{helpItems}}" wx:key="index" class="help-row" bindtap="openHelp" data-item="{{item}}">
-        <text class="help-title">{{item.title}}</text>
+      <view wx:if="{{helpItems.length}}" class="help-row" bindtap="goManual">
+        <text class="help-title">电子说明书</text>
         <text class="help-arrow">›</text>
       </view>
-    </view>
-
-    <!-- Sections -->
-    <view wx:if="{{sections.length}}" class="card">
-      <view wx:for="{{sections}}" wx:key="index" class="section-block">
-        <text class="title">{{item.title}}</text>
-        <view wx:for="{{item.tips}}" wx:for-item="tip" wx:key="*this" class="tip-row">
-          <text class="tip-dot">·</text>
-          <text class="tip-text">{{tip}}</text>
-        </view>
+      <view wx:if="{{sections.length}}" class="help-row" bindtap="goMaintenance">
+        <text class="help-title">常见问题与保养建议</text>
+        <text class="help-arrow">›</text>
       </view>
     </view>
 

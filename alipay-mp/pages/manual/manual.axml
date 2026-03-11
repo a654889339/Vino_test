@@ -1,0 +1,27 @@
+<view class="page">
+  <view a:if="{{loading}}" class="loading">加载中...</view>
+  <block a:else>
+    <view class="header">
+      <text class="main-title">{{guideName}} · 电子说明书</text>
+      <text a:if="{{helpItems.length > 1}}" class="chapter-count">共 {{helpItems.length}} 个章节</text>
+    </view>
+
+    <!-- TOC -->
+    <view a:if="{{helpItems.length > 1}}" class="toc-card">
+      <text class="toc-title">目录</text>
+      <view a:for="{{helpItems}}" a:for-index="idx" a:for-item="item" class="toc-item">
+        <text class="toc-num">{{idx + 1}}</text>
+        <text class="toc-text">{{item.title}}</text>
+      </view>
+    </view>
+
+    <!-- Chapters -->
+    <view a:for="{{helpItems}}" a:for-index="idx" a:for-item="item" class="chapter-card">
+      <view class="chapter-header">
+        <text class="chapter-num">{{idx + 1}}</text>
+        <text class="chapter-title">{{item.title}}</text>
+      </view>
+      <rich-text class="chapter-content" nodes="{{item.content}}" />
+    </view>
+  </block>
+</view>

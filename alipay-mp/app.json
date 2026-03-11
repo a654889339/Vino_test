@@ -6,6 +6,8 @@
     "pages/mine/mine",
     "pages/service-detail/service-detail",
     "pages/guide-detail/guide-detail",
+    "pages/manual/manual",
+    "pages/maintenance/maintenance",
     "pages/login/login"
   ],
   "window": {
