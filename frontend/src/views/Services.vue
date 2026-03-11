@@ -1,7 +1,5 @@
 <template>
   <div class="services-page">
-    <van-nav-bar title="全部服务" />
-
     <!-- 产品导航 Apple 风格 -->
     <div class="product-nav">
       <div class="product-nav-scroll">
@@ -190,19 +188,6 @@ onMounted(async () => {
   min-height: 100vh;
 }
 
-.services-page :deep(.van-nav-bar) {
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  border-bottom: 0.5px solid rgba(0, 0, 0, 0.06);
-}
-
-.services-page :deep(.van-nav-bar__title) {
-  font-weight: 600;
-  font-size: 17px;
-  color: var(--vino-dark);
-}
-
 /* ===== Product Nav (Apple Style) ===== */
 .product-nav {
   background: var(--vino-card);
@@ -212,17 +197,18 @@ onMounted(async () => {
 .product-nav-scroll {
   display: flex;
   align-items: center;
+  justify-content: center;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  padding: 0 20px;
+  padding: 0 12px;
 }
 
 .product-nav-scroll::-webkit-scrollbar { display: none; }
 
 .product-nav-item {
   flex-shrink: 0;
-  padding: 14px 18px;
+  padding: 14px 16px;
   font-size: 14px;
   font-weight: 400;
   color: var(--vino-dark);
@@ -232,10 +218,6 @@ onMounted(async () => {
   position: relative;
   letter-spacing: 0;
   opacity: 0.88;
-}
-
-.product-nav-item:first-child {
-  padding-left: 0;
 }
 
 .product-nav-item:hover,
