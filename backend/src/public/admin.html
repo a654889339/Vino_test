@@ -249,6 +249,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       </div>
     </div>
 
+    <!-- Upload Loading Overlay -->
+    <div id="uploadOverlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.55);z-index:9999;justify-content:center;align-items:center;flex-direction:column;gap:16px">
+      <div style="width:48px;height:48px;border:4px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite"></div>
+      <span id="uploadOverlayText" style="color:#fff;font-size:15px;font-weight:500">上传中，请稍候...</span>
+    </div>
+    <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+
     <!-- Guide Editor Modal -->
     <div class="modal-overlay" id="guideModal" style="display:none" onclick="if(event.target===this)closeGuideEditor()">
       <div class="modal-content" style="width:760px">
@@ -818,46 +825,58 @@ function renderHelpItems() {
 function addHelpItem() { guideHelpItems.push({title:'',icon:'description',content:''}); renderHelpItems(); }
 function removeHelpItem(i) { guideHelpItems.splice(i,1); renderHelpItems(); }
 
+function showUploadLoading(filename) {
+  const o = document.getElementById('uploadOverlay');
+  document.getElementById('uploadOverlayText').textContent = '正在上传 ' + (filename||'文件') + '，请稍候...';
+  o.style.display = 'flex';
+}
+function hideUploadLoading() { document.getElementById('uploadOverlay').style.display = 'none'; }
+
+async function doUpload(file) {
+  const fd = new FormData(); fd.append('file', file);
+  const r = await fetch('/api/guides/admin/upload', { method:'POST', headers:{'Authorization':'Bearer '+token}, body:fd });
+  return await r.json();
+}
+
 async function uploadGuideFile(input, targetId) {
   if (!input.files[0]) return;
   const file = input.files[0];
   if (file.size > 100*1024*1024) { alert('文件不能超过100MB'); return; }
+  showUploadLoading(file.name);
   const el = document.getElementById(targetId);
-  el.value = '上传中...';
-  const fd = new FormData(); fd.append('file', file);
   try {
-    const r = await fetch('/api/guides/admin/upload', { method:'POST', headers:{'Authorization':'Bearer '+token}, body:fd });
-    const res = await r.json();
+    const res = await doUpload(file);
     if (res.code === 0) {
       el.value = res.data.url;
       const preview = document.getElementById('gCoverPreview');
       if (targetId === 'gCoverImage' && preview) { preview.src = res.data.url; preview.style.display = 'block'; }
     } else { el.value = ''; alert(res.message||'上传失败'); }
   } catch { el.value = ''; alert('上传失败'); }
+  hideUploadLoading();
 }
 
 async function uploadMediaThumb(input, idx) {
   if (!input.files[0]) return;
-  const fd = new FormData(); fd.append('file', input.files[0]);
+  showUploadLoading(input.files[0].name);
   try {
-    const r = await fetch('/api/guides/admin/upload', { method:'POST', headers:{'Authorization':'Bearer '+token}, body:fd });
-    const res = await r.json();
+    const res = await doUpload(input.files[0]);
     if (res.code === 0) { guideMediaItems[idx].thumb = res.data.url; renderMediaItems(); }
     else alert(res.message||'上传失败');
   } catch { alert('上传失败'); }
+  hideUploadLoading();
 }
 
 async function uploadMediaUrl(input, idx) {
   if (!input.files[0]) return;
   const file = input.files[0];
   if (file.size > 100*1024*1024) { alert('文件不能超过100MB'); return; }
-  const fd = new FormData(); fd.append('file', file);
+  showUploadLoading(file.name);
   try {
-    const r = await fetch('/api/guides/admin/upload', { method:'POST', headers:{'Authorization':'Bearer '+token}, body:fd });
-    const res = await r.json();
+    const res = await doUpload(file);
     if (res.code === 0) { guideMediaItems[idx].url = res.data.url; renderMediaItems(); }
     else alert(res.message||'上传失败');
   } catch { alert('上传失败'); }
+  hideUploadLoading();
 }
 
 function parseJSON(val) { try { return Array.isArray(val) ? val : JSON.parse(val||'[]'); } catch { return []; } }
