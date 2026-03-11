@@ -279,14 +279,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
           <h4 style="margin:20px 0 12px;color:var(--primary)">展示媒体</h4>
           <div class="form-group">
-            <label>封面图</label>
+            <label>展示大图 <span style="font-weight:normal;color:#999;font-size:12px">（前端页面顶部横幅图片，建议 750×400 以上）</span></label>
             <div style="display:flex;gap:8px;align-items:center">
-              <input class="form-input" id="gCoverImage" placeholder="图片URL或点击上传" style="flex:1" />
+              <input class="form-input" id="gCoverImage" placeholder="点击右侧按钮上传横幅大图" style="flex:1" />
               <label style="padding:8px 16px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">
-                上传<input type="file" accept="image/*" style="display:none" onchange="uploadGuideFile(this,'gCoverImage')" />
+                上传图片<input type="file" accept="image/*" style="display:none" onchange="uploadGuideFile(this,'gCoverImage')" />
               </label>
             </div>
-            <img id="gCoverPreview" style="max-width:200px;max-height:120px;margin-top:8px;border-radius:8px;display:none" />
+            <img id="gCoverPreview" style="max-width:300px;max-height:160px;margin-top:8px;border-radius:8px;display:none;border:1px solid #eee" />
           </div>
           <div class="form-group">
             <label>展示视频</label>

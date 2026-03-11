@@ -14,7 +14,7 @@
           </div>
           <div class="hero-play-btn"><van-icon name="play-circle" size="48" color="#fff" /></div>
         </div>
-        <div v-else-if="guide.coverImage" class="hero-img-wrap">
+        <div v-else-if="guide.coverImage" class="hero-img-wrap" @click="previewImage(fullUrl(guide.coverImage))">
           <img :src="fullUrl(guide.coverImage)" class="hero-img" />
         </div>
         <div v-else class="hero-gradient" :style="{ background: guide.gradient }">
@@ -108,6 +108,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
+import { showImagePreview } from 'vant';
 import { guideApi } from '@/api';
 
 const route = useRoute();
@@ -175,19 +176,21 @@ const closeVideo = () => {
   currentVideoUrl.value = '';
 };
 
+const previewImage = (url) => {
+  showImagePreview({ images: [url], closeable: true });
+};
+
 const openMedia = (m) => {
   const url = getMediaUrl(m);
   if (!url) return;
   if (isVideo(m)) {
     playVideo(url);
   } else {
-    import('vant').then(({ showImagePreview }) => {
-      const images = mediaItems.value
-        .filter(item => !isVideo(item) && getMediaUrl(item))
-        .map(item => getMediaUrl(item));
-      const idx = images.indexOf(url);
-      showImagePreview({ images, startPosition: idx >= 0 ? idx : 0 });
-    });
+    const images = mediaItems.value
+      .filter(item => !isVideo(item) && getMediaUrl(item))
+      .map(item => getMediaUrl(item));
+    const idx = images.indexOf(url);
+    showImagePreview({ images, startPosition: idx >= 0 ? idx : 0, closeable: true });
   }
 };
 
