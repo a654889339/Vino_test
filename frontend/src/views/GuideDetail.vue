@@ -26,15 +26,15 @@
           </div>
         </div>
         <div v-if="mediaItems.length" class="hero-media">
-          <h3 class="hero-media-title">{{ guide.name }}</h3>
+          <h3 class="hero-media-title">{{ mediaItems[0]?.title || guide.name }}</h3>
           <div class="media-scroll">
             <div v-for="(m, i) in mediaItems" :key="i" class="media-card" @click="openMedia(m)">
               <div class="media-thumb">
                 <img v-if="getThumbUrl(m)" :src="getThumbUrl(m)" />
                 <div v-else class="media-thumb-placeholder"><van-icon :name="isVideo(m) ? 'video-o' : 'photo-o'" size="28" color="#999" /></div>
-                <div v-if="isVideo(m)" class="media-play"><van-icon name="play-circle-o" size="28" color="#fff" /></div>
+                <div v-if="isVideo(m)" class="media-play"><van-icon name="play-circle-o" size="24" color="#fff" /></div>
+                <div class="media-label-overlay">{{ m.title }}</div>
               </div>
-              <p class="media-label">{{ m.title }}</p>
             </div>
           </div>
         </div>
@@ -197,14 +197,20 @@ onMounted(async () => {
 .section-card { background: #fff; margin: 10px 12px; border-radius: 12px; padding: 16px; }
 .section-title { font-size: 16px; font-weight: 600; color: #1a1a1a; margin-bottom: 12px; display: flex; align-items: center; }
 
-.media-scroll { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; -webkit-overflow-scrolling: touch; }
+.media-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
 .media-scroll::-webkit-scrollbar { display: none; }
-.media-card { flex-shrink: 0; width: 140px; cursor: pointer; }
-.media-thumb { width: 140px; height: 100px; border-radius: 10px; overflow: hidden; position: relative; background: #f0f0f0; }
+.media-card { flex-shrink: 0; width: 130px; cursor: pointer; }
+.media-thumb { width: 130px; height: 160px; border-radius: 10px; overflow: hidden; position: relative; background: #1a1a1a; }
 .media-thumb img { width: 100%; height: 100%; object-fit: cover; }
-.media-thumb-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #eee; }
-.media-play { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 36px; height: 36px; background: rgba(0,0,0,0.5); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-.media-label { font-size: 12px; color: #333; margin-top: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.media-thumb-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #2a2a2a; }
+.media-play { position: absolute; top: 40%; left: 50%; transform: translate(-50%,-50%); width: 36px; height: 36px; background: rgba(0,0,0,0.5); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.media-label-overlay {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 20px 8px 8px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.7));
+  font-size: 13px; font-weight: 600; color: #fff;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 
 
 .service-entry-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
