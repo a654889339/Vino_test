@@ -126,13 +126,28 @@ const sendMessage = async () => {
   sending.value = false;
 };
 
-const onOpen = () => {
-  loadMessages();
+let pendingAutoMsg = '';
+
+const onOpen = async () => {
+  await loadMessages();
+  if (pendingAutoMsg && isLoggedIn.value) {
+    inputText.value = pendingAutoMsg;
+    pendingAutoMsg = '';
+    await nextTick();
+    await sendMessage();
+  }
 };
 
 const toggleChat = () => {
   showChat.value = !showChat.value;
 };
+
+const openWithAutoMessage = (msg) => {
+  pendingAutoMsg = msg || '';
+  showChat.value = true;
+};
+
+defineExpose({ openWithAutoMessage });
 
 const goLogin = () => {
   showChat.value = false;

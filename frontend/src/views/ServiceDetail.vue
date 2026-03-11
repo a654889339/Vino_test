@@ -45,7 +45,7 @@
       </div>
 
       <div class="detail-footer">
-        <van-button icon="chat-o" type="default" size="small">咨询</van-button>
+        <van-button icon="chat-o" type="default" size="small" @click="onConsult">咨询</van-button>
         <van-button type="primary" color="#B91C1C" block round @click="onBookClick">
           立即预约
         </van-button>
@@ -163,7 +163,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted, inject } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { serviceApi, orderApi, addressApi } from '@/api';
 import { showToast, showDialog } from 'vant';
@@ -171,6 +171,7 @@ import { areaList } from '@vant/area-data';
 
 const route = useRoute();
 const router = useRouter();
+const chatWidgetRef = inject('chatWidget', ref(null));
 const loading = ref(true);
 const showOrderPopup = ref(false);
 const submitting = ref(false);
@@ -285,6 +286,14 @@ const loadSavedAddresses = async () => {
     const res = await addressApi.list();
     savedAddresses.value = res.data || [];
   } catch {}
+};
+
+const onConsult = () => {
+  const s = serviceData.value;
+  const msg = `我想咨询一下【${s.title || '该服务'}】${s.price ? '（¥' + s.price + '）' : ''}${s.description ? '：' + s.description : ''}`;
+  if (chatWidgetRef.value) {
+    chatWidgetRef.value.openWithAutoMessage(msg);
+  }
 };
 
 const onBookClick = () => {

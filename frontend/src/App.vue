@@ -7,11 +7,11 @@
     <van-tabbar-item to="/orders" icon="bill-o">订单</van-tabbar-item>
     <van-tabbar-item to="/mine" icon="contact-o">我的</van-tabbar-item>
   </van-tabbar>
-  <ChatWidget v-if="showChatWidget" />
+  <ChatWidget v-if="showChatWidget" ref="chatWidgetRef" />
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, provide } from 'vue';
 import { useRoute } from 'vue-router';
 import SplashScreen from '@/components/SplashScreen.vue';
 import ChatWidget from '@/components/ChatWidget.vue';
@@ -26,6 +26,9 @@ const showTabbar = computed(() => {
 const showChatWidget = computed(() => {
   return !route.path.startsWith('/login') && !route.path.startsWith('/register');
 });
+
+const chatWidgetRef = ref(null);
+provide('chatWidget', chatWidgetRef);
 
 const showSplash = ref(false);
 
