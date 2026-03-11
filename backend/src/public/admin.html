@@ -521,7 +521,8 @@ function switchPage(page) {
   if (page === 'users') loadUsers();
   if (page === 'guides') loadGuides();
   if (page === 'homeConfig') loadHomeConfig();
-  if (page === 'messages') loadConversations();
+  if (page === 'messages') { loadConversations(); startMsgPolling(); }
+  else { stopMsgPolling(); currentChatUserId = null; }
 }
 
 async function handleLogin(e) {
@@ -1241,6 +1242,27 @@ async function deleteHC(id) {
 /* ===== Messages / Chat ===== */
 let conversations = [];
 let currentChatUserId = null;
+let msgConvPollTimer = null;   // 会话列表轮询（留言板页面打开期间）
+let msgChatPollTimer = null;   // 当前会话消息轮询（选中某用户对话期间）
+let lastMsgCount = 0;          // 用于增量检测：仅当消息数变化时才刷新 DOM
+
+function startMsgPolling() {
+  stopMsgPolling();
+  msgConvPollTimer = setInterval(loadConversations, 5000);
+}
+function stopMsgPolling() {
+  if (msgConvPollTimer) { clearInterval(msgConvPollTimer); msgConvPollTimer = null; }
+  stopChatPoll();
+}
+function startChatPoll() {
+  stopChatPoll();
+  msgChatPollTimer = setInterval(() => {
+    if (currentChatUserId) refreshChat(currentChatUserId);
+  }, 3000);
+}
+function stopChatPoll() {
+  if (msgChatPollTimer) { clearInterval(msgChatPollTimer); msgChatPollTimer = null; }
+}
 
 async function loadConversations() {
   try {
@@ -1278,6 +1300,7 @@ function renderConvList() {
 
 async function openChat(userId) {
   currentChatUserId = userId;
+  lastMsgCount = 0;
   const conv = conversations.find(c => c.userId === userId);
   document.getElementById('chatHeader').textContent = conv ? (conv.nickname || conv.username) : '用户 #' + userId;
   document.getElementById('chatInputArea').style.display = '';
@@ -1285,10 +1308,25 @@ async function openChat(userId) {
   try {
     const res = await api('/messages/admin/' + userId);
     const msgs = res.data || [];
+    lastMsgCount = msgs.length;
     renderChatMessages(msgs, conv);
     if (conv) conv.unread = 0;
     renderConvList();
   } catch { document.getElementById('chatMessages').innerHTML = '<div style="text-align:center;color:#999;padding:40px">加载失败</div>'; }
+  startChatPoll();
+}
+
+// 静默刷新当前会话：仅在消息数变化时更新 DOM，避免频繁重绘
+async function refreshChat(userId) {
+  try {
+    const res = await api('/messages/admin/' + userId);
+    const msgs = res.data || [];
+    if (msgs.length === lastMsgCount) return;
+    lastMsgCount = msgs.length;
+    const conv = conversations.find(c => c.userId === userId);
+    renderChatMessages(msgs, conv);
+    if (conv) conv.unread = 0;
+  } catch { /* ignore polling errors */ }
 }
 
 function renderChatMessages(msgs, conv) {

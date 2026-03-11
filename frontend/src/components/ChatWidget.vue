@@ -7,7 +7,7 @@
     </div>
 
     <!-- Chat Panel -->
-    <van-popup v-model:show="showChat" position="bottom" round :style="{ height: '75vh' }" @open="onOpen">
+    <van-popup v-model:show="showChat" position="bottom" round :style="{ height: '75vh' }" @open="onOpen" @close="onClose">
       <div class="chat-panel">
         <div class="chat-header">
           <span class="chat-title">在线客服</span>
@@ -60,7 +60,7 @@
  * 3. 用户消息（右侧红色气泡）与客服回复（左侧白色气泡）
  * 4. 未登录时禁用输入框并提示登录
  * 5. 支持外部调用 openWithAutoMessage() 自动打开并发送预设消息（如商品咨询）
- * 6. 每 30 秒轮询未读消息数用于红点提示
+ * 6. 面板关闭时每 15 秒轮询未读数；面板打开时每 3 秒拉取新消息，快速感知回复
  */
 import { ref, computed, nextTick, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
@@ -85,8 +85,9 @@ const userInitial = computed(() => {
   return n ? n[0] : '我';
 });
 
-// 未读消息轮询定时器
+// 轮询定时器：面板关闭时每 15 秒检查未读数，面板打开时每 3 秒拉取新消息
 let pollTimer = null;
+let activePollTimer = null;
 
 // 格式化消息时间：当天只显示时分，非当天显示月/日 时分
 const formatTime = (t) => {
@@ -104,11 +105,14 @@ const scrollToBottom = async () => {
 };
 
 // 加载当前用户的全部聊天记录，同时清零未读计数（服务端会标记已读）
-const loadMessages = async () => {
+// smartScroll: 仅在有新消息时滚动到底部，避免用户翻看历史时被强制滚动
+const loadMessages = async (smartScroll = false) => {
   if (!isLoggedIn.value) return;
   try {
     const res = await messageApi.mine();
-    messages.value = res.data || [];
+    const newList = res.data || [];
+    if (smartScroll && newList.length === messages.value.length) return;
+    messages.value = newList;
     unreadCount.value = 0;
     scrollToBottom();
   } catch { /* ignore */ }
@@ -146,15 +150,30 @@ const sendMessage = async () => {
 // 待发送的自动消息（由 openWithAutoMessage 设置，面板打开后自动发送）
 let pendingAutoMsg = '';
 
-// 面板打开时加载消息，若有待发自动消息则立即发送
+// 开启面板打开期间的快速轮询（3 秒），快速感知管理员回复
+const startActivePoll = () => {
+  stopActivePoll();
+  activePollTimer = setInterval(() => loadMessages(true), 3000);
+};
+const stopActivePoll = () => {
+  if (activePollTimer) { clearInterval(activePollTimer); activePollTimer = null; }
+};
+
+// 面板打开时：加载消息 + 启动快速轮询；若有待发自动消息则立即发送
 const onOpen = async () => {
   await loadMessages();
+  startActivePoll();
   if (pendingAutoMsg && isLoggedIn.value) {
     inputText.value = pendingAutoMsg;
     pendingAutoMsg = '';
     await nextTick();
     await sendMessage();
   }
+};
+
+const onClose = () => {
+  stopActivePoll();
+  checkUnread();
 };
 
 const toggleChat = () => {
@@ -179,11 +198,12 @@ const goLogin = () => {
 
 onMounted(() => {
   checkUnread();
-  pollTimer = setInterval(checkUnread, 30000);
+  pollTimer = setInterval(checkUnread, 15000);
 });
 
 onBeforeUnmount(() => {
   if (pollTimer) clearInterval(pollTimer);
+  stopActivePoll();
 });
 </script>
 
