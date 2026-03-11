@@ -763,7 +763,7 @@ async function loadGuides() {
         <td>${g.coverImage ? '<img src="'+g.coverImage+'" style="width:40px;height:40px;object-fit:cover;border-radius:4px">' : (g.icon || '-')}</td>
         <td>${g.emoji || '-'}</td>
         <td>${g.badge ? '<span style="background:#FEE2E2;color:#B91C1C;padding:2px 8px;border-radius:4px;font-size:11px">'+g.badge+'</span>' : '-'}</td>
-        <td><span style="color:${g.status==='active'?'#059669':'#999'}">${g.status==='active'?'启用':'禁用'}</span></td>
+        <td><span style="display:inline-block;padding:4px 14px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:500;transition:all .2s;${g.status==='active'?'background:#D1FAE5;color:#059669':'background:#F3F4F6;color:#999'}" onclick="toggleGuideStatus(${g.id},'${g.status}')">${g.status==='active'?'启用':'禁用'}</span></td>
         <td>
           <button class="detail-btn" onclick='editGuide(${g.id})'>编辑</button>
           <button class="history-btn" style="color:#B91C1C;border-color:#FCA5A5" onclick="deleteGuide(${g.id})">删除</button>
@@ -897,6 +897,15 @@ async function saveGuide() {
     if (res.code === 0) { closeGuideEditor(); loadGuides(); }
     else alert(res.message || '保存失败');
   } catch { alert('保存失败'); }
+}
+
+async function toggleGuideStatus(id, currentStatus) {
+  const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+  try {
+    const res = await api('/guides/admin/' + id, { method: 'PUT', body: { status: newStatus } });
+    if (res.code === 0) loadGuides();
+    else alert(res.message || '切换失败');
+  } catch { alert('切换失败'); }
 }
 
 async function deleteGuide(id) {
