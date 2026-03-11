@@ -20,6 +20,7 @@ router.post('/send-code', authController.sendCode);
 router.post('/register', authController.register);
 router.post('/login', authController.login);
 router.post('/wx-login', authController.wxLogin);
+router.post('/alipay-login', authController.alipayLogin);
 router.get('/profile', authMiddleware, authController.getProfile);
 router.put('/profile', authMiddleware, authController.updateProfile);
 router.post('/upload-avatar', authMiddleware, upload.single('avatar'), authController.uploadAvatar);

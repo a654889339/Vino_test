@@ -18,6 +18,11 @@ module.exports = {
     appId: process.env.WECHAT_APPID || '',
     appSecret: process.env.WECHAT_SECRET || '',
   },
+  alipay: {
+    appId: process.env.ALIPAY_APPID || '',
+    privateKey: process.env.ALIPAY_PRIVATE_KEY || '',
+    publicKey: process.env.ALIPAY_PUBLIC_KEY || '',
+  },
   email: {
     enabled: process.env.EMAIL_ENABLED === 'true',
     host: process.env.EMAIL_HOST || 'smtp.qq.com',

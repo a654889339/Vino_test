@@ -2,175 +2,139 @@ const app = getApp();
 
 Page({
   data: {
-    isRegister: false,
-    username: '',
-    password: '',
-    email: '',
-    code: '',
-    nickname: '',
-    codeCountdown: 0,
-    loading: false,
+    logging: false,
+    saving: false,
+    isLoggedIn: false,
+    showProfile: false,
+    tempAvatarUrl: '',
+    tempNickname: '',
   },
 
-  switchMode() {
-    this.setData({
-      isRegister: !this.data.isRegister,
-      username: '',
-      password: '',
-      email: '',
-      code: '',
-      nickname: '',
+  alipayLogin() {
+    this.setData({ logging: true });
+    my.getAuthCode({
+      scopes: 'auth_base',
+      success: (authRes) => {
+        if (!authRes.authCode) {
+          my.showToast({ content: '获取授权码失败', type: 'none' });
+          this.setData({ logging: false });
+          return;
+        }
+        app.request({
+          method: 'POST',
+          url: '/auth/alipay-login',
+          data: { code: authRes.authCode },
+        })
+          .then((res) => {
+            const { token, user, isNew } = res.data;
+            app.setToken(token);
+            app.globalData.userInfo = user;
+            if (isNew) {
+              this.setData({ isLoggedIn: true, showProfile: true, logging: false });
+            } else {
+              this.setData({ logging: false });
+              this.goBack();
+            }
+          })
+          .catch((err) => {
+            my.showToast({ content: err.message || '登录失败', type: 'none' });
+            this.setData({ logging: false });
+          });
+      },
+      fail: () => {
+        my.showToast({ content: '支付宝授权失败', type: 'none' });
+        this.setData({ logging: false });
+      },
     });
   },
 
-  inputUsername(e) {
-    this.setData({ username: e.detail.value });
-  },
-  inputPassword(e) {
-    this.setData({ password: e.detail.value });
-  },
-  inputEmail(e) {
-    this.setData({ email: e.detail.value });
-  },
-  inputCode(e) {
-    this.setData({ code: e.detail.value });
-  },
-  inputNickname(e) {
-    this.setData({ nickname: e.detail.value });
-  },
-
-  sendCode() {
-    const { email, codeCountdown } = this.data;
-    if (!email || !email.trim()) {
-      my.showToast({ content: '请输入邮箱', type: 'none' });
-      return;
-    }
-    if (codeCountdown > 0) return;
-    app
-      .request({
-        method: 'POST',
-        url: '/auth/send-code',
-        data: { email: email.trim() },
-      })
-      .then(() => {
-        my.showToast({ content: '验证码已发送', type: 'success' });
-        this.setData({ codeCountdown: 60 });
-        this.startCountdown();
-      })
-      .catch(err => {
-        my.showToast({ content: err.message || '发送失败', type: 'none' });
-      });
-  },
-
-  startCountdown() {
-    const t = setInterval(() => {
-      const n = this.data.codeCountdown - 1;
-      this.setData({ codeCountdown: n });
-      if (n <= 0) clearInterval(t);
-    }, 1000);
-  },
-
-  handleLogin() {
-    const { username, password } = this.data;
-    if (!username || !username.trim()) {
-      my.showToast({ content: '请输入用户名', type: 'none' });
-      return;
-    }
-    if (!password || !password.trim()) {
-      my.showToast({ content: '请输入密码', type: 'none' });
-      return;
-    }
-    this.setData({ loading: true });
-    app
-      .request({
-        method: 'POST',
-        url: '/auth/login',
-        data: { username: username.trim(), password: password.trim() },
-      })
-      .then(res => {
-        const token = res.data && res.data.token;
-        const user = res.data && res.data.user;
-        if (token) {
-          app.setToken(token);
-          app.globalData.userInfo = user || {};
+  chooseAvatar() {
+    my.chooseImage({
+      count: 1,
+      success: (res) => {
+        if (res.apFilePaths && res.apFilePaths.length) {
+          this.setData({ tempAvatarUrl: res.apFilePaths[0] });
         }
-        this.setData({ loading: false });
-        my.showToast({ content: '登录成功', type: 'success' });
-        setTimeout(() => {
-          const pages = getCurrentPages();
-          if (pages.length > 1) {
-            my.navigateBack();
-          } else {
-            my.switchTab({ url: '/pages/index/index' });
-          }
-        }, 500);
-      })
-      .catch(err => {
-        this.setData({ loading: false });
-        my.showToast({ content: err.message || '登录失败', type: 'none' });
-      });
+      },
+    });
   },
 
-  handleRegister() {
-    const { username, password, email, code, nickname } = this.data;
-    if (!username || !username.trim()) {
-      my.showToast({ content: '请输入用户名', type: 'none' });
-      return;
-    }
-    if (!password || !password.trim()) {
-      my.showToast({ content: '请输入密码', type: 'none' });
-      return;
-    }
-    if (!email || !email.trim()) {
-      my.showToast({ content: '请输入邮箱', type: 'none' });
-      return;
-    }
-    if (!code || !code.trim()) {
-      my.showToast({ content: '请输入验证码', type: 'none' });
-      return;
-    }
-    this.setData({ loading: true });
-    app
-      .request({
-        method: 'POST',
-        url: '/auth/register',
-        data: {
-          username: username.trim(),
-          password: password.trim(),
-          email: email.trim(),
-          code: code.trim(),
-          nickname: (nickname || username).trim(),
+  onNicknameInput(e) {
+    this.setData({ tempNickname: e.detail.value });
+  },
+
+  saveProfile() {
+    const { tempAvatarUrl, tempNickname } = this.data;
+    this.setData({ saving: true });
+
+    const doSave = (avatarServerUrl) => {
+      const updateData = {};
+      if (tempNickname.trim()) updateData.nickname = tempNickname.trim();
+      if (avatarServerUrl) updateData.avatar = avatarServerUrl;
+
+      if (!Object.keys(updateData).length) {
+        this.setData({ saving: false });
+        this.goBack();
+        return;
+      }
+
+      app.request({
+        method: 'PUT',
+        url: '/auth/profile',
+        data: updateData,
+      })
+        .then((res) => {
+          app.globalData.userInfo = res.data;
+          this.setData({ saving: false });
+          my.showToast({ content: '设置成功', type: 'success' });
+          setTimeout(() => this.goBack(), 800);
+        })
+        .catch(() => {
+          this.setData({ saving: false });
+          this.goBack();
+        });
+    };
+
+    if (tempAvatarUrl && tempAvatarUrl.startsWith('http')) {
+      doSave(tempAvatarUrl);
+    } else if (tempAvatarUrl) {
+      my.uploadFile({
+        url: app.globalData.baseUrl + '/auth/upload-avatar',
+        fileType: 'image',
+        fileName: 'avatar',
+        filePath: tempAvatarUrl,
+        header: {
+          Authorization: 'Bearer ' + app.globalData.token,
         },
-      })
-      .then(res => {
-        const token = res.data && res.data.token;
-        const user = res.data && res.data.user;
-        if (token) {
-          app.setToken(token);
-          app.globalData.userInfo = user || {};
-        }
-        this.setData({ loading: false });
-        my.showToast({ content: '注册成功', type: 'success' });
-        setTimeout(() => {
-          const pages = getCurrentPages();
-          if (pages.length > 1) {
-            my.navigateBack();
-          } else {
-            my.switchTab({ url: '/pages/index/index' });
+        success: (uploadRes) => {
+          try {
+            const data = JSON.parse(uploadRes.data);
+            if (data.code === 0) {
+              doSave(data.data.url);
+            } else {
+              doSave('');
+            }
+          } catch {
+            doSave('');
           }
-        }, 500);
-      })
-      .catch(err => {
-        this.setData({ loading: false });
-        my.showToast({ content: err.message || '注册失败', type: 'none' });
+        },
+        fail: () => doSave(''),
       });
+    } else {
+      doSave('');
+    }
   },
 
-  submit() {
-    if (this.data.isRegister) {
-      this.handleRegister();
+  skipProfile() {
+    this.goBack();
+  },
+
+  goBack() {
+    const pages = getCurrentPages();
+    if (pages.length > 1) {
+      my.navigateBack();
     } else {
-      this.handleLogin();
+      my.switchTab({ url: '/pages/index/index' });
     }
   },
 });

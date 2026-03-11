@@ -1,11 +1,24 @@
 <view class="page">
   <view class="profile-header" onTap="onProfileTap">
     <view class="avatar">
-      <text class="avatar-text">{{userInfo && userInfo.nickname ? userInfo.nickname.substring(0,1) : 'V'}}</text>
+      <image a:if="{{avatarUrl}}" class="avatar-img" src="{{avatarUrl}}" mode="aspectFill" />
+      <text a:else class="avatar-text">{{avatarInitial}}</text>
     </view>
     <view class="profile-info">
       <text class="profile-name">{{isLoggedIn ? (userInfo.nickname || userInfo.username || '用户') : '点击登录'}}</text>
-      <text class="profile-desc">{{isLoggedIn ? (userInfo.email || userInfo.phone || '') : '登录享更多权益'}}</text>
+      <text class="profile-desc">{{isLoggedIn ? (userInfo.email || '') : '登录享更多权益'}}</text>
+    </view>
+  </view>
+
+  <!-- 头像/昵称更新区域 -->
+  <view class="edit-profile-card" a:if="{{isLoggedIn}}">
+    <view class="edit-row" onTap="updateAvatar">
+      <text class="edit-label">更换头像</text>
+      <text class="edit-btn-text">选择头像 ›</text>
+    </view>
+    <view class="edit-row">
+      <text class="edit-label">修改昵称</text>
+      <input class="edit-nickname-input" placeholder="点击修改" value="{{userInfo.nickname}}" onBlur="onUpdateNickname" />
     </view>
   </view>
 

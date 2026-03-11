@@ -44,6 +44,9 @@ services:
       EMAIL_FROM_NAME: Vino服务
       WECHAT_APPID: wxf6fdff25c117e86d
       WECHAT_SECRET: ${WECHAT_SECRET:-}
+      ALIPAY_APPID: ${ALIPAY_APPID:-}
+      ALIPAY_PRIVATE_KEY: ${ALIPAY_PRIVATE_KEY:-}
+      ALIPAY_PUBLIC_KEY: ${ALIPAY_PUBLIC_KEY:-}
     depends_on:
       vino-mysql:
         condition: service_healthy

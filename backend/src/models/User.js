@@ -31,6 +31,11 @@ const User = sequelize.define('User', {
     allowNull: true,
     unique: true,
   },
+  alipayId: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+    unique: true,
+  },
   avatar: {
     type: DataTypes.STRING(500),
     defaultValue: '',

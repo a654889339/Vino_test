@@ -190,6 +190,58 @@ exports.wxLogin = async (req, res) => {
   }
 };
 
+exports.alipayLogin = async (req, res) => {
+  try {
+    const { code } = req.body;
+    if (!code) return res.status(400).json({ code: 400, message: 'code不能为空' });
+
+    const { appId, privateKey, publicKey } = config.alipay || {};
+    if (!appId || !privateKey) {
+      return res.status(500).json({ code: 500, message: '支付宝配置缺失，请联系管理员' });
+    }
+
+    const AlipaySdk = require('alipay-sdk').default || require('alipay-sdk');
+    const sdk = new AlipaySdk({
+      appId,
+      privateKey,
+      alipayPublicKey: publicKey,
+    });
+
+    const result = await sdk.exec('alipay.system.oauth.token', {
+      grantType: 'authorization_code',
+      code,
+    });
+
+    const userId = result.userId || result.user_id;
+    if (!userId) {
+      console.error('[Auth] alipay oauth result:', result);
+      return res.status(400).json({ code: 400, message: result.subMsg || '支付宝登录失败' });
+    }
+
+    let user = await User.findOne({ where: { alipayId: userId } });
+    let isNew = false;
+    if (!user) {
+      const crypto = require('crypto');
+      const shortId = crypto.randomBytes(4).toString('hex');
+      const randomPwd = crypto.randomBytes(16).toString('hex');
+      user = await User.create({
+        username: `ali_${shortId}`,
+        password: randomPwd,
+        nickname: '支付宝用户',
+        alipayId: userId,
+        email: null,
+      });
+      isNew = true;
+    }
+
+    const token = generateToken(user);
+    res.json({ code: 0, data: { token, user, isNew } });
+  } catch (err) {
+    console.error('[Auth] alipayLogin error:', err.message);
+    res.status(500).json({ code: 500, message: '支付宝登录失败' });
+  }
+};
+
 exports.updateProfile = async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id);

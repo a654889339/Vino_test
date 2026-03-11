@@ -27,7 +27,7 @@
         <view class="order-icon">🔧</view>
         <view class="order-info">
           <text class="order-title">{{item.serviceTitle}}</text>
-          <text class="order-time">{{item.createdAt ? (item.createdAt.split('T')[0] + ' ' + (item.createdAt.split('T')[1] || '').substring(0,5)) : ''}}</text>
+          <text class="order-time">{{item.timeText}}</text>
           <text class="order-contact" a:if="{{item.contactName}}">{{item.contactName}} {{item.contactPhone}}</text>
         </view>
         <text class="order-price">¥{{item.price}}</text>

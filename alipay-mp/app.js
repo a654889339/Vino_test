@@ -11,10 +11,21 @@ App({
       const token = res && res.data ? res.data : '';
       if (token) {
         this.globalData.token = token;
+        this.fetchProfile();
       }
     } catch (e) {
       // ignore
     }
+  },
+
+  fetchProfile() {
+    this.request({ url: '/auth/profile' })
+      .then(res => {
+        this.globalData.userInfo = res.data;
+      })
+      .catch(() => {
+        this.clearToken();
+      });
   },
 
   request(options) {
@@ -27,7 +38,7 @@ App({
         data: options.data,
         headers: {
           'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(token ? { Authorization: 'Bearer ' + token } : {}),
         },
         success: (res) => {
           if (res.status === 401 || (res.data && res.data.code === 401)) {
