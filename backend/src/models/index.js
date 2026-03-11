@@ -26,7 +26,6 @@ const syncDatabase = async () => {
   try {
     await sequelize.authenticate();
     console.log('[DB] Connection established successfully.');
-    await DeviceGuide.sync({ alter: true });
     await sequelize.sync();
     console.log('[DB] All models synchronized.');
 
