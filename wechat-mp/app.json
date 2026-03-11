@@ -15,9 +15,9 @@
   ],
   "window": {
     "backgroundTextStyle": "light",
-    "navigationBarBackgroundColor": "#B91C1C",
+    "navigationBarBackgroundColor": "#E8E8ED",
     "navigationBarTitleText": "Vino服务",
-    "navigationBarTextStyle": "white"
+    "navigationBarTextStyle": "black"
   },
   "tabBar": {
     "custom": true,

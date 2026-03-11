@@ -3,7 +3,7 @@
 }
 
 .page-title {
-  background: #fff;
+  background: rgba(232, 232, 237, 0.5);
   text-align: center;
   font-size: 34rpx;
   font-weight: 600;
