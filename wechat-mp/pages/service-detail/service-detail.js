@@ -65,6 +65,12 @@ Page({
     return map[id] || map[1];
   },
 
+  onConsult() {
+    const s = this.data.serviceData;
+    const msg = '我想咨询一下【' + (s.title || '该服务') + '】' + (s.price ? '（¥' + s.price + '）' : '') + (s.description ? '：' + s.description : '');
+    wx.navigateTo({ url: '/pages/chat/chat?autoMsg=' + encodeURIComponent(msg) });
+  },
+
   onBookTap() {
     if (!app.checkLogin()) return;
     this.setData({ showOrderForm: true });

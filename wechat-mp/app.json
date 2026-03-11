@@ -8,6 +8,7 @@
     "pages/guide-detail/guide-detail",
     "pages/manual/manual",
     "pages/maintenance/maintenance",
+    "pages/chat/chat",
     "pages/login/login"
   ],
   "window": {

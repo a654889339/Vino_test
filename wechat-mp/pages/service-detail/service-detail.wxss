@@ -105,10 +105,25 @@
   padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
   background: #fff;
   box-shadow: 0 -4rpx 20rpx rgba(0,0,0,0.06);
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.btn-consult {
+  width: 120rpx;
+  height: 88rpx;
+  line-height: 88rpx;
+  text-align: center;
+  font-size: 26rpx;
+  color: #666;
+  border: 2rpx solid #ddd;
+  border-radius: 44rpx;
+  flex-shrink: 0;
 }
 
 .btn-book {
-  width: 100%;
+  flex: 1;
   height: 88rpx;
   line-height: 88rpx;
   background: #B91C1C;

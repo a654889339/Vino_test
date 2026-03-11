@@ -37,6 +37,7 @@
     </view>
 
     <view class="detail-footer">
+      <view class="btn-consult" bindtap="onConsult">💬 咨询</view>
       <button class="btn-book" bindtap="onBookTap">立即预约</button>
     </view>
   </block>
