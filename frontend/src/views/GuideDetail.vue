@@ -40,8 +40,9 @@
         </div>
       </div>
 
-      <!-- Electronic Manual & Maintenance Tips -->
+      <!-- Help Links -->
       <div v-if="helpItems.length || sections.length" class="section-card">
+        <h3 class="section-title">使用帮助</h3>
         <van-cell-group inset :border="false">
           <van-cell v-if="helpItems.length" title="电子说明书" icon="description" is-link @click="$router.push(`/guide/${guide.id}/manual`)" />
           <van-cell v-if="sections.length" title="常见问题与保养建议" icon="info-o" is-link @click="$router.push(`/guide/${guide.id}/maintenance`)" />
