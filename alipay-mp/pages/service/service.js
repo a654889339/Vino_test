@@ -1,13 +1,5 @@
 const app = getApp();
 
-const fallbackGuides = [
-  { id: 1, name: '空调', model: '家用/商用中央空调', emoji: '❄️', gradient: 'linear-gradient(135deg, #2563EB, #60A5FA)', badge: '热门' },
-  { id: 2, name: '除湿机', model: '家用/工业除湿设备', emoji: '💧', gradient: 'linear-gradient(135deg, #0891B2, #67E8F9)', badge: '' },
-  { id: 3, name: '光储一体机', model: '户用光储一体化系统', emoji: '☀️', gradient: 'linear-gradient(135deg, #D97706, #FBBF24)', badge: '新' },
-  { id: 4, name: '光伏变电器', model: '汇流箱/变压器/配电柜', emoji: '⚡', gradient: 'linear-gradient(135deg, #059669, #34D399)', badge: '' },
-  { id: 5, name: '逆变器', model: '组串式/集中式/微型逆变器', emoji: '🔌', gradient: 'linear-gradient(135deg, #7C3AED, #A78BFA)', badge: '' },
-];
-
 Page({
   data: {
     activeTab: 0,
@@ -17,28 +9,12 @@ Page({
       { key: 'inspect', name: '检测' },
       { key: 'data', name: '数据' },
     ],
-    deviceGuides: fallbackGuides,
     services: [],
     loading: true,
   },
 
   onShow() {
-    this.loadGuides();
     this.loadServices();
-  },
-
-  loadGuides() {
-    app.request({ url: '/guides' })
-      .then(res => {
-        const list = res.data || [];
-        if (list.length) {
-          this.setData({ deviceGuides: list.map(g => ({
-            id: g.id, name: g.name, model: g.subtitle || '', emoji: g.emoji || '',
-            gradient: g.gradient || '', badge: g.badge || '', iconUrl: g.iconUrl || '',
-          }))});
-        }
-      })
-      .catch(() => {});
   },
 
   loadServices() {
@@ -99,11 +75,4 @@ Page({
     my.navigateTo({ url: `/pages/service-detail/service-detail?id=${id}` });
   },
 
-  showGuide(e) {
-    const index = parseInt(e.currentTarget.dataset.index, 10);
-    const device = this.data.deviceGuides[index] || {};
-    if (device.id) {
-      my.navigateTo({ url: `/pages/guide-detail/guide-detail?id=${device.id}` });
-    }
-  },
 });

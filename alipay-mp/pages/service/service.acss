@@ -2,6 +2,15 @@
   min-height: 100vh;
 }
 
+.page-title {
+  background: #fff;
+  text-align: center;
+  font-size: 34rpx;
+  font-weight: 600;
+  padding: 24rpx 0;
+  color: #1a1a1a;
+}
+
 .tabs {
   display: flex;
   background: #fff;

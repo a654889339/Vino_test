@@ -1,6 +1,7 @@
 {
   "pages": [
     "pages/index/index",
+    "pages/products/products",
     "pages/service/service",
     "pages/orders/orders",
     "pages/mine/mine",
@@ -26,6 +27,12 @@
         "name": "首页",
         "icon": "assets/tab-home.png",
         "activeIcon": "assets/tab-home-active.png"
+      },
+      {
+        "pagePath": "pages/products/products",
+        "name": "产品",
+        "icon": "assets/tab-products.png",
+        "activeIcon": "assets/tab-products-active.png"
       },
       {
         "pagePath": "pages/service/service",
