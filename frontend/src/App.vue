@@ -3,6 +3,7 @@
   <router-view />
   <van-tabbar v-if="showTabbar" v-model="activeTab" route active-color="var(--vino-primary)">
     <van-tabbar-item to="/" icon="wap-home-o">首页</van-tabbar-item>
+    <van-tabbar-item to="/products" icon="label-o">产品</van-tabbar-item>
     <van-tabbar-item to="/services" icon="apps-o">服务</van-tabbar-item>
     <van-tabbar-item to="/orders" icon="bill-o">订单</van-tabbar-item>
     <van-tabbar-item to="/mine" icon="contact-o">我的</van-tabbar-item>

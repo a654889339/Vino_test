@@ -1,16 +1,6 @@
 <template>
   <div class="services-page">
-    <!-- 产品导航 Apple 风格 -->
-    <div class="product-nav">
-      <div class="product-nav-scroll">
-        <a
-          v-for="device in deviceGuides"
-          :key="device.id"
-          class="product-nav-item"
-          @click="openGuide(device)"
-        >{{ device.name }}</a>
-      </div>
-    </div>
+    <van-nav-bar title="全部服务" />
 
     <van-tabs v-model:active="activeTab" sticky color="var(--vino-primary)">
       <van-tab v-for="cat in categories" :key="cat.key" :title="cat.name">
@@ -102,29 +92,10 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { guideApi, serviceApi } from '@/api';
+import { serviceApi } from '@/api';
 
-const router = useRouter();
 const activeTab = ref(0);
-const showGuideDetail = ref(false);
-const showAllGuides = ref(false);
-const currentGuide = ref(null);
-
-const deviceGuides = ref([]);
 const categories = ref([]);
-
-const openGuide = (device) => {
-  router.push(`/guide/${device.id}`);
-};
-
-const fallbackGuides = [
-  { id: 1, name: '空调', model: '家用 / 商用中央空调', icon: 'cluster-o', gradient: 'linear-gradient(135deg, #2563EB, #60A5FA)', badge: '热门', tags: ['制冷维修', '清洗保养', '加氟充注', '故障排查'], sections: [{ title: '日常维护', icon: 'shield-o', tips: ['每月清洗一次过滤网', '室外机周围保持通风', '换季使用前先送风运行30分钟', '定期检查排水管是否通畅'] }, { title: '故障排查', icon: 'warning-o', tips: ['不制冷/制热：检查温度设置及滤网', '漏水：检查排水管', '异响：检查风扇叶片', '遥控器无反应：更换电池'] }] },
-  { id: 2, name: '除湿机', model: '家用 / 工业除湿设备', icon: 'filter-o', gradient: 'linear-gradient(135deg, #0891B2, #67E8F9)', badge: '', tags: ['除湿效率', '水箱清洁', '滤网更换'], sections: [] },
-  { id: 3, name: '光储一体机', model: '户用光储一体化系统', icon: 'fire-o', gradient: 'linear-gradient(135deg, #D97706, #FBBF24)', badge: '新', tags: ['储能管理', '并离网切换'], sections: [] },
-  { id: 4, name: '光伏变电器', model: '汇流箱 / 变压器 / 配电柜', icon: 'balance-list-o', gradient: 'linear-gradient(135deg, #059669, #34D399)', badge: '', tags: ['电气安全', '汇流检测'], sections: [] },
-  { id: 5, name: '逆变器', model: '组串式 / 集中式 / 微型逆变器', icon: 'replay', gradient: 'linear-gradient(135deg, #7C3AED, #A78BFA)', badge: '', tags: ['直流转交流', 'MPPT追踪'], sections: [] },
-];
 
 const fallbackCategories = [
   { key: 'repair', name: '维修', items: [
@@ -149,19 +120,6 @@ const fallbackCategories = [
 const categoryColors = { repair: '#B91C1C', clean: '#2563EB', inspect: '#059669', data: '#7C3AED' };
 
 onMounted(async () => {
-  try {
-    const res = await guideApi.list();
-    const list = res.data || [];
-    deviceGuides.value = list.map(g => ({
-      ...g,
-      model: g.subtitle,
-      tags: Array.isArray(g.tags) ? g.tags : JSON.parse(g.tags || '[]'),
-      sections: Array.isArray(g.sections) ? g.sections : JSON.parse(g.sections || '[]'),
-    }));
-  } catch {
-    deviceGuides.value = fallbackGuides;
-  }
-
   try {
     const res = await serviceApi.list();
     const services = res.data?.list || res.data || [];
@@ -188,49 +146,15 @@ onMounted(async () => {
   min-height: 100vh;
 }
 
-/* ===== Product Nav (Apple Style) ===== */
-.product-nav {
+/* ===== Nav Bar ===== */
+.services-page :deep(.van-nav-bar) {
   background: var(--vino-card);
-  border-bottom: 0.5px solid rgba(0, 0, 0, 0.08);
 }
-
-.product-nav-scroll {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  padding: 0 12px;
-}
-
-.product-nav-scroll::-webkit-scrollbar { display: none; }
-
-.product-nav-item {
-  flex-shrink: 0;
-  padding: 14px 16px;
-  font-size: 14px;
-  font-weight: 400;
-  color: var(--vino-dark);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: color 0.2s, opacity 0.2s;
-  position: relative;
-  letter-spacing: 0;
-  opacity: 0.88;
-}
-
-.product-nav-item:hover,
-.product-nav-item:active {
-  opacity: 1;
+.services-page :deep(.van-nav-bar__title) {
+  font-size: 17px;
+  font-weight: 600;
   color: var(--vino-dark);
 }
-
-.product-nav-item:active {
-  opacity: 0.6;
-}
-
-.guide-icon-img-sm { width: 100%; height: 100%; object-fit: contain; }
 
 /* ===== Tabs ===== */
 .services-page :deep(.van-tabs__nav) {
