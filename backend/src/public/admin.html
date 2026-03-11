@@ -117,6 +117,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .log-empty{text-align:center;color:#999;padding:30px 0;font-size:13px}
 .history-btn{padding:2px 8px;font-size:11px;background:#f0f0f0;border:1px solid #ddd;border-radius:4px;cursor:pointer;color:#666;margin-left:4px}
 .history-btn:hover{background:#e0e0e0}
+.detail-btn{padding:2px 8px;font-size:11px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:4px;cursor:pointer;color:#1E40AF}
+.detail-btn:hover{background:#DBEAFE}
+.user-detail-row td{padding:0!important;border-bottom:1px solid #f0f0f0}
+.user-detail-inner{background:#fafafa;padding:16px 20px}
+.addr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:8px}
+.addr-card{background:#fff;border:1px solid #e5e5e5;border-radius:8px;padding:12px 14px;font-size:13px;position:relative}
+.addr-card.default{border-color:#B91C1C;background:#fff5f5}
+.addr-card .addr-name{font-weight:600;margin-bottom:4px}
+.addr-card .addr-phone{color:#666;margin-bottom:6px}
+.addr-card .addr-full{color:#333;line-height:1.5}
+.addr-card .addr-default-tag{position:absolute;top:8px;right:10px;font-size:10px;background:#B91C1C;color:#fff;padding:1px 6px;border-radius:3px}
+.no-addr{font-size:13px;color:#999;padding:8px 0}
 </style>
 </head>
 <body>
@@ -174,6 +186,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   <div class="dash-nav" id="dashNav">
     <div class="dash-nav-item active" onclick="switchPage('overview')">概览</div>
     <div class="dash-nav-item" onclick="switchPage('orders')">订单管理</div>
+    <div class="dash-nav-item" onclick="switchPage('users')">用户管理</div>
   </div>
 
   <div class="dash-body">
@@ -198,6 +211,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <h3>快捷链接</h3>
         <div class="info-row"><span class="label">用户前端</span><a class="value" id="frontendLink" target="_blank" style="color:var(--primary);text-decoration:none">-</a></div>
         <div class="info-row"><span class="label">API 健康检查</span><a class="value" id="healthLink" target="_blank" style="color:var(--primary);text-decoration:none">-</a></div>
+      </div>
+    </div>
+
+    <!-- Users Page -->
+    <div class="dash-page" id="page-users">
+      <div class="dash-stats" id="userStats"></div>
+      <div class="dash-section">
+        <div class="section-header">
+          <h3>全部用户</h3>
+          <button class="refresh-btn" onclick="loadUsers()">刷新</button>
+        </div>
+        <table class="order-table" id="userTable">
+          <thead><tr><th>ID</th><th>用户名</th><th>邮箱</th><th>昵称</th><th>角色</th><th>订单数</th><th>地址数</th><th>注册时间</th><th>操作</th></tr></thead>
+          <tbody id="userTableBody"></tbody>
+        </table>
+        <div class="order-empty" id="userEmpty" style="display:none">暂无用户</div>
       </div>
     </div>
 
@@ -287,10 +316,12 @@ async function api(path, options = {}) {
 function switchPage(page) {
   document.querySelectorAll('.dash-nav-item').forEach(n => n.classList.remove('active'));
   document.querySelectorAll('.dash-page').forEach(p => p.classList.remove('active'));
-  const idx = page === 'overview' ? 0 : 1;
-  document.querySelectorAll('.dash-nav-item')[idx].classList.add('active');
+  const navMap = { overview: 0, orders: 1, users: 2 };
+  const navItems = document.querySelectorAll('.dash-nav-item');
+  if (navItems[navMap[page]]) navItems[navMap[page]].classList.add('active');
   document.getElementById('page-' + page).classList.add('active');
   if (page === 'orders') loadOrders();
+  if (page === 'users') loadUsers();
 }
 
 async function handleLogin(e) {
@@ -350,8 +381,13 @@ function showDashboard(user) {
   document.getElementById('healthLink').href = 'http://' + host + ':5202/api/health';
   document.getElementById('healthLink').textContent = 'http://' + host + ':5202/api/health';
   const navItems = document.querySelectorAll('.dash-nav-item');
-  if (user.role !== 'admin' && navItems[1]) { navItems[1].style.display = 'none'; }
-  else if (navItems[1]) { navItems[1].style.display = ''; }
+  if (user.role !== 'admin') {
+    if (navItems[1]) navItems[1].style.display = 'none';
+    if (navItems[2]) navItems[2].style.display = 'none';
+  } else {
+    if (navItems[1]) navItems[1].style.display = '';
+    if (navItems[2]) navItems[2].style.display = '';
+  }
   loadOrderStats();
 }
 
@@ -522,7 +558,7 @@ async function submitAdminRemark() {
   const remark = document.getElementById('adminRemarkInput').value.trim();
   if (!remark) return;
   try {
-    await api(`/orders/admin/${currentLogOrderId}/remark`, 'POST', { remark });
+    await api(`/orders/admin/${currentLogOrderId}/remark`, { method: 'POST', body: { remark } });
     document.getElementById('adminRemarkInput').value = '';
     loadOrderLogs(currentLogOrderId);
   } catch (e) { alert(e.message || '添加备注失败'); }
@@ -532,10 +568,102 @@ async function submitPriceChange() {
   const price = document.getElementById('priceInput').value;
   if (!price || isNaN(Number(price)) || Number(price) < 0) { alert('请输入有效金额'); return; }
   try {
-    await api(`/orders/admin/${currentLogOrderId}/price`, 'PUT', { price: Number(price) });
+    await api(`/orders/admin/${currentLogOrderId}/price`, { method: 'PUT', body: { price: Number(price) } });
     loadOrderLogs(currentLogOrderId);
     loadOrders();
   } catch (e) { alert(e.message || '修改金额失败'); }
+}
+
+let allUsers = [];
+const expandedUsers = new Set();
+
+async function loadUsers() {
+  const tbody = document.getElementById('userTableBody');
+  const empty = document.getElementById('userEmpty');
+  tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#999">加载中...</td></tr>';
+  try {
+    const res = await api('/auth/admin/users');
+    if (res.code === 0) {
+      allUsers = res.data || [];
+      const totalUsers = allUsers.length;
+      const adminCount = allUsers.filter(u => u.role === 'admin').length;
+      const totalAddresses = allUsers.reduce((s, u) => s + (u.addresses ? u.addresses.length : 0), 0);
+      document.getElementById('userStats').innerHTML = `
+        <div class="stat-card"><h3>总用户</h3><div class="val">${totalUsers}</div></div>
+        <div class="stat-card"><h3>管理员</h3><div class="val" style="color:#B91C1C">${adminCount}</div></div>
+        <div class="stat-card"><h3>普通用户</h3><div class="val" style="color:#2563EB">${totalUsers - adminCount}</div></div>
+        <div class="stat-card"><h3>地址总数</h3><div class="val" style="color:#059669">${totalAddresses}</div></div>`;
+      if (!allUsers.length) {
+        tbody.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+      empty.style.display = 'none';
+      renderUserTable();
+    }
+  } catch {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#B91C1C">加载失败</td></tr>';
+  }
+}
+
+function renderUserTable() {
+  const tbody = document.getElementById('userTableBody');
+  let html = '';
+  allUsers.forEach(u => {
+    const addrCount = u.addresses ? u.addresses.length : 0;
+    const roleTag = u.role === 'admin' ? '<span class="role-tag admin">管理员</span>' : '<span class="role-tag user">用户</span>';
+    const regTime = u.createdAt ? new Date(u.createdAt).toLocaleString('zh-CN', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }) : '-';
+    const isExpanded = expandedUsers.has(u.id);
+    html += `<tr>
+      <td>${u.id}</td>
+      <td><strong>${u.username}</strong></td>
+      <td style="font-size:12px">${u.email || '-'}</td>
+      <td>${u.nickname || '-'}</td>
+      <td>${roleTag}</td>
+      <td>${u.orderCount}</td>
+      <td>${addrCount}</td>
+      <td style="font-size:12px">${regTime}</td>
+      <td><button class="detail-btn" onclick="toggleUserDetail(${u.id})">${isExpanded ? '收起' : '详情'}</button></td>
+    </tr>`;
+    if (isExpanded) {
+      html += `<tr class="user-detail-row"><td colspan="9"><div class="user-detail-inner">`;
+      html += `<div style="margin-bottom:10px"><strong>用户信息</strong>
+        <span style="margin-left:16px;font-size:13px;color:#666">状态: ${u.status === 'active' ? '✅ 正常' : '❌ 禁用'}</span>
+      </div>`;
+      if (addrCount > 0) {
+        html += `<div style="font-size:14px;font-weight:600;margin-bottom:4px">收货地址 (${addrCount})</div>`;
+        html += '<div class="addr-grid">';
+        u.addresses.forEach(a => {
+          const parts = [];
+          if (a.country === '其他') parts.push(a.customCountry || '其他');
+          else if (a.country) parts.push(a.country);
+          if (a.country === '中国大陆') {
+            if (a.province) parts.push(a.province);
+            if (a.city) parts.push(a.city);
+            if (a.district) parts.push(a.district);
+          }
+          if (a.detailAddress) parts.push(a.detailAddress);
+          html += `<div class="addr-card ${a.isDefault ? 'default' : ''}">
+            ${a.isDefault ? '<span class="addr-default-tag">默认</span>' : ''}
+            <div class="addr-name">${a.contactName}</div>
+            <div class="addr-phone">${a.contactPhone}</div>
+            <div class="addr-full">${parts.join(' ')}</div>
+          </div>`;
+        });
+        html += '</div>';
+      } else {
+        html += '<div class="no-addr">该用户暂无收货地址</div>';
+      }
+      html += '</div></td></tr>';
+    }
+  });
+  tbody.innerHTML = html;
+}
+
+function toggleUserDetail(userId) {
+  if (expandedUsers.has(userId)) expandedUsers.delete(userId);
+  else expandedUsers.add(userId);
+  renderUserTable();
 }
 </script>
 </body>

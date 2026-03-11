@@ -103,6 +103,39 @@ exports.login = async (req, res) => {
   }
 };
 
+exports.adminGetUsers = async (req, res) => {
+  try {
+    const { User, Address, Order } = require('../models');
+    const { Op } = require('sequelize');
+    const users = await User.findAll({
+      attributes: { exclude: ['password'] },
+      include: [
+        { model: Address, as: 'addresses', required: false },
+      ],
+      order: [['createdAt', 'DESC']],
+    });
+    const orderCounts = await Order.findAll({
+      attributes: [
+        'userId',
+        [require('sequelize').fn('COUNT', require('sequelize').col('id')), 'orderCount'],
+      ],
+      group: ['userId'],
+      raw: true,
+    });
+    const countMap = {};
+    orderCounts.forEach(r => { countMap[r.userId] = parseInt(r.orderCount, 10); });
+    const result = users.map(u => {
+      const plain = u.toJSON();
+      plain.orderCount = countMap[u.id] || 0;
+      return plain;
+    });
+    res.json({ code: 0, data: result });
+  } catch (err) {
+    console.error('[Auth] adminGetUsers error:', err.message);
+    res.status(500).json({ code: 500, message: '获取用户列表失败' });
+  }
+};
+
 exports.getProfile = async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id);
