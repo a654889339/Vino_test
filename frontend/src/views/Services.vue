@@ -38,7 +38,7 @@
             @click="$router.push(`/service/${item.id}`)"
           >
             <div class="grid-icon" :style="{ background: item.bg }">
-              <van-icon :name="item.icon" size="28" color="#fff" />
+              <van-icon :name="item.icon" size="26" color="#fff" />
             </div>
             <h4>{{ item.title }}</h4>
             <p>{{ item.desc }}</p>
@@ -135,76 +135,11 @@ const openGuide = (device) => {
 };
 
 const fallbackGuides = [
-  {
-    id: 1,
-    name: '空调',
-    model: '家用 / 商用中央空调',
-    icon: 'cluster-o',
-    gradient: 'linear-gradient(135deg, #2563EB, #60A5FA)',
-    badge: '热门',
-    tags: ['制冷维修', '清洗保养', '加氟充注', '故障排查'],
-    sections: [
-      { title: '日常维护', icon: 'shield-o', tips: ['每月清洗一次过滤网，保持进风通畅', '室外机周围保持通风，不要堆放杂物', '换季使用前先送风运行 30 分钟', '定期检查排水管是否通畅，防止漏水'] },
-      { title: '故障排查', icon: 'warning-o', tips: ['不制冷/制热：检查温度设置及滤网是否堵塞', '漏水：检查排水管是否弯折或堵塞', '异响：检查风扇叶片及压缩机运行状态', '遥控器无反应：更换电池或对准接收窗口'] },
-      { title: '保养建议', icon: 'clock-o', tips: ['每年至少做一次专业深度清洗', '每 2-3 年检查制冷剂是否不足', '冬季长期不用时断电并盖好外机防尘罩'] },
-    ],
-  },
-  {
-    id: 2,
-    name: '除湿机',
-    model: '家用 / 工业除湿设备',
-    icon: 'filter-o',
-    gradient: 'linear-gradient(135deg, #0891B2, #67E8F9)',
-    badge: '',
-    tags: ['除湿效率', '水箱清洁', '滤网更换', '运行维护'],
-    sections: [
-      { title: '使用指南', icon: 'shield-o', tips: ['关闭门窗使用，提高除湿效率', '水箱水满后及时排水或连接外排管', '避免在高温环境下长时间运行', '放置在房间中央位置效果最佳'] },
-      { title: '维护保养', icon: 'clock-o', tips: ['每两周清洗一次空气滤网', '定期清洁水箱内壁防止细菌滋生', '冬季存放时清洁擦干后竖直放置', '检查电源线是否有老化磨损'] },
-      { title: '故障排查', icon: 'warning-o', tips: ['不除湿：检查温度是否过低（低于 5°C 效率降低）', '噪音大：检查是否放置平稳，压缩机是否异常', '漏水：检查水箱是否到位，排水口是否堵塞'] },
-    ],
-  },
-  {
-    id: 3,
-    name: '光储一体机',
-    model: '户用光储一体化系统',
-    icon: 'fire-o',
-    gradient: 'linear-gradient(135deg, #D97706, #FBBF24)',
-    badge: '新',
-    tags: ['储能管理', '并离网切换', '电池维护', '系统监控'],
-    sections: [
-      { title: '系统概述', icon: 'shield-o', tips: ['光储一体机集成光伏逆变与储能功能', '支持并网/离网/自动切换三种模式', '可通过 APP 远程监控发电及用电数据', '电池容量和光伏功率需匹配合理设计'] },
-      { title: '日常维护', icon: 'clock-o', tips: ['定期检查电池充放电状态是否正常', '保持设备通风散热，避免阳光直射机柜', '雷雨季节检查防雷接地是否完好', '每季度检查线缆连接是否紧固无松动'] },
-      { title: '故障处理', icon: 'warning-o', tips: ['离网不供电：检查电池电量和逆变器状态', '充电异常：检查光伏板是否有遮挡或积灰', '报警代码：记录报警信息并联系售后工程师', '切勿自行拆卸电池模组，存在触电危险'] },
-    ],
-  },
-  {
-    id: 4,
-    name: '光伏变电器',
-    model: '汇流箱 / 变压器 / 配电柜',
-    icon: 'balance-list-o',
-    gradient: 'linear-gradient(135deg, #059669, #34D399)',
-    badge: '',
-    tags: ['电气安全', '汇流检测', '防雷保护', '绝缘监测'],
-    sections: [
-      { title: '设备说明', icon: 'shield-o', tips: ['光伏变电器负责电压转换和电力分配', '汇流箱将多路光伏串合并后接入逆变器', '配电柜实现并网输出和负载分配', '需严格按照电气规范安装和操作'] },
-      { title: '巡检要点', icon: 'clock-o', tips: ['每月检查接线端子是否发热或变色', '定期测试防雷器件是否失效', '检查绝缘电阻值是否在正常范围', '暴雨后检查柜体密封和排水情况'] },
-      { title: '安全须知', icon: 'warning-o', tips: ['操作前务必断开直流和交流开关', '带电检测必须使用专业绝缘工具', '未经培训人员禁止打开配电柜', '发现异味、冒烟立即断电并报修'] },
-    ],
-  },
-  {
-    id: 5,
-    name: '逆变器',
-    model: '组串式 / 集中式 / 微型逆变器',
-    icon: 'replay',
-    gradient: 'linear-gradient(135deg, #7C3AED, #A78BFA)',
-    badge: '',
-    tags: ['直流转交流', 'MPPT 追踪', '并网保护', '效率监测'],
-    sections: [
-      { title: '工作原理', icon: 'shield-o', tips: ['逆变器将光伏板产生的直流电转为交流电', 'MPPT 功能实时追踪最佳功率输出点', '组串式逆变器适合户用和小型商用场景', '微型逆变器实现组件级功率优化和监控'] },
-      { title: '日常维护', icon: 'clock-o', tips: ['保持散热风道通畅，定期清理灰尘', '检查显示屏或 APP 上的发电数据是否正常', '确认交流输出电压和频率在标准范围内', '每年进行一次绝缘和接地电阻测试'] },
-      { title: '常见故障', icon: 'warning-o', tips: ['不并网：检查电网电压是否超限或逆变器保护', '发电量低：检查组件是否遮挡、积灰或损坏', '报故障码：记录代码后联系厂家或专业工程师', '风扇异响：可能灰尘堆积，需清洁或更换风扇'] },
-    ],
-  },
+  { id: 1, name: '空调', model: '家用 / 商用中央空调', icon: 'cluster-o', gradient: 'linear-gradient(135deg, #2563EB, #60A5FA)', badge: '热门', tags: ['制冷维修', '清洗保养', '加氟充注', '故障排查'], sections: [{ title: '日常维护', icon: 'shield-o', tips: ['每月清洗一次过滤网', '室外机周围保持通风', '换季使用前先送风运行30分钟', '定期检查排水管是否通畅'] }, { title: '故障排查', icon: 'warning-o', tips: ['不制冷/制热：检查温度设置及滤网', '漏水：检查排水管', '异响：检查风扇叶片', '遥控器无反应：更换电池'] }] },
+  { id: 2, name: '除湿机', model: '家用 / 工业除湿设备', icon: 'filter-o', gradient: 'linear-gradient(135deg, #0891B2, #67E8F9)', badge: '', tags: ['除湿效率', '水箱清洁', '滤网更换'], sections: [] },
+  { id: 3, name: '光储一体机', model: '户用光储一体化系统', icon: 'fire-o', gradient: 'linear-gradient(135deg, #D97706, #FBBF24)', badge: '新', tags: ['储能管理', '并离网切换'], sections: [] },
+  { id: 4, name: '光伏变电器', model: '汇流箱 / 变压器 / 配电柜', icon: 'balance-list-o', gradient: 'linear-gradient(135deg, #059669, #34D399)', badge: '', tags: ['电气安全', '汇流检测'], sections: [] },
+  { id: 5, name: '逆变器', model: '组串式 / 集中式 / 微型逆变器', icon: 'replay', gradient: 'linear-gradient(135deg, #7C3AED, #A78BFA)', badge: '', tags: ['直流转交流', 'MPPT追踪'], sections: [] },
 ];
 
 const fallbackCategories = [
@@ -269,69 +204,84 @@ onMounted(async () => {
   min-height: 100vh;
 }
 
-/* 服务指南 */
+.services-page :deep(.van-nav-bar) {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 0.5px solid rgba(0, 0, 0, 0.06);
+}
+
+.services-page :deep(.van-nav-bar__title) {
+  font-weight: 600;
+  font-size: 17px;
+  color: var(--vino-dark);
+}
+
+/* ===== Guide Section ===== */
 .guide-section {
   background: var(--vino-card);
-  padding: 16px 16px 12px;
+  padding: 20px 20px 16px;
   margin-bottom: 8px;
+  animation: fadeInUp 0.4s var(--vino-transition) both;
 }
 
 .guide-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 
 .guide-header h3 {
-  font-size: 17px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .guide-more {
-  font-size: 13px;
-  color: var(--vino-text-secondary);
+  font-size: 14px;
+  color: var(--vino-primary);
+  font-weight: 500;
   cursor: pointer;
 }
 
 .guide-scroll {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   padding-bottom: 4px;
 }
 
-.guide-scroll::-webkit-scrollbar {
-  display: none;
-}
+.guide-scroll::-webkit-scrollbar { display: none; }
 
 .guide-card {
-  min-width: 130px;
+  min-width: 135px;
   flex-shrink: 0;
   background: var(--vino-bg);
-  border-radius: 12px;
-  padding: 14px 12px;
+  border-radius: var(--vino-radius);
+  padding: 16px 14px;
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: transform 0.25s var(--vino-transition);
 }
 
 .guide-card:active {
-  transform: scale(0.96);
+  transform: scale(0.95);
 }
 
 .guide-icon-wrapper {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
+  width: 50px;
+  height: 50px;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   position: relative;
   overflow: hidden;
 }
+
 .guide-icon-img { width: 100%; height: 100%; object-fit: contain; }
 .guide-icon-img-sm { width: 100%; height: 100%; object-fit: contain; }
 
@@ -339,23 +289,25 @@ onMounted(async () => {
   position: absolute;
   top: -6px;
   right: -10px;
-  background: #B91C1C;
+  background: var(--vino-primary);
   color: #fff;
   font-size: 10px;
-  padding: 1px 5px;
+  font-weight: 600;
+  padding: 2px 6px;
   border-radius: 6px;
   white-space: nowrap;
 }
 
 .guide-info h4 {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
-  margin-bottom: 3px;
+  margin-bottom: 4px;
   white-space: nowrap;
+  color: var(--vino-dark);
 }
 
 .guide-info p {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--vino-text-secondary);
   white-space: nowrap;
   overflow: hidden;
@@ -363,43 +315,103 @@ onMounted(async () => {
   max-width: 110px;
 }
 
-/* 设备指南详情弹窗 */
+/* ===== Tabs ===== */
+.services-page :deep(.van-tabs__nav) {
+  background: #fff;
+}
+
+.services-page :deep(.van-tab--active) {
+  font-weight: 600;
+}
+
+/* ===== Service Grid ===== */
+.service-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 16px 20px;
+}
+
+.grid-card {
+  background: var(--vino-card);
+  border-radius: var(--vino-radius);
+  padding: 18px 16px;
+  cursor: pointer;
+  transition: transform 0.25s var(--vino-transition);
+  box-shadow: var(--vino-shadow);
+}
+
+.grid-card:active {
+  transform: scale(0.96);
+}
+
+.grid-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.grid-card h4 {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: var(--vino-dark);
+}
+
+.grid-card p {
+  font-size: 13px;
+  color: var(--vino-text-secondary);
+  margin-bottom: 10px;
+}
+
+.grid-price {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--vino-primary);
+  letter-spacing: -0.02em;
+}
+
+/* ===== Guide Detail Popup ===== */
 .guide-detail-header {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 24px 20px;
+  gap: 16px;
+  padding: 28px 24px;
   border-radius: 16px 16px 0 0;
 }
 
 .guide-detail-header h3 {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 700;
   color: #fff;
 }
 
 .guide-detail-header p {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.8);
-  margin-top: 2px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.75);
+  margin-top: 4px;
 }
 
 .guide-detail-body {
-  padding: 16px 20px 24px;
+  padding: 20px 24px 28px;
 }
 
 .guide-detail-section {
-  margin-bottom: 18px;
+  margin-bottom: 20px;
 }
 
 .guide-detail-section h4 {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   margin-bottom: 10px;
   display: flex;
   align-items: center;
-  gap: 6px;
-  color: var(--vino-text);
+  gap: 8px;
+  color: var(--vino-dark);
 }
 
 .guide-detail-section ul {
@@ -409,9 +421,9 @@ onMounted(async () => {
 }
 
 .guide-detail-section li {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--vino-text-secondary);
-  padding: 6px 0 6px 16px;
+  padding: 7px 0 7px 18px;
   position: relative;
   line-height: 1.5;
 }
@@ -420,33 +432,33 @@ onMounted(async () => {
   content: '';
   position: absolute;
   left: 0;
-  top: 13px;
+  top: 14px;
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #B91C1C;
+  background: var(--vino-primary);
 }
 
 .guide-detail-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  padding-top: 4px;
+  padding-top: 8px;
 }
 
-/* 全部设备指南弹窗 */
+/* ===== All Guides Popup ===== */
 .all-guides {
-  padding: 0 0 24px;
+  padding: 0 0 28px;
 }
 
 .all-guides-title {
-  padding: 20px 20px 12px;
+  padding: 24px 24px 14px;
   text-align: center;
 }
 
 .all-guides-title h3 {
-  font-size: 17px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 700;
 }
 
 .all-guides-grid {
@@ -456,9 +468,9 @@ onMounted(async () => {
 .all-guide-item {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   padding: 14px 12px;
-  border-radius: 12px;
+  border-radius: var(--vino-radius-sm);
   cursor: pointer;
   transition: background 0.2s;
 }
@@ -468,9 +480,9 @@ onMounted(async () => {
 }
 
 .all-guide-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -483,60 +495,14 @@ onMounted(async () => {
 }
 
 .all-guide-info h4 {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
-  margin-bottom: 2px;
+  margin-bottom: 3px;
+  color: var(--vino-dark);
 }
 
 .all-guide-info p {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--vino-text-secondary);
-}
-
-/* 服务列表 */
-.service-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  padding: 16px;
-}
-
-.grid-card {
-  background: var(--vino-card);
-  border-radius: 10px;
-  padding: 16px;
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-
-.grid-card:active {
-  transform: scale(0.97);
-}
-
-.grid-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 10px;
-}
-
-.grid-card h4 {
-  font-size: 15px;
-  margin-bottom: 4px;
-}
-
-.grid-card p {
-  font-size: 12px;
-  color: var(--vino-text-secondary);
-  margin-bottom: 8px;
-}
-
-.grid-price {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--vino-primary);
 }
 </style>

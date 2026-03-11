@@ -35,7 +35,7 @@
     </van-cell-group>
 
     <div class="logout-area" v-if="userStore.isLoggedIn">
-      <van-button block plain type="default" @click="handleLogout">退出登录</van-button>
+      <van-button block plain type="default" class="logout-btn" @click="handleLogout">退出登录</van-button>
     </div>
 
     <div style="height: 60px;"></div>
@@ -91,39 +91,43 @@ const handleLogout = () => {
 }
 
 .profile-header {
-  background: linear-gradient(135deg, #B91C1C, #7F1D1D);
-  padding: 40px 20px 30px;
+  background: linear-gradient(160deg, #1d1d1f 0%, #B91C1C 100%);
+  padding: 48px 24px 36px;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
 }
 
 .avatar {
-  width: 60px;
-  height: 60px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .profile-info h3 {
   color: #fff;
-  font-size: 18px;
-  margin-bottom: 4px;
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 5px;
+  letter-spacing: -0.02em;
 }
 
 .profile-info p {
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 14px;
 }
 
 .stats-row {
   display: flex;
   background: var(--vino-card);
-  padding: 16px 0;
-  margin-bottom: 10px;
+  padding: 20px 0;
+  margin-bottom: 8px;
 }
 
 .stat-item {
@@ -131,24 +135,51 @@ const handleLogout = () => {
   text-align: center;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
 }
 
 .stat-num {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--vino-dark);
+  letter-spacing: -0.02em;
 }
 
 .stat-label {
   font-size: 12px;
   color: var(--vino-text-secondary);
+  font-weight: 500;
 }
 
 .menu-group {
-  margin-bottom: 10px;
+  margin: 0 12px 8px !important;
+  border-radius: var(--vino-radius) !important;
+  overflow: hidden;
+}
+
+.menu-group :deep(.van-cell) {
+  padding: 15px 20px;
+}
+
+.menu-group :deep(.van-cell__title) {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--vino-dark);
+}
+
+.menu-group :deep(.van-cell:active) {
+  background: var(--vino-bg);
 }
 
 .logout-area {
-  padding: 20px 16px;
+  padding: 24px 20px;
+}
+
+.logout-btn {
+  border-radius: var(--vino-radius-sm) !important;
+  font-size: 15px !important;
+  font-weight: 500 !important;
+  color: var(--vino-text-secondary) !important;
+  border-color: var(--vino-border) !important;
 }
 </style>
