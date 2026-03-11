@@ -1,18 +1,12 @@
 const { Router } = require('express');
 const multer = require('multer');
-const path = require('path');
-const crypto = require('crypto');
 const authController = require('../controllers/authController');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 
-const storage = multer.diskStorage({
-  destination: path.join(__dirname, '..', 'public', 'uploads'),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname) || '.png';
-    cb(null, `avatar_${crypto.randomBytes(8).toString('hex')}${ext}`);
-  },
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
 });
-const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
 
 const router = Router();
 

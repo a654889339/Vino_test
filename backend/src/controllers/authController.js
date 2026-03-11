@@ -262,7 +262,12 @@ exports.updateProfile = async (req, res) => {
 exports.uploadAvatar = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ code: 400, message: '请选择图片' });
-    const avatarUrl = `/uploads/${req.file.filename}`;
+    const cosUpload = require('../utils/cosUpload');
+    const crypto = require('crypto');
+    const path = require('path');
+    const ext = path.extname(req.file.originalname) || '.png';
+    const filename = `avatar_${crypto.randomBytes(8).toString('hex')}${ext}`;
+    const avatarUrl = await cosUpload.upload(req.file.buffer, filename, req.file.mimetype);
 
     const user = await User.findByPk(req.user.id);
     if (user) {

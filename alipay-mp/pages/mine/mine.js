@@ -53,14 +53,7 @@ Page({
 
   applyUserData(user) {
     const initial = (user.nickname || user.username || 'V').charAt(0);
-    let avatarUrl = '';
-    if (user.avatar) {
-      if (user.avatar.startsWith('http')) {
-        avatarUrl = user.avatar;
-      } else {
-        avatarUrl = app.globalData.baseUrl.replace('/api', '') + user.avatar;
-      }
-    }
+    const avatarUrl = user.avatar || '';
     this.setData({ userInfo: user, isLoggedIn: true, avatarInitial: initial, avatarUrl });
   },
 
@@ -88,10 +81,9 @@ Page({
             try {
               const data = JSON.parse(uploadRes.data);
               if (data.code === 0) {
-                const serverUrl = data.data.url;
-                const fullUrl = app.globalData.baseUrl.replace('/api', '') + serverUrl;
-                if (app.globalData.userInfo) app.globalData.userInfo.avatar = serverUrl;
-                this.setData({ avatarUrl: fullUrl });
+                const cosUrl = data.data.url;
+                if (app.globalData.userInfo) app.globalData.userInfo.avatar = cosUrl;
+                this.setData({ avatarUrl: cosUrl });
                 my.showToast({ content: '头像已更新', type: 'success' });
               } else {
                 my.showToast({ content: '上传失败', type: 'none' });
