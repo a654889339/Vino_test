@@ -1437,38 +1437,36 @@ function showGuideQR(id, name) {
   document.getElementById('qrModal').style.display = '';
 }
 
-function generateQR() {
+async function generateQR() {
   const btn = document.getElementById('qrGenBtn');
   btn.textContent = '生成中...';
   btn.disabled = true;
-  const img = document.getElementById('qrImage');
-  const apiUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=256x256&margin=10&data=' + encodeURIComponent(currentQRUrl);
-  img.onload = function() {
-    document.getElementById('qrPlaceholder').style.display = 'none';
-    document.getElementById('qrImageWrap').style.display = '';
-    btn.textContent = '重新生成';
-    btn.disabled = false;
-    document.getElementById('qrDownloadBtn').style.display = '';
-  };
-  img.onerror = function() {
+  try {
+    const res = await api('/qrcode?url=' + encodeURIComponent(currentQRUrl));
+    if (res.code === 0 && res.data && res.data.dataUrl) {
+      const img = document.getElementById('qrImage');
+      img.src = res.data.dataUrl;
+      document.getElementById('qrPlaceholder').style.display = 'none';
+      document.getElementById('qrImageWrap').style.display = '';
+      btn.textContent = '重新生成';
+      document.getElementById('qrDownloadBtn').style.display = '';
+    } else {
+      alert(res.message || '生成失败');
+      btn.textContent = '生成二维码';
+    }
+  } catch {
+    alert('二维码生成失败');
     btn.textContent = '生成二维码';
-    btn.disabled = false;
-    alert('二维码生成失败，请检查网络');
-  };
-  img.src = apiUrl;
+  }
+  btn.disabled = false;
 }
 
 function downloadQR() {
   const img = document.getElementById('qrImage');
   if (!img.src) return;
-  const canvas = document.createElement('canvas');
-  canvas.width = 256;
-  canvas.height = 256;
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(img, 0, 0, 256, 256);
   const link = document.createElement('a');
   link.download = (currentQRName || 'guide') + '-qrcode.png';
-  link.href = canvas.toDataURL('image/png');
+  link.href = img.src;
   link.click();
 }
 
