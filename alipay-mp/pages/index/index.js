@@ -4,16 +4,8 @@ Page({
   data: {
     headerLogoUrl: '',
     heroBgUrl: '',
-    navItems: [
-      { title: '全部服务', emoji: '📋', color: '#B91C1C' },
-      { title: '预约', emoji: '📅', color: '#D97706' },
-      { title: '维修', emoji: '🔧', color: '#2563EB' },
-      { title: '咨询', emoji: '💬', color: '#7C3AED' },
-      { title: '安装', emoji: '📦', color: '#059669' },
-      { title: '保养', emoji: '🛡️', color: '#DC2626' },
-      { title: '检测', emoji: '🔍', color: '#EA580C' },
-      { title: '更多', emoji: '···', color: '#6B7280' },
-    ],
+    navLgItems: [],
+    navSmItems: [],
     hotServices: [],
     recommends: [
       { id: 1, title: '会员权益', desc: '专属折扣', emoji: '🏅', bg: 'linear-gradient(135deg, #F59E0B, #D97706)' },
@@ -34,10 +26,13 @@ Page({
         const items = res.data || [];
         const headerLogo = items.find(i => i.section === 'headerLogo' && i.status === 'active');
         const homeBg = items.find(i => i.section === 'homeBg' && i.status === 'active');
-        this.setData({
-          headerLogoUrl: headerLogo ? headerLogo.imageUrl : '',
-          heroBgUrl: homeBg ? homeBg.imageUrl : '',
-        });
+        const navLg = items.filter(i => i.section === 'navLg' && i.status === 'active')
+          .sort((a, b) => a.sortOrder - b.sortOrder)
+          .map(i => ({ id: i.id, title: i.title, imageUrl: i.imageUrl, icon: i.icon, path: i.path || '/pages/service/service', color: i.color }));
+        const navSm = items.filter(i => i.section === 'navSm' && i.status === 'active')
+          .sort((a, b) => a.sortOrder - b.sortOrder)
+          .map(i => ({ id: i.id, title: i.title, imageUrl: i.imageUrl, icon: i.icon, path: i.path || '/pages/service/service', color: i.color }));
+        this.setData({ headerLogoUrl: headerLogo ? headerLogo.imageUrl : '', heroBgUrl: homeBg ? homeBg.imageUrl : '', navLgItems: navLg, navSmItems: navSm });
       })
       .catch(() => {});
   },
@@ -47,18 +42,12 @@ Page({
       .then(res => {
         const data = (res.data || []).slice(0, 8);
         const hotServices = data.map(s => ({
-          id: s.id,
-          title: s.title || '服务',
-          desc: s.description || '专业服务',
-          price: s.price || 0,
-          emoji: '🔧',
-          bg: 'linear-gradient(135deg, #B91C1C, #991B1B)',
+          id: s.id, title: s.title || '服务', desc: s.description || '专业服务',
+          price: s.price || 0, emoji: '🔧', bg: 'linear-gradient(135deg, #B91C1C, #991B1B)',
         }));
         this.setData({ hotServices: hotServices.length ? hotServices : this.getFallbackHotServices() });
       })
-      .catch(() => {
-        this.setData({ hotServices: this.getFallbackHotServices() });
-      });
+      .catch(() => this.setData({ hotServices: this.getFallbackHotServices() }));
   },
 
   getFallbackHotServices() {
@@ -70,16 +59,12 @@ Page({
     ];
   },
 
-  goService() {
-    my.switchTab({ url: '/pages/service/service' });
+  goPath(e) {
+    const path = e.currentTarget.dataset.path || '';
+    if (path) { my.navigateTo({ url: path, fail() { my.switchTab({ url: path }); } }); }
   },
 
-  goServiceList() {
-    my.switchTab({ url: '/pages/service/service' });
-  },
-
-  goServiceDetail(e) {
-    const id = e.currentTarget.dataset.id;
-    my.navigateTo({ url: `/pages/service-detail/service-detail?id=${id}` });
-  },
+  goService() { my.switchTab({ url: '/pages/service/service' }); },
+  goServiceList() { my.switchTab({ url: '/pages/service/service' }); },
+  goServiceDetail(e) { my.navigateTo({ url: '/pages/service-detail/service-detail?id=' + e.currentTarget.dataset.id }); },
 });

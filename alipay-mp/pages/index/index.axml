@@ -9,18 +9,34 @@
     </view>
   </view>
 
-  <!-- Quick Nav -->
-  <view class="nav-grid">
-    <view class="nav-item" a:for="{{navItems}}" a:key="title" onTap="goService">
-      <view class="nav-icon" style="background: {{item.color}}">
-        <text class="nav-icon-text">{{item.emoji}}</text>
+  <!-- 自助预约 -->
+  <view class="card-section" a:if="{{navLgItems.length || navSmItems.length}}">
+    <view class="section-header">
+      <text class="section-title">自助预约</text>
+      <text class="section-more" onTap="goService">进度查询 ›</text>
+    </view>
+    <scroll-view scroll-x class="nav-lg-row" a:if="{{navLgItems.length}}">
+      <view class="nav-lg-item" a:for="{{navLgItems}}" a:key="id" onTap="goPath" data-path="{{item.path}}">
+        <view class="nav-lg-icon">
+          <image a:if="{{item.imageUrl}}" src="{{item.imageUrl}}" class="nav-lg-img" mode="aspectFill" />
+          <text a:else class="nav-lg-emoji">🔧</text>
+        </view>
+        <text class="nav-lg-label" style="color:{{item.color || '#B91C1C'}}">{{item.title}}</text>
       </view>
-      <text class="nav-label">{{item.title}}</text>
+    </scroll-view>
+    <view class="nav-sm-row" a:if="{{navSmItems.length}}">
+      <view class="nav-sm-item" a:for="{{navSmItems}}" a:key="id" onTap="goPath" data-path="{{item.path}}">
+        <view class="nav-sm-icon">
+          <image a:if="{{item.imageUrl}}" src="{{item.imageUrl}}" class="nav-sm-img" mode="aspectFit" />
+          <text a:else class="nav-sm-emoji">📋</text>
+        </view>
+        <text class="nav-sm-label">{{item.title}}</text>
+      </view>
     </view>
   </view>
 
   <!-- Hot Services -->
-  <view class="card">
+  <view class="card-section">
     <view class="section-header">
       <text class="section-title">热门服务</text>
       <text class="section-more" onTap="goServiceList">查看全部 ›</text>
@@ -40,8 +56,8 @@
   </view>
 
   <!-- Recommend -->
-  <view class="card">
-    <text class="section-title">为你推荐</text>
+  <view class="card-section">
+    <text class="section-title" style="display:block;margin-bottom:20rpx">为你推荐</text>
     <view class="recommend-grid">
       <view class="recommend-item" a:for="{{recommends}}" a:key="id">
         <view class="recommend-icon" style="background: {{item.bg}}">

@@ -34,52 +34,48 @@
           </div>
           <p class="share-hint">扫描二维码，打开 Vino 服务站</p>
           <div class="share-url">{{ shareUrl }}</div>
-          <van-button
-            size="small"
-            round
-            plain
-            type="primary"
-            color="#B91C1C"
-            class="share-copy-btn"
-            @click="copyUrl"
-          >
-            复制链接
-          </van-button>
+          <van-button size="small" round plain type="primary" color="#B91C1C" class="share-copy-btn" @click="copyUrl">复制链接</van-button>
         </div>
         <van-icon name="close" size="28" color="rgba(255,255,255,0.6)" class="share-close" @click="showShare = false" />
       </div>
     </van-overlay>
 
-    <!-- Quick Nav -->
-    <div class="section nav-section">
-      <div class="nav-grid">
-        <div
-          v-for="nav in navItems"
-          :key="nav.title"
-          class="nav-item"
-          @click="$router.push(nav.path)"
-        >
-          <div class="nav-icon" :style="{ background: nav.color }">
-            <van-icon :name="nav.icon" size="22" color="#fff" />
+    <!-- 自助预约 -->
+    <div class="section card-section" v-if="navLgItems.length || navSmItems.length">
+      <div class="section-header">
+        <h3>自助预约</h3>
+        <span class="more" @click="$router.push('/services')">进度查询 ›</span>
+      </div>
+      <!-- 大图标行 -->
+      <div class="nav-lg-row" v-if="navLgItems.length">
+        <div class="nav-lg-item" v-for="item in navLgItems" :key="item.id" @click="$router.push(item.path)">
+          <div class="nav-lg-icon">
+            <img v-if="item.imageUrl" :src="item.imageUrl" class="nav-lg-img" />
+            <van-icon v-else :name="item.icon || 'apps-o'" size="36" :color="item.color || '#B91C1C'" />
           </div>
-          <span>{{ nav.title }}</span>
+          <span class="nav-lg-label" :style="{ color: item.color || '#B91C1C' }">{{ item.title }}</span>
+        </div>
+      </div>
+      <!-- 小图标行 -->
+      <div class="nav-sm-row" v-if="navSmItems.length">
+        <div class="nav-sm-item" v-for="item in navSmItems" :key="item.id" @click="$router.push(item.path)">
+          <div class="nav-sm-icon">
+            <img v-if="item.imageUrl" :src="item.imageUrl" class="nav-sm-img" />
+            <van-icon v-else :name="item.icon || 'apps-o'" size="20" color="#666" />
+          </div>
+          <span class="nav-sm-label">{{ item.title }}</span>
         </div>
       </div>
     </div>
 
     <!-- Hot Services -->
-    <div class="section">
+    <div class="section card-section">
       <div class="section-header">
         <h3>热门服务</h3>
         <span class="more" @click="$router.push('/services')">查看全部 ›</span>
       </div>
       <div class="service-list">
-        <div
-          v-for="item in hotServices"
-          :key="item.id"
-          class="service-card"
-          @click="$router.push(item.path)"
-        >
+        <div v-for="item in hotServices" :key="item.id" class="service-card" @click="$router.push(item.path)">
           <div class="service-cover" :style="{ background: item.coverBg }">
             <van-icon :name="item.icon" size="36" color="#fff" />
           </div>
@@ -93,16 +89,12 @@
     </div>
 
     <!-- Recommend -->
-    <div class="section">
+    <div class="section card-section">
       <div class="section-header">
         <h3>为你推荐</h3>
       </div>
       <div class="recommend-grid">
-        <div
-          v-for="item in recommends"
-          :key="item.id"
-          class="recommend-card"
-        >
+        <div v-for="item in recommends" :key="item.id" class="recommend-card">
           <div class="recommend-icon" :style="{ background: item.bg }">
             <van-icon :name="item.icon" size="28" color="#fff" />
           </div>
@@ -138,42 +130,42 @@ const headerLogoUrl = computed(() => {
   const logo = allItems.value.find(i => i.section === 'headerLogo' && i.status === 'active');
   return logo?.imageUrl || '';
 });
-
 const heroBgUrl = computed(() => {
   const bg = allItems.value.find(i => i.section === 'homeBg' && i.status === 'active');
   return bg?.imageUrl || '';
 });
 
-const navItems = computed(() =>
-  allItems.value.filter(i => i.section === 'nav' && i.status === 'active').map(i => ({ title: i.title, icon: i.icon, path: i.path || '/services', color: i.color }))
+const navLgItems = computed(() =>
+  allItems.value.filter(i => i.section === 'navLg' && i.status === 'active')
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map(i => ({ id: i.id, title: i.title, icon: i.icon, imageUrl: i.imageUrl, path: i.path || '/services', color: i.color }))
+);
+const navSmItems = computed(() =>
+  allItems.value.filter(i => i.section === 'navSm' && i.status === 'active')
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map(i => ({ id: i.id, title: i.title, icon: i.icon, imageUrl: i.imageUrl, path: i.path || '/services', color: i.color }))
 );
 const hotServices = computed(() =>
-  allItems.value.filter(i => i.section === 'hotService' && i.status === 'active').map(i => ({ id: i.id, title: i.title, desc: i.desc, price: i.price, icon: i.icon, coverBg: i.color, path: i.path || '/services' }))
+  allItems.value.filter(i => i.section === 'hotService' && i.status === 'active')
+    .map(i => ({ id: i.id, title: i.title, desc: i.desc, price: i.price, icon: i.icon, coverBg: i.color, path: i.path || '/services' }))
 );
 const recommends = computed(() =>
-  allItems.value.filter(i => i.section === 'recommend' && i.status === 'active').map(i => ({ id: i.id, title: i.title, desc: i.desc, icon: i.icon, bg: i.color }))
+  allItems.value.filter(i => i.section === 'recommend' && i.status === 'active')
+    .map(i => ({ id: i.id, title: i.title, desc: i.desc, icon: i.icon, bg: i.color }))
 );
 
 watch(showShare, async (val) => {
   if (val) {
     await nextTick();
     if (qrCanvas.value) {
-      QRCode.toCanvas(qrCanvas.value, shareUrl, {
-        width: 180,
-        margin: 2,
-        color: { dark: '#1d1d1f', light: '#ffffff' },
-      });
+      QRCode.toCanvas(qrCanvas.value, shareUrl, { width: 180, margin: 2, color: { dark: '#1d1d1f', light: '#ffffff' } });
     }
   }
 });
 
 const copyUrl = async () => {
-  try {
-    await navigator.clipboard.writeText(shareUrl);
-    showToast('链接已复制');
-  } catch {
-    showToast('复制失败，请手动复制');
-  }
+  try { await navigator.clipboard.writeText(shareUrl); showToast('链接已复制'); }
+  catch { showToast('复制失败，请手动复制'); }
 };
 </script>
 
@@ -192,15 +184,13 @@ const copyUrl = async () => {
   background-size: cover;
   background-position: center;
 }
-
 .hero-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.02) 50%, rgba(255,255,255,0.1) 100%);
+  background: linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.02) 50%, rgba(255,255,255,0.05) 100%);
   display: flex;
   flex-direction: column;
 }
-
 .hero-header {
   display: flex;
   align-items: center;
@@ -208,294 +198,141 @@ const copyUrl = async () => {
   padding: 14px 20px;
   padding-top: max(14px, env(safe-area-inset-top));
 }
+.hero-logo { height: 30px; width: auto; max-width: 100px; object-fit: contain; filter: brightness(0) invert(1); }
+.hero-logo-svg { width: 64px; height: 26px; }
+.hero-actions { display: flex; gap: 8px; }
 
-.hero-logo {
-  height: 30px;
-  width: auto;
-  max-width: 100px;
-  object-fit: contain;
-  filter: brightness(0) invert(1);
+/* ===== Card Sections with side margins ===== */
+.card-section {
+  margin: 12px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
 }
-
-.hero-logo-svg {
-  width: 64px;
-  height: 26px;
-}
-
-.hero-actions {
-  display: flex;
-  gap: 8px;
-}
-
-/* ===== Quick Nav ===== */
-.nav-section {
-  padding: 20px !important;
-  margin-top: -20px;
+.card-section:first-of-type {
+  margin-top: -24px;
   position: relative;
   z-index: 2;
-  border-radius: 16px 16px 0 0;
-  background: #fff;
 }
 
-.nav-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 4px;
-}
-
-.nav-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 0;
-  cursor: pointer;
-  transition: transform 0.25s var(--vino-transition);
-}
-
-.nav-item:active {
-  transform: scale(0.92);
-}
-
-.nav-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.nav-item span {
-  font-size: 12px;
-  color: var(--vino-text);
-  font-weight: 500;
-}
-
-/* ===== Section ===== */
-.section {
-  background: var(--vino-card);
-  padding: 20px;
-  margin-bottom: 8px;
-  animation: fadeInUp 0.4s var(--vino-transition) both;
-}
-
+/* ===== Section common ===== */
+.section { padding: 20px; animation: fadeInUp 0.4s var(--vino-transition) both; }
 .section:nth-child(3) { animation-delay: 0.05s; }
 .section:nth-child(4) { animation-delay: 0.1s; }
 .section:nth-child(5) { animation-delay: 0.15s; }
+.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.section-header h3 { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; color: var(--vino-dark); }
+.more { font-size: 14px; color: var(--vino-primary); font-weight: 500; cursor: pointer; }
 
-.section-header {
+/* ===== 自助预约 - 大图标 ===== */
+.nav-lg-row {
   display: flex;
-  justify-content: space-between;
+  gap: 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 12px;
+}
+.nav-lg-row::-webkit-scrollbar { display: none; }
+.nav-lg-item {
+  flex: 1;
+  min-width: 90px;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  margin-bottom: 16px;
-}
-
-.section-header h3 {
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--vino-dark);
-}
-
-.more {
-  font-size: 14px;
-  color: var(--vino-primary);
-  font-weight: 500;
+  gap: 8px;
   cursor: pointer;
+  transition: transform 0.2s;
 }
+.nav-lg-item:active { transform: scale(0.95); }
+.nav-lg-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 20px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f8f8;
+}
+.nav-lg-img { width: 100%; height: 100%; object-fit: cover; }
+.nav-lg-label { font-size: 13px; font-weight: 600; text-align: center; }
+
+/* ===== 自助预约 - 小图标 ===== */
+.nav-sm-row {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-top: 4px;
+  border-top: 1px solid rgba(0,0,0,0.04);
+}
+.nav-sm-row::-webkit-scrollbar { display: none; }
+.nav-sm-item {
+  flex: 1;
+  min-width: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 4px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.nav-sm-item:active { transform: scale(0.92); }
+.nav-sm-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+}
+.nav-sm-img { width: 100%; height: 100%; object-fit: contain; }
+.nav-sm-label { font-size: 11px; color: #666; text-align: center; }
 
 /* ===== Hot Services ===== */
-.service-list {
-  display: flex;
-  gap: 12px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  padding-bottom: 2px;
-}
-
-.service-list::-webkit-scrollbar {
-  display: none;
-}
-
+.service-list { display: flex; gap: 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-bottom: 2px; }
+.service-list::-webkit-scrollbar { display: none; }
 .service-card {
   min-width: 150px;
   flex-shrink: 0;
-  border-radius: var(--vino-radius);
+  border-radius: 12px;
   overflow: hidden;
-  background: var(--vino-card);
-  box-shadow: var(--vino-shadow);
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
   cursor: pointer;
-  transition: transform 0.3s var(--vino-transition), box-shadow 0.3s var(--vino-transition);
+  transition: transform 0.3s;
 }
-
-.service-card:active {
-  transform: scale(0.96);
-}
-
-.service-cover {
-  height: 100px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.service-info {
-  padding: 12px 14px 14px;
-}
-
-.service-info h4 {
-  font-size: 15px;
-  font-weight: 600;
-  margin-bottom: 4px;
-  color: var(--vino-dark);
-}
-
-.service-info p {
-  font-size: 12px;
-  color: var(--vino-text-secondary);
-  margin-bottom: 8px;
-}
-
-.price {
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--vino-primary);
-  letter-spacing: -0.02em;
-}
+.service-card:active { transform: scale(0.96); }
+.service-cover { height: 100px; display: flex; align-items: center; justify-content: center; }
+.service-info { padding: 12px 14px 14px; }
+.service-info h4 { font-size: 15px; font-weight: 600; margin-bottom: 4px; color: var(--vino-dark); }
+.service-info p { font-size: 12px; color: var(--vino-text-secondary); margin-bottom: 8px; }
+.price { font-size: 17px; font-weight: 700; color: var(--vino-primary); letter-spacing: -0.02em; }
 
 /* ===== Recommend ===== */
-.recommend-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
+.recommend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.recommend-card { background: #f5f5f5; border-radius: 12px; padding: 20px 16px; transition: transform 0.25s; cursor: pointer; }
+.recommend-card:active { transform: scale(0.97); }
+.recommend-icon { width: 50px; height: 50px; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; }
+.recommend-card h4 { font-size: 15px; font-weight: 600; margin-bottom: 4px; color: var(--vino-dark); }
+.recommend-card p { font-size: 13px; color: var(--vino-text-secondary); line-height: 1.5; }
 
-.recommend-card {
-  background: var(--vino-bg);
-  border-radius: var(--vino-radius);
-  padding: 20px 16px;
-  transition: transform 0.25s var(--vino-transition);
-  cursor: pointer;
-}
-
-.recommend-card:active {
-  transform: scale(0.97);
-}
-
-.recommend-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 12px;
-}
-
-.recommend-card h4 {
-  font-size: 15px;
-  font-weight: 600;
-  margin-bottom: 4px;
-  color: var(--vino-dark);
-}
-
-.recommend-card p {
-  font-size: 13px;
-  color: var(--vino-text-secondary);
-  line-height: 1.5;
-}
-
-.footer-space {
-  height: 24px;
-}
+.footer-space { height: 24px; }
 
 /* ===== Share ===== */
-.share-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(8px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  cursor: pointer;
-  transition: all 0.25s var(--vino-transition);
-}
-
-.share-btn:active {
-  background: rgba(255, 255, 255, 0.3);
-  transform: scale(0.92);
-}
-
-.share-popup {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  padding: 24px;
-}
-
-.share-card {
-  background: #fff;
-  border-radius: 20px;
-  padding: 28px 24px;
-  width: 290px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
-}
-
-.share-card-header {
-  width: 160px;
-  height: 50px;
-  background: #000;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 24px;
-  padding: 8px 16px;
-}
-
-.share-qr {
-  padding: 14px;
-  background: #fff;
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  border-radius: 16px;
-  margin-bottom: 18px;
-}
-
-.share-qr canvas {
-  display: block;
-}
-
-.share-hint {
-  font-size: 15px;
-  color: var(--vino-dark);
-  font-weight: 600;
-  margin-bottom: 6px;
-}
-
-.share-url {
-  font-size: 12px;
-  color: var(--vino-text-secondary);
-  margin-bottom: 16px;
-  word-break: break-all;
-  text-align: center;
-}
-
-.share-copy-btn {
-  width: 130px;
-}
-
-.share-close {
-  margin-top: 24px;
-  cursor: pointer;
-}
+.share-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.2); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer; transition: all 0.25s; }
+.share-btn:active { background: rgba(255,255,255,0.3); transform: scale(0.92); }
+.share-popup { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 24px; }
+.share-card { background: #fff; border-radius: 20px; padding: 28px 24px; width: 290px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 24px 80px rgba(0,0,0,0.35); }
+.share-card-header { width: 160px; height: 50px; background: #000; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 24px; padding: 8px 16px; }
+.share-qr { padding: 14px; background: #fff; border: 1px solid rgba(0,0,0,0.06); border-radius: 16px; margin-bottom: 18px; }
+.share-qr canvas { display: block; }
+.share-hint { font-size: 15px; color: var(--vino-dark); font-weight: 600; margin-bottom: 6px; }
+.share-url { font-size: 12px; color: var(--vino-text-secondary); margin-bottom: 16px; word-break: break-all; text-align: center; }
+.share-copy-btn { width: 130px; }
+.share-close { margin-top: 24px; cursor: pointer; }
 </style>

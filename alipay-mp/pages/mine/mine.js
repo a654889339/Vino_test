@@ -15,11 +15,11 @@ Page({
     menus: [
       { title: '我的订单', emoji: '📋', url: '/pages/orders/orders' },
       { title: '我的收藏', emoji: '⭐', url: '' },
-      { title: '地址管理', emoji: '📍', url: '' },
+      { title: '地址管理', emoji: '📍', url: '/pages/address/address' },
       { title: '优惠券', emoji: '🎫', url: '' },
       { title: '帮助中心', emoji: '❓', url: '' },
       { title: '意见反馈', emoji: '💬', url: '', chat: true },
-      { title: '关于Vino', emoji: 'ℹ️', url: '', webUrl: 'https://www.samyou.cn/' },
+      { title: '关于Vino', emoji: 'ℹ️', url: '', webUrl: 'https://www.vinotech.cn/' },
     ],
   },
 
@@ -125,7 +125,7 @@ Page({
     } else if (item.webUrl) {
       my.navigateTo({ url: '/pages/webview/webview?url=' + encodeURIComponent(item.webUrl) });
     } else if (item.url) {
-      my.switchTab({ url: item.url });
+      my.navigateTo({ url: item.url, fail() { my.switchTab({ url: item.url }); } });
     } else {
       my.showToast({ content: '功能开发中', type: 'none' });
     }

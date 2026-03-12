@@ -11,7 +11,9 @@
     "pages/maintenance/maintenance",
     "pages/chat/chat",
     "pages/webview/webview",
-    "pages/login/login"
+    "pages/login/login",
+    "pages/address/address",
+    "pages/address-edit/address-edit"
   ],
   "window": {
     "backgroundTextStyle": "light",

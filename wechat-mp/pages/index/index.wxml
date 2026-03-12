@@ -9,18 +9,36 @@
     </view>
   </view>
 
-  <!-- Quick Nav -->
-  <view class="nav-grid">
-    <view class="nav-item" wx:for="{{navItems}}" wx:key="title" bindtap="goService">
-      <view class="nav-icon" style="background: {{item.color}}">
-        <text class="nav-icon-text">{{item.emoji}}</text>
+  <!-- 自助预约 -->
+  <view class="card-section" wx:if="{{navLgItems.length || navSmItems.length}}">
+    <view class="section-header">
+      <text class="section-title">自助预约</text>
+      <text class="section-more" bindtap="goService">进度查询 ›</text>
+    </view>
+    <!-- 大图标 -->
+    <scroll-view scroll-x class="nav-lg-row" wx:if="{{navLgItems.length}}">
+      <view class="nav-lg-item" wx:for="{{navLgItems}}" wx:key="id" bindtap="goPath" data-path="{{item.path}}">
+        <view class="nav-lg-icon">
+          <image wx:if="{{item.imageUrl}}" src="{{item.imageUrl}}" class="nav-lg-img" mode="aspectFill" />
+          <text wx:else class="nav-lg-emoji">🔧</text>
+        </view>
+        <text class="nav-lg-label" style="color:{{item.color || '#B91C1C'}}">{{item.title}}</text>
       </view>
-      <text class="nav-label">{{item.title}}</text>
+    </scroll-view>
+    <!-- 小图标 -->
+    <view class="nav-sm-row" wx:if="{{navSmItems.length}}">
+      <view class="nav-sm-item" wx:for="{{navSmItems}}" wx:key="id" bindtap="goPath" data-path="{{item.path}}">
+        <view class="nav-sm-icon">
+          <image wx:if="{{item.imageUrl}}" src="{{item.imageUrl}}" class="nav-sm-img" mode="aspectFit" />
+          <text wx:else class="nav-sm-emoji">📋</text>
+        </view>
+        <text class="nav-sm-label">{{item.title}}</text>
+      </view>
     </view>
   </view>
 
   <!-- Hot Services -->
-  <view class="card">
+  <view class="card-section">
     <view class="section-header">
       <text class="section-title">热门服务</text>
       <text class="section-more" bindtap="goServiceList">查看全部 ›</text>
@@ -40,8 +58,8 @@
   </view>
 
   <!-- Recommend -->
-  <view class="card">
-    <text class="section-title">为你推荐</text>
+  <view class="card-section">
+    <text class="section-title" style="display:block;margin-bottom:20rpx">为你推荐</text>
     <view class="recommend-grid">
       <view class="recommend-item" wx:for="{{recommends}}" wx:key="id">
         <view class="recommend-icon" style="background: {{item.bg}}">

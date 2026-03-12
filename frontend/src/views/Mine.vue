@@ -58,7 +58,7 @@ const openFeedback = () => {
 };
 
 const openAbout = () => {
-  window.open('https://www.samyou.cn/', '_blank');
+  window.open('https://www.vinotech.cn/', '_blank');
 };
 
 const stats = [
