@@ -1285,24 +1285,55 @@ async function saveHC() {
 // 上传首页配置图片
 async function uploadHCImage(input) {
   const file = input.files[0];
-  if (!file) return;
+  if (!file) {
+    console.log('未选择文件');
+    return;
+  }
+
+  console.log('开始上传文件:', file.name, file.size, file.type);
+
+  // 检查文件大小（10MB限制）
+  if (file.size > 10 * 1024 * 1024) {
+    alert('图片文件不能超过 10MB');
+    return;
+  }
+
+  // 检查文件类型
+  if (!file.type.startsWith('image/')) {
+    alert('只能上传图片文件');
+    return;
+  }
+
+  const token = localStorage.getItem('vino_admin_token');
+  if (!token) {
+    alert('未登录或登录已过期，请重新登录');
+    return;
+  }
+
   const formData = new FormData();
   formData.append('file', file);
+
   try {
+    console.log('上传URL:', API + '/home-config/upload');
     const res = await fetch(API + '/home-config/upload', {
       method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('vino_admin_token') },
+      headers: { 'Authorization': 'Bearer ' + token },
       body: formData
     }).then(r => r.json());
+
+    console.log('上传响应:', res);
+
     if (res.code === 0 && res.data?.url) {
       document.getElementById('hcImageUrl').value = res.data.url;
       const preview = document.getElementById('hcImagePreview');
       preview.src = res.data.url;
       preview.style.display = 'block';
+      alert('上传成功！');
     } else {
       alert(res.message || '上传失败');
     }
   } catch (e) {
+    console.error('上传错误:', e);
     alert('上传失败: ' + e.message);
   }
   input.value = '';
