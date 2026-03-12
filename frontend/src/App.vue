@@ -45,8 +45,14 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* 提高 z-index，避免被页面内 fixed 或聊天 FAB 下方的触摸层遮挡，解决手机端「产品」等按钮无法点击 */
 :deep(.van-tabbar) {
   max-width: 750px;
   margin: 0 auto;
+  z-index: 100;
+}
+:deep(.van-tabbar-item) {
+  touch-action: manipulation;
+  cursor: pointer;
 }
 </style>
