@@ -20,6 +20,8 @@
         <text x="498" y="43" font-family="Arial" font-size="14" fill="#999" text-anchor="middle" font-weight="bold">R</text>
       </svg>
       <h2>{{ splashDesc || '欢迎使用 Vino 服务' }}</h2>
+      <!-- 登录页下方：显示后台 首页配置-首页logo-描述 -->
+      <p v-if="headerLogoDesc" class="login-header-desc">{{ headerLogoDesc }}</p>
     </div>
 
     <div class="login-form">
@@ -72,15 +74,19 @@ const loading = ref(false);
 const splashImageUrl = ref('');
 const splashDesc = ref('');
 const splashImageError = ref(false);
+const headerLogoDesc = ref('');
 
 onMounted(async () => {
   try {
     const res = await homeConfigApi.list();
-    const splash = (res.data || []).find(i => i.section === 'splash' && i.status === 'active');
+    const items = res.data || [];
+    const splash = items.find(i => i.section === 'splash' && i.status === 'active');
     if (splash) {
       if (splash.imageUrl) splashImageUrl.value = splash.imageUrl;
       if (splash.desc) splashDesc.value = splash.desc;
     }
+    const headerLogo = items.find(i => i.section === 'headerLogo' && i.status === 'active');
+    if (headerLogo && headerLogo.desc) headerLogoDesc.value = headerLogo.desc;
   } catch (_) {}
 });
 
@@ -135,6 +141,16 @@ const handleRegister = () => {
 .login-header h2 {
   font-size: 20px;
   color: var(--vino-text);
+}
+
+.login-header-desc {
+  font-size: 14px;
+  color: var(--vino-text-secondary);
+  margin-top: 12px;
+  line-height: 1.5;
+  max-width: 280px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .login-form {

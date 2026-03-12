@@ -347,11 +347,11 @@ onMounted(async () => {
   width: 100%; height: 260px; display: flex; align-items: center; justify-content: center;
 }
 
-/* ===== Media ===== */
-.hero-media { padding: 20px; }
+/* ===== Media（红框区域元素居中） ===== */
+.hero-media { padding: 20px; text-align: center; }
 .hero-media-title { font-size: 20px; font-weight: 700; color: var(--vino-dark); margin-bottom: 14px; letter-spacing: -0.02em; }
 
-.media-scroll { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
+.media-scroll { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; justify-content: center; }
 .media-scroll::-webkit-scrollbar { display: none; }
 .media-card { flex-shrink: 0; width: 135px; cursor: pointer; transition: transform 0.25s var(--vino-transition); }
 .media-card:active { transform: scale(0.96); }

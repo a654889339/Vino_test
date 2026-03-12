@@ -1,7 +1,5 @@
 <template>
   <div class="services-page">
-    <van-nav-bar title="全部服务" />
-
     <van-tabs v-model:active="activeTab" sticky color="var(--vino-primary)">
       <van-tab v-for="cat in categories" :key="cat.key" :title="cat.name">
         <div class="service-grid">

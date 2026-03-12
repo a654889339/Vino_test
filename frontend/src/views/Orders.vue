@@ -1,7 +1,5 @@
 <template>
   <div class="orders-page">
-    <van-nav-bar title="我的订单" />
-
     <van-tabs v-model:active="activeTab" sticky color="var(--vino-primary)" @change="onTabChange">
       <van-tab v-for="tab in tabs" :key="tab.key" :title="tab.name">
         <van-pull-refresh v-model="refreshing" @refresh="loadOrders">

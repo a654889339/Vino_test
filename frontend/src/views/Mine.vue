@@ -1,6 +1,6 @@
 <template>
   <div class="mine-page">
-    <div class="profile-header">
+    <div class="profile-header" :style="profileHeaderStyle">
       <div class="avatar">
         <van-icon name="user-o" size="36" color="#fff" />
       </div>
@@ -43,13 +43,28 @@
 </template>
 
 <script setup>
-import { ref, inject, onMounted } from 'vue';
+import { ref, inject, onMounted, computed } from 'vue';
 import { useUserStore } from '@/stores/user';
 import { useRouter } from 'vue-router';
+import { homeConfigApi } from '@/api';
 
 const userStore = useUserStore();
 const router = useRouter();
 const chatWidgetRef = inject('chatWidget', ref(null));
+
+const mineBgImageUrl = ref('');
+const profileHeaderStyle = computed(() => {
+  if (mineBgImageUrl.value) {
+    return {
+      backgroundImage: `url(${mineBgImageUrl.value})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+    };
+  }
+  return {
+    background: 'linear-gradient(160deg, #1d1d1f 0%, #B91C1C 100%)',
+  };
+});
 
 const openFeedback = () => {
   if (chatWidgetRef.value) {
@@ -76,6 +91,12 @@ onMounted(async () => {
       userStore.logout();
     }
   }
+  try {
+    const res = await homeConfigApi.list();
+    const items = res.data || [];
+    const mineBg = items.find(i => i.section === 'mineBg' && i.status === 'active');
+    if (mineBg && mineBg.imageUrl) mineBgImageUrl.value = mineBg.imageUrl;
+  } catch (_) {}
 });
 
 const handleLogout = () => {
