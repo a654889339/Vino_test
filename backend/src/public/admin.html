@@ -1233,7 +1233,8 @@ function onHCSectionChange() {
   document.getElementById('hcIconGroup').style.display = (sec === 'banner' || sec === 'splash') ? 'none' : '';
   document.getElementById('hcPathGroup').style.display = (sec === 'banner' || sec === 'splash') ? 'none' : '';
   document.getElementById('hcImageGroup').style.display = sec === 'splash' ? '' : 'none';
-  document.getElementById('hcColorGroup').style.display = sec === 'splash' ? 'none' : '';
+  // 开场动画也需要显示颜色字段，用于设置背景色
+  document.getElementById('hcColorGroup').style.display = '';
 }
 
 function openHCEditor(id) {
