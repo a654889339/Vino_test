@@ -3,7 +3,15 @@
     <div v-if="visible" class="splash-screen" @click="dismiss">
       <div class="splash-content">
         <div class="splash-logo-wrapper">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 200" class="splash-logo">
+          <!-- 动态图片：如果配置了 imageUrl 则显示图片，否则显示默认 SVG -->
+          <img
+            v-if="splashConfig?.imageUrl && !imageError"
+            :src="splashConfig.imageUrl"
+            :alt="splashConfig.title || 'VINO'"
+            class="splash-logo-image"
+            @error="onImageError"
+          />
+          <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 200" class="splash-logo">
             <rect width="520" height="200" fill="#000"/>
             <path d="M18 35 L58 35 L100 145 L142 35 L160 35 L108 170 L92 170 Z" fill="#B91C1C"/>
             <path d="M38 35 L55 35 L55 60 L45 35 Z" fill="#000" opacity="0.2"/>
@@ -28,16 +36,57 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
+import { homeConfigApi } from '@/api';
 
 const visible = ref(true);
-const textChars = '即将打开VINO服务站...'.split('');
+const splashConfig = ref(null);
+const imageError = ref(false);
+
+// 获取显示文本：优先使用配置的描述，否则使用默认文本
+const displayText = computed(() => {
+  if (splashConfig.value?.desc) {
+    return splashConfig.value.desc;
+  }
+  if (splashConfig.value?.title) {
+    return `即将打开${splashConfig.value.title}...`;
+  }
+  return '即将打开VINO服务站...';
+});
+
+const textChars = computed(() => displayText.value.split(''));
 
 const dismiss = () => {
   visible.value = false;
 };
 
-onMounted(() => {
+const onImageError = () => {
+  imageError.value = true;
+  // 图片加载失败时，会自动显示 SVG 备用方案
+};
+
+// 加载开场动画配置
+const loadSplashConfig = async () => {
+  try {
+    const res = await homeConfigApi.list();
+    if (res.data) {
+      // 查找 section 为 splash 且状态为 active 的配置
+      const splash = res.data.find(item => item.section === 'splash' && item.status === 'active');
+      if (splash) {
+        splashConfig.value = splash;
+      }
+    }
+  } catch (error) {
+    console.error('加载开场动画配置失败:', error);
+    // 失败时使用默认配置（SVG）
+  }
+};
+
+onMounted(async () => {
+  // 先加载配置
+  await loadSplashConfig();
+
+  // 3.2秒后自动关闭
   setTimeout(() => {
     visible.value = false;
   }, 3200);
@@ -76,6 +125,15 @@ onMounted(() => {
   width: 280px;
   height: auto;
   filter: drop-shadow(0 0 30px rgba(185, 28, 28, 0.4));
+}
+
+.splash-logo-image {
+  max-width: 280px;
+  max-height: 200px;
+  width: auto;
+  height: auto;
+  filter: drop-shadow(0 0 30px rgba(185, 28, 28, 0.4));
+  object-fit: contain;
 }
 
 .splash-text {
