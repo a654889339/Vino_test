@@ -1,16 +1,34 @@
 const path = require('path');
-const { DeviceGuide } = require('../models');
+const { DeviceGuide, ProductCategory } = require('../models');
+
+/** 前台：获取商品种类列表（仅启用） */
+exports.categories = async (req, res) => {
+  try {
+    const list = await ProductCategory.findAll({
+      where: { status: 'active' },
+      order: [['sortOrder', 'ASC'], ['id', 'ASC']],
+      attributes: ['id', 'name', 'sortOrder'],
+    });
+    res.json({ code: 0, data: list });
+  } catch (err) {
+    console.error('[Guide] categories error:', err.message);
+    res.status(500).json({ code: 500, message: '获取种类失败' });
+  }
+};
 
 exports.list = async (req, res) => {
   try {
+    const { categoryId } = req.query;
+    const where = { status: 'active' };
+    if (categoryId != null && categoryId !== '') where.categoryId = categoryId;
     const guides = await DeviceGuide.findAll({
-      where: { status: 'active' },
+      where,
       order: [['sortOrder', 'ASC'], ['id', 'ASC']],
     });
     res.json({ code: 0, data: guides });
   } catch (err) {
     console.error('[Guide] list error:', err.message);
-    res.status(500).json({ code: 500, message: '获取服务指南失败' });
+    res.status(500).json({ code: 500, message: '获取列表失败' });
   }
 };
 
@@ -31,6 +49,7 @@ exports.detail = async (req, res) => {
 exports.adminList = async (req, res) => {
   try {
     const guides = await DeviceGuide.findAll({
+      include: [{ model: require('../models').ProductCategory, as: 'category', attributes: ['id', 'name'] }],
       order: [['sortOrder', 'ASC'], ['id', 'ASC']],
     });
     res.json({ code: 0, data: guides });
@@ -42,7 +61,7 @@ exports.adminList = async (req, res) => {
 
 const GUIDE_FIELDS = [
   'name','slug','subtitle','icon','iconUrl','emoji','gradient','badge',
-  'tags','sections','sortOrder','status',
+  'categoryId','tags','sections','sortOrder','status',
   'coverImage','showcaseVideo','description','mediaItems','helpItems',
 ];
 

@@ -96,6 +96,11 @@ const DeviceGuide = sequelize.define('DeviceGuide', {
       this.setDataValue('helpItems', JSON.stringify(val || []));
     },
   },
+  categoryId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    comment: '所属商品种类 ID',
+  },
   sortOrder: {
     type: DataTypes.INTEGER,
     defaultValue: 0,

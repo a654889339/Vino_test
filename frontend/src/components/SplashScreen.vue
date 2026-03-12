@@ -24,9 +24,8 @@
             <text x="498" y="43" font-family="Arial" font-size="14" fill="#666" text-anchor="middle" font-weight="bold">R</text>
           </svg>
         </div>
-        <div class="splash-text">
-          <span v-for="(char, i) in textChars" :key="i" class="splash-char" :style="{ animationDelay: `${1.2 + i * 0.08}s` }">{{ char }}</span>
-        </div>
+        <!-- 红框处：后台配置的开场动画描述 -->
+        <div class="splash-desc" v-if="displayText">{{ displayText }}</div>
         <div class="splash-progress">
           <div class="splash-progress-bar"></div>
         </div>
@@ -59,7 +58,6 @@ const displayText = computed(() => {
   return '即将打开VINO服务站...';
 });
 
-const textChars = computed(() => displayText.value.split(''));
 
 const dismiss = () => {
   visible.value = false;
@@ -129,7 +127,6 @@ onMounted(async () => {
 .splash-logo {
   width: 280px;
   height: auto;
-  filter: drop-shadow(0 0 30px rgba(185, 28, 28, 0.4));
 }
 
 .splash-logo-image {
@@ -137,24 +134,20 @@ onMounted(async () => {
   max-height: 200px;
   width: auto;
   height: auto;
-  filter: drop-shadow(0 0 30px rgba(185, 28, 28, 0.4));
   object-fit: contain;
 }
 
-.splash-text {
-  display: flex;
-  justify-content: center;
-  gap: 1px;
-  min-height: 24px;
-}
-
-.splash-char {
+/* 红框处：后台配置的开场动画描述 */
+.splash-desc {
   font-size: 15px;
-  color: rgba(255, 255, 255, 0.7);
-  letter-spacing: 2px;
+  color: rgba(255, 255, 255, 0.85);
+  text-align: center;
+  letter-spacing: 1px;
+  line-height: 1.5;
+  max-width: 280px;
+  min-height: 24px;
   opacity: 0;
-  transform: translateY(8px);
-  animation: charIn 0.4s ease forwards;
+  animation: charIn 0.5s 0.8s ease forwards;
 }
 
 .splash-progress {

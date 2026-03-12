@@ -1,16 +1,35 @@
 <template>
   <div class="products-page">
-    <!-- Apple-style product nav -->
+    <!-- 第一栏：只显示商品种类 -->
     <div class="product-nav">
       <div class="product-nav-scroll">
         <a
-          v-for="device in deviceGuides"
-          :key="device.id"
+          v-for="cat in categories"
+          :key="cat.id"
           class="product-nav-item"
-          :class="{ active: activeId === device.id }"
-          @click="selectDevice(device)"
-        >{{ device.name }}</a>
+          :class="{ active: selectedCategoryId === cat.id }"
+          @click="selectCategory(cat)"
+        >{{ cat.name }}</a>
       </div>
+    </div>
+
+    <!-- 第二行：下拉框显示此类下的所有商品 -->
+    <div class="product-select-row" v-if="categories.length">
+      <van-field
+        readonly
+        clickable
+        :model-value="selectedProductLabel"
+        label="选择商品"
+        :placeholder="selectedCategoryId && !deviceGuides.length ? '该种类下暂无商品' : '请选择商品'"
+        @click="deviceGuides.length ? (showProductPicker = true) : null"
+      />
+      <van-popup v-model:show="showProductPicker" position="bottom" round>
+        <van-picker
+          :columns="productPickerColumns"
+          @confirm="onProductPick"
+          @cancel="showProductPicker = false"
+        />
+      </van-popup>
     </div>
 
     <!-- Product detail content -->
@@ -86,7 +105,7 @@
 
     <div v-else-if="!loading" class="empty-hint">
       <van-icon name="info-o" size="48" color="#ccc" />
-      <p>请选择一个产品</p>
+      <p>{{ categories.length ? '请在上方选择种类与商品' : '暂无商品配置' }}</p>
     </div>
 
     <!-- Video Player -->
@@ -104,12 +123,24 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { showImagePreview } from 'vant';
 import { guideApi } from '@/api';
 
+const categories = ref([]);
+const selectedCategoryId = ref(null);
 const deviceGuides = ref([]);
 const activeId = ref(null);
 const guide = ref({});
 const loading = ref(false);
 const playShowcase = ref(false);
 const currentVideoUrl = ref('');
+const showProductPicker = ref(false);
+
+const selectedProductLabel = computed(() => {
+  const g = deviceGuides.value.find(d => d.id === activeId.value);
+  return g ? g.name : '';
+});
+
+const productPickerColumns = computed(() =>
+  deviceGuides.value.map(d => ({ text: d.name, value: d.id }))
+);
 
 const sections = computed(() => {
   const s = guide.value.sections;
@@ -177,20 +208,46 @@ const loadGuideDetail = async (id) => {
   loading.value = false;
 };
 
-const selectDevice = (device) => {
-  if (activeId.value === device.id) return;
-  activeId.value = device.id;
-  loadGuideDetail(device.slug || device.id);
-};
-
-onMounted(async () => {
+const selectCategory = async (cat) => {
+  if (selectedCategoryId.value === cat.id) return;
+  selectedCategoryId.value = cat.id;
   try {
-    const res = await guideApi.list();
+    const res = await guideApi.list({ categoryId: cat.id });
     deviceGuides.value = res.data || [];
+    activeId.value = null;
+    guide.value = {};
     if (deviceGuides.value.length) {
       const first = deviceGuides.value[0];
       activeId.value = first.id;
       loadGuideDetail(first.slug || first.id);
+    }
+  } catch { deviceGuides.value = []; }
+};
+
+const onProductPick = ({ selectedOptions }) => {
+  showProductPicker.value = false;
+  const opt = selectedOptions[0];
+  if (!opt) return;
+  const device = deviceGuides.value.find(d => d.id === opt.value);
+  if (device) {
+    activeId.value = device.id;
+    loadGuideDetail(device.slug || device.id);
+  }
+};
+
+onMounted(async () => {
+  try {
+    const res = await guideApi.categories();
+    categories.value = res.data || [];
+    if (categories.value.length) {
+      selectedCategoryId.value = categories.value[0].id;
+      const listRes = await guideApi.list({ categoryId: categories.value[0].id });
+      deviceGuides.value = listRes.data || [];
+      if (deviceGuides.value.length) {
+        const first = deviceGuides.value[0];
+        activeId.value = first.id;
+        loadGuideDetail(first.slug || first.id);
+      }
     }
   } catch { /* empty */ }
 });
@@ -209,6 +266,12 @@ onMounted(async () => {
   position: sticky;
   top: 0;
   z-index: 10;
+}
+
+.product-select-row {
+  background: var(--vino-card);
+  padding: 0 16px 12px;
+  border-bottom: 0.5px solid rgba(0, 0, 0, 0.08);
 }
 
 .product-nav-scroll {

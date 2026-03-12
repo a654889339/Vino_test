@@ -10,6 +10,7 @@ const upload = multer({
 
 const router = Router();
 
+router.get('/categories', guideController.categories);
 router.get('/', guideController.list);
 router.get('/admin/list', authMiddleware, adminMiddleware, guideController.adminList);
 router.get('/:id', guideController.detail);

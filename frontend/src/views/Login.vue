@@ -3,7 +3,14 @@
     <van-nav-bar title="登录" left-arrow @click-left="$router.back()" />
 
     <div class="login-header">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 200" class="login-logo">
+      <img
+        v-if="splashImageUrl && !splashImageError"
+        :src="splashImageUrl"
+        alt="VINO"
+        class="login-logo-img"
+        @error="splashImageError = true"
+      />
+      <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 200" class="login-logo">
         <path d="M18 35 L58 35 L100 145 L142 35 L160 35 L108 170 L92 170 Z" fill="#B91C1C"/>
         <path d="M165 35 L195 35 L195 170 L165 170 Z" fill="#B91C1C"/>
         <path d="M210 35 L240 35 L320 140 L320 35 L350 35 L350 170 L320 170 L240 65 L240 170 L210 170 Z" fill="#B91C1C"/>
@@ -12,7 +19,7 @@
         <circle cx="498" cy="38" r="10" stroke="#999" stroke-width="1.5" fill="none"/>
         <text x="498" y="43" font-family="Arial" font-size="14" fill="#999" text-anchor="middle" font-weight="bold">R</text>
       </svg>
-      <h2>欢迎使用 Vino 服务</h2>
+      <h2>{{ splashDesc || '欢迎使用 Vino 服务' }}</h2>
     </div>
 
     <div class="login-form">
@@ -53,14 +60,29 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { showToast } from 'vant';
+import { homeConfigApi } from '@/api';
 
 const router = useRouter();
 const userStore = useUserStore();
 const loading = ref(false);
+const splashImageUrl = ref('');
+const splashDesc = ref('');
+const splashImageError = ref(false);
+
+onMounted(async () => {
+  try {
+    const res = await homeConfigApi.list();
+    const splash = (res.data || []).find(i => i.section === 'splash' && i.status === 'active');
+    if (splash) {
+      if (splash.imageUrl) splashImageUrl.value = splash.imageUrl;
+      if (splash.desc) splashDesc.value = splash.desc;
+    }
+  } catch (_) {}
+});
 
 const form = reactive({ username: '', password: '' });
 
@@ -100,6 +122,14 @@ const handleRegister = () => {
 .login-logo {
   width: 100px;
   margin: 0 auto 16px;
+}
+
+.login-logo-img {
+  width: 120px;
+  max-height: 80px;
+  object-fit: contain;
+  margin: 0 auto 16px;
+  display: block;
 }
 
 .login-header h2 {

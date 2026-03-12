@@ -4,6 +4,7 @@ const serviceRoutes = require('./service');
 const orderRoutes = require('./order');
 const addressRoutes = require('./address');
 const guideRoutes = require('./guide');
+const productCategoryRoutes = require('./productCategory');
 const homeConfigRoutes = require('./homeConfig');
 const messageRoutes = require('./message');
 
@@ -14,6 +15,7 @@ router.use('/services', serviceRoutes);
 router.use('/orders', orderRoutes);
 router.use('/addresses', addressRoutes);
 router.use('/guides', guideRoutes);
+router.use('/product-categories', productCategoryRoutes);
 router.use('/home-config', homeConfigRoutes);
 router.use('/messages', messageRoutes);
 

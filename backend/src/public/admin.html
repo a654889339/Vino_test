@@ -187,7 +187,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <div class="dash-nav-item active" onclick="switchPage('overview')">概览</div>
     <div class="dash-nav-item" onclick="switchPage('orders')">订单管理</div>
     <div class="dash-nav-item" onclick="switchPage('users')">用户管理</div>
-    <div class="dash-nav-item" onclick="switchPage('guides')">服务指南</div>
+    <div class="dash-nav-item" onclick="switchPage('guides')">商品配置</div>
     <div class="dash-nav-item" onclick="switchPage('homeConfig')">首页配置</div>
     <div class="dash-nav-item" onclick="switchPage('messages')">留言板</div>
   </div>
@@ -233,21 +233,32 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       </div>
     </div>
 
-    <!-- Guides Page -->
+    <!-- 商品配置 Page -->
     <div class="dash-page" id="page-guides">
       <div class="dash-section">
         <div class="section-header">
-          <h3>服务指南管理</h3>
+          <h3>商品种类</h3>
+          <button class="refresh-btn" style="background:#059669" onclick="openCategoryEditor()">+ 新增种类</button>
+        </div>
+        <p style="font-size:13px;color:#666;margin-bottom:12px">先配置种类，再在下方商品列表中为每个商品选择种类。</p>
+        <table class="order-table">
+          <thead><tr><th>ID</th><th>种类名称</th><th>排序</th><th>状态</th><th>操作</th></tr></thead>
+          <tbody id="categoryTableBody"></tbody>
+        </table>
+      </div>
+      <div class="dash-section" style="margin-top:24px">
+        <div class="section-header">
+          <h3>商品管理</h3>
           <div style="display:flex;gap:8px">
             <button class="refresh-btn" onclick="loadGuides()">刷新</button>
-            <button class="refresh-btn" style="background:#059669" onclick="openGuideEditor()">+ 新增</button>
+            <button class="refresh-btn" style="background:#059669" onclick="openGuideEditor()">+ 新增商品</button>
           </div>
         </div>
         <table class="order-table">
-          <thead><tr><th>排序</th><th>名称</th><th>英文描述</th><th>副标题</th><th>图标</th><th>Emoji</th><th>角标</th><th>状态</th><th>二维码</th><th>操作</th></tr></thead>
+          <thead><tr><th>排序</th><th>种类</th><th>名称</th><th>英文描述</th><th>副标题</th><th>图标</th><th>状态</th><th>二维码</th><th>操作</th></tr></thead>
           <tbody id="guideTableBody"></tbody>
         </table>
-        <div class="order-empty" id="guideEmpty" style="display:none">暂无服务指南</div>
+        <div class="order-empty" id="guideEmpty" style="display:none">暂无商品</div>
       </div>
     </div>
 
@@ -414,13 +425,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <div class="modal-overlay" id="guideModal" style="display:none" onclick="if(event.target===this)closeGuideEditor()">
       <div class="modal-content" style="width:760px">
         <div class="modal-header">
-          <h3 id="guideModalTitle">新增服务指南</h3>
+          <h3 id="guideModalTitle">新增商品</h3>
           <span class="modal-close" onclick="closeGuideEditor()">&times;</span>
         </div>
         <div class="modal-body" style="max-height:75vh;overflow-y:auto">
           <input type="hidden" id="guideEditId" />
           <h4 style="margin:0 0 12px;color:var(--primary)">基本信息</h4>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="form-group"><label>所属种类 *</label><select class="form-input" id="gCategoryId"><option value="">请选择种类</option></select></div>
             <div class="form-group"><label>名称 *</label><input class="form-input" id="gName" placeholder="如：空调" /></div>
             <div class="form-group"><label>英文描述 * <span style="font-weight:normal;color:#999;font-size:12px">（唯一标识，用于链接路径，如 aircondition）</span></label><input class="form-input" id="gSlug" placeholder="如：aircondition" oninput="this.value=this.value.replace(/[^a-zA-Z0-9_-]/g,'')" /></div>
             <div class="form-group"><label>副标题</label><input class="form-input" id="gSubtitle" placeholder="如：家用/商用中央空调" /></div>
@@ -474,6 +486,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
             <select class="form-input" id="gStatus"><option value="active">启用</option><option value="inactive">禁用</option></select>
           </div>
           <button class="submit-btn" onclick="saveGuide()">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Category Editor Modal -->
+    <div class="modal-overlay" id="categoryModal" style="display:none" onclick="if(event.target===this)closeCategoryEditor()">
+      <div class="modal-content" style="max-width:400px">
+        <div class="modal-header">
+          <h3 id="categoryModalTitle">新增种类</h3>
+          <span class="modal-close" onclick="closeCategoryEditor()">&times;</span>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="categoryEditId" />
+          <div class="form-group"><label>种类名称 *</label><input class="form-input" id="categoryName" placeholder="如：空调" /></div>
+          <div class="form-group"><label>排序</label><input type="number" class="form-input" id="categorySort" value="0" /></div>
+          <div class="form-group"><label>状态</label><select class="form-input" id="categoryStatus"><option value="active">启用</option><option value="inactive">禁用</option></select></div>
+          <button class="submit-btn" onclick="saveCategory()">保存</button>
         </div>
       </div>
     </div>
@@ -570,7 +599,7 @@ function switchPage(page) {
   document.getElementById('page-' + page).classList.add('active');
   if (page === 'orders') loadOrders();
   if (page === 'users') loadUsers();
-  if (page === 'guides') loadGuides();
+  if (page === 'guides') { loadCategories(); loadGuides(); }
   if (page === 'homeConfig') loadHomeConfig();
   if (page === 'messages') { loadConversations(); startMsgPolling(); }
   else { stopMsgPolling(); currentChatUserId = null; }
@@ -920,7 +949,7 @@ let allGuides = [];
 async function loadGuides() {
   const tbody = document.getElementById('guideTableBody');
   const empty = document.getElementById('guideEmpty');
-  tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:#999">加载中...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#999">加载中...</td></tr>';
   try {
     const res = await api('/guides/admin/list');
     if (res.code === 0) {
@@ -929,12 +958,11 @@ async function loadGuides() {
       empty.style.display = 'none';
       tbody.innerHTML = allGuides.map(g => `<tr>
         <td>${g.sortOrder}</td>
+        <td style="font-size:12px;color:#666">${g.category ? g.category.name : '-'}</td>
         <td><strong>${g.name}</strong></td>
         <td style="font-size:12px;color:#6366F1;font-family:monospace">${g.slug || '<span style="color:#ccc">-</span>'}</td>
         <td style="font-size:12px;color:#666">${g.subtitle || '-'}</td>
         <td>${g.iconUrl ? '<img src="'+g.iconUrl+'" style="width:36px;height:36px;object-fit:contain;border-radius:8px;background:#f5f5f5;padding:2px">' : (g.icon || '-')}</td>
-        <td>${g.emoji || '-'}</td>
-        <td>${g.badge ? '<span style="background:#FEE2E2;color:#B91C1C;padding:2px 8px;border-radius:4px;font-size:11px">'+g.badge+'</span>' : '-'}</td>
         <td><span style="display:inline-block;padding:4px 14px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:500;transition:all .2s;${g.status==='active'?'background:#D1FAE5;color:#059669':'background:#F3F4F6;color:#999'}" onclick="toggleGuideStatus(${g.id},'${g.status}')">${g.status==='active'?'启用':'禁用'}</span></td>
         <td>${g.qrcodeUrl
           ? '<img src="'+g.qrcodeUrl+'" style="width:48px;height:48px;cursor:pointer;border:1px solid #eee;border-radius:6px" onclick="showGuideQR('+g.id+',\''+escapeHtml(g.name)+'\',\''+g.qrcodeUrl+'\')" title="点击查看大图" />'
@@ -946,7 +974,68 @@ async function loadGuides() {
         </td>
       </tr>`).join('');
     }
-  } catch { tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:#B91C1C">加载失败</td></tr>'; }
+  } catch { tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#B91C1C">加载失败</td></tr>'; }
+}
+
+let allCategories = [];
+async function loadCategories() {
+  const tbody = document.getElementById('categoryTableBody');
+  try {
+    const res = await api('/product-categories');
+    if (res.code === 0) {
+      allCategories = res.data || [];
+      tbody.innerHTML = allCategories.map(c => `<tr>
+        <td>${c.id}</td>
+        <td><strong>${c.name}</strong></td>
+        <td>${c.sortOrder}</td>
+        <td><span style="padding:2px 8px;border-radius:4px;font-size:12px;${c.status==='active'?'background:#D1FAE5;color:#059669':'background:#F3F4F6;color:#999'}">${c.status==='active'?'启用':'禁用'}</span></td>
+        <td>
+          <button class="detail-btn" onclick="openCategoryEditor(${c.id})">编辑</button>
+          <button class="history-btn" style="color:#B91C1C;border-color:#FCA5A5" onclick="deleteCategory(${c.id})">删除</button>
+        </td>
+      </tr>`).join('');
+      if (!allCategories.length) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:#999">暂无种类，请先新增种类</td></tr>';
+    }
+  } catch { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:#B91C1C">加载失败</td></tr>'; }
+}
+
+function openCategoryEditor(id) {
+  const c = id ? allCategories.find(x => x.id === id) : null;
+  document.getElementById('categoryEditId').value = c ? c.id : '';
+  document.getElementById('categoryModalTitle').textContent = c ? '编辑种类' : '新增种类';
+  document.getElementById('categoryName').value = c ? c.name : '';
+  document.getElementById('categorySort').value = c ? c.sortOrder : 0;
+  document.getElementById('categoryStatus').value = c ? c.status : 'active';
+  document.getElementById('categoryModal').style.display = 'flex';
+}
+
+function closeCategoryEditor() { document.getElementById('categoryModal').style.display = 'none'; }
+
+async function saveCategory() {
+  const id = document.getElementById('categoryEditId').value;
+  const name = document.getElementById('categoryName').value.trim();
+  if (!name) { alert('请填写种类名称'); return; }
+  const body = {
+    name,
+    sortOrder: parseInt(document.getElementById('categorySort').value, 10) || 0,
+    status: document.getElementById('categoryStatus').value,
+  };
+  try {
+    const res = id
+      ? await api('/product-categories/' + id, { method: 'PUT', body })
+      : await api('/product-categories', { method: 'POST', body });
+    if (res.code === 0) { closeCategoryEditor(); loadCategories(); loadGuides(); }
+    else alert(res.message || '保存失败');
+  } catch (e) { alert('保存失败'); }
+}
+
+async function deleteCategory(id) {
+  if (!confirm('确定删除该种类？其下商品将变为未分类。')) return;
+  try {
+    const res = await api('/product-categories/' + id, { method: 'DELETE' });
+    if (res.code === 0) { loadCategories(); loadGuides(); }
+    else alert(res.message || '删除失败');
+  } catch { alert('删除失败'); }
 }
 
 let guideMediaItems = [];
@@ -1101,7 +1190,10 @@ function parseJSON(val) { try { return Array.isArray(val) ? val : JSON.parse(val
 
 function openGuideEditor(guide) {
   document.getElementById('guideEditId').value = guide ? guide.id : '';
-  document.getElementById('guideModalTitle').textContent = guide ? '编辑服务指南' : '新增服务指南';
+  document.getElementById('guideModalTitle').textContent = guide ? '编辑商品' : '新增商品';
+  const gCatSel = document.getElementById('gCategoryId');
+  gCatSel.innerHTML = '<option value="">请选择种类</option>' + (allCategories || []).map(c => '<option value="'+c.id+'">'+c.name+'</option>').join('');
+  gCatSel.value = guide && guide.categoryId ? guide.categoryId : '';
   document.getElementById('gName').value = guide ? guide.name : '';
   document.getElementById('gSlug').value = guide ? (guide.slug||'') : '';
   document.getElementById('gSubtitle').value = guide ? (guide.subtitle||'') : '';
@@ -1148,6 +1240,7 @@ async function saveGuide() {
   const dup = allGuides.find(g => g.slug === slug && g.id !== editId);
   if (dup) { alert('英文描述 "' + slug + '" 已被 "' + dup.name + '" 使用，请更换'); return; }
   const body = {
+    categoryId: document.getElementById('gCategoryId').value ? parseInt(document.getElementById('gCategoryId').value, 10) : null,
     name: document.getElementById('gName').value,
     slug,
     subtitle: document.getElementById('gSubtitle').value,
@@ -1263,6 +1356,9 @@ function onHCSectionChange() {
     imgLabel.innerHTML = '大图标图片 <span style="font-weight:normal;color:#999;font-size:12px">（建议 200x200 带背景的图标）</span>';
   } else if (sec === 'navSm') {
     imgLabel.innerHTML = '小图标图片 <span style="font-weight:normal;color:#999;font-size:12px">（建议 80x80 图标）</span>';
+  } else if (sec === 'hotService' || sec === 'recommend') {
+    colorLabel.innerHTML = '底色 <span style="font-weight:normal;color:#999;font-size:12px">（卡片/图标背景色，如 #B91C1C 或 linear-gradient(...)）</span>';
+    colorInput.placeholder = '如 #B91C1C 或 linear-gradient(135deg, #3B82F6, #1D4ED8)';
   } else {
     colorLabel.textContent = '颜色/渐变背景';
     colorInput.placeholder = '如 #B91C1C 或 linear-gradient(...)';

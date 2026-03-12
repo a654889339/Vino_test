@@ -20,7 +20,8 @@ export const orderApi = {
 };
 
 export const guideApi = {
-  list: () => request.get('/guides'),
+  categories: () => request.get('/guides/categories'),
+  list: (params) => request.get('/guides', { params }),
   detail: (id) => request.get(`/guides/${id}`),
 };
 

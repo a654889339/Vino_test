@@ -1,7 +1,11 @@
 <template>
   <div class="home">
-    <!-- Hero Section: Background Image + Logo -->
-    <div class="hero" :style="heroBgUrl ? { backgroundImage: `url(${heroBgUrl})` } : {}">
+    <!-- 独立背景层：铺在整页最底层，红框处（卡片两侧）才能透出背景图 -->
+    <div class="home-bg" aria-hidden="true">
+      <div class="home-bg-image" v-if="heroBgUrl" :style="{ backgroundImage: `url(${heroBgUrl})` }"></div>
+    </div>
+    <!-- Hero 仅负责顶部 logo/分享，背景透明以露出 home-bg -->
+    <div class="hero">
       <div class="hero-overlay">
         <div class="hero-header">
           <img v-if="headerLogoUrl" :src="headerLogoUrl" class="hero-logo" alt="Logo" />
@@ -171,23 +175,48 @@ const copyUrl = async () => {
 
 <style scoped>
 .home {
+  position: relative;
   padding-bottom: 50px;
+  background: transparent;
 }
 
-/* ===== Hero Section ===== */
+/* ===== 独立背景层：置于最底层，延展到卡片下方，红框处才能透出 ===== */
+.home-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 78vh;
+  min-height: 480px;
+  z-index: 0;
+  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 40%, #16213e 100%);
+}
+.home-bg-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50vh;
+  max-height: 300px;
+  min-height: 200px;
+  background-size: cover;
+  background-position: top center;
+  background-repeat: no-repeat;
+}
+
+/* ===== Hero：仅顶部内容区，背景透明以露出 home-bg ===== */
 .hero {
   position: relative;
-  height: 55vw;
-  max-height: 320px;
-  min-height: 200px;
-  background: linear-gradient(135deg, #1a1a2e, #16213e);
-  background-size: cover;
-  background-position: center;
+  z-index: 1;
+  height: 54vh;
+  min-height: 320px;
+  max-height: 520px;
+  background: transparent;
 }
 .hero-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.02) 50%, rgba(255,255,255,0.05) 100%);
+  background: linear-gradient(to bottom, rgba(0,0,0,0.12) 0%, rgba(0,0,0,0.02) 40%, transparent 65%, rgba(255,255,255,0.02) 100%);
   display: flex;
   flex-direction: column;
 }
@@ -202,18 +231,19 @@ const copyUrl = async () => {
 .hero-logo-svg { width: 64px; height: 26px; }
 .hero-actions { display: flex; gap: 8px; }
 
-/* ===== Card Sections with side margins ===== */
+/* ===== Card Sections：半透明 + 两侧留白，红框处透出底层 home-bg 背景图 ===== */
 .card-section {
+  position: relative;
+  z-index: 2;
   margin: 12px;
   border-radius: 16px;
-  background: rgba(255,255,255,0.95);
-  backdrop-filter: blur(10px);
+  background: linear-gradient(to bottom, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.72) 50%, rgba(255,255,255,0.5) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   box-shadow: 0 2px 12px rgba(0,0,0,0.06);
 }
 .card-section:first-of-type {
-  margin-top: -24px;
-  position: relative;
-  z-index: 2;
+  margin-top: -36px;
 }
 
 /* ===== Section common ===== */
@@ -308,16 +338,16 @@ const copyUrl = async () => {
 }
 .service-card:active { transform: scale(0.96); }
 .service-cover { height: 100px; display: flex; align-items: center; justify-content: center; }
-.service-info { padding: 12px 14px 14px; }
+.service-info { padding: 12px 14px 14px; text-align: center; }
 .service-info h4 { font-size: 15px; font-weight: 600; margin-bottom: 4px; color: var(--vino-dark); }
 .service-info p { font-size: 12px; color: var(--vino-text-secondary); margin-bottom: 8px; }
 .price { font-size: 17px; font-weight: 700; color: var(--vino-primary); letter-spacing: -0.02em; }
 
 /* ===== Recommend ===== */
 .recommend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.recommend-card { background: #f5f5f5; border-radius: 12px; padding: 20px 16px; transition: transform 0.25s; cursor: pointer; }
+.recommend-card { background: #f5f5f5; border-radius: 12px; padding: 20px 16px; transition: transform 0.25s; cursor: pointer; text-align: center; }
 .recommend-card:active { transform: scale(0.97); }
-.recommend-icon { width: 50px; height: 50px; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; }
+.recommend-icon { width: 50px; height: 50px; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; }
 .recommend-card h4 { font-size: 15px; font-weight: 600; margin-bottom: 4px; color: var(--vino-dark); }
 .recommend-card p { font-size: 13px; color: var(--vino-text-secondary); line-height: 1.5; }
 

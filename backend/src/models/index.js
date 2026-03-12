@@ -5,8 +5,12 @@ const Order = require('./Order');
 const OrderLog = require('./OrderLog');
 const Address = require('./Address');
 const DeviceGuide = require('./DeviceGuide');
+const ProductCategory = require('./ProductCategory');
 const HomeConfig = require('./HomeConfig');
 const Message = require('./Message');
+
+ProductCategory.hasMany(DeviceGuide, { foreignKey: 'categoryId', as: 'guides' });
+DeviceGuide.belongsTo(ProductCategory, { foreignKey: 'categoryId', as: 'category' });
 
 User.hasMany(Order, { foreignKey: 'userId', as: 'orders' });
 Order.belongsTo(User, { foreignKey: 'userId', as: 'user' });
@@ -18,7 +22,7 @@ Address.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 User.hasMany(Message, { foreignKey: 'userId', as: 'messages' });
 Message.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
-const models = { User, Service, Order, OrderLog, Address, DeviceGuide, HomeConfig, Message };
+const models = { User, Service, Order, OrderLog, Address, DeviceGuide, ProductCategory, HomeConfig, Message };
 
 const ADMIN_PASSWORD = 'Vino@2024admin';
 
@@ -26,7 +30,7 @@ const syncDatabase = async () => {
   try {
     await sequelize.authenticate();
     console.log('[DB] Connection established successfully.');
-    await sequelize.sync();
+    await sequelize.sync({ alter: true });
     console.log('[DB] All models synchronized.');
 
     const admin = await User.findOne({ where: { username: 'admin' } });
@@ -41,14 +45,24 @@ const syncDatabase = async () => {
       console.log('[DB] Default admin account created.');
     }
 
+    const catCount = await ProductCategory.count();
+    if (catCount === 0) {
+      await ProductCategory.bulkCreate([
+        { name: '空调', sortOrder: 1 },
+        { name: '除湿与储能', sortOrder: 2 },
+      ]);
+      console.log('[DB] Default product categories created.');
+    }
+
     const guideCount = await DeviceGuide.count();
     if (guideCount === 0) {
+      const [cat1, cat2] = await ProductCategory.findAll({ order: [['sortOrder', 'ASC']] });
       const seedGuides = [
-        { name: '空调', subtitle: '家用/商用中央空调', icon: 'cluster-o', emoji: '❄️', gradient: 'linear-gradient(135deg, #3B82F6, #1D4ED8)', badge: '热门', sortOrder: 1 },
-        { name: '除湿机', subtitle: '家用/工业除湿设备', icon: 'filter-o', emoji: '💧', gradient: 'linear-gradient(135deg, #06B6D4, #0891B2)', badge: '', sortOrder: 2 },
-        { name: '光储一体机', subtitle: '户用光储一体解决方案', icon: 'fire-o', emoji: '☀️', gradient: 'linear-gradient(135deg, #F59E0B, #D97706)', badge: '新', sortOrder: 3 },
-        { name: '光伏变电器', subtitle: '光伏发电变电设备', icon: 'balance-list-o', emoji: '⚡', gradient: 'linear-gradient(135deg, #8B5CF6, #7C3AED)', badge: '', sortOrder: 4 },
-        { name: '逆变器', subtitle: '光伏/储能逆变器', icon: 'replay', emoji: '🔌', gradient: 'linear-gradient(135deg, #10B981, #059669)', badge: '', sortOrder: 5 },
+        { name: '空调', subtitle: '家用/商用中央空调', icon: 'cluster-o', emoji: '❄️', gradient: 'linear-gradient(135deg, #3B82F6, #1D4ED8)', badge: '热门', sortOrder: 1, categoryId: cat1.id },
+        { name: '除湿机', subtitle: '家用/工业除湿设备', icon: 'filter-o', emoji: '💧', gradient: 'linear-gradient(135deg, #06B6D4, #0891B2)', badge: '', sortOrder: 2, categoryId: cat2.id },
+        { name: '光储一体机', subtitle: '户用光储一体解决方案', icon: 'fire-o', emoji: '☀️', gradient: 'linear-gradient(135deg, #F59E0B, #D97706)', badge: '新', sortOrder: 3, categoryId: cat2.id },
+        { name: '光伏变电器', subtitle: '光伏发电变电设备', icon: 'balance-list-o', emoji: '⚡', gradient: 'linear-gradient(135deg, #8B5CF6, #7C3AED)', badge: '', sortOrder: 4, categoryId: cat2.id },
+        { name: '逆变器', subtitle: '光伏/储能逆变器', icon: 'replay', emoji: '🔌', gradient: 'linear-gradient(135deg, #10B981, #059669)', badge: '', sortOrder: 5, categoryId: cat2.id },
       ];
       const tagsData = [
         ['制冷维修','清洗保养','加氟充注','安装移机'],
@@ -65,7 +79,7 @@ const syncDatabase = async () => {
         [{title:'常见故障',icon:'warning-o',tips:['不并网','功率不足','报错代码','通讯故障']},{title:'维护建议',icon:'info-o',tips:['保持通风散热','定期清洁滤网','检查直流端子','监控发电效率']}],
       ];
       for (let i = 0; i < seedGuides.length; i++) {
-        await DeviceGuide.create({ ...seedGuides[i], tags: tagsData[i], sections: sectionsData[i] });
+        await DeviceGuide.create({ ...seedGuides[i], slug: seedGuides[i].name === '空调' ? 'aircondition' : seedGuides[i].name === '除湿机' ? 'dehumidifier' : seedGuides[i].name === '光储一体机' ? 'solar-storage' : seedGuides[i].name === '光伏变电器' ? 'pv-inverter' : 'inverter', tags: tagsData[i], sections: sectionsData[i] });
       }
       console.log('[DB] Default device guides created.');
     }
