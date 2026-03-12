@@ -1,6 +1,6 @@
 <template>
   <Transition name="splash-fade">
-    <div v-if="visible" class="splash-screen" @click="dismiss">
+    <div v-if="visible" class="splash-screen" :style="{ background: backgroundColor }" @click="dismiss">
       <div class="splash-content">
         <div class="splash-logo-wrapper">
           <!-- 动态图片：如果配置了 imageUrl 则显示图片，否则显示默认 SVG -->
@@ -42,6 +42,11 @@ import { homeConfigApi } from '@/api';
 const visible = ref(true);
 const splashConfig = ref(null);
 const imageError = ref(false);
+
+// 获取背景色：优先使用配置的 color，否则使用默认黑色
+const backgroundColor = computed(() => {
+  return splashConfig.value?.color || '#000';
+});
 
 // 获取显示文本：优先使用配置的描述，否则使用默认文本
 const displayText = computed(() => {
@@ -98,7 +103,7 @@ onMounted(async () => {
   position: fixed;
   inset: 0;
   z-index: 9999;
-  background: #000;
+  /* 背景色通过 :style 动态绑定 */
   display: flex;
   align-items: center;
   justify-content: center;
