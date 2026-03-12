@@ -293,6 +293,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <button class="btn" onclick="filterHC('hotService')" id="hcFilterHotService">热门服务</button>
           <button class="btn" onclick="filterHC('recommend')" id="hcFilterRecommend">为你推荐</button>
           <button class="btn" onclick="filterHC('splash')" id="hcFilterSplash">开场动画</button>
+          <button class="btn" onclick="filterHC('headerLogo')" id="hcFilterHeaderLogo">首页Logo</button>
           <button class="btn" onclick="openHCEditor()" style="margin-left:auto;background:#059669;color:#fff">+ 新增项目</button>
         </div>
         <table class="order-table" id="hcTable">
@@ -345,6 +346,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
             <option value="hotService">热门服务 (HotService)</option>
             <option value="recommend">为你推荐 (Recommend)</option>
             <option value="splash">开场动画 (Splash)</option>
+            <option value="headerLogo">首页Logo (HeaderLogo)</option>
           </select>
         </div>
         <div class="form-group">
@@ -1187,7 +1189,7 @@ async function deleteGuide(id) {
 /* ===== Home Config ===== */
 let allHCItems = [];
 let hcFilterSection = 'all';
-const SECTION_LABELS = { banner: '轮播横幅', nav: '快捷导航', hotService: '热门服务', recommend: '为你推荐', splash: '开场动画' };
+const SECTION_LABELS = { banner: '轮播横幅', nav: '快捷导航', hotService: '热门服务', recommend: '为你推荐', splash: '开场动画', headerLogo: '首页Logo' };
 
 async function loadHomeConfig() {
   try {
@@ -1232,16 +1234,23 @@ function renderHCTable() {
 
 function onHCSectionChange() {
   const sec = document.getElementById('hcSection').value;
+  const noIcon = ['banner', 'splash', 'headerLogo'];
+  const noPath = ['banner', 'splash', 'headerLogo'];
+  const showImage = ['splash', 'headerLogo'];
   document.getElementById('hcPriceGroup').style.display = sec === 'hotService' ? '' : 'none';
-  document.getElementById('hcIconGroup').style.display = (sec === 'banner' || sec === 'splash') ? 'none' : '';
-  document.getElementById('hcPathGroup').style.display = (sec === 'banner' || sec === 'splash') ? 'none' : '';
-  document.getElementById('hcImageGroup').style.display = sec === 'splash' ? '' : 'none';
-  document.getElementById('hcColorGroup').style.display = '';
+  document.getElementById('hcIconGroup').style.display = noIcon.includes(sec) ? 'none' : '';
+  document.getElementById('hcPathGroup').style.display = noPath.includes(sec) ? 'none' : '';
+  document.getElementById('hcImageGroup').style.display = showImage.includes(sec) ? '' : 'none';
+  document.getElementById('hcColorGroup').style.display = (sec === 'headerLogo') ? 'none' : '';
   const colorLabel = document.getElementById('hcColorLabel');
   const colorInput = document.getElementById('hcColor');
+  const imgLabel = document.getElementById('hcImageGroup').querySelector('label');
   if (sec === 'splash') {
     colorLabel.innerHTML = '开场动画背景色 <span style="font-weight:normal;color:#999;font-size:12px">（必填，Logo图片将显示在此背景上）</span>';
     colorInput.placeholder = '如 #000000（黑色）、#1a1a1a 或 linear-gradient(135deg, #1a1a1a, #B91C1C)';
+    imgLabel.innerHTML = '开场动画图片 <span style="font-weight:normal;color:#999;font-size:12px">（建议使用透明背景PNG）</span>';
+  } else if (sec === 'headerLogo') {
+    imgLabel.innerHTML = '首页Logo图片 <span style="font-weight:normal;color:#999;font-size:12px">（建议使用透明背景PNG，高度约40px）</span>';
   } else {
     colorLabel.textContent = '颜色/渐变背景';
     colorInput.placeholder = '如 #B91C1C 或 linear-gradient(...)';

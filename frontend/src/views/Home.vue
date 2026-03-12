@@ -3,7 +3,8 @@
     <!-- Header -->
     <div class="header">
       <div class="header-inner">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 200" class="logo">
+        <img v-if="headerLogoUrl" :src="headerLogoUrl" class="logo logo-img" alt="Logo" />
+        <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 200" class="logo">
           <path d="M18 35 L58 35 L100 145 L142 35 L160 35 L108 170 L92 170 Z" fill="#B91C1C"/>
           <path d="M165 35 L195 35 L195 170 L165 170 Z" fill="#B91C1C"/>
           <path d="M210 35 L240 35 L320 140 L320 35 L350 35 L350 170 L320 170 L240 65 L240 170 L210 170 Z" fill="#B91C1C"/>
@@ -160,6 +161,11 @@ onMounted(async () => {
   } catch { /* use empty */ }
 });
 
+const headerLogoUrl = computed(() => {
+  const logo = allItems.value.find(i => i.section === 'headerLogo' && i.status === 'active');
+  return logo?.imageUrl || '';
+});
+
 const banners = computed(() =>
   allItems.value.filter(i => i.section === 'banner').map(i => ({ id: i.id, title: i.title, desc: i.desc, bg: i.color }))
 );
@@ -220,6 +226,13 @@ const copyUrl = async () => {
 .logo {
   width: 60px;
   height: 24px;
+  object-fit: contain;
+}
+
+.logo-img {
+  width: auto;
+  max-width: 80px;
+  height: 28px;
   object-fit: contain;
 }
 
