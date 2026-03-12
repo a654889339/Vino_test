@@ -335,8 +335,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <h3 id="hcModalTitle">新增配置项</h3>
           <span class="modal-close" onclick="closeHCEditor()">&times;</span>
         </div>
-        <input type="hidden" id="hcEditId" />
-        <div class="form-group">
+        <div class="modal-body">
+          <input type="hidden" id="hcEditId" />
+          <div class="form-group">
           <label>板块类型</label>
           <select class="form-input" id="hcSection" onchange="onHCSectionChange()">
             <option value="banner">轮播横幅 (Banner)</option>
@@ -391,9 +392,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
             <option value="inactive">禁用</option>
           </select>
         </div>
-        <div style="text-align:right;margin-top:16px">
-          <button class="btn" onclick="closeHCEditor()">取消</button>
-          <button class="btn" onclick="saveHC()" style="background:var(--primary);color:#fff;margin-left:8px">保存</button>
+          <div style="text-align:right;margin-top:16px">
+            <button class="btn" onclick="closeHCEditor()">取消</button>
+            <button class="btn" onclick="saveHC()" style="background:var(--primary);color:#fff;margin-left:8px">保存</button>
+          </div>
         </div>
       </div>
     </div>
