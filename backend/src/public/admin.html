@@ -292,10 +292,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <button class="btn" onclick="filterHC('nav')" id="hcFilterNav">快捷导航</button>
           <button class="btn" onclick="filterHC('hotService')" id="hcFilterHotService">热门服务</button>
           <button class="btn" onclick="filterHC('recommend')" id="hcFilterRecommend">为你推荐</button>
+          <button class="btn" onclick="filterHC('splash')" id="hcFilterSplash">开场动画</button>
           <button class="btn" onclick="openHCEditor()" style="margin-left:auto;background:#059669;color:#fff">+ 新增项目</button>
         </div>
         <table class="order-table" id="hcTable">
-          <thead><tr><th>ID</th><th>板块</th><th>标题</th><th>描述</th><th>图标</th><th>颜色/背景</th><th>跳转</th><th>价格</th><th>排序</th><th>状态</th><th>操作</th></tr></thead>
+          <thead><tr><th>ID</th><th>板块</th><th>标题</th><th>描述</th><th>图标</th><th>图片</th><th>颜色/背景</th><th>跳转</th><th>价格</th><th>排序</th><th>状态</th><th>操作</th></tr></thead>
           <tbody id="hcBody"></tbody>
         </table>
         <div class="order-empty" id="hcEmpty" style="display:none">暂无配置项</div>
@@ -342,6 +343,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
             <option value="nav">快捷导航 (Nav)</option>
             <option value="hotService">热门服务 (HotService)</option>
             <option value="recommend">为你推荐 (Recommend)</option>
+            <option value="splash">开场动画 (Splash)</option>
           </select>
         </div>
         <div class="form-group">
@@ -356,7 +358,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <label>Vant 图标名</label>
           <input class="form-input" id="hcIcon" placeholder="如 apps-o, setting-o" />
         </div>
-        <div class="form-group">
+        <div class="form-group" id="hcImageGroup" style="display:none">
+          <label>开场动画图片 <span style="font-weight:normal;color:#999;font-size:12px">（建议使用透明背景PNG）</span></label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input class="form-input" id="hcImageUrl" placeholder="上传开场动画Logo图片" style="flex:1" />
+            <label style="padding:8px 16px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">
+              上传图片<input type="file" accept="image/*" style="display:none" onchange="uploadHCImage(this)" />
+            </label>
+          </div>
+          <img id="hcImagePreview" style="max-width:200px;max-height:100px;margin-top:8px;border-radius:8px;display:none;border:1px solid #eee;background:#1a1a1a;padding:8px" />
+        </div>
+        <div class="form-group" id="hcColorGroup">
           <label>颜色/渐变背景</label>
           <input class="form-input" id="hcColor" placeholder="如 #B91C1C 或 linear-gradient(...)" />
         </div>
@@ -1170,7 +1182,7 @@ async function deleteGuide(id) {
 /* ===== Home Config ===== */
 let allHCItems = [];
 let hcFilterSection = 'all';
-const SECTION_LABELS = { banner: '轮播横幅', nav: '快捷导航', hotService: '热门服务', recommend: '为你推荐' };
+const SECTION_LABELS = { banner: '轮播横幅', nav: '快捷导航', hotService: '热门服务', recommend: '为你推荐', splash: '开场动画' };
 
 async function loadHomeConfig() {
   try {
@@ -1200,6 +1212,7 @@ function renderHCTable() {
     <td style="font-weight:500">${h.title}</td>
     <td style="color:#666;font-size:13px">${h.desc||''}</td>
     <td>${h.icon ? '<span style="font-family:monospace;font-size:12px;background:#F3F4F6;padding:2px 6px;border-radius:4px">'+h.icon+'</span>' : '-'}</td>
+    <td>${h.imageUrl ? '<img src="'+h.imageUrl+'" style="max-width:60px;max-height:30px;border-radius:4px;background:#1a1a1a;padding:2px" />' : '-'}</td>
     <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px" title="${h.color||''}">${h.color ? '<span style="display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:middle;margin-right:4px;background:'+h.color+'"></span>'+h.color.substring(0,25) : '-'}</td>
     <td style="font-size:12px">${h.path||'-'}</td>
     <td>${h.price ? '¥'+h.price : '-'}</td>
@@ -1215,8 +1228,10 @@ function renderHCTable() {
 function onHCSectionChange() {
   const sec = document.getElementById('hcSection').value;
   document.getElementById('hcPriceGroup').style.display = sec === 'hotService' ? '' : 'none';
-  document.getElementById('hcIconGroup').style.display = sec === 'banner' ? 'none' : '';
-  document.getElementById('hcPathGroup').style.display = sec === 'banner' ? 'none' : '';
+  document.getElementById('hcIconGroup').style.display = (sec === 'banner' || sec === 'splash') ? 'none' : '';
+  document.getElementById('hcPathGroup').style.display = (sec === 'banner' || sec === 'splash') ? 'none' : '';
+  document.getElementById('hcImageGroup').style.display = sec === 'splash' ? '' : 'none';
+  document.getElementById('hcColorGroup').style.display = sec === 'splash' ? 'none' : '';
 }
 
 function openHCEditor(id) {
@@ -1230,8 +1245,13 @@ function openHCEditor(id) {
   document.getElementById('hcColor').value = item ? (item.color||'') : '';
   document.getElementById('hcPath').value = item ? (item.path||'/services') : '/services';
   document.getElementById('hcPrice').value = item ? (item.price||'') : '';
+  document.getElementById('hcImageUrl').value = item ? (item.imageUrl||'') : '';
   document.getElementById('hcSortOrder').value = item ? item.sortOrder : 0;
   document.getElementById('hcStatus').value = item ? item.status : 'active';
+  // 更新图片预览
+  const preview = document.getElementById('hcImagePreview');
+  if (item && item.imageUrl) { preview.src = item.imageUrl; preview.style.display = 'block'; }
+  else { preview.style.display = 'none'; }
   onHCSectionChange();
   document.getElementById('hcModal').style.display = 'flex';
 }
@@ -1248,6 +1268,7 @@ async function saveHC() {
     color: document.getElementById('hcColor').value,
     path: document.getElementById('hcPath').value,
     price: document.getElementById('hcPrice').value,
+    imageUrl: document.getElementById('hcImageUrl').value,
     sortOrder: parseInt(document.getElementById('hcSortOrder').value) || 0,
     status: document.getElementById('hcStatus').value,
   };
@@ -1259,6 +1280,32 @@ async function saveHC() {
     if (res.code === 0) { closeHCEditor(); loadHomeConfig(); }
     else alert(res.message || '保存失败');
   } catch { alert('保存失败'); }
+}
+
+// 上传首页配置图片
+async function uploadHCImage(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const formData = new FormData();
+  formData.append('file', file);
+  try {
+    const res = await fetch(API_BASE + '/home-config/upload', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('adminToken') },
+      body: formData
+    }).then(r => r.json());
+    if (res.code === 0 && res.data?.url) {
+      document.getElementById('hcImageUrl').value = res.data.url;
+      const preview = document.getElementById('hcImagePreview');
+      preview.src = res.data.url;
+      preview.style.display = 'block';
+    } else {
+      alert(res.message || '上传失败');
+    }
+  } catch (e) {
+    alert('上传失败: ' + e.message);
+  }
+  input.value = '';
 }
 
 async function toggleHCStatus(id, current) {

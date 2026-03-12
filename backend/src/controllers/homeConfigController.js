@@ -1,6 +1,8 @@
 const HomeConfig = require('../models/HomeConfig');
+const cosUpload = require('../utils/cosUpload');
+const path = require('path');
 
-const FIELDS = ['section','title','desc','icon','color','path','price','sortOrder','status'];
+const FIELDS = ['section','title','desc','icon','color','path','price','sortOrder','status','imageUrl'];
 
 exports.list = async (req, res) => {
   try {
@@ -44,6 +46,21 @@ exports.remove = async (req, res) => {
     if (!item) return res.status(404).json({ code: 1, message: '配置不存在' });
     await item.destroy();
     res.json({ code: 0, message: '删除成功' });
+  } catch (e) {
+    res.status(500).json({ code: 1, message: e.message });
+  }
+};
+
+// 上传首页配置图片（如开场动画logo）
+exports.uploadImage = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ code: 1, message: '请选择图片文件' });
+    }
+    const ext = path.extname(req.file.originalname) || '.png';
+    const filename = `homeconfig-${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`;
+    const url = await cosUpload.upload(req.file.buffer, filename, req.file.mimetype);
+    res.json({ code: 0, data: { url } });
   } catch (e) {
     res.status(500).json({ code: 1, message: e.message });
   }

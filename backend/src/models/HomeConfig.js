@@ -3,7 +3,7 @@ const sequelize = require('../config/database');
 
 const HomeConfig = sequelize.define('HomeConfig', {
   section: {
-    type: DataTypes.ENUM('banner', 'nav', 'hotService', 'recommend'),
+    type: DataTypes.ENUM('banner', 'nav', 'hotService', 'recommend', 'splash'),
     allowNull: false,
   },
   title: {
@@ -17,6 +17,11 @@ const HomeConfig = sequelize.define('HomeConfig', {
   icon: {
     type: DataTypes.STRING(100),
     defaultValue: '',
+  },
+  imageUrl: {
+    type: DataTypes.STRING(500),
+    defaultValue: '',
+    comment: '图片URL，用于开场动画logo等',
   },
   color: {
     type: DataTypes.STRING(200),
