@@ -1291,7 +1291,7 @@ async function uploadHCImage(input) {
   try {
     const res = await fetch(API + '/home-config/upload', {
       method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('adminToken') },
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('vino_admin_token') },
       body: formData
     }).then(r => r.json());
     if (res.code === 0 && res.data?.url) {
