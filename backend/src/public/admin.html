@@ -370,8 +370,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <img id="hcImagePreview" style="max-width:200px;max-height:100px;margin-top:8px;border-radius:8px;display:none;border:1px solid #eee;background:#1a1a1a;padding:8px" />
         </div>
         <div class="form-group" id="hcColorGroup">
-          <label>颜色/渐变背景</label>
-          <input class="form-input" id="hcColor" placeholder="如 #B91C1C 或 linear-gradient(...)" />
+          <label id="hcColorLabel">颜色/渐变背景</label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input class="form-input" id="hcColor" placeholder="如 #B91C1C 或 linear-gradient(...)" style="flex:1" oninput="document.getElementById('hcColorPreview').style.background=this.value" />
+            <div id="hcColorPreview" style="width:36px;height:36px;border-radius:8px;border:1px solid #ddd;flex-shrink:0"></div>
+          </div>
         </div>
         <div class="form-group" id="hcPathGroup">
           <label>跳转路径</label>
@@ -1233,8 +1236,17 @@ function onHCSectionChange() {
   document.getElementById('hcIconGroup').style.display = (sec === 'banner' || sec === 'splash') ? 'none' : '';
   document.getElementById('hcPathGroup').style.display = (sec === 'banner' || sec === 'splash') ? 'none' : '';
   document.getElementById('hcImageGroup').style.display = sec === 'splash' ? '' : 'none';
-  // 开场动画也需要显示颜色字段，用于设置背景色
   document.getElementById('hcColorGroup').style.display = '';
+  const colorLabel = document.getElementById('hcColorLabel');
+  const colorInput = document.getElementById('hcColor');
+  if (sec === 'splash') {
+    colorLabel.innerHTML = '开场动画背景色 <span style="font-weight:normal;color:#999;font-size:12px">（必填，Logo图片将显示在此背景上）</span>';
+    colorInput.placeholder = '如 #000000（黑色）、#1a1a1a 或 linear-gradient(135deg, #1a1a1a, #B91C1C)';
+  } else {
+    colorLabel.textContent = '颜色/渐变背景';
+    colorInput.placeholder = '如 #B91C1C 或 linear-gradient(...)';
+  }
+  document.getElementById('hcColorPreview').style.background = colorInput.value || 'transparent';
 }
 
 function openHCEditor(id) {
@@ -1246,6 +1258,7 @@ function openHCEditor(id) {
   document.getElementById('hcDesc').value = item ? (item.desc||'') : '';
   document.getElementById('hcIcon').value = item ? (item.icon||'') : '';
   document.getElementById('hcColor').value = item ? (item.color||'') : '';
+  document.getElementById('hcColorPreview').style.background = (item && item.color) ? item.color : 'transparent';
   document.getElementById('hcPath').value = item ? (item.path||'/services') : '/services';
   document.getElementById('hcPrice').value = item ? (item.price||'') : '';
   document.getElementById('hcImageUrl').value = item ? (item.imageUrl||'') : '';
