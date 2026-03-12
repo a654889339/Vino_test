@@ -1,26 +1,22 @@
 <template>
   <div class="home">
-    <!-- Header -->
-    <div class="header">
-      <div class="header-inner">
-        <img v-if="headerLogoUrl" :src="headerLogoUrl" class="logo logo-img" alt="Logo" />
-        <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 200" class="logo">
-          <path d="M18 35 L58 35 L100 145 L142 35 L160 35 L108 170 L92 170 Z" fill="#B91C1C"/>
-          <path d="M165 35 L195 35 L195 170 L165 170 Z" fill="#B91C1C"/>
-          <path d="M210 35 L240 35 L320 140 L320 35 L350 35 L350 170 L320 170 L240 65 L240 170 L210 170 Z" fill="#B91C1C"/>
-          <circle cx="420" cy="102" r="68" stroke="#B91C1C" stroke-width="28" fill="none"/>
-          <path d="M405 72 C410 58, 435 55, 440 72 C445 89, 420 98, 415 112 C410 126, 430 138, 445 125 C435 145, 405 138, 400 120 C395 102, 418 95, 425 80 C430 70, 412 65, 408 75Z" fill="#B91C1C"/>
-          <circle cx="498" cy="38" r="10" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" fill="none"/>
-          <text x="498" y="43" font-family="Arial" font-size="14" fill="rgba(255,255,255,0.3)" text-anchor="middle" font-weight="bold">R</text>
-        </svg>
-        <van-search
-          v-model="searchText"
-          shape="round"
-          placeholder="搜索服务"
-          class="search"
-        />
-        <div class="share-btn" @click="showShare = true">
-          <van-icon name="share-o" size="20" color="#fff" />
+    <!-- Hero Section: Background Image + Logo -->
+    <div class="hero" :style="heroBgUrl ? { backgroundImage: `url(${heroBgUrl})` } : {}">
+      <div class="hero-overlay">
+        <div class="hero-header">
+          <img v-if="headerLogoUrl" :src="headerLogoUrl" class="hero-logo" alt="Logo" />
+          <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 200" class="hero-logo-svg">
+            <path d="M18 35 L58 35 L100 145 L142 35 L160 35 L108 170 L92 170 Z" fill="#fff"/>
+            <path d="M165 35 L195 35 L195 170 L165 170 Z" fill="#fff"/>
+            <path d="M210 35 L240 35 L320 140 L320 35 L350 35 L350 170 L320 170 L240 65 L240 170 L210 170 Z" fill="#fff"/>
+            <circle cx="420" cy="102" r="68" stroke="#fff" stroke-width="28" fill="none"/>
+            <path d="M405 72 C410 58, 435 55, 440 72 C445 89, 420 98, 415 112 C410 126, 430 138, 445 125 C435 145, 405 138, 400 120 C395 102, 418 95, 425 80 C430 70, 412 65, 408 75Z" fill="#fff"/>
+          </svg>
+          <div class="hero-actions">
+            <div class="share-btn" @click="showShare = true">
+              <van-icon name="share-o" size="18" color="#fff" />
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -30,18 +26,8 @@
       <div class="share-popup" @click.stop>
         <div class="share-card">
           <div class="share-card-header">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 200" class="share-logo">
-              <rect width="520" height="200" fill="#000"/>
-              <path d="M18 35 L58 35 L100 145 L142 35 L160 35 L108 170 L92 170 Z" fill="#B91C1C"/>
-              <path d="M38 35 L55 35 L55 60 L45 35 Z" fill="#000" opacity="0.2"/>
-              <path d="M165 35 L195 35 L195 170 L165 170 Z" fill="#B91C1C"/>
-              <path d="M172 35 L180 35 L180 170 L172 170 Z" fill="#000" opacity="0.15"/>
-              <path d="M210 35 L240 35 L320 140 L320 35 L350 35 L350 170 L320 170 L240 65 L240 170 L210 170 Z" fill="#B91C1C"/>
-              <circle cx="420" cy="102" r="68" stroke="#B91C1C" stroke-width="28" fill="none"/>
-              <path d="M405 72 C410 58, 435 55, 440 72 C445 89, 420 98, 415 112 C410 126, 430 138, 445 125 C435 145, 405 138, 400 120 C395 102, 418 95, 425 80 C430 70, 412 65, 408 75Z" fill="#B91C1C"/>
-              <circle cx="498" cy="38" r="10" stroke="#666" stroke-width="1.5" fill="none"/>
-              <text x="498" y="43" font-family="Arial" font-size="14" fill="#666" text-anchor="middle" font-weight="bold">R</text>
-            </svg>
+            <img v-if="headerLogoUrl" :src="headerLogoUrl" style="height:32px;object-fit:contain" />
+            <span v-else style="color:#fff;font-weight:700;font-size:18px;letter-spacing:2px">VINO</span>
           </div>
           <div class="share-qr">
             <canvas ref="qrCanvas"></canvas>
@@ -63,18 +49,6 @@
         <van-icon name="close" size="28" color="rgba(255,255,255,0.6)" class="share-close" @click="showShare = false" />
       </div>
     </van-overlay>
-
-    <!-- Banner Swiper -->
-    <van-swipe :autoplay="4000" indicator-color="#B91C1C" class="banner">
-      <van-swipe-item v-for="banner in banners" :key="banner.id">
-        <div class="banner-item" :style="{ background: banner.bg }">
-          <div class="banner-content">
-            <h2>{{ banner.title }}</h2>
-            <p>{{ banner.desc }}</p>
-          </div>
-        </div>
-      </van-swipe-item>
-    </van-swipe>
 
     <!-- Quick Nav -->
     <div class="section nav-section">
@@ -148,7 +122,6 @@ import QRCode from 'qrcode';
 import { showToast } from 'vant';
 import { homeConfigApi } from '@/api';
 
-const searchText = ref('');
 const showShare = ref(false);
 const qrCanvas = ref(null);
 const shareUrl = window.location.origin;
@@ -166,17 +139,19 @@ const headerLogoUrl = computed(() => {
   return logo?.imageUrl || '';
 });
 
-const banners = computed(() =>
-  allItems.value.filter(i => i.section === 'banner').map(i => ({ id: i.id, title: i.title, desc: i.desc, bg: i.color }))
-);
+const heroBgUrl = computed(() => {
+  const bg = allItems.value.find(i => i.section === 'homeBg' && i.status === 'active');
+  return bg?.imageUrl || '';
+});
+
 const navItems = computed(() =>
-  allItems.value.filter(i => i.section === 'nav').map(i => ({ title: i.title, icon: i.icon, path: i.path || '/services', color: i.color }))
+  allItems.value.filter(i => i.section === 'nav' && i.status === 'active').map(i => ({ title: i.title, icon: i.icon, path: i.path || '/services', color: i.color }))
 );
 const hotServices = computed(() =>
-  allItems.value.filter(i => i.section === 'hotService').map(i => ({ id: i.id, title: i.title, desc: i.desc, price: i.price, icon: i.icon, coverBg: i.color, path: i.path || '/services' }))
+  allItems.value.filter(i => i.section === 'hotService' && i.status === 'active').map(i => ({ id: i.id, title: i.title, desc: i.desc, price: i.price, icon: i.icon, coverBg: i.color, path: i.path || '/services' }))
 );
 const recommends = computed(() =>
-  allItems.value.filter(i => i.section === 'recommend').map(i => ({ id: i.id, title: i.title, desc: i.desc, icon: i.icon, bg: i.color }))
+  allItems.value.filter(i => i.section === 'recommend' && i.status === 'active').map(i => ({ id: i.id, title: i.title, desc: i.desc, icon: i.icon, bg: i.color }))
 );
 
 watch(showShare, async (val) => {
@@ -207,84 +182,59 @@ const copyUrl = async () => {
   padding-bottom: 50px;
 }
 
-/* ===== Header ===== */
-.header {
-  background: var(--vino-dark);
+/* ===== Hero Section ===== */
+.hero {
+  position: relative;
+  height: 55vw;
+  max-height: 320px;
+  min-height: 200px;
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  background-size: cover;
+  background-position: center;
+}
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.02) 50%, rgba(255,255,255,0.1) 100%);
+  display: flex;
+  flex-direction: column;
+}
+
+.hero-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 14px 20px;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  backdrop-filter: saturate(180%) blur(20px);
+  padding-top: max(14px, env(safe-area-inset-top));
 }
 
-.header-inner {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.logo {
-  width: 60px;
-  height: 24px;
-  object-fit: contain;
-}
-
-.logo-img {
+.hero-logo {
+  height: 30px;
   width: auto;
-  max-width: 80px;
-  height: 28px;
+  max-width: 100px;
   object-fit: contain;
+  filter: brightness(0) invert(1);
 }
 
-.search {
-  flex: 1;
-  padding: 0;
+.hero-logo-svg {
+  width: 64px;
+  height: 26px;
 }
 
-.search :deep(.van-search__content) {
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
-}
-
-.search :deep(.van-field__control) {
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.search :deep(.van-field__control::placeholder) {
-  color: rgba(255, 255, 255, 0.35);
-}
-
-/* ===== Banner ===== */
-.banner {
-  height: 180px;
-}
-
-.banner-item {
-  height: 180px;
+.hero-actions {
   display: flex;
-  align-items: center;
-  padding: 0 28px;
-}
-
-.banner-content h2 {
-  color: #fff;
-  font-size: 24px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  margin-bottom: 8px;
-  line-height: 1.15;
-}
-
-.banner-content p {
-  color: rgba(255, 255, 255, 0.75);
-  font-size: 15px;
-  font-weight: 400;
-  line-height: 1.5;
+  gap: 8px;
 }
 
 /* ===== Quick Nav ===== */
 .nav-section {
   padding: 20px !important;
+  margin-top: -20px;
+  position: relative;
+  z-index: 2;
+  border-radius: 16px 16px 0 0;
+  background: #fff;
 }
 
 .nav-grid {
@@ -314,7 +264,6 @@ const copyUrl = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.25s var(--vino-transition);
 }
 
 .nav-item span {
@@ -467,7 +416,8 @@ const copyUrl = async () => {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -477,7 +427,7 @@ const copyUrl = async () => {
 }
 
 .share-btn:active {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.3);
   transform: scale(0.92);
 }
 
@@ -511,12 +461,6 @@ const copyUrl = async () => {
   justify-content: center;
   margin-bottom: 24px;
   padding: 8px 16px;
-}
-
-.share-logo {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
 }
 
 .share-qr {

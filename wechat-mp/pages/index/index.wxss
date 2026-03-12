@@ -1,38 +1,57 @@
 .page {
-  padding-bottom: 20rpx;
+  background: transparent;
+  min-height: 100vh;
 }
 
-.banner {
-  height: 320rpx;
+/* ===== Hero Section ===== */
+.hero {
+  height: 55vw;
+  max-height: 640rpx;
+  min-height: 400rpx;
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  background-size: cover;
+  background-position: center;
+  position: relative;
 }
 
-.banner-item {
-  height: 320rpx;
+.hero-overlay {
+  position: absolute;
+  left: 0; right: 0; top: 0; bottom: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.12) 0%, rgba(0,0,0,0.02) 50%, rgba(255,255,255,0.08) 100%);
+  display: flex;
+  flex-direction: column;
+}
+
+.hero-header {
   display: flex;
   align-items: center;
-  padding: 0 40rpx;
+  justify-content: space-between;
+  padding: 20rpx 30rpx;
 }
 
-.banner-title {
+.hero-logo {
+  height: 56rpx;
+  width: auto;
+  max-width: 200rpx;
+}
+
+.hero-logo-text {
   color: #fff;
-  font-size: 40rpx;
-  font-weight: 600;
-  display: block;
-  margin-bottom: 12rpx;
+  font-size: 36rpx;
+  font-weight: 700;
+  letter-spacing: 4rpx;
 }
 
-.banner-desc {
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 26rpx;
-  display: block;
-}
-
+/* ===== Quick Nav ===== */
 .nav-grid {
   display: flex;
   flex-wrap: wrap;
   background: #fff;
   padding: 30rpx 20rpx;
-  margin-bottom: 20rpx;
+  margin-top: -30rpx;
+  border-radius: 24rpx 24rpx 0 0;
+  position: relative;
+  z-index: 2;
 }
 
 .nav-item {
@@ -62,6 +81,13 @@
   color: #333;
 }
 
+/* ===== Card / Section ===== */
+.card {
+  background: #fff;
+  padding: 30rpx;
+  margin-bottom: 16rpx;
+}
+
 .section-header {
   display: flex;
   justify-content: space-between;
@@ -69,11 +95,18 @@
   margin-bottom: 20rpx;
 }
 
+.section-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #1d1d1f;
+}
+
 .section-more {
   font-size: 24rpx;
   color: #999;
 }
 
+/* ===== Hot Services ===== */
 .service-scroll {
   white-space: nowrap;
 }
@@ -123,6 +156,7 @@
   color: #B91C1C;
 }
 
+/* ===== Recommend ===== */
 .recommend-grid {
   display: flex;
   flex-wrap: wrap;

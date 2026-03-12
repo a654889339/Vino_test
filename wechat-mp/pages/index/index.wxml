@@ -1,15 +1,15 @@
 <view class="page">
-  <swiper class="banner" autoplay circular indicator-dots indicator-color="rgba(255,255,255,0.5)" indicator-active-color="#fff">
-    <swiper-item wx:for="{{banners}}" wx:key="id">
-      <view class="banner-item" style="background: {{item.bg}}">
-        <view class="banner-text">
-          <text class="banner-title">{{item.title}}</text>
-          <text class="banner-desc">{{item.desc}}</text>
-        </view>
+  <!-- Hero Background Image -->
+  <view class="hero" style="{{heroBgUrl ? 'background-image: url(' + heroBgUrl + ')' : ''}}">
+    <view class="hero-overlay">
+      <view class="hero-header">
+        <image wx:if="{{headerLogoUrl}}" src="{{headerLogoUrl}}" class="hero-logo" mode="aspectFit" />
+        <text wx:else class="hero-logo-text">VINO</text>
       </view>
-    </swiper-item>
-  </swiper>
+    </view>
+  </view>
 
+  <!-- Quick Nav -->
   <view class="nav-grid">
     <view class="nav-item" wx:for="{{navItems}}" wx:key="title" bindtap="goService">
       <view class="nav-icon" style="background: {{item.color}}">
@@ -19,6 +19,7 @@
     </view>
   </view>
 
+  <!-- Hot Services -->
   <view class="card">
     <view class="section-header">
       <text class="section-title">热门服务</text>
@@ -38,6 +39,7 @@
     </scroll-view>
   </view>
 
+  <!-- Recommend -->
   <view class="card">
     <text class="section-title">为你推荐</text>
     <view class="recommend-grid">

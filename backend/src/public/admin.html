@@ -288,12 +288,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         </div>
         <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
           <button class="btn" onclick="filterHC('all')" id="hcFilterAll" style="background:var(--primary);color:#fff">全部</button>
-          <button class="btn" onclick="filterHC('banner')" id="hcFilterBanner">轮播横幅</button>
+          <!-- banner removed from frontend, hidden filter -->
+
           <button class="btn" onclick="filterHC('nav')" id="hcFilterNav">快捷导航</button>
           <button class="btn" onclick="filterHC('hotService')" id="hcFilterHotService">热门服务</button>
           <button class="btn" onclick="filterHC('recommend')" id="hcFilterRecommend">为你推荐</button>
           <button class="btn" onclick="filterHC('splash')" id="hcFilterSplash">开场动画</button>
           <button class="btn" onclick="filterHC('headerLogo')" id="hcFilterHeaderLogo">首页Logo</button>
+          <button class="btn" onclick="filterHC('homeBg')" id="hcFilterHomeBg">首页背景</button>
           <button class="btn" onclick="openHCEditor()" style="margin-left:auto;background:#059669;color:#fff">+ 新增项目</button>
         </div>
         <table class="order-table" id="hcTable">
@@ -341,12 +343,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <div class="form-group">
           <label>板块类型</label>
           <select class="form-input" id="hcSection" onchange="onHCSectionChange()">
-            <option value="banner">轮播横幅 (Banner)</option>
+            <!-- <option value="banner">轮播横幅 (Banner)</option> -->
             <option value="nav">快捷导航 (Nav)</option>
             <option value="hotService">热门服务 (HotService)</option>
             <option value="recommend">为你推荐 (Recommend)</option>
             <option value="splash">开场动画 (Splash)</option>
             <option value="headerLogo">首页Logo (HeaderLogo)</option>
+            <option value="homeBg">首页背景图 (HomeBg)</option>
           </select>
         </div>
         <div class="form-group">
@@ -1189,7 +1192,7 @@ async function deleteGuide(id) {
 /* ===== Home Config ===== */
 let allHCItems = [];
 let hcFilterSection = 'all';
-const SECTION_LABELS = { banner: '轮播横幅', nav: '快捷导航', hotService: '热门服务', recommend: '为你推荐', splash: '开场动画', headerLogo: '首页Logo' };
+const SECTION_LABELS = { banner: '轮播横幅', nav: '快捷导航', hotService: '热门服务', recommend: '为你推荐', splash: '开场动画', headerLogo: '首页Logo', homeBg: '首页背景' };
 
 async function loadHomeConfig() {
   try {
@@ -1234,14 +1237,15 @@ function renderHCTable() {
 
 function onHCSectionChange() {
   const sec = document.getElementById('hcSection').value;
-  const noIcon = ['banner', 'splash', 'headerLogo'];
-  const noPath = ['banner', 'splash', 'headerLogo'];
-  const showImage = ['splash', 'headerLogo'];
+  const noIcon = ['banner', 'splash', 'headerLogo', 'homeBg'];
+  const noPath = ['banner', 'splash', 'headerLogo', 'homeBg'];
+  const showImage = ['splash', 'headerLogo', 'homeBg'];
+  const hideColor = ['headerLogo', 'homeBg'];
   document.getElementById('hcPriceGroup').style.display = sec === 'hotService' ? '' : 'none';
   document.getElementById('hcIconGroup').style.display = noIcon.includes(sec) ? 'none' : '';
   document.getElementById('hcPathGroup').style.display = noPath.includes(sec) ? 'none' : '';
   document.getElementById('hcImageGroup').style.display = showImage.includes(sec) ? '' : 'none';
-  document.getElementById('hcColorGroup').style.display = (sec === 'headerLogo') ? 'none' : '';
+  document.getElementById('hcColorGroup').style.display = hideColor.includes(sec) ? 'none' : '';
   const colorLabel = document.getElementById('hcColorLabel');
   const colorInput = document.getElementById('hcColor');
   const imgLabel = document.getElementById('hcImageGroup').querySelector('label');
@@ -1251,6 +1255,8 @@ function onHCSectionChange() {
     imgLabel.innerHTML = '开场动画图片 <span style="font-weight:normal;color:#999;font-size:12px">（建议使用透明背景PNG）</span>';
   } else if (sec === 'headerLogo') {
     imgLabel.innerHTML = '首页Logo图片 <span style="font-weight:normal;color:#999;font-size:12px">（建议使用透明背景PNG，高度约40px）</span>';
+  } else if (sec === 'homeBg') {
+    imgLabel.innerHTML = '首页背景图 <span style="font-weight:normal;color:#999;font-size:12px">（建议尺寸 750x600 以上，将显示在首页顶部）</span>';
   } else {
     colorLabel.textContent = '颜色/渐变背景';
     colorInput.placeholder = '如 #B91C1C 或 linear-gradient(...)';

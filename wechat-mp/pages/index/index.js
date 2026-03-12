@@ -2,11 +2,8 @@ const app = getApp();
 
 Page({
   data: {
-    banners: [
-      { id: 1, title: 'Vino 品质服务', desc: '专业·高效·可信赖', bg: 'linear-gradient(135deg, #B91C1C, #7F1D1D)' },
-      { id: 2, title: '新用户专享', desc: '首单立减 20 元', bg: 'linear-gradient(135deg, #1E40AF, #1E3A5F)' },
-      { id: 3, title: '企业解决方案', desc: '定制化一站式服务', bg: 'linear-gradient(135deg, #065F46, #064E3B)' },
-    ],
+    headerLogoUrl: '',
+    heroBgUrl: '',
     navItems: [
       { title: '全部服务', emoji: '📋', color: '#B91C1C' },
       { title: '预约', emoji: '📅', color: '#D97706' },
@@ -30,7 +27,22 @@ Page({
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({ selected: 0 });
     }
+    this.loadHomeConfig();
     this.loadHotServices();
+  },
+
+  loadHomeConfig() {
+    app.request({ url: '/home-config?all=1' })
+      .then(res => {
+        const items = res.data || [];
+        const headerLogo = items.find(i => i.section === 'headerLogo' && i.status === 'active');
+        const homeBg = items.find(i => i.section === 'homeBg' && i.status === 'active');
+        this.setData({
+          headerLogoUrl: headerLogo ? headerLogo.imageUrl : '',
+          heroBgUrl: homeBg ? homeBg.imageUrl : '',
+        });
+      })
+      .catch(() => {});
   },
 
   loadHotServices() {
