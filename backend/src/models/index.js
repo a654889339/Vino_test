@@ -35,12 +35,73 @@ const models = { User, Service, Order, OrderLog, Address, DeviceGuide, ProductCa
 
 const ADMIN_PASSWORD = 'Vino@2024admin';
 
+const INDEX_WARN_THRESHOLD = 20;
+const INDEX_HARD_LIMIT = 64;
+
+async function cleanDuplicateIndexes() {
+  try {
+    const [rows] = await sequelize.query(
+      `SELECT TABLE_NAME, INDEX_NAME
+       FROM information_schema.STATISTICS
+       WHERE TABLE_SCHEMA = DATABASE()
+         AND INDEX_NAME != 'PRIMARY'
+         AND INDEX_NAME REGEXP '_[0-9]+$'
+       GROUP BY TABLE_NAME, INDEX_NAME
+       ORDER BY TABLE_NAME, INDEX_NAME`
+    );
+    if (!rows.length) return;
+    console.warn(`[DB-IndexGuard] Found ${rows.length} duplicate index(es), cleaning...`);
+    for (const { TABLE_NAME, INDEX_NAME } of rows) {
+      try {
+        await sequelize.query(`DROP INDEX \`${INDEX_NAME}\` ON \`${TABLE_NAME}\``);
+        console.warn(`[DB-IndexGuard] Dropped duplicate index ${TABLE_NAME}.${INDEX_NAME}`);
+      } catch (e) {
+        console.error(`[DB-IndexGuard] Failed to drop ${TABLE_NAME}.${INDEX_NAME}: ${e.message}`);
+      }
+    }
+  } catch (e) {
+    console.error('[DB-IndexGuard] cleanDuplicateIndexes error:', e.message);
+  }
+}
+
+async function checkIndexHealth() {
+  try {
+    const [rows] = await sequelize.query(
+      `SELECT TABLE_NAME, COUNT(DISTINCT INDEX_NAME) AS idx_count
+       FROM information_schema.STATISTICS
+       WHERE TABLE_SCHEMA = DATABASE()
+       GROUP BY TABLE_NAME
+       HAVING idx_count >= ${INDEX_WARN_THRESHOLD}
+       ORDER BY idx_count DESC`
+    );
+    for (const { TABLE_NAME, idx_count } of rows) {
+      if (idx_count >= INDEX_HARD_LIMIT) {
+        console.error(`[DB-IndexGuard] CRITICAL: ${TABLE_NAME} has ${idx_count} indexes (limit ${INDEX_HARD_LIMIT}), attempting auto-cleanup`);
+        await cleanDuplicateIndexes();
+        return false;
+      }
+      console.warn(`[DB-IndexGuard] WARNING: ${TABLE_NAME} has ${idx_count} indexes (threshold ${INDEX_WARN_THRESHOLD})`);
+    }
+    return true;
+  } catch (e) {
+    console.error('[DB-IndexGuard] checkIndexHealth error:', e.message);
+    return true;
+  }
+}
+
 const syncDatabase = async () => {
   try {
     await sequelize.authenticate();
     console.log('[DB] Connection established successfully.');
+    await cleanDuplicateIndexes();
     await sequelize.sync({ alter: true });
     console.log('[DB] All models synchronized.');
+    const healthy = await checkIndexHealth();
+    if (!healthy) {
+      console.error('[DB-IndexGuard] Index anomaly detected after sync, cleaned duplicates. Re-checking...');
+      const ok = await checkIndexHealth();
+      if (!ok) console.error('[DB-IndexGuard] Index issue persists after cleanup. Manual intervention may be needed.');
+    }
 
     const admin = await User.findOne({ where: { username: 'admin' } });
     if (!admin) {
