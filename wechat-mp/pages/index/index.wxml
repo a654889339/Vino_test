@@ -1,6 +1,17 @@
 <view class="page">
-  <!-- Hero Background Image -->
-  <view class="hero" style="{{heroBgUrl ? 'background-image: url(' + heroBgUrl + ')' : ''}}">
+  <!-- 独立背景层（与网页前台一致），背景图铺在底层 -->
+  <view class="home-bg">
+    <swiper wx:if="{{heroBgList.length}}" class="home-bg-swiper" autoplay circular interval="4000" indicator-dots indicator-color="rgba(255,255,255,0.5)">
+      <block wx:for="{{heroBgList}}" wx:key="*this">
+        <swiper-item>
+          <view class="home-bg-image" style="background-image: url({{item}})"></view>
+        </swiper-item>
+      </block>
+    </swiper>
+    <view class="home-bg-image" wx:elif="{{heroBgUrl}}" style="background-image: url({{heroBgUrl}})"></view>
+  </view>
+  <!-- Hero 透明叠在背景上 -->
+  <view class="hero">
     <view class="hero-overlay">
       <view class="hero-header">
         <image wx:if="{{headerLogoUrl}}" src="{{headerLogoUrl}}" class="hero-logo" mode="aspectFit" />
@@ -40,7 +51,7 @@
   <!-- Hot Services -->
   <view class="card-section">
     <view class="section-header">
-      <text class="section-title">热门服务</text>
+      <text class="section-title">{{hotServiceTitle}}</text>
       <text class="section-more" bindtap="goServiceList">查看全部 ›</text>
     </view>
     <scroll-view scroll-x class="service-scroll">
@@ -57,9 +68,9 @@
     </scroll-view>
   </view>
 
-  <!-- Recommend -->
-  <view class="card-section">
-    <text class="section-title" style="display:block;margin-bottom:20rpx">为你推荐</text>
+  <!-- Recommend：层级低于底栏 -->
+  <view class="card-section section-recommend">
+    <text class="section-title" style="display:block;margin-bottom:20rpx">{{recommendTitle}}</text>
     <view class="recommend-grid">
       <view class="recommend-item" wx:for="{{recommends}}" wx:key="id">
         <view class="recommend-icon" style="background: {{item.bg}}">

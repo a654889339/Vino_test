@@ -1,14 +1,20 @@
 <template>
   <div class="mine-page">
-    <div class="profile-header" :style="profileHeaderStyle">
+    <div
+      class="profile-header"
+      :style="profileHeaderStyle"
+      @click="onProfileHeaderClick"
+    >
       <div class="avatar">
-        <van-icon name="user-o" size="36" color="#fff" />
+        <img v-if="userStore.isLoggedIn && userStore.userInfo?.avatar" :src="userStore.userInfo.avatar" class="avatar-img" alt="" />
+        <span v-else-if="userStore.isLoggedIn && (userStore.userInfo?.nickname || userStore.userInfo?.username)" class="avatar-initial">{{ (userStore.userInfo?.nickname || userStore.userInfo?.username).charAt(0) }}</span>
+        <van-icon v-else name="user-o" size="36" color="#fff" />
       </div>
       <div class="profile-info" v-if="userStore.isLoggedIn">
-        <h3>{{ userStore.userInfo?.nickname || '用户' }}</h3>
-        <p>{{ userStore.userInfo?.phone || '未绑定手机' }}</p>
+        <h3>{{ userStore.userInfo?.nickname || userStore.userInfo?.username || '用户' }}</h3>
+        <p>{{ profileSubtitle }}</p>
       </div>
-      <div class="profile-info" v-else @click="$router.push('/login')">
+      <div class="profile-info" v-else>
         <h3>点击登录</h3>
         <p>登录享更多权益</p>
       </div>
@@ -46,11 +52,28 @@
 import { ref, inject, onMounted, computed } from 'vue';
 import { useUserStore } from '@/stores/user';
 import { useRouter } from 'vue-router';
+import { showToast } from 'vant';
 import { homeConfigApi } from '@/api';
 
 const userStore = useUserStore();
 const router = useRouter();
 const chatWidgetRef = inject('chatWidget', ref(null));
+
+const profileSubtitle = computed(() => {
+  const u = userStore.userInfo;
+  if (!u) return '未绑定手机';
+  if (u.phone) return u.phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
+  if (u.email) return u.email;
+  return '未绑定手机';
+});
+
+const onProfileHeaderClick = () => {
+  if (userStore.isLoggedIn) {
+    router.push('/mine/profile');
+  } else {
+    router.push('/login');
+  }
+};
 
 const mineBgImageUrl = ref('');
 const profileHeaderStyle = computed(() => {
@@ -117,6 +140,7 @@ const handleLogout = () => {
   display: flex;
   align-items: center;
   gap: 16px;
+  cursor: pointer;
 }
 
 .avatar {
@@ -129,6 +153,17 @@ const handleLogout = () => {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  overflow: hidden;
+}
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.avatar-initial {
+  font-size: 24px;
+  font-weight: 700;
+  color: #fff;
 }
 
 .profile-info h3 {

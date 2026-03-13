@@ -32,4 +32,13 @@ module.exports = {
     from: process.env.EMAIL_FROM || '',
     fromName: process.env.EMAIL_FROM_NAME || 'Vino服务',
   },
+  sms: {
+    enabled: process.env.SMS_ENABLED === 'true',
+    secretId: process.env.TENCENT_SMS_SECRET_ID || '',
+    secretKey: process.env.TENCENT_SMS_SECRET_KEY || '',
+    smsSdkAppId: process.env.TENCENT_SMS_APP_ID || '',
+    signName: process.env.TENCENT_SMS_SIGN_NAME || 'Vino服务',
+    templateId: process.env.TENCENT_SMS_TEMPLATE_ID || '',
+    codeExpireMinutes: 5,
+  },
 };

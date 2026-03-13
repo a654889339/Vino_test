@@ -1,7 +1,10 @@
 Page({
   data: { url: '' },
   onLoad(query) {
-    const url = decodeURIComponent(query.url || '');
+    let url = decodeURIComponent(query.url || '');
+    if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'https://' + url;
+    }
     this.setData({ url });
   },
 });

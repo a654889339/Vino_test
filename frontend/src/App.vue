@@ -24,8 +24,12 @@ const hiddenTabRoutes = ['/login', '/register', '/service/', '/address', '/guide
 const showTabbar = computed(() => {
   return !hiddenTabRoutes.some((r) => route.path.startsWith(r));
 });
+// 首页、产品页、我的页面不显示聊天悬浮按钮（与小程序一致）
 const showChatWidget = computed(() => {
-  return !route.path.startsWith('/login') && !route.path.startsWith('/register');
+  const p = route.path;
+  if (p === '/' || p === '/products' || p === '/mine') return false;
+  if (p.startsWith('/login') || p.startsWith('/register')) return false;
+  return true;
 });
 
 const chatWidgetRef = ref(null);

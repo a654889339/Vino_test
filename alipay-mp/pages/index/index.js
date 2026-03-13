@@ -4,6 +4,9 @@ Page({
   data: {
     headerLogoUrl: '',
     heroBgUrl: '',
+    heroBgList: [],
+    hotServiceTitle: '热门服务',
+    recommendTitle: '为你推荐',
     navLgItems: [],
     navSmItems: [],
     hotServices: [],
@@ -25,14 +28,26 @@ Page({
       .then(res => {
         const items = res.data || [];
         const headerLogo = items.find(i => i.section === 'headerLogo' && i.status === 'active');
-        const homeBg = items.find(i => i.section === 'homeBg' && i.status === 'active');
+        const homeBgItems = items.filter(i => i.section === 'homeBg' && i.status === 'active');
+        const homeBgList = homeBgItems.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0)).map(i => i.imageUrl).filter(Boolean);
+        const singleBg = homeBgItems[0] ? homeBgItems[0].imageUrl : '';
+        const hotServiceTitleItem = items.find(i => i.section === 'hotServiceTitle' && i.status === 'active');
+        const recommendTitleItem = items.find(i => i.section === 'recommendTitle' && i.status === 'active');
         const navLg = items.filter(i => i.section === 'navLg' && i.status === 'active')
           .sort((a, b) => a.sortOrder - b.sortOrder)
           .map(i => ({ id: i.id, title: i.title, imageUrl: i.imageUrl, icon: i.icon, path: i.path || '/pages/service/service', color: i.color }));
         const navSm = items.filter(i => i.section === 'navSm' && i.status === 'active')
           .sort((a, b) => a.sortOrder - b.sortOrder)
           .map(i => ({ id: i.id, title: i.title, imageUrl: i.imageUrl, icon: i.icon, path: i.path || '/pages/service/service', color: i.color }));
-        this.setData({ headerLogoUrl: headerLogo ? headerLogo.imageUrl : '', heroBgUrl: homeBg ? homeBg.imageUrl : '', navLgItems: navLg, navSmItems: navSm });
+        this.setData({
+          headerLogoUrl: headerLogo ? headerLogo.imageUrl : '',
+          heroBgUrl: singleBg,
+          heroBgList: homeBgList,
+          hotServiceTitle: (hotServiceTitleItem && hotServiceTitleItem.title) ? hotServiceTitleItem.title.trim() : '热门服务',
+          recommendTitle: (recommendTitleItem && recommendTitleItem.title) ? recommendTitleItem.title.trim() : '为你推荐',
+          navLgItems: navLg,
+          navSmItems: navSm,
+        });
       })
       .catch(() => {});
   },

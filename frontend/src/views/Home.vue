@@ -2,7 +2,11 @@
   <div class="home">
     <!-- 独立背景层：铺在整页最底层，红框处（卡片两侧）才能透出背景图 -->
     <div class="home-bg" aria-hidden="true">
-      <div class="home-bg-image" v-if="heroBgUrl" :style="{ backgroundImage: `url(${heroBgUrl})` }"></div>
+      <van-swipe v-if="heroBgList.length" class="home-bg-swipe" :autoplay="4000" indicator-color="rgba(255,255,255,0.5)">
+        <van-swipe-item v-for="(img, i) in heroBgList" :key="i">
+          <div class="home-bg-image" :style="{ backgroundImage: `url(${img})` }"></div>
+        </van-swipe-item>
+      </van-swipe>
     </div>
     <!-- Hero 仅负责顶部 logo/分享，背景透明以露出 home-bg -->
     <div class="hero">
@@ -75,7 +79,7 @@
     <!-- Hot Services -->
     <div class="section card-section">
       <div class="section-header">
-        <h3>热门服务</h3>
+        <h3>{{ hotServiceTitle }}</h3>
         <span class="more" @click="$router.push('/services')">查看全部 ›</span>
       </div>
       <div class="service-list">
@@ -92,10 +96,10 @@
       </div>
     </div>
 
-    <!-- Recommend -->
-    <div class="section card-section">
+    <!-- Recommend：层级低于底栏，避免遮挡首页/产品/我的底部导航 -->
+    <div class="section card-section section-recommend">
       <div class="section-header">
-        <h3>为你推荐</h3>
+        <h3>{{ recommendTitle }}</h3>
       </div>
       <div class="recommend-grid">
         <div v-for="item in recommends" :key="item.id" class="recommend-card">
@@ -134,9 +138,18 @@ const headerLogoUrl = computed(() => {
   const logo = allItems.value.find(i => i.section === 'headerLogo' && i.status === 'active');
   return logo?.imageUrl || '';
 });
-const heroBgUrl = computed(() => {
-  const bg = allItems.value.find(i => i.section === 'homeBg' && i.status === 'active');
-  return bg?.imageUrl || '';
+const heroBgList = computed(() => {
+  const list = allItems.value.filter(i => i.section === 'homeBg' && i.status === 'active');
+  return (list || []).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0)).map(i => i.imageUrl).filter(Boolean);
+});
+const heroBgFallback = computed(() => allItems.value.find(i => i.section === 'homeBg' && i.status === 'active')?.imageUrl || '');
+const hotServiceTitle = computed(() => {
+  const item = allItems.value.find(i => i.section === 'hotServiceTitle' && i.status === 'active');
+  return (item?.title || '').trim() || '热门服务';
+});
+const recommendTitle = computed(() => {
+  const item = allItems.value.find(i => i.section === 'recommendTitle' && i.status === 'active');
+  return (item?.title || '').trim() || '为你推荐';
 });
 
 const navLgItems = computed(() =>
@@ -176,7 +189,7 @@ const copyUrl = async () => {
 <style scoped>
 .home {
   position: relative;
-  padding-bottom: 50px;
+  padding-bottom: 80px;
   background: transparent;
 }
 
@@ -191,6 +204,15 @@ const copyUrl = async () => {
   z-index: 0;
   background: linear-gradient(180deg, #1a1a2e 0%, #16213e 40%, #16213e 100%);
 }
+.home-bg-swipe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 100%;
+}
+.home-bg-swipe .van-swipe-item { height: 100%; }
 .home-bg-image {
   position: absolute;
   top: 0;
@@ -242,8 +264,14 @@ const copyUrl = async () => {
   -webkit-backdrop-filter: blur(12px);
   box-shadow: 0 2px 12px rgba(0,0,0,0.06);
 }
+/* 首个卡片区（自助预约/热门服务）上移，参考小程序位置比例 */
 .card-section:first-of-type {
-  margin-top: -36px;
+  margin-top: -24vh;
+  min-height: 0;
+}
+/* 为你推荐区块层级低于底栏，避免遮挡首页/产品/我的底部导航 */
+.section-recommend {
+  z-index: 1;
 }
 
 /* ===== Section common ===== */

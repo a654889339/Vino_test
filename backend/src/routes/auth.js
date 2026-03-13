@@ -11,8 +11,10 @@ const upload = multer({
 const router = Router();
 
 router.post('/send-code', authController.sendCode);
+router.post('/send-sms-code', authController.sendSmsCode);
 router.post('/register', authController.register);
 router.post('/login', authController.login);
+router.post('/bind-phone', authMiddleware, authController.bindPhone);
 router.post('/wx-login', authController.wxLogin);
 router.post('/alipay-login', authController.alipayLogin);
 router.get('/profile', authMiddleware, authController.getProfile);

@@ -47,6 +47,11 @@ const routes = [
     component: () => import('@/views/Mine.vue'),
   },
   {
+    path: '/mine/profile',
+    name: 'ProfileEdit',
+    component: () => import('@/views/ProfileEdit.vue'),
+  },
+  {
     path: '/login',
     name: 'Login',
     component: () => import('@/views/Login.vue'),

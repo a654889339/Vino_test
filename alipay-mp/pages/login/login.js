@@ -8,6 +8,17 @@ Page({
     showProfile: false,
     tempAvatarUrl: '',
     tempNickname: '',
+    headerLogoDesc: '',
+  },
+
+  onLoad() {
+    app.request({ url: '/home-config' }).then(res => {
+      const list = res.data || [];
+      const headerLogo = list.find(i => i.section === 'headerLogo' && i.status === 'active');
+      if (headerLogo && headerLogo.desc) {
+        this.setData({ headerLogoDesc: headerLogo.desc });
+      }
+    }).catch(() => {});
   },
 
   alipayLogin() {

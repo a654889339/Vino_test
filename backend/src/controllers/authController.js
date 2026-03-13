@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const config = require('../config');
 const { User } = require('../models');
 const emailService = require('../services/emailService');
+const smsService = require('../services/smsService');
 
 const generateToken = (user) =>
   jwt.sign({ id: user.id, username: user.username, role: user.role }, config.jwt.secret, {
@@ -32,18 +33,74 @@ exports.sendCode = async (req, res) => {
   }
 };
 
+exports.sendSmsCode = async (req, res) => {
+  try {
+    const { phone, scene } = req.body;
+    if (!phone) return res.status(400).json({ code: 400, message: '手机号不能为空' });
+    const normalized = smsService.normalizePhone(phone);
+    if (!/^1\d{10}$/.test(normalized)) {
+      return res.status(400).json({ code: 400, message: '请输入正确的11位大陆手机号' });
+    }
+    if (scene === 'register') {
+      const existing = await User.findOne({ where: { phone: normalized } });
+      if (existing) return res.status(400).json({ code: 400, message: '该手机号已注册' });
+    }
+    await smsService.sendVerificationCode(phone);
+    res.json({ code: 0, message: '验证码已发送' });
+  } catch (err) {
+    console.error('[Auth] sendSmsCode error:', err.message);
+    res.status(400).json({ code: 400, message: err.message || '发送验证码失败' });
+  }
+};
+
 exports.register = async (req, res) => {
   try {
-    const { username, password, email, code, nickname } = req.body;
+    const { username, password, email, code, nickname, phone, smsCode } = req.body;
+    const usePhone = phone != null && String(phone).trim() !== '';
+
+    if (usePhone) {
+      if (!smsCode && !code) return res.status(400).json({ code: 400, message: '验证码不能为空' });
+      const normalized = smsService.normalizePhone(phone);
+      if (!/^1\d{10}$/.test(normalized)) {
+        return res.status(400).json({ code: 400, message: '手机号格式不正确' });
+      }
+      const verify = smsService.verifyCode(phone, smsCode || code);
+      if (!verify.valid) return res.status(400).json({ code: 400, message: verify.message });
+
+      const existingPhone = await User.findOne({ where: { phone: normalized } });
+      if (existingPhone) return res.status(400).json({ code: 400, message: '该手机号已注册' });
+
+      const baseUsername = username && String(username).trim()
+        ? String(username).trim()
+        : 'u' + normalized.slice(-8);
+      if (baseUsername.toLowerCase() === 'admin') {
+        return res.status(400).json({ code: 400, message: '该用户名为系统保留，不可注册' });
+      }
+      let finalUsername = baseUsername;
+      let n = 0;
+      while (await User.findOne({ where: { username: finalUsername } })) {
+        finalUsername = baseUsername + (++n);
+      }
+      if (!password || String(password).length < 6) {
+        return res.status(400).json({ code: 400, message: '密码长度不能少于6位' });
+      }
+
+      const user = await User.create({
+        username: finalUsername,
+        password,
+        email: null,
+        phone: normalized,
+        nickname: (nickname && String(nickname).trim()) || normalized.slice(0, 3) + '****' + normalized.slice(-4),
+      });
+      const token = generateToken(user);
+      return res.json({ code: 0, data: { token, user } });
+    }
+
     if (!username || !password) {
       return res.status(400).json({ code: 400, message: '用户名和密码不能为空' });
     }
-    if (!email) {
-      return res.status(400).json({ code: 400, message: '邮箱不能为空' });
-    }
-    if (!code) {
-      return res.status(400).json({ code: 400, message: '验证码不能为空' });
-    }
+    if (!email) return res.status(400).json({ code: 400, message: '邮箱不能为空' });
+    if (!code) return res.status(400).json({ code: 400, message: '验证码不能为空' });
     if (String(username).trim().length < 2 || String(username).trim().length > 50) {
       return res.status(400).json({ code: 400, message: '用户名长度需在2-50个字符之间' });
     }
@@ -52,21 +109,15 @@ exports.register = async (req, res) => {
     }
 
     const verify = emailService.verifyCode(email, code);
-    if (!verify.valid) {
-      return res.status(400).json({ code: 400, message: verify.message });
-    }
+    if (!verify.valid) return res.status(400).json({ code: 400, message: verify.message });
 
     if (String(username).trim().toLowerCase() === 'admin') {
       return res.status(400).json({ code: 400, message: '该用户名为系统保留，不可注册' });
     }
     const existingUser = await User.findOne({ where: { username: String(username).trim() } });
-    if (existingUser) {
-      return res.status(400).json({ code: 400, message: '用户名已存在' });
-    }
+    if (existingUser) return res.status(400).json({ code: 400, message: '用户名已存在' });
     const existingEmail = await User.findOne({ where: { email } });
-    if (existingEmail) {
-      return res.status(400).json({ code: 400, message: '该邮箱已被注册' });
-    }
+    if (existingEmail) return res.status(400).json({ code: 400, message: '该邮箱已被注册' });
 
     const user = await User.create({
       username: String(username).trim(),
@@ -84,7 +135,25 @@ exports.register = async (req, res) => {
 
 exports.login = async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { username, password, phone, code } = req.body;
+    if (phone !== undefined && phone !== '') {
+      if (!code) return res.status(400).json({ code: 400, message: '验证码不能为空' });
+      const normalized = smsService.normalizePhone(phone);
+      if (!/^1\d{10}$/.test(normalized)) {
+        return res.status(400).json({ code: 400, message: '手机号格式不正确' });
+      }
+      const verify = smsService.verifyCode(phone, code);
+      if (!verify.valid) {
+        return res.status(400).json({ code: 400, message: verify.message });
+      }
+      const user = await User.findOne({ where: { phone: normalized } });
+      if (!user) return res.status(400).json({ code: 400, message: '该手机号未注册，请先注册' });
+      if (user.status !== 'active') {
+        return res.status(403).json({ code: 403, message: '账号已被禁用' });
+      }
+      const token = generateToken(user);
+      return res.json({ code: 0, data: { token, user } });
+    }
     if (!username || !password) {
       return res.status(400).json({ code: 400, message: '用户名和密码不能为空' });
     }
@@ -293,5 +362,34 @@ exports.getProfile = async (req, res) => {
   } catch (err) {
     console.error('[Auth] getProfile error:', err.message);
     res.status(500).json({ code: 500, message: '获取用户信息失败' });
+  }
+};
+
+exports.bindPhone = async (req, res) => {
+  try {
+    const { phone, code } = req.body;
+    if (!phone || !code) {
+      return res.status(400).json({ code: 400, message: '手机号和验证码不能为空' });
+    }
+    const normalized = smsService.normalizePhone(phone);
+    if (!/^1\d{10}$/.test(normalized)) {
+      return res.status(400).json({ code: 400, message: '手机号格式不正确' });
+    }
+    const verify = smsService.verifyCode(phone, code);
+    if (!verify.valid) {
+      return res.status(400).json({ code: 400, message: verify.message });
+    }
+    const existing = await User.findOne({ where: { phone: normalized } });
+    if (existing && existing.id !== req.user.id) {
+      return res.status(400).json({ code: 400, message: '该手机号已被其他账号绑定' });
+    }
+    const user = await User.findByPk(req.user.id);
+    if (!user) return res.status(404).json({ code: 404, message: '用户不存在' });
+    user.phone = normalized;
+    await user.save({ hooks: false });
+    res.json({ code: 0, data: user, message: '绑定成功' });
+  } catch (err) {
+    console.error('[Auth] bindPhone error:', err.message);
+    res.status(500).json({ code: 500, message: err.message || '绑定失败' });
   }
 };

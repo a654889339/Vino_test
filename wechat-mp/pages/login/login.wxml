@@ -6,6 +6,7 @@
       </view>
       <text class="app-name">Vino 服务</text>
       <text class="app-desc">专业·高效·可信赖</text>
+      <text wx:if="{{headerLogoDesc}}" class="header-logo-desc">{{headerLogoDesc}}</text>
     </view>
 
     <!-- 微信一键登录 -->

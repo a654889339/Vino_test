@@ -13,7 +13,7 @@ export const useUserStore = defineStore('user', {
     async login(data) {
       const res = await authApi.login(data);
       this.token = res.data.token;
-      this.userInfo = res.data.user;
+      this.userInfo = res.data.user || res.data;
       localStorage.setItem('vino_token', res.data.token);
     },
     setAuth(token, user) {

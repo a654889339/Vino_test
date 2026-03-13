@@ -1,15 +1,41 @@
 <view class="page">
-  <!-- Product Nav -->
-  <scroll-view scroll-x class="product-nav">
-    <view
-      class="nav-item {{activeId === item.id ? 'active' : ''}}"
-      a:for="{{deviceGuides}}"
-      a:key="id"
-      data-id="{{item.id}}"
-      data-slug="{{item.slug}}"
-      onTap="selectDevice"
-    >{{item.name}}</view>
-  </scroll-view>
+  <!-- 第一行：商品种类（与网页前台一致） -->
+  <view class="product-nav">
+    <scroll-view scroll-x class="product-nav-scroll">
+      <view
+        class="nav-item {{selectedCategoryId === item.id ? 'active' : ''}}"
+        a:for="{{categories}}"
+        a:key="id"
+        data-id="{{item.id}}"
+        onTap="selectCategory"
+      >{{item.name}}</view>
+    </scroll-view>
+  </view>
+
+  <!-- 第二行：选择商品（与网页前台一致） -->
+  <picker
+    a:if="{{categories.length && deviceGuides.length}}"
+    mode="selector"
+    range="{{deviceGuides}}"
+    range-key="name"
+    value="{{productPickerIndex}}"
+    onChange="onProductPick"
+  >
+    <view class="product-select-row">
+      <view class="select-product-field">
+        <text class="select-label">选择商品</text>
+        <text class="select-value">{{selectedProductLabel}}</text>
+        <text class="select-arrow">›</text>
+      </view>
+    </view>
+  </picker>
+  <view a:elif="{{categories.length}}" class="product-select-row">
+    <view class="select-product-field">
+      <text class="select-label">选择商品</text>
+      <text class="select-value">{{selectedCategoryId && !deviceGuides.length ? '该种类下暂无商品' : '请选择商品'}}</text>
+      <text class="select-arrow">›</text>
+    </view>
+  </view>
 
   <!-- Loading -->
   <view a:if="{{loading}}" class="loading">加载中...</view>
@@ -66,8 +92,11 @@
     </view>
   </block>
 
+  <view a:elif="{{!loading && categories.length}}" class="empty-hint">
+    <text>请在上方选择种类与商品</text>
+  </view>
   <view a:elif="{{!loading}}" class="empty-hint">
-    <text>请选择一个产品</text>
+    <text>暂无商品配置</text>
   </view>
 
   <view class="tab-bar-placeholder"></view>

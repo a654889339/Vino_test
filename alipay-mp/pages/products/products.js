@@ -2,8 +2,12 @@ const app = getApp();
 
 Page({
   data: {
+    categories: [],
+    selectedCategoryId: null,
     deviceGuides: [],
     activeId: null,
+    selectedProductLabel: '',
+    productPickerIndex: 0,
     guide: {},
     sections: [],
     mediaItems: [],
@@ -13,32 +17,56 @@ Page({
   },
 
   onShow() {
-    if (!this.data.deviceGuides.length) this.loadGuides();
+    if (!this.data.categories.length) this.loadCategories();
   },
 
-  loadGuides() {
-    app.request({ url: '/guides' })
+  loadCategories() {
+    app.request({ url: '/guides/categories' })
       .then(res => {
-        const list = (res.data || []).map(g => ({
-          id: g.id, name: g.name, slug: g.slug || '', model: g.subtitle || '',
-          emoji: g.emoji || '', gradient: g.gradient || '', badge: g.badge || '',
-          iconUrl: g.iconUrl || '',
-        }));
-        this.setData({ deviceGuides: list });
-        if (list.length) this.loadDetail(list[0].slug || list[0].id, list[0].id);
+        const categories = res.data || [];
+        this.setData({ categories });
+        if (categories.length) {
+          this.selectCategoryByCat(categories[0]);
+        }
       })
       .catch(() => {});
   },
 
-  selectDevice(e) {
-    const id = parseInt(e.currentTarget.dataset.id, 10);
-    const slug = e.currentTarget.dataset.slug;
-    if (id === this.data.activeId) return;
-    this.loadDetail(slug || id, id);
+  selectCategory(e) {
+    const id = e.currentTarget.dataset.id;
+    if (id === this.data.selectedCategoryId) return;
+    const cat = this.data.categories.find(c => c.id === id);
+    if (cat) this.selectCategoryByCat(cat);
   },
 
-  loadDetail(param, id) {
-    this.setData({ activeId: id, loading: true });
+  selectCategoryByCat(cat) {
+    this.setData({ selectedCategoryId: cat.id, deviceGuides: [], activeId: null, guide: {}, loading: true });
+    app.request({ url: '/guides', data: { categoryId: cat.id } })
+      .then(res => {
+        const list = (res.data || []).map(g => ({
+          id: g.id,
+          name: g.name,
+          slug: g.slug || '',
+        }));
+        this.setData({ deviceGuides: list, loading: false });
+        if (list.length) {
+          this.loadDetail(list[0].slug || list[0].id, list[0].id, 0);
+        }
+      })
+      .catch(() => this.setData({ loading: false }));
+  },
+
+  onProductPick(e) {
+    const index = parseInt(e.detail.value, 10);
+    const list = this.data.deviceGuides;
+    const item = list[index];
+    if (!item) return;
+    this.loadDetail(item.slug || item.id, item.id, index);
+  },
+
+  loadDetail(param, id, pickerIndex) {
+    this.setData({ activeId: id, productPickerIndex: pickerIndex !== undefined ? pickerIndex : this.data.productPickerIndex, loading: true });
+    const guideName = (this.data.deviceGuides.find(g => g.id === id) || {}).name || '';
     app.request({ url: `/guides/${param}` })
       .then(res => {
         const g = res.data || {};
@@ -54,7 +82,11 @@ Page({
         const helpItems = parse(g.helpItems);
         const sections = parse(g.sections);
         this.setData({
-          guide: g, sections, mediaItems, helpItems,
+          guide: g,
+          sections,
+          mediaItems,
+          helpItems,
+          selectedProductLabel: guideName || g.name,
           firstMediaTitle: mediaItems.length ? (mediaItems[0].title || g.name) : g.name,
           loading: false,
         });

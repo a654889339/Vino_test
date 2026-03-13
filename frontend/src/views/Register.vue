@@ -16,57 +16,37 @@
     </div>
 
     <div class="register-form">
-      <van-cell-group inset>
-        <van-field
-          v-model="form.username"
-          label="账号"
-          placeholder="请输入用户名（2-50字符）"
-          left-icon="manager-o"
-          maxlength="50"
-        />
-        <van-field
-          v-model="form.password"
-          type="password"
-          label="密码"
-          placeholder="请输入密码（至少6位）"
-          left-icon="lock"
-          autocomplete="new-password"
-        />
-        <van-field
-          v-model="form.email"
-          label="邮箱"
-          placeholder="请输入邮箱"
-          left-icon="envelop-o"
-          type="email"
-        />
-        <van-field
-          v-model="form.code"
-          label="验证码"
-          placeholder="请输入邮箱验证码"
-          left-icon="shield-o"
-          maxlength="6"
-        >
-          <template #button>
-            <van-button
-              size="small"
-              type="primary"
-              color="#B91C1C"
-              :disabled="countdown > 0 || sendingCode"
-              :loading="sendingCode"
-              @click="handleSendCode"
-            >
-              {{ countdown > 0 ? countdown + 's' : '发送验证码' }}
-            </van-button>
-          </template>
-        </van-field>
-        <van-field
-          v-model="form.nickname"
-          label="昵称"
-          placeholder="选填，默认为用户名"
-          left-icon="contact-o"
-          maxlength="50"
-        />
-      </van-cell-group>
+      <van-tabs v-model:active="registerMode" class="register-tabs">
+        <van-tab title="邮箱注册" name="email">
+          <van-cell-group inset>
+            <van-field v-model="form.username" label="账号" placeholder="请输入用户名（2-50字符）" left-icon="manager-o" maxlength="50" />
+            <van-field v-model="form.password" type="password" label="密码" placeholder="请输入密码（至少6位）" left-icon="lock" autocomplete="new-password" />
+            <van-field v-model="form.email" label="邮箱" placeholder="请输入邮箱" left-icon="envelop-o" type="email" />
+            <van-field v-model="form.code" label="验证码" placeholder="请输入邮箱验证码" left-icon="shield-o" maxlength="6">
+              <template #button>
+                <van-button size="small" type="primary" color="#B91C1C" :disabled="countdown > 0 || sendingCode" :loading="sendingCode" @click="handleSendCode">
+                  {{ countdown > 0 ? countdown + 's' : '发送验证码' }}
+                </van-button>
+              </template>
+            </van-field>
+            <van-field v-model="form.nickname" label="昵称" placeholder="选填" left-icon="contact-o" maxlength="50" />
+          </van-cell-group>
+        </van-tab>
+        <van-tab title="手机号注册" name="phone">
+          <van-cell-group inset>
+            <van-field v-model="form.phone" label="手机号" placeholder="请输入11位手机号" left-icon="phone-o" type="tel" maxlength="11" />
+            <van-field v-model="form.smsCode" label="验证码" placeholder="请输入短信验证码" left-icon="shield-o" maxlength="6">
+              <template #button>
+                <van-button size="small" type="primary" color="#B91C1C" :disabled="smsCountdown > 0 || sendingSmsCode" :loading="sendingSmsCode" @click="handleSendSmsCode">
+                  {{ smsCountdown > 0 ? smsCountdown + 's' : '获取验证码' }}
+                </van-button>
+              </template>
+            </van-field>
+            <van-field v-model="form.password" type="password" label="密码" placeholder="请输入密码（至少6位）" left-icon="lock" autocomplete="new-password" />
+            <van-field v-model="form.nickname" label="昵称" placeholder="选填" left-icon="contact-o" maxlength="50" />
+          </van-cell-group>
+        </van-tab>
+      </van-tabs>
 
       <div class="register-actions">
         <van-button
@@ -101,13 +81,19 @@ const sendingCode = ref(false);
 const countdown = ref(0);
 let timer = null;
 
+const registerMode = ref('email');
 const form = reactive({
   username: '',
   password: '',
   email: '',
   code: '',
   nickname: '',
+  phone: '',
+  smsCode: '',
 });
+const smsCountdown = ref(0);
+const sendingSmsCode = ref(false);
+let smsTimer = null;
 
 const handleSendCode = async () => {
   if (!form.email) {
@@ -135,18 +121,57 @@ const handleSendCode = async () => {
   }
 };
 
-const handleRegister = async () => {
-  if (!form.username || !form.password || !form.email || !form.code) {
-    showToast('请填写完整信息');
+const handleSendSmsCode = async () => {
+  if (!/^1\d{10}$/.test(form.phone)) {
+    showToast('请输入正确的11位手机号');
     return;
   }
-  if (form.password.length < 6) {
-    showToast('密码至少6位');
-    return;
+  sendingSmsCode.value = true;
+  try {
+    await authApi.sendSmsCode({ phone: form.phone, scene: 'register' });
+    showToast('验证码已发送');
+    smsCountdown.value = 60;
+    smsTimer = setInterval(() => {
+      smsCountdown.value--;
+      if (smsCountdown.value <= 0) clearInterval(smsTimer);
+    }, 1000);
+  } catch (err) {
+    showToast(err.message || '发送失败');
+  } finally {
+    sendingSmsCode.value = false;
+  }
+};
+
+const handleRegister = async () => {
+  if (registerMode.value === 'phone') {
+    if (!form.phone || !form.smsCode || !form.password) {
+      showToast('请填写手机号、验证码和密码');
+      return;
+    }
+    if (!/^1\d{10}$/.test(form.phone)) {
+      showToast('手机号格式不正确');
+      return;
+    }
+    if (form.password.length < 6) {
+      showToast('密码至少6位');
+      return;
+    }
+  } else {
+    if (!form.username || !form.password || !form.email || !form.code) {
+      showToast('请填写完整信息');
+      return;
+    }
+    if (form.password.length < 6) {
+      showToast('密码至少6位');
+      return;
+    }
   }
   loading.value = true;
   try {
-    const res = await authApi.register(form);
+    const payload = registerMode.value === 'phone'
+      ? { phone: form.phone, smsCode: form.smsCode, password: form.password, nickname: form.nickname }
+      : form;
+    const res = await authApi.register(payload);
     const d = res.data || res;
     userStore.setAuth(d.token, d.user);
     showToast('注册成功');
@@ -160,6 +185,7 @@ const handleRegister = async () => {
 
 onBeforeUnmount(() => {
   if (timer) clearInterval(timer);
+  if (smsTimer) clearInterval(smsTimer);
 });
 </script>
 

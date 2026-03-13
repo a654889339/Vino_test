@@ -3,8 +3,16 @@ import request from './request';
 export const authApi = {
   login: (data) => request.post('/auth/login', data),
   sendCode: (data) => request.post('/auth/send-code', data),
+  sendSmsCode: (data) => request.post('/auth/send-sms-code', data),
   register: (data) => request.post('/auth/register', data),
   getProfile: () => request.get('/auth/profile'),
+  updateProfile: (data) => request.put('/auth/profile', data),
+  uploadAvatar: (file) => {
+    const fd = new FormData();
+    fd.append('avatar', file);
+    return request.post('/auth/upload-avatar', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+  },
+  bindPhone: (data) => request.post('/auth/bind-phone', data),
 };
 
 export const serviceApi = {

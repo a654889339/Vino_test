@@ -13,7 +13,8 @@
     "pages/webview/webview",
     "pages/login/login",
     "pages/address/address",
-    "pages/address-edit/address-edit"
+    "pages/address-edit/address-edit",
+    "pages/profile-edit/profile-edit"
   ],
   "window": {
     "defaultTitle": "Vino服务",

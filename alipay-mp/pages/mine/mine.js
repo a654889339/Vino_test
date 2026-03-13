@@ -6,6 +6,8 @@ Page({
     isLoggedIn: false,
     avatarInitial: 'V',
     avatarUrl: '',
+    maskedPhone: '',
+    profileHeaderStyle: 'background: linear-gradient(135deg, #B91C1C, #7F1D1D);',
     stats: [
       { label: '待支付', value: 0 },
       { label: '进行中', value: 0 },
@@ -19,12 +21,24 @@ Page({
       { title: '优惠券', emoji: '🎫', url: '' },
       { title: '帮助中心', emoji: '❓', url: '' },
       { title: '意见反馈', emoji: '💬', url: '', chat: true },
-      { title: '关于Vino', emoji: 'ℹ️', url: '', webUrl: 'https://www.vinotech.cn/' },
+      { title: '关于Vino', emoji: 'ℹ️', url: '', webUrl: 'www.vinotech.cn' },
     ],
   },
 
   onShow() {
     this.checkLoginState();
+    this.loadMineBg();
+  },
+
+  loadMineBg() {
+    app.request({ url: '/home-config' }).then(res => {
+      const list = res.data || [];
+      const mineBg = list.find(i => i.section === 'mineBg' && i.status === 'active');
+      const style = mineBg && mineBg.imageUrl
+        ? 'background-image: url(' + mineBg.imageUrl + '); background-size: cover; background-position: center;'
+        : 'background: linear-gradient(135deg, #B91C1C, #7F1D1D);';
+      this.setData({ profileHeaderStyle: style });
+    }).catch(() => {});
   },
 
   checkLoginState() {
@@ -54,67 +68,16 @@ Page({
   applyUserData(user) {
     const initial = (user.nickname || user.username || 'V').charAt(0);
     const avatarUrl = user.avatar || '';
-    this.setData({ userInfo: user, isLoggedIn: true, avatarInitial: initial, avatarUrl });
+    const maskedPhone = user.phone ? user.phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2') : '';
+    this.setData({ userInfo: user, isLoggedIn: true, avatarInitial: initial, avatarUrl, maskedPhone });
   },
 
   onProfileTap() {
     if (!app.isLoggedIn()) {
       my.navigateTo({ url: '/pages/login/login' });
+    } else {
+      my.navigateTo({ url: '/pages/profile-edit/profile-edit' });
     }
-  },
-
-  updateAvatar() {
-    my.chooseImage({
-      count: 1,
-      success: (res) => {
-        const tempUrl = res.apFilePaths && res.apFilePaths[0];
-        if (!tempUrl) return;
-        my.showLoading({ content: '上传中...' });
-        my.uploadFile({
-          url: app.globalData.baseUrl + '/auth/upload-avatar',
-          fileType: 'image',
-          fileName: 'avatar',
-          filePath: tempUrl,
-          header: { Authorization: 'Bearer ' + app.globalData.token },
-          success: (uploadRes) => {
-            my.hideLoading();
-            try {
-              const data = JSON.parse(uploadRes.data);
-              if (data.code === 0) {
-                const cosUrl = data.data.url;
-                if (app.globalData.userInfo) app.globalData.userInfo.avatar = cosUrl;
-                this.setData({ avatarUrl: cosUrl });
-                my.showToast({ content: '头像已更新', type: 'success' });
-              } else {
-                my.showToast({ content: '上传失败', type: 'none' });
-              }
-            } catch {
-              my.showToast({ content: '上传失败', type: 'none' });
-            }
-          },
-          fail: () => {
-            my.hideLoading();
-            my.showToast({ content: '上传失败', type: 'none' });
-          },
-        });
-      },
-    });
-  },
-
-  onUpdateNickname(e) {
-    const nickname = (e.detail.value || '').trim();
-    if (!nickname || nickname === (this.data.userInfo && this.data.userInfo.nickname)) return;
-    app.request({
-      method: 'PUT',
-      url: '/auth/profile',
-      data: { nickname },
-    }).then(res => {
-      app.globalData.userInfo = res.data;
-      this.applyUserData(res.data);
-      my.showToast({ content: '昵称已更新', type: 'success' });
-    }).catch(() => {
-      my.showToast({ content: '更新失败', type: 'none' });
-    });
   },
 
   onMenuTap(e) {
