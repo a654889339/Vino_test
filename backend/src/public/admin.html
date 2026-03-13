@@ -424,6 +424,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
             </label>
           </div>
           <img id="hcImagePreview" style="max-width:200px;max-height:100px;margin-top:8px;border-radius:8px;display:none;border:1px solid #eee;background:#1a1a1a;padding:8px" />
+          <div class="form-group" id="hcImageThumbGroup" style="display:none;margin-top:8px">
+            <label>缩略图 URL <span style="font-weight:normal;color:#999;font-size:12px">（可选，配置后前台先加载缩略图再加载原图）</span></label>
+            <input class="form-input" id="hcImageUrlThumb" placeholder="留空则直接使用原图或系统推导缩略图" />
+          </div>
         </div>
         <div class="form-group" id="hcColorGroup">
           <label id="hcColorLabel">颜色/渐变背景</label>
@@ -480,6 +484,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
                 <input class="form-input" id="gIconUrl" placeholder="上传自定义图标图片" style="flex:1" onchange="var p=document.getElementById('gIconPreview');if(this.value){p.src=this.value;p.style.display='block'}else{p.style.display='none'}" />
                 <label style="padding:8px 14px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">上传图标<input type="file" accept="image/*" style="display:none" onchange="uploadGuideFile(this,'gIconUrl')" /></label>
               </div>
+              <div class="form-group" style="margin-top:6px"><label>图标缩略图 URL <span style="font-weight:normal;color:#999;font-size:12px">（可选，优先加载）</span></label><input class="form-input" id="gIconUrlThumb" placeholder="留空则直接使用原图" /></div>
             </div>
             <div class="form-group"><label>备用Vant图标 <span style="font-weight:normal;color:#999;font-size:12px">（无自定义图标时使用）</span></label><input class="form-input" id="gIcon" placeholder="cluster-o" /></div>
             <div class="form-group"><label>Emoji</label><input class="form-input" id="gEmoji" placeholder="❄️" /></div>
@@ -497,6 +502,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
               </label>
             </div>
             <img id="gCoverPreview" style="max-width:300px;max-height:160px;margin-top:8px;border-radius:8px;display:none;border:1px solid #eee" />
+            <div class="form-group" style="margin-top:8px"><label>封面缩略图 URL <span style="font-weight:normal;color:#999;font-size:12px">（可选，优先加载）</span></label><input class="form-input" id="gCoverImageThumb" placeholder="留空则直接使用原图" /></div>
           </div>
           <div class="form-group">
             <label>展示视频</label>
@@ -1208,8 +1214,8 @@ async function uploadGuideFile(input, targetId) {
     const res = await doUpload(file);
     if (res.code === 0) {
       el.value = res.data.url;
-      if (targetId === 'gCoverImage') { const p = document.getElementById('gCoverPreview'); if(p){p.src=res.data.url;p.style.display='block';} }
-      if (targetId === 'gIconUrl') { const p = document.getElementById('gIconPreview'); if(p){p.src=res.data.url;p.style.display='block';} }
+      if (targetId === 'gCoverImage') { const p = document.getElementById('gCoverPreview'); if(p){p.src=res.data.url;p.style.display='block';} if(res.data.thumbUrl){ const t=document.getElementById('gCoverImageThumb'); if(t)t.value=res.data.thumbUrl; } }
+      if (targetId === 'gIconUrl') { const p = document.getElementById('gIconPreview'); if(p){p.src=res.data.url;p.style.display='block';} if(res.data.thumbUrl){ const t=document.getElementById('gIconUrlThumb'); if(t)t.value=res.data.thumbUrl; } }
     } else { el.value = ''; alert(res.message||'上传失败'); }
   } catch { el.value = ''; alert('上传失败'); }
   hideUploadLoading();
@@ -1262,6 +1268,7 @@ function openGuideEditor(guide) {
   document.getElementById('gSubtitle').value = guide ? (guide.subtitle||'') : '';
   document.getElementById('gIcon').value = guide ? guide.icon : 'setting-o';
   document.getElementById('gIconUrl').value = guide ? (guide.iconUrl||'') : '';
+  document.getElementById('gIconUrlThumb').value = guide ? (guide.iconUrlThumb||'') : '';
   const iconPrev = document.getElementById('gIconPreview');
   if (guide && guide.iconUrl) { iconPrev.src = guide.iconUrl; iconPrev.style.display = 'block'; } else { iconPrev.style.display = 'none'; }
   document.getElementById('gEmoji').value = guide ? (guide.emoji||'') : '';
@@ -1271,6 +1278,7 @@ function openGuideEditor(guide) {
   document.getElementById('gSections').value = JSON.stringify(parseJSON(guide&&guide.sections), null, 2);
   document.getElementById('gStatus').value = guide ? guide.status : 'active';
   document.getElementById('gCoverImage').value = guide ? (guide.coverImage||'') : '';
+  document.getElementById('gCoverImageThumb').value = guide ? (guide.coverImageThumb||'') : '';
   document.getElementById('gShowcaseVideo').value = guide ? (guide.showcaseVideo||'') : '';
   const preview = document.getElementById('gCoverPreview');
   if (guide && guide.coverImage) { preview.src = guide.coverImage; preview.style.display = 'block'; } else { preview.style.display = 'none'; }
@@ -1309,6 +1317,7 @@ async function saveGuide() {
     subtitle: document.getElementById('gSubtitle').value,
     icon: document.getElementById('gIcon').value,
     iconUrl: document.getElementById('gIconUrl').value,
+    iconUrlThumb: document.getElementById('gIconUrlThumb').value,
     emoji: document.getElementById('gEmoji').value,
     badge: document.getElementById('gBadge').value,
     sortOrder: parseInt(document.getElementById('gSort').value) || 0,
@@ -1316,6 +1325,7 @@ async function saveGuide() {
     sections,
     status: document.getElementById('gStatus').value,
     coverImage: document.getElementById('gCoverImage').value,
+    coverImageThumb: document.getElementById('gCoverImageThumb').value,
     showcaseVideo: document.getElementById('gShowcaseVideo').value,
     mediaItems: guideMediaItems,
     helpItems: guideHelpItems,
@@ -1470,6 +1480,7 @@ function onHCSectionChange() {
   document.getElementById('hcIconGroup').style.display = noIcon.includes(sec) ? 'none' : '';
   document.getElementById('hcPathGroup').style.display = noPath.includes(sec) ? 'none' : '';
   document.getElementById('hcImageGroup').style.display = showImage.includes(sec) ? '' : 'none';
+  document.getElementById('hcImageThumbGroup').style.display = showImage.includes(sec) ? '' : 'none';
   document.getElementById('hcColorGroup').style.display = hideColor.includes(sec) ? 'none' : '';
   const colorLabel = document.getElementById('hcColorLabel');
   const colorInput = document.getElementById('hcColor');
@@ -1509,6 +1520,7 @@ function openHCEditor(id) {
   document.getElementById('hcPath').value = item ? (item.path||'/services') : '/services';
   document.getElementById('hcPrice').value = item ? (item.price||'') : '';
   document.getElementById('hcImageUrl').value = item ? (item.imageUrl||'') : '';
+  document.getElementById('hcImageUrlThumb').value = item ? (item.imageUrlThumb||'') : '';
   document.getElementById('hcSortOrder').value = item ? item.sortOrder : 0;
   document.getElementById('hcStatus').value = item ? item.status : 'active';
   // 更新图片预览
@@ -1532,6 +1544,7 @@ async function saveHC() {
     path: document.getElementById('hcPath').value,
     price: document.getElementById('hcPrice').value,
     imageUrl: document.getElementById('hcImageUrl').value,
+    imageUrlThumb: document.getElementById('hcImageUrlThumb').value,
     sortOrder: parseInt(document.getElementById('hcSortOrder').value) || 0,
     status: document.getElementById('hcStatus').value,
   };
@@ -1588,6 +1601,7 @@ async function uploadHCImage(input) {
 
     if (res.code === 0 && res.data?.url) {
       document.getElementById('hcImageUrl').value = res.data.url;
+      if (res.data.thumbUrl) { const tb = document.getElementById('hcImageUrlThumb'); if (tb) tb.value = res.data.thumbUrl; }
       const preview = document.getElementById('hcImagePreview');
       preview.src = res.data.url;
       preview.style.display = 'block';

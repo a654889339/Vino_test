@@ -2,13 +2,13 @@
   <!-- 独立背景层（与网页前台一致），背景图铺在底层 -->
   <view class="home-bg">
     <swiper a:if="{{heroBgList.length}}" class="home-bg-swiper" autoplay circular interval="4000" indicator-dots indicator-color="rgba(255,255,255,0.5)">
-      <block a:for="{{heroBgList}}" a:key="*this">
+      <block a:for="{{heroBgList}}" a:key="url">
         <swiper-item>
-          <view class="home-bg-image" style="background-image: url({{item}})"></view>
+          <image class="home-bg-image" src="{{item.displayUrl}}" mode="aspectFill" data-idx="{{index}}" onLoad="onHeroBgLoad" />
         </swiper-item>
       </block>
     </swiper>
-    <view class="home-bg-image" a:elif="{{heroBgUrl}}" style="background-image: url({{heroBgUrl}})"></view>
+    <image a:elif="{{heroBgUrl}}" class="home-bg-image" src="{{heroBgUrl}}" mode="aspectFill" />
   </view>
   <!-- Hero 透明叠在背景上 -->
   <view class="hero">
@@ -29,7 +29,7 @@
     <scroll-view scroll-x class="nav-lg-row" a:if="{{navLgItems.length}}">
       <view class="nav-lg-item" a:for="{{navLgItems}}" a:key="id" onTap="goPath" data-path="{{item.path}}">
         <view class="nav-lg-icon">
-          <image a:if="{{item.imageUrl}}" src="{{item.imageUrl}}" class="nav-lg-img" mode="aspectFill" />
+          <image a:if="{{item.imageUrl}}" src="{{item.imageUrlThumb || item.imageUrl}}" class="nav-lg-img" mode="aspectFill" />
           <text a:else class="nav-lg-emoji">🔧</text>
         </view>
         <text class="nav-lg-label" style="color:{{item.color || '#B91C1C'}}">{{item.title}}</text>
@@ -38,7 +38,7 @@
     <view class="nav-sm-row" a:if="{{navSmItems.length}}">
       <view class="nav-sm-item" a:for="{{navSmItems}}" a:key="id" onTap="goPath" data-path="{{item.path}}">
         <view class="nav-sm-icon">
-          <image a:if="{{item.imageUrl}}" src="{{item.imageUrl}}" class="nav-sm-img" mode="aspectFit" />
+          <image a:if="{{item.imageUrl}}" src="{{item.imageUrlThumb || item.imageUrl}}" class="nav-sm-img" mode="aspectFit" />
           <text a:else class="nav-sm-emoji">📋</text>
         </view>
         <text class="nav-sm-label">{{item.title}}</text>

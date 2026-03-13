@@ -5,9 +5,9 @@
     <!-- Hero + Media merged block -->
     <view class="hero-block">
       <view class="hero" style="background:{{guide.gradient || '#333'}}">
-        <image wx:if="{{guide.coverImage}}" src="{{guide.coverImage}}" class="hero-img" mode="aspectFill" bindtap="previewCover" />
+        <image wx:if="{{guide.coverImage}}" src="{{guide.displayCoverUrl}}" class="hero-img" mode="aspectFill" bindtap="previewCover" bindload="onCoverLoad" />
         <view wx:else class="hero-fallback">
-          <image wx:if="{{guide.iconUrl}}" src="{{guide.iconUrl}}" class="hero-icon-img" />
+          <image wx:if="{{guide.iconUrl}}" src="{{guide.displayIconUrl}}" class="hero-icon-img" bindload="onIconLoad" />
           <text wx:else class="hero-emoji">{{guide.emoji}}</text>
           <text class="hero-name">{{guide.name}}</text>
         </view>

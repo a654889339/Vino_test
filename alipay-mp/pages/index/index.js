@@ -30,8 +30,14 @@ Page({
         const items = res.data || [];
         const headerLogo = items.find(i => i.section === 'headerLogo' && i.status === 'active');
         const homeBgItems = items.filter(i => i.section === 'homeBg' && i.status === 'active');
-        const homeBgList = homeBgItems.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0)).map(i => i.imageUrl).filter(Boolean);
-        const singleBg = homeBgItems[0] ? homeBgItems[0].imageUrl : '';
+        const homeBgList = homeBgItems.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+          .map(i => ({
+            url: i.imageUrl,
+            thumb: (i.imageUrlThumb && i.imageUrlThumb.trim()) ? i.imageUrlThumb.trim() : '',
+            displayUrl: (i.imageUrlThumb && i.imageUrlThumb.trim()) ? i.imageUrlThumb.trim() : (i.imageUrl || ''),
+          }))
+          .filter(i => i.url);
+        const singleBg = homeBgList[0] ? homeBgList[0].displayUrl : '';
         const navSectionTitleItem = items.find(i => i.section === 'navSectionTitle' && i.status === 'active');
         const hotServiceTitleItem = items.find(i => i.section === 'hotServiceTitle' && i.status === 'active');
         const recommendTitleItem = items.find(i => i.section === 'recommendTitle' && i.status === 'active');
@@ -44,10 +50,10 @@ Page({
         };
         const navLg = items.filter(i => i.section === 'navLg' && i.status === 'active')
           .sort((a, b) => a.sortOrder - b.sortOrder)
-          .map(i => ({ id: i.id, title: i.title, imageUrl: i.imageUrl, icon: i.icon, path: i.path || '/pages/service/service', color: i.color }));
+          .map(i => ({ id: i.id, title: i.title, imageUrl: i.imageUrl, imageUrlThumb: i.imageUrlThumb || '', icon: i.icon, path: i.path || '/pages/service/service', color: i.color }));
         const navSm = items.filter(i => i.section === 'navSm' && i.status === 'active')
           .sort((a, b) => a.sortOrder - b.sortOrder)
-          .map(i => ({ id: i.id, title: i.title, imageUrl: i.imageUrl, icon: i.icon, path: i.path || '/pages/service/service', color: i.color }));
+          .map(i => ({ id: i.id, title: i.title, imageUrl: i.imageUrl, imageUrlThumb: i.imageUrlThumb || '', icon: i.icon, path: i.path || '/pages/service/service', color: i.color }));
         this.setData({
           headerLogoUrl: headerLogo ? headerLogo.imageUrl : '',
           heroBgUrl: singleBg,
@@ -62,6 +68,15 @@ Page({
         });
       })
       .catch(() => {});
+  },
+
+  onHeroBgLoad(e) {
+    const idx = e.currentTarget.dataset.idx;
+    const list = this.data.heroBgList || [];
+    if (list[idx] && list[idx].thumb && list[idx].url && list[idx].displayUrl === list[idx].thumb) {
+      list[idx] = { ...list[idx], displayUrl: list[idx].url };
+      this.setData({ heroBgList: list });
+    }
   },
 
   loadHotServices() {

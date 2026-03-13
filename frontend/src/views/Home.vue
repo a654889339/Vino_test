@@ -3,8 +3,8 @@
     <!-- 独立背景层：铺在整页最底层，红框处（卡片两侧）才能透出背景图 -->
     <div class="home-bg" aria-hidden="true">
       <van-swipe v-if="heroBgList.length" class="home-bg-swipe" :autoplay="4000" indicator-color="rgba(255,255,255,0.5)">
-        <van-swipe-item v-for="(img, i) in heroBgList" :key="i">
-          <div class="home-bg-image" :style="{ backgroundImage: `url(${img})` }"></div>
+        <van-swipe-item v-for="(item, i) in heroBgList" :key="i">
+          <LodImg v-if="item.url" :src="item.url" :thumb="item.thumb" class="home-bg-img" />
         </van-swipe-item>
       </van-swipe>
     </div>
@@ -121,6 +121,7 @@ import { ref, watch, nextTick, onMounted, computed } from 'vue';
 import QRCode from 'qrcode';
 import { showToast } from 'vant';
 import { homeConfigApi } from '@/api';
+import LodImg from '@/components/LodImg.vue';
 
 const showShare = ref(false);
 const qrCanvas = ref(null);
@@ -138,12 +139,13 @@ const headerLogoUrl = computed(() => {
   const logo = allItems.value.find(i => i.section === 'headerLogo' && i.status === 'active');
   return logo?.imageUrl || '';
 });
+// 有缩略图则先加载缩略图再原图，无则直接原图
 const heroBgList = computed(() => {
   const list = allItems.value.filter(i => i.section === 'homeBg' && i.status === 'active');
   return (list || [])
     .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
-    .map(i => i.imageUrlThumb || i.imageUrl)
-    .filter(Boolean);
+    .map(i => ({ url: i.imageUrl, thumb: (i.imageUrlThumb && i.imageUrlThumb.trim()) ? i.imageUrlThumb.trim() : '' }))
+    .filter(i => i.url);
 });
 const heroBgFallback = computed(() => allItems.value.find(i => i.section === 'homeBg' && i.status === 'active')?.imageUrl || '');
 const navSectionTitle = computed(() => {
@@ -230,16 +232,14 @@ const copyUrl = async () => {
   height: 100%;
 }
 .home-bg-swipe .van-swipe-item { height: 100%; }
-.home-bg-image {
+.home-bg-img {
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
+  width: 100%;
   height: 100%;
-  background-size: cover;
-  background-position: center center;
-  background-repeat: no-repeat;
+  object-fit: cover;
+  object-position: center;
 }
 
 /* ===== Hero：仅顶部内容区，背景透明以露出 home-bg ===== */

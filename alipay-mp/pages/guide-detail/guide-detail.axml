@@ -5,9 +5,9 @@
     <!-- Hero + Media merged block -->
     <view class="hero-block">
       <view class="hero" style="background:{{guide.gradient || '#333'}}">
-        <image a:if="{{guide.coverImage}}" src="{{guide.coverImage}}" class="hero-img" mode="aspectFill" onTap="previewCover" />
+        <image a:if="{{guide.coverImage}}" src="{{guide.displayCoverUrl}}" class="hero-img" mode="aspectFill" onTap="previewCover" onLoad="onCoverLoad" />
         <view a:else class="hero-fallback">
-          <image a:if="{{guide.iconUrl}}" src="{{guide.iconUrl}}" class="hero-icon-img" />
+          <image a:if="{{guide.iconUrl}}" src="{{guide.displayIconUrl}}" class="hero-icon-img" onLoad="onIconLoad" />
           <text a:else class="hero-emoji">{{guide.emoji}}</text>
           <text class="hero-name">{{guide.name}}</text>
         </view>

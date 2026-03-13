@@ -7,6 +7,7 @@
     :style="imgStyle"
     loading="lazy"
     @load="onLoad"
+    @error="onError"
   />
 </template>
 
@@ -32,6 +33,12 @@ function loadFull() {
 
 function onLoad() {
   if (props.thumb && props.src && displaySrc.value === props.thumb) loadFull();
+}
+
+function onError() {
+  if (props.src && displaySrc.value !== props.src) {
+    displaySrc.value = props.src;
+  }
 }
 
 watch(

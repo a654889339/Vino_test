@@ -23,6 +23,11 @@ const HomeConfig = sequelize.define('HomeConfig', {
     defaultValue: '',
     comment: '图片URL，用于开场动画logo等',
   },
+  imageUrlThumb: {
+    type: DataTypes.STRING(500),
+    defaultValue: '',
+    comment: '缩略图URL，可选，配置后优先加载缩略图再加载原图',
+  },
   color: {
     type: DataTypes.STRING(200),
     defaultValue: '',

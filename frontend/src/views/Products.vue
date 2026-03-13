@@ -60,7 +60,8 @@
           <div class="media-scroll">
             <div v-for="(m, i) in mediaItems" :key="i" class="media-card" @click="openMedia(m)">
               <div class="media-thumb">
-                <img v-if="getThumbUrl(m)" :src="getThumbUrl(m)" />
+                <LodImg v-if="getMediaUrl(m) && !isVideo(m)" :src="getMediaUrl(m)" :thumb="getThumbUrl(m) !== getMediaUrl(m) ? getThumbUrl(m) : ''" class="media-thumb-img" />
+                <img v-else-if="getThumbUrl(m)" :src="getThumbUrl(m)" />
                 <div v-else class="media-thumb-placeholder"><van-icon :name="isVideo(m) ? 'video-o' : 'photo-o'" size="28" color="#999" /></div>
                 <div v-if="isVideo(m)" class="media-play"><van-icon name="play-circle-o" size="24" color="#fff" /></div>
                 <div class="media-label-overlay">{{ m.title }}</div>
@@ -184,6 +185,7 @@ const getThumbUrl = (m) => {
   if (m.thumb && isImageUrl(m.thumb)) return fullUrl(m.thumb);
   if (m.url && isImageUrl(m.url)) return fullUrl(m.url);
   if (m.thumb && !isVideoUrl(m.thumb)) return fullUrl(m.thumb);
+  if (m.url && !isVideoUrl(m.url)) return fullUrl(m.url);
   return '';
 };
 

@@ -2,13 +2,13 @@
   <!-- 独立背景层（与网页前台一致），背景图铺在底层 -->
   <view class="home-bg">
     <swiper wx:if="{{heroBgList.length}}" class="home-bg-swiper" autoplay circular interval="4000" indicator-dots indicator-color="rgba(255,255,255,0.5)">
-      <block wx:for="{{heroBgList}}" wx:key="*this">
+      <block wx:for="{{heroBgList}}" wx:key="url">
         <swiper-item>
-          <view class="home-bg-image" style="background-image: url({{item}})"></view>
+          <image class="home-bg-image" src="{{item.displayUrl}}" mode="aspectFill" data-idx="{{index}}" bindload="onHeroBgLoad" />
         </swiper-item>
       </block>
     </swiper>
-    <view class="home-bg-image" wx:elif="{{heroBgUrl}}" style="background-image: url({{heroBgUrl}})"></view>
+    <image wx:elif="{{heroBgUrl}}" class="home-bg-image" src="{{heroBgUrl}}" mode="aspectFill" />
   </view>
   <!-- Hero 透明叠在背景上 -->
   <view class="hero">
@@ -30,7 +30,7 @@
     <scroll-view scroll-x class="nav-lg-row" wx:if="{{navLgItems.length}}">
       <view class="nav-lg-item" wx:for="{{navLgItems}}" wx:key="id" bindtap="goPath" data-path="{{item.path}}">
         <view class="nav-lg-icon">
-          <image wx:if="{{item.imageUrl}}" src="{{item.imageUrl}}" class="nav-lg-img" mode="aspectFill" />
+          <image wx:if="{{item.imageUrl}}" src="{{item.imageUrlThumb || item.imageUrl}}" class="nav-lg-img" mode="aspectFill" />
           <text wx:else class="nav-lg-emoji">🔧</text>
         </view>
         <text class="nav-lg-label" style="color:{{item.color || '#B91C1C'}}">{{item.title}}</text>
@@ -40,7 +40,7 @@
     <view class="nav-sm-row" wx:if="{{navSmItems.length}}">
       <view class="nav-sm-item" wx:for="{{navSmItems}}" wx:key="id" bindtap="goPath" data-path="{{item.path}}">
         <view class="nav-sm-icon">
-          <image wx:if="{{item.imageUrl}}" src="{{item.imageUrl}}" class="nav-sm-img" mode="aspectFit" />
+          <image wx:if="{{item.imageUrl}}" src="{{item.imageUrlThumb || item.imageUrl}}" class="nav-sm-img" mode="aspectFit" />
           <text wx:else class="nav-sm-emoji">📋</text>
         </view>
         <text class="nav-sm-label">{{item.title}}</text>

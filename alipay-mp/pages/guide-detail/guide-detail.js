@@ -21,9 +21,14 @@ Page({
         const g = res.data || {};
         my.setNavigationBar({ title: g.name || '设备指南' });
         const parse = v => { try { return Array.isArray(v) ? v : JSON.parse(v || '[]'); } catch { return []; } };
-        if (g.coverImage && !g.coverImage.startsWith('http')) {
-          g.coverImage = app.globalData.baseUrl.replace('/api', '') + g.coverImage;
-        }
+        const base = app.globalData.baseUrl.replace('/api', '');
+        const fix = u => (u && !u.startsWith('http') ? base + u : u);
+        if (g.coverImage) g.coverImage = fix(g.coverImage);
+        if (g.coverImageThumb) g.coverImageThumb = fix(g.coverImageThumb);
+        if (g.iconUrl) g.iconUrl = fix(g.iconUrl);
+        if (g.iconUrlThumb) g.iconUrlThumb = fix(g.iconUrlThumb);
+        g.displayCoverUrl = g.coverImageThumb || g.coverImage;
+        g.displayIconUrl = g.iconUrlThumb || g.iconUrl;
         const mediaItems = parse(g.mediaItems).map(m => {
           if (m.thumb && !m.thumb.startsWith('http')) m.thumb = app.globalData.baseUrl.replace('/api', '') + m.thumb;
           if (m.url && !m.url.startsWith('http')) m.url = app.globalData.baseUrl.replace('/api', '') + m.url;
@@ -43,6 +48,18 @@ Page({
       .catch(() => this.setData({ loading: false }));
   },
 
+  onCoverLoad() {
+    const g = this.data.guide;
+    if (g.coverImageThumb && g.displayCoverUrl === g.coverImageThumb) {
+      this.setData({ 'guide.displayCoverUrl': g.coverImage });
+    }
+  },
+  onIconLoad() {
+    const g = this.data.guide;
+    if (g.iconUrlThumb && g.displayIconUrl === g.iconUrlThumb) {
+      this.setData({ 'guide.displayIconUrl': g.iconUrl });
+    }
+  },
   previewCover() {
     const url = this.data.guide.coverImage;
     if (url) my.previewImage({ current: 0, urls: [url] });

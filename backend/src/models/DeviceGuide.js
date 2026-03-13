@@ -28,6 +28,11 @@ const DeviceGuide = sequelize.define('DeviceGuide', {
     type: DataTypes.STRING(500),
     defaultValue: '',
   },
+  iconUrlThumb: {
+    type: DataTypes.STRING(500),
+    defaultValue: '',
+    comment: '图标缩略图URL，可选',
+  },
   emoji: {
     type: DataTypes.STRING(20),
     defaultValue: '',
@@ -65,6 +70,11 @@ const DeviceGuide = sequelize.define('DeviceGuide', {
   coverImage: {
     type: DataTypes.STRING(500),
     defaultValue: '',
+  },
+  coverImageThumb: {
+    type: DataTypes.STRING(500),
+    defaultValue: '',
+    comment: '封面缩略图URL，可选',
   },
   showcaseVideo: {
     type: DataTypes.STRING(500),

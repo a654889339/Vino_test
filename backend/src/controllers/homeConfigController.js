@@ -2,7 +2,7 @@ const HomeConfig = require('../models/HomeConfig');
 const cosUpload = require('../utils/cosUpload');
 const path = require('path');
 
-const FIELDS = ['section','title','desc','icon','color','path','price','sortOrder','status','imageUrl'];
+const FIELDS = ['section','title','desc','icon','color','path','price','sortOrder','status','imageUrl','imageUrlThumb'];
 
 exports.list = async (req, res) => {
   try {
@@ -12,7 +12,8 @@ exports.list = async (req, res) => {
     const items = await HomeConfig.findAll({ where, order: [['section','ASC'],['sortOrder','ASC'],['id','ASC']] });
     const data = items.map(it => {
       const o = it.get ? it.get({ plain: true }) : it;
-      return { ...o, imageUrlThumb: cosUpload.getThumbUrl(o.imageUrl) || null };
+      const thumb = (o.imageUrlThumb && o.imageUrlThumb.trim()) ? o.imageUrlThumb.trim() : (cosUpload.getThumbUrl(o.imageUrl) || null);
+      return { ...o, imageUrlThumb: thumb };
     });
     res.json({ code: 0, data });
   } catch (e) {

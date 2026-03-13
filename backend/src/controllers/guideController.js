@@ -6,8 +6,8 @@ function attachGuideThumbUrls(guide) {
   const g = guide.get ? guide.get({ plain: true }) : guide;
   return {
     ...g,
-    iconUrlThumb: cosUpload.getThumbUrl(g.iconUrl) || null,
-    coverImageThumb: cosUpload.getThumbUrl(g.coverImage) || null,
+    iconUrlThumb: (g.iconUrlThumb && g.iconUrlThumb.trim()) ? g.iconUrlThumb.trim() : (cosUpload.getThumbUrl(g.iconUrl) || null),
+    coverImageThumb: (g.coverImageThumb && g.coverImageThumb.trim()) ? g.coverImageThumb.trim() : (cosUpload.getThumbUrl(g.coverImage) || null),
     qrcodeUrlThumb: cosUpload.getThumbUrl(g.qrcodeUrl) || null,
   };
 }
@@ -71,9 +71,9 @@ exports.adminList = async (req, res) => {
 };
 
 const GUIDE_FIELDS = [
-  'name','slug','subtitle','icon','iconUrl','emoji','gradient','badge',
+  'name','slug','subtitle','icon','iconUrl','iconUrlThumb','emoji','gradient','badge',
   'categoryId','tags','sections','sortOrder','status',
-  'coverImage','showcaseVideo','description','mediaItems','helpItems',
+  'coverImage','coverImageThumb','showcaseVideo','description','mediaItems','helpItems',
 ];
 
 exports.create = async (req, res) => {
