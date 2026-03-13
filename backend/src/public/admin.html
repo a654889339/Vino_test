@@ -426,7 +426,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <img id="hcImagePreview" style="max-width:200px;max-height:100px;margin-top:8px;border-radius:8px;display:none;border:1px solid #eee;background:#1a1a1a;padding:8px" />
           <div class="form-group" id="hcImageThumbGroup" style="display:none;margin-top:8px">
             <label>缩略图 URL <span style="font-weight:normal;color:#999;font-size:12px">（可选，配置后前台先加载缩略图再加载原图）</span></label>
-            <input class="form-input" id="hcImageUrlThumb" placeholder="留空则直接使用原图或系统推导缩略图" />
+            <div style="display:flex;gap:8px;align-items:center">
+              <input class="form-input" id="hcImageUrlThumb" placeholder="留空则直接使用原图或系统推导缩略图" style="flex:1" />
+              <label style="padding:8px 16px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">上传图片<input type="file" accept="image/*" style="display:none" onchange="uploadHCImageThumb(this)" /></label>
+            </div>
           </div>
         </div>
         <div class="form-group" id="hcColorGroup">
@@ -484,7 +487,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
                 <input class="form-input" id="gIconUrl" placeholder="上传自定义图标图片" style="flex:1" onchange="var p=document.getElementById('gIconPreview');if(this.value){p.src=this.value;p.style.display='block'}else{p.style.display='none'}" />
                 <label style="padding:8px 14px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">上传图标<input type="file" accept="image/*" style="display:none" onchange="uploadGuideFile(this,'gIconUrl')" /></label>
               </div>
-              <div class="form-group" style="margin-top:6px"><label>图标缩略图 URL <span style="font-weight:normal;color:#999;font-size:12px">（可选，优先加载）</span></label><input class="form-input" id="gIconUrlThumb" placeholder="留空则直接使用原图" /></div>
+              <div class="form-group" style="margin-top:6px"><label>图标缩略图 URL <span style="font-weight:normal;color:#999;font-size:12px">（可选，优先加载）</span></label><div style="display:flex;gap:8px;align-items:center"><input class="form-input" id="gIconUrlThumb" placeholder="留空则直接使用原图" style="flex:1" /><label style="padding:8px 14px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">上传图片<input type="file" accept="image/*" style="display:none" onchange="uploadGuideFile(this,'gIconUrlThumb')" /></label></div></div>
             </div>
             <div class="form-group"><label>备用Vant图标 <span style="font-weight:normal;color:#999;font-size:12px">（无自定义图标时使用）</span></label><input class="form-input" id="gIcon" placeholder="cluster-o" /></div>
             <div class="form-group"><label>Emoji</label><input class="form-input" id="gEmoji" placeholder="❄️" /></div>
@@ -502,7 +505,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
               </label>
             </div>
             <img id="gCoverPreview" style="max-width:300px;max-height:160px;margin-top:8px;border-radius:8px;display:none;border:1px solid #eee" />
-            <div class="form-group" style="margin-top:8px"><label>封面缩略图 URL <span style="font-weight:normal;color:#999;font-size:12px">（可选，优先加载）</span></label><input class="form-input" id="gCoverImageThumb" placeholder="留空则直接使用原图" /></div>
+            <div class="form-group" style="margin-top:8px"><label>封面缩略图 URL <span style="font-weight:normal;color:#999;font-size:12px">（可选，优先加载）</span></label><div style="display:flex;gap:8px;align-items:center"><input class="form-input" id="gCoverImageThumb" placeholder="留空则直接使用原图" style="flex:1" /><label style="padding:8px 16px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">上传图片<input type="file" accept="image/*" style="display:none" onchange="uploadGuideFile(this,'gCoverImageThumb')" /></label></div></div>
           </div>
           <div class="form-group">
             <label>展示视频</label>
@@ -1613,6 +1616,26 @@ async function uploadHCImage(input) {
     console.error('上传错误:', e);
     alert('上传失败: ' + e.message);
   }
+  input.value = '';
+}
+
+// 上传首页背景图缩略图（仅填充缩略图 URL）
+async function uploadHCImageThumb(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 10 * 1024 * 1024) { alert('图片不能超过 10MB'); input.value = ''; return; }
+  if (!file.type.startsWith('image/')) { alert('只能上传图片'); input.value = ''; return; }
+  const token = localStorage.getItem('vino_admin_token');
+  if (!token) { alert('请先登录'); input.value = ''; return; }
+  showUploadLoading(file.name);
+  try {
+    const formData = new FormData(); formData.append('file', file);
+    const res = await fetch(API + '/home-config/upload', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: formData }).then(r => r.json());
+    if (res.code === 0 && res.data?.url) {
+      const tb = document.getElementById('hcImageUrlThumb'); if (tb) tb.value = res.data.url;
+    } else alert(res.message || '上传失败');
+  } catch (e) { alert('上传失败: ' + (e.message || '')); }
+  hideUploadLoading();
   input.value = '';
 }
 
