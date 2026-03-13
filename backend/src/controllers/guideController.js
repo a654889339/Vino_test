@@ -1,5 +1,16 @@
 const path = require('path');
 const { DeviceGuide, ProductCategory } = require('../models');
+const cosUpload = require('../utils/cosUpload');
+
+function attachGuideThumbUrls(guide) {
+  const g = guide.get ? guide.get({ plain: true }) : guide;
+  return {
+    ...g,
+    iconUrlThumb: cosUpload.getThumbUrl(g.iconUrl) || null,
+    coverImageThumb: cosUpload.getThumbUrl(g.coverImage) || null,
+    qrcodeUrlThumb: cosUpload.getThumbUrl(g.qrcodeUrl) || null,
+  };
+}
 
 /** 前台：获取商品种类列表（仅启用） */
 exports.categories = async (req, res) => {
@@ -25,7 +36,7 @@ exports.list = async (req, res) => {
       where,
       order: [['sortOrder', 'ASC'], ['id', 'ASC']],
     });
-    res.json({ code: 0, data: guides });
+    res.json({ code: 0, data: guides.map(attachGuideThumbUrls) });
   } catch (err) {
     console.error('[Guide] list error:', err.message);
     res.status(500).json({ code: 500, message: '获取列表失败' });
@@ -39,7 +50,7 @@ exports.detail = async (req, res) => {
       ? await DeviceGuide.findByPk(param)
       : await DeviceGuide.findOne({ where: { slug: param } });
     if (!guide) return res.status(404).json({ code: 404, message: '不存在' });
-    res.json({ code: 0, data: guide });
+    res.json({ code: 0, data: attachGuideThumbUrls(guide) });
   } catch (err) {
     console.error('[Guide] detail error:', err.message);
     res.status(500).json({ code: 500, message: '获取详情失败' });
@@ -52,7 +63,7 @@ exports.adminList = async (req, res) => {
       include: [{ model: require('../models').ProductCategory, as: 'category', attributes: ['id', 'name'] }],
       order: [['sortOrder', 'ASC'], ['id', 'ASC']],
     });
-    res.json({ code: 0, data: guides });
+    res.json({ code: 0, data: guides.map(attachGuideThumbUrls) });
   } catch (err) {
     console.error('[Guide] adminList error:', err.message);
     res.status(500).json({ code: 500, message: '获取列表失败' });
@@ -124,11 +135,13 @@ exports.remove = async (req, res) => {
 exports.uploadFile = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ code: 400, message: '未选择文件' });
-    const cosUpload = require('../utils/cosUpload');
     const ext = path.extname(req.file.originalname) || '.bin';
     const filename = `guide-${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`;
-    const url = await cosUpload.upload(req.file.buffer, filename, req.file.mimetype);
-    res.json({ code: 0, data: { url } });
+    const isImage = (req.file.mimetype || '').startsWith('image/');
+    const result = isImage
+      ? await cosUpload.uploadWithThumb(req.file.buffer, filename, req.file.mimetype)
+      : { url: await cosUpload.upload(req.file.buffer, filename, req.file.mimetype), thumbUrl: null };
+    res.json({ code: 0, data: { url: result.url, thumbUrl: result.thumbUrl || null } });
   } catch (err) {
     console.error('[Guide] uploadFile error:', err.message);
     res.status(500).json({ code: 500, message: '上传失败: ' + err.message });
@@ -138,7 +151,6 @@ exports.uploadFile = async (req, res) => {
 exports.generateQRCode = async (req, res) => {
   try {
     const QRCode = require('qrcode');
-    const cosUpload = require('../utils/cosUpload');
     const guide = await DeviceGuide.findByPk(req.params.id);
     if (!guide) return res.status(404).json({ code: 1, message: '商品不存在' });
     const forceRegen = req.body && req.body.force;
@@ -147,7 +159,7 @@ exports.generateQRCode = async (req, res) => {
     const pageUrl = frontendBase + '/guide/' + (guide.slug || guide.id);
     const buffer = await QRCode.toBuffer(pageUrl, { width: 400, margin: 2, type: 'png' });
     const filename = `qrcode_guide_${guide.id}_${Date.now()}.png`;
-    const cosUrl = await cosUpload.upload(buffer, filename, 'image/png');
+    const { url: cosUrl } = await cosUpload.uploadWithThumb(buffer, filename, 'image/png', { maxWidth: 120 });
     guide.qrcodeUrl = cosUrl;
     await guide.save();
     res.json({ code: 0, data: { url: cosUrl } });

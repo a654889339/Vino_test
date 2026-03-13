@@ -71,7 +71,7 @@
             @click="showAllGuides = false; openGuide(device)"
           >
             <div class="all-guide-icon" :style="{ background: device.iconUrl ? '#fff' : device.gradient }">
-              <img v-if="device.iconUrl" :src="device.iconUrl" class="guide-icon-img-sm" />
+              <LodImg v-if="device.iconUrl" :src="device.iconUrl" :thumb="device.iconUrlThumb" class="guide-icon-img-sm" />
               <van-icon v-else :name="device.icon" size="24" color="#fff" />
             </div>
             <div class="all-guide-info">
@@ -91,6 +91,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { serviceApi } from '@/api';
+import LodImg from '@/components/LodImg.vue';
 
 const activeTab = ref(0);
 const categories = ref([]);

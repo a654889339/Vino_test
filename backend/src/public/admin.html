@@ -34,7 +34,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 .dashboard{display:none}
 .dash-header{background:#1a1a1a;color:#fff;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
-.dash-header svg{width:80px;height:auto}
+.dash-header .dash-header-logo{display:flex;align-items:center;height:36px}
+.dash-header .dash-header-logo img{max-height:36px;width:auto;object-fit:contain}
+.dash-header .dash-header-logo svg{width:80px;height:auto}
+.hc-edit-name{font-size:11px;color:var(--primary);margin-left:4px;text-decoration:none}
+.hc-edit-name:hover{text-decoration:underline}
 .dash-user{display:flex;align-items:center;gap:12px}
 .dash-user span{font-size:14px;color:rgba(255,255,255,.8)}
 .dash-logout{padding:6px 16px;background:rgba(255,255,255,.1);color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;transition:background .2s}
@@ -170,13 +174,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 <div class="dashboard" id="dashboard">
   <div class="dash-header">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 200">
-      <path d="M18 35 L58 35 L100 145 L142 35 L160 35 L108 170 L92 170 Z" fill="#B91C1C"/>
-      <path d="M165 35 L195 35 L195 170 L165 170 Z" fill="#B91C1C"/>
-      <path d="M210 35 L240 35 L320 140 L320 35 L350 35 L350 170 L320 170 L240 65 L240 170 L210 170 Z" fill="#B91C1C"/>
-      <circle cx="420" cy="102" r="68" stroke="#B91C1C" stroke-width="28" fill="none"/>
-      <path d="M405 72 C410 58,435 55,440 72 C445 89,420 98,415 112 C410 126,430 138,445 125 C435 145,405 138,400 120 C395 102,418 95,425 80 C430 70,412 65,408 75Z" fill="#B91C1C"/>
-    </svg>
+    <div class="dash-header-logo" id="dashHeaderLogoWrap">
+      <img id="dashHeaderLogoImg" src="" alt="Logo" style="display:none" />
+      <svg id="dashHeaderLogoSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 200">
+        <path d="M18 35 L58 35 L100 145 L142 35 L160 35 L108 170 L92 170 Z" fill="#B91C1C"/>
+        <path d="M165 35 L195 35 L195 170 L165 170 Z" fill="#B91C1C"/>
+        <path d="M210 35 L240 35 L320 140 L320 35 L350 35 L350 170 L320 170 L240 65 L240 170 L210 170 Z" fill="#B91C1C"/>
+        <circle cx="420" cy="102" r="68" stroke="#B91C1C" stroke-width="28" fill="none"/>
+        <path d="M405 72 C410 58,435 55,440 72 C445 89,420 98,415 112 C410 126,430 138,445 125 C435 145,405 138,400 120 C395 102,418 95,425 80 C430 70,412 65,408 75Z" fill="#B91C1C"/>
+      </svg>
+    </div>
     <div class="dash-user">
       <span id="dashUsername"></span>
       <button class="dash-logout" onclick="handleLogout()">退出登录</button>
@@ -301,16 +308,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
           <button class="btn" onclick="filterHC('all')" id="hcFilterAll" style="background:var(--primary);color:#fff">全部</button>
           <!-- banner removed from frontend, hidden filter -->
-          <button class="btn" onclick="filterHC('navLg')" id="hcFilterNavLg" data-section-type="navSectionTitle" title="双击可修改名称，将同步到前台" ondblclick="handleHCFilterDblclick('navSectionTitle','自助预约',this)">自助预约(大)</button>
-          <button class="btn" onclick="filterHC('navSm')" id="hcFilterNavSm" data-section-type="navSectionTitle" title="双击可修改名称，将同步到前台" ondblclick="handleHCFilterDblclick('navSectionTitle','自助预约',this)">自助预约(小)</button>
-          <button class="btn" onclick="filterHC('hotService')" id="hcFilterHotService" data-section-type="hotServiceTitle" title="双击可修改名称，将同步到前台" ondblclick="handleHCFilterDblclick('hotServiceTitle','热门服务',this)">热门服务</button>
-          <button class="btn" onclick="filterHC('recommend')" id="hcFilterRecommend" data-section-type="recommendTitle" title="双击可修改名称，将同步到前台" ondblclick="handleHCFilterDblclick('recommendTitle','为你推荐',this)">为你推荐</button>
+          <button class="btn" id="hcFilterNavLg" onclick="filterHC('navLg')" title="点击筛选；点击「改」可修改名称并同步前台"><span id="hcFilterNavLgText">自助预约(大)</span> <a href="javascript:void(0)" class="hc-edit-name" onclick="event.preventDefault();event.stopPropagation();handleHCFilterDblclick('navSectionTitle','自助预约',this)">改</a></button>
+          <button class="btn" id="hcFilterNavSm" onclick="filterHC('navSm')" title="点击筛选；点击「改」可修改名称并同步前台"><span id="hcFilterNavSmText">自助预约(小)</span> <a href="javascript:void(0)" class="hc-edit-name" onclick="event.preventDefault();event.stopPropagation();handleHCFilterDblclick('navSectionTitle','自助预约',this)">改</a></button>
+          <button class="btn" id="hcFilterHotService" onclick="filterHC('hotService')" title="点击筛选；点击「改」可修改名称并同步前台"><span id="hcFilterHotServiceText">热门服务</span> <a href="javascript:void(0)" class="hc-edit-name" onclick="event.preventDefault();event.stopPropagation();handleHCFilterDblclick('hotServiceTitle','热门服务',this)">改</a></button>
+          <button class="btn" id="hcFilterRecommend" onclick="filterHC('recommend')" title="点击筛选；点击「改」可修改名称并同步前台"><span id="hcFilterRecommendText">为你推荐</span> <a href="javascript:void(0)" class="hc-edit-name" onclick="event.preventDefault();event.stopPropagation();handleHCFilterDblclick('recommendTitle','为你推荐',this)">改</a></button>
           <button class="btn" onclick="filterHC('splash')" id="hcFilterSplash">开场动画</button>
           <button class="btn" onclick="filterHC('headerLogo')" id="hcFilterHeaderLogo">首页Logo</button>
           <button class="btn" onclick="filterHC('homeBg')" id="hcFilterHomeBg">首页背景</button>
           <button class="btn" onclick="filterHC('hotServiceSpacing')" id="hcFilterHotServiceSpacing">热门服务距上</button>
           <button class="btn" onclick="filterHC('recommendSpacing')" id="hcFilterRecommendSpacing">为你推荐距上</button>
           <button class="btn" onclick="openHCEditor()" style="margin-left:auto;background:#059669;color:#fff">+ 新增项目</button>
+          <button class="btn" onclick="generateThumbs()" style="background:#6366F1;color:#fff" title="为商品配置与首页背景中已有图片生成缩略图并上传到 COS">为已有图片生成缩略图</button>
         </div>
         <table class="order-table" id="hcTable">
           <thead><tr><th>ID</th><th>板块</th><th>标题</th><th>描述</th><th>图标</th><th>图片</th><th>颜色/背景</th><th>跳转</th><th>价格</th><th>排序</th><th>状态</th><th>操作</th></tr></thead>
@@ -699,6 +707,28 @@ function showDashboard(user) {
     [1,2,3].forEach(i => { if (navItems[i]) navItems[i].style.display = ''; });
   }
   loadOrderStats();
+  loadDashHeaderLogo();
+}
+
+async function loadDashHeaderLogo() {
+  try {
+    const res = await api('/home-config?section=headerLogo');
+    const list = (res.data || []).filter(i => i.status === 'active');
+    const logo = list[0];
+    const imgEl = document.getElementById('dashHeaderLogoImg');
+    const svgEl = document.getElementById('dashHeaderLogoSvg');
+    if (imgEl && svgEl) {
+      if (logo && logo.imageUrl) {
+        imgEl.src = logo.imageUrl;
+        imgEl.style.display = '';
+        svgEl.style.display = 'none';
+      } else {
+        imgEl.src = '';
+        imgEl.style.display = 'none';
+        svgEl.style.display = '';
+      }
+    }
+  } catch { /* keep default svg */ }
 }
 
 function handleLogout() {
@@ -994,10 +1024,10 @@ async function loadGuides() {
         <td><strong>${g.name}</strong></td>
         <td style="font-size:12px;color:#6366F1;font-family:monospace">${g.slug || '<span style="color:#ccc">-</span>'}</td>
         <td style="font-size:12px;color:#666">${g.subtitle || '-'}</td>
-        <td>${g.iconUrl ? '<img src="'+g.iconUrl+'" style="width:36px;height:36px;object-fit:contain;border-radius:8px;background:#f5f5f5;padding:2px">' : (g.icon || '-')}</td>
+        <td>${g.iconUrl ? '<img src="'+(g.iconUrlThumb||g.iconUrl)+'" data-full-src="'+(g.iconUrlThumb?g.iconUrl:'')+'" style="width:36px;height:36px;object-fit:contain;border-radius:8px;background:#f5f5f5;padding:2px" class="lod-img">' : (g.icon || '-')}</td>
         <td><span style="display:inline-block;padding:4px 14px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:500;transition:all .2s;${g.status==='active'?'background:#D1FAE5;color:#059669':'background:#F3F4F6;color:#999'}" onclick="toggleGuideStatus(${g.id},'${g.status}')">${g.status==='active'?'启用':'禁用'}</span></td>
         <td>${g.qrcodeUrl
-          ? '<img src="'+g.qrcodeUrl+'" style="width:48px;height:48px;cursor:pointer;border:1px solid #eee;border-radius:6px" onclick="showGuideQR('+g.id+',\''+escapeHtml(g.name)+'\',\''+g.qrcodeUrl+'\')" title="点击查看大图" />'
+          ? '<img src="'+(g.qrcodeUrlThumb||g.qrcodeUrl)+'" data-full-src="'+(g.qrcodeUrlThumb?g.qrcodeUrl:'')+'" style="width:48px;height:48px;cursor:pointer;border:1px solid #eee;border-radius:6px" onclick="showGuideQR('+g.id+',\''+escapeHtml(g.name)+'\',\''+g.qrcodeUrl+'\')" title="点击查看大图" class="lod-img" />'
           : '<button class="detail-btn" onclick="showGuideQR('+g.id+',\''+escapeHtml(g.name)+'\',\'\')">生成</button>'
         }</td>
         <td>
@@ -1007,6 +1037,7 @@ async function loadGuides() {
       </tr>`).join('');
     }
   } catch { tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#B91C1C">加载失败</td></tr>'; }
+  setTimeout(upgradeLodImages, 0);
 }
 
 let allCategories = [];
@@ -1327,6 +1358,7 @@ async function loadHomeConfig() {
     allHCItems = res.data || [];
     renderHCTable();
     updateHCFilterButtonLabels();
+    loadDashHeaderLogo();
   } catch { document.getElementById('hcBody').innerHTML = ''; }
 }
 
@@ -1337,12 +1369,12 @@ function updateHCFilterButtonLabels() {
     return t;
   };
   const navTitle = getTitle('navSectionTitle') || '自助预约';
-  const elLg = document.getElementById('hcFilterNavLg'); if (elLg) elLg.textContent = navTitle + '(大)';
-  const elSm = document.getElementById('hcFilterNavSm'); if (elSm) elSm.textContent = navTitle + '(小)';
+  const elLg = document.getElementById('hcFilterNavLgText'); if (elLg) elLg.textContent = navTitle + '(大)';
+  const elSm = document.getElementById('hcFilterNavSmText'); if (elSm) elSm.textContent = navTitle + '(小)';
   const hotTitle = getTitle('hotServiceTitle') || '热门服务';
-  const hotEl = document.getElementById('hcFilterHotService'); if (hotEl) hotEl.textContent = hotTitle;
+  const hotEl = document.getElementById('hcFilterHotServiceText'); if (hotEl) hotEl.textContent = hotTitle;
   const recTitle = getTitle('recommendTitle') || '为你推荐';
-  const recEl = document.getElementById('hcFilterRecommend'); if (recEl) recEl.textContent = recTitle;
+  const recEl = document.getElementById('hcFilterRecommendText'); if (recEl) recEl.textContent = recTitle;
 }
 
 async function handleHCFilterDblclick(sectionType, defaultLabel, btnEl) {
@@ -1384,7 +1416,7 @@ function renderHCTable() {
     <td style="font-weight:500">${h.title}</td>
     <td style="color:#666;font-size:13px">${h.desc||''}</td>
     <td>${h.icon ? '<span style="font-family:monospace;font-size:12px;background:#F3F4F6;padding:2px 6px;border-radius:4px">'+h.icon+'</span>' : '-'}</td>
-    <td>${h.imageUrl ? '<img src="'+h.imageUrl+'" style="max-width:60px;max-height:30px;border-radius:4px;background:#1a1a1a;padding:2px" />' : '-'}</td>
+    <td>${h.imageUrl ? '<img src="'+(h.imageUrlThumb||h.imageUrl)+'" data-full-src="'+(h.imageUrlThumb?(h.imageUrl||''):'')+'" style="max-width:60px;max-height:30px;border-radius:4px;background:#1a1a1a;padding:2px" class="lod-img" />' : '-'}</td>
     <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px" title="${h.color||''}">${h.color ? '<span style="display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:middle;margin-right:4px;background:'+h.color+'"></span>'+h.color.substring(0,25) : '-'}</td>
     <td style="font-size:12px">${h.path||'-'}</td>
     <td>${h.price ? '¥'+h.price : '-'}</td>
@@ -1395,6 +1427,26 @@ function renderHCTable() {
       <button class="btn btn-sm" onclick="deleteHC(${h.id})" style="background:#DC2626;color:#fff">删除</button>
     </td>
   </tr>`).join('');
+  setTimeout(upgradeLodImages, 0);
+}
+
+function upgradeLodImages() {
+  document.querySelectorAll('img.lod-img[data-full-src]').forEach(img => {
+    const full = img.getAttribute('data-full-src');
+    if (!full) return;
+    const i = new Image();
+    i.onload = () => { img.src = full; img.removeAttribute('data-full-src'); };
+    i.src = full;
+  });
+}
+
+async function generateThumbs() {
+  if (!confirm('将为「商品配置」与「首页配置」中已上传到 COS 的图片批量生成缩略图并上传，是否继续？')) return;
+  try {
+    const res = await api('/admin/generate-thumbs', { method: 'POST' });
+    if (res.code === 0) alert(res.data.message || '完成');
+    else alert(res.message || '失败');
+  } catch (e) { alert('请求失败：' + (e.message || '网络错误')); }
 }
 
 function onHCSectionChange() {

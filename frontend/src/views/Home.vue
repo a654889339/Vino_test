@@ -58,7 +58,7 @@
       <div class="nav-lg-row" v-if="navLgItems.length">
         <div class="nav-lg-item" v-for="item in navLgItems" :key="item.id" @click="$router.push(item.path)">
           <div class="nav-lg-icon">
-            <img v-if="item.imageUrl" :src="item.imageUrl" class="nav-lg-img" />
+            <img v-if="item.imageUrl" :src="item.imageUrlThumb || item.imageUrl" class="nav-lg-img" />
             <van-icon v-else :name="item.icon || 'apps-o'" size="36" :color="item.color || '#B91C1C'" />
           </div>
           <span class="nav-lg-label" :style="{ color: item.color || '#B91C1C' }">{{ item.title }}</span>
@@ -68,7 +68,7 @@
       <div class="nav-sm-row" v-if="navSmItems.length">
         <div class="nav-sm-item" v-for="item in navSmItems" :key="item.id" @click="$router.push(item.path)">
           <div class="nav-sm-icon">
-            <img v-if="item.imageUrl" :src="item.imageUrl" class="nav-sm-img" />
+            <img v-if="item.imageUrl" :src="item.imageUrlThumb || item.imageUrl" class="nav-sm-img" />
             <van-icon v-else :name="item.icon || 'apps-o'" size="20" color="#666" />
           </div>
           <span class="nav-sm-label">{{ item.title }}</span>
@@ -140,7 +140,10 @@ const headerLogoUrl = computed(() => {
 });
 const heroBgList = computed(() => {
   const list = allItems.value.filter(i => i.section === 'homeBg' && i.status === 'active');
-  return (list || []).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0)).map(i => i.imageUrl).filter(Boolean);
+  return (list || [])
+    .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+    .map(i => i.imageUrlThumb || i.imageUrl)
+    .filter(Boolean);
 });
 const heroBgFallback = computed(() => allItems.value.find(i => i.section === 'homeBg' && i.status === 'active')?.imageUrl || '');
 const navSectionTitle = computed(() => {
@@ -169,12 +172,12 @@ const recommendSpacingPx = computed(() => {
 const navLgItems = computed(() =>
   allItems.value.filter(i => i.section === 'navLg' && i.status === 'active')
     .sort((a, b) => a.sortOrder - b.sortOrder)
-    .map(i => ({ id: i.id, title: i.title, icon: i.icon, imageUrl: i.imageUrl, path: i.path || '/services', color: i.color }))
+    .map(i => ({ id: i.id, title: i.title, icon: i.icon, imageUrl: i.imageUrl, imageUrlThumb: i.imageUrlThumb, path: i.path || '/services', color: i.color }))
 );
 const navSmItems = computed(() =>
   allItems.value.filter(i => i.section === 'navSm' && i.status === 'active')
     .sort((a, b) => a.sortOrder - b.sortOrder)
-    .map(i => ({ id: i.id, title: i.title, icon: i.icon, imageUrl: i.imageUrl, path: i.path || '/services', color: i.color }))
+    .map(i => ({ id: i.id, title: i.title, icon: i.icon, imageUrl: i.imageUrl, imageUrlThumb: i.imageUrlThumb, path: i.path || '/services', color: i.color }))
 );
 const hotServices = computed(() =>
   allItems.value.filter(i => i.section === 'hotService' && i.status === 'active')

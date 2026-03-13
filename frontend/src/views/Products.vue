@@ -39,18 +39,18 @@
       <div class="hero-block">
         <div class="hero-section">
           <div v-if="guide.showcaseVideo" class="hero-video-wrap" @click="playVideo(fullUrl(guide.showcaseVideo))">
-            <img v-if="guide.coverImage" :src="fullUrl(guide.coverImage)" class="hero-img" />
+            <LodImg v-if="guide.coverImage" :src="fullUrl(guide.coverImage)" :thumb="guide.coverImageThumb ? fullUrl(guide.coverImageThumb) : ''" class="hero-img" />
             <div v-else class="hero-placeholder" :style="{ background: guide.gradient }">
-              <img v-if="guide.iconUrl" :src="guide.iconUrl" style="width:64px;height:64px;object-fit:contain" />
+              <LodImg v-if="guide.iconUrl" :src="guide.iconUrl" :thumb="guide.iconUrlThumb" style="width:64px;height:64px;object-fit:contain" />
               <van-icon v-else :name="guide.icon" size="64" color="#fff" />
             </div>
             <div class="hero-play-btn"><van-icon name="play-circle" size="48" color="#fff" /></div>
           </div>
           <div v-else-if="guide.coverImage" class="hero-img-wrap" @click="previewImage(fullUrl(guide.coverImage))">
-            <img :src="fullUrl(guide.coverImage)" class="hero-img" />
+            <LodImg :src="fullUrl(guide.coverImage)" :thumb="guide.coverImageThumb ? fullUrl(guide.coverImageThumb) : ''" class="hero-img" />
           </div>
           <div v-else class="hero-gradient" :style="{ background: guide.gradient }">
-            <img v-if="guide.iconUrl" :src="guide.iconUrl" style="width:64px;height:64px;object-fit:contain" />
+            <LodImg v-if="guide.iconUrl" :src="guide.iconUrl" :thumb="guide.iconUrlThumb" style="width:64px;height:64px;object-fit:contain" />
             <van-icon v-else :name="guide.icon" size="64" color="#fff" />
             <h2>{{ guide.name }}</h2>
           </div>
@@ -122,6 +122,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { showImagePreview } from 'vant';
 import { guideApi } from '@/api';
+import LodImg from '@/components/LodImg.vue';
 
 const categories = ref([]);
 const selectedCategoryId = ref(null);

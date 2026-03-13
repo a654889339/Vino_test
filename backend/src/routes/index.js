@@ -7,6 +7,8 @@ const guideRoutes = require('./guide');
 const productCategoryRoutes = require('./productCategory');
 const homeConfigRoutes = require('./homeConfig');
 const messageRoutes = require('./message');
+const { authMiddleware, adminMiddleware } = require('../middleware/auth');
+const adminController = require('../controllers/adminController');
 
 const router = Router();
 
@@ -18,6 +20,8 @@ router.use('/guides', guideRoutes);
 router.use('/product-categories', productCategoryRoutes);
 router.use('/home-config', homeConfigRoutes);
 router.use('/messages', messageRoutes);
+
+router.post('/admin/generate-thumbs', authMiddleware, adminMiddleware, adminController.generateThumbs);
 
 router.get('/health', (req, res) => {
   res.json({ code: 0, message: 'Vino服务运行中', timestamp: new Date().toISOString() });

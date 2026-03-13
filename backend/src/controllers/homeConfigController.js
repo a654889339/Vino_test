@@ -10,7 +10,11 @@ exports.list = async (req, res) => {
     if (req.query.section) where.section = req.query.section;
     if (!req.query.all) where.status = 'active';
     const items = await HomeConfig.findAll({ where, order: [['section','ASC'],['sortOrder','ASC'],['id','ASC']] });
-    res.json({ code: 0, data: items });
+    const data = items.map(it => {
+      const o = it.get ? it.get({ plain: true }) : it;
+      return { ...o, imageUrlThumb: cosUpload.getThumbUrl(o.imageUrl) || null };
+    });
+    res.json({ code: 0, data });
   } catch (e) {
     res.status(500).json({ code: 1, message: e.message });
   }
@@ -51,7 +55,7 @@ exports.remove = async (req, res) => {
   }
 };
 
-// 上传首页配置图片（如开场动画logo）
+// 上传首页配置图片（如开场动画、首页背景、Logo），同时上传缩略图用于 LOD
 exports.uploadImage = async (req, res) => {
   try {
     if (!req.file) {
@@ -59,8 +63,8 @@ exports.uploadImage = async (req, res) => {
     }
     const ext = path.extname(req.file.originalname) || '.png';
     const filename = `homeconfig-${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`;
-    const url = await cosUpload.upload(req.file.buffer, filename, req.file.mimetype);
-    res.json({ code: 0, data: { url } });
+    const { url, thumbUrl } = await cosUpload.uploadWithThumb(req.file.buffer, filename, req.file.mimetype);
+    res.json({ code: 0, data: { url, thumbUrl: thumbUrl || null } });
   } catch (e) {
     res.status(500).json({ code: 1, message: e.message });
   }
