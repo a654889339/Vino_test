@@ -388,7 +388,8 @@ exports.bindProduct = async (req, res) => {
       where: { userId: req.user.id, productKey },
       defaults: { userId: req.user.id, productKey },
     });
-    res.json({ code: 0, data: { productKey, productName: product.name }, message: '绑定成功' });
+    const guideSlug = (product.guideSlug && String(product.guideSlug).trim()) ? String(product.guideSlug).trim() : '';
+    res.json({ code: 0, data: { productKey, productName: product.name, guideSlug }, message: '绑定成功' });
   } catch (err) {
     console.error('[Auth] bindProduct error:', err.message);
     res.status(500).json({ code: 500, message: err.message || '绑定失败' });

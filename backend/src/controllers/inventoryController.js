@@ -88,7 +88,7 @@ exports.listProducts = async (req, res) => {
 
 exports.createProduct = async (req, res) => {
   try {
-    const { categoryId, name, serialNumber, sortOrder, status } = req.body;
+    const { categoryId, name, serialNumber, guideSlug, sortOrder, status } = req.body;
     if (!categoryId) return res.status(400).json({ code: 400, message: '请选择种类' });
     if (!name || !name.trim()) return res.status(400).json({ code: 400, message: '商品名称不能为空' });
     if (!serialNumber || !String(serialNumber).trim()) return res.status(400).json({ code: 400, message: '序列号不能为空' });
@@ -101,6 +101,7 @@ exports.createProduct = async (req, res) => {
       categoryId,
       name: name.trim(),
       serialNumber: sn,
+      guideSlug: guideSlug != null ? String(guideSlug).trim() : '',
       sortOrder: parseInt(sortOrder, 10) || 0,
       status: status || 'active',
     });
@@ -115,7 +116,7 @@ exports.updateProduct = async (req, res) => {
   try {
     const product = await InventoryProduct.findByPk(req.params.id);
     if (!product) return res.status(404).json({ code: 404, message: '商品不存在' });
-    const { categoryId, name, serialNumber, sortOrder, status } = req.body;
+    const { categoryId, name, serialNumber, guideSlug, sortOrder, status } = req.body;
     if (categoryId != null) product.categoryId = categoryId;
     if (name !== undefined) product.name = name.trim();
     if (serialNumber !== undefined && String(serialNumber).trim()) {
@@ -126,6 +127,7 @@ exports.updateProduct = async (req, res) => {
         product.serialNumber = sn;
       }
     }
+    if (guideSlug !== undefined) product.guideSlug = String(guideSlug).trim();
     if (sortOrder !== undefined) product.sortOrder = parseInt(sortOrder, 10) || 0;
     if (status !== undefined) product.status = status;
     await product.save();
@@ -155,7 +157,10 @@ exports.getBindQrUrl = async (req, res) => {
     const product = await InventoryProduct.findByPk(req.params.id);
     if (!product) return res.status(404).json({ code: 404, message: '商品不存在' });
     const frontendBase = process.env.FRONTEND_URL || 'http://106.54.50.88:5201';
-    const bindUrl = `${frontendBase}/bind-product?sn=${encodeURIComponent(product.serialNumber)}`;
+    let bindUrl = `${frontendBase}/bind-product?sn=${encodeURIComponent(product.serialNumber)}`;
+    if (product.guideSlug && String(product.guideSlug).trim()) {
+      bindUrl += '&guide=' + encodeURIComponent(String(product.guideSlug).trim());
+    }
     const dataUrl = await QRCode.toDataURL(bindUrl, { width: 400, margin: 2 });
     res.json({ code: 0, data: { url: bindUrl, serialNumber: product.serialNumber, dataUrl } });
   } catch (err) {

@@ -637,6 +637,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <div class="form-group"><label>种类 *</label><select class="form-input" id="invProductCategoryId"><option value="">请选择种类</option></select></div>
           <div class="form-group"><label>商品名称 *</label><input class="form-input" id="invProductName" placeholder="如：某某型号空调" /></div>
           <div class="form-group"><label>序列号 (key) * <span style="font-weight:normal;color:#999;font-size:12px">（唯一，扫码绑定时作为参数）</span></label><input class="form-input" id="invProductSerialNumber" placeholder="如：AC-2024-001" /></div>
+          <div class="form-group"><label>商品配置 <span style="font-weight:normal;color:#999;font-size:12px">（如 aircondition，将作为二维码链接参数，绑定后跳转 /guide/商品配置）</span></label><input class="form-input" id="invProductGuideSlug" placeholder="如：aircondition 或 Centralair-conditioning" /></div>
           <div class="form-group"><label>排序</label><input type="number" class="form-input" id="invProductSort" value="0" /></div>
           <div class="form-group"><label>状态</label><select class="form-input" id="invProductStatus"><option value="active">启用</option><option value="inactive">禁用</option></select></div>
           <button class="submit-btn" onclick="saveInvProduct()">保存</button>
@@ -1576,6 +1577,7 @@ function openInvProductEditor(product) {
   sel.value = product && product.categoryId ? product.categoryId : '';
   document.getElementById('invProductName').value = product ? product.name : '';
   document.getElementById('invProductSerialNumber').value = product ? product.serialNumber : '';
+  document.getElementById('invProductGuideSlug').value = product && product.guideSlug ? product.guideSlug : '';
   document.getElementById('invProductSort').value = product ? product.sortOrder : 0;
   document.getElementById('invProductStatus').value = product ? product.status : 'active';
   document.getElementById('invProductModal').style.display = 'flex';
@@ -1592,7 +1594,8 @@ async function saveInvProduct() {
   if (!name) { alert('商品名称不能为空'); return; }
   if (!serialNumber) { alert('序列号不能为空'); return; }
   try {
-    const body = { categoryId: parseInt(categoryId, 10), name, serialNumber, sortOrder: parseInt(document.getElementById('invProductSort').value) || 0, status: document.getElementById('invProductStatus').value };
+    const guideSlug = document.getElementById('invProductGuideSlug').value.trim();
+    const body = { categoryId: parseInt(categoryId, 10), name, serialNumber, guideSlug, sortOrder: parseInt(document.getElementById('invProductSort').value) || 0, status: document.getElementById('invProductStatus').value };
     const res = id ? await api('/inventory/products/' + id, { method: 'PUT', body }) : await api('/inventory/products', { method: 'POST', body });
     if (res.code === 0) { closeInvProductEditor(); loadInventoryProducts(); }
     else alert(res.message || '保存失败');

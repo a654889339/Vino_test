@@ -51,6 +51,11 @@ onMounted(async () => {
   try {
     const res = await authApi.bindProduct({ sn: sn.value });
     if (res.code === 0) {
+      const guideSlug = (res.data && res.data.guideSlug && String(res.data.guideSlug).trim()) || (route.query.guide && String(route.query.guide).trim());
+      if (guideSlug) {
+        router.replace('/guide/' + encodeURIComponent(guideSlug));
+        return;
+      }
       result.value = 'success';
       productName.value = res.data?.productName || '';
     } else {
