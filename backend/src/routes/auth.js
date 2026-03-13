@@ -21,5 +21,7 @@ router.get('/profile', authMiddleware, authController.getProfile);
 router.put('/profile', authMiddleware, authController.updateProfile);
 router.post('/upload-avatar', authMiddleware, upload.single('avatar'), authController.uploadAvatar);
 router.get('/admin/users', authMiddleware, adminMiddleware, authController.adminGetUsers);
+router.get('/my-products', authMiddleware, authController.myProducts);
+router.post('/bind-product', authMiddleware, authController.bindProduct);
 
 module.exports = router;

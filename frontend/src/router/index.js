@@ -76,6 +76,11 @@ const routes = [
     name: 'AddressEditDetail',
     component: () => import('@/views/AddressEdit.vue'),
   },
+  {
+    path: '/bind-product',
+    name: 'BindProduct',
+    component: () => import('@/views/BindProduct.vue'),
+  },
 ];
 
 const router = createRouter({

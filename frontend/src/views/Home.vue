@@ -76,6 +76,19 @@
       </div>
     </div>
 
+    <!-- 我的商品（仅在有绑定商品时显示） -->
+    <div class="section card-section" v-if="myProducts.length">
+      <div class="section-header">
+        <h3>我的商品</h3>
+      </div>
+      <div class="my-products-list">
+        <div v-for="(item, i) in myProducts" :key="item.productKey || i" class="my-product-item">
+          <span class="my-product-name">{{ item.productName || item.productKey }}</span>
+          <span class="my-product-key">序列号：{{ item.productKey }}</span>
+        </div>
+      </div>
+    </div>
+
     <!-- Hot Services -->
     <div class="section card-section section-hot-service" :style="hotServiceSpacingPx ? { marginTop: hotServiceSpacingPx } : undefined">
       <div class="section-header">
@@ -120,19 +133,26 @@
 import { ref, watch, nextTick, onMounted, computed } from 'vue';
 import QRCode from 'qrcode';
 import { showToast } from 'vant';
-import { homeConfigApi } from '@/api';
+import { homeConfigApi, authApi } from '@/api';
 import LodImg from '@/components/LodImg.vue';
 
 const showShare = ref(false);
 const qrCanvas = ref(null);
 const shareUrl = window.location.origin;
 const allItems = ref([]);
+const myProducts = ref([]);
 
 onMounted(async () => {
   try {
     const res = await homeConfigApi.list();
     allItems.value = res.data || [];
   } catch { /* use empty */ }
+  if (localStorage.getItem('vino_token')) {
+    try {
+      const r = await authApi.myProducts();
+      myProducts.value = r.data || [];
+    } catch { myProducts.value = []; }
+  }
 });
 
 const headerLogoUrl = computed(() => {
@@ -366,6 +386,15 @@ const copyUrl = async () => {
 }
 .nav-sm-img { width: 100%; height: 100%; object-fit: contain; }
 .nav-sm-label { font-size: 11px; color: #666; text-align: center; }
+
+/* ===== 我的商品 ===== */
+.my-products-list { display: flex; flex-direction: column; gap: 10px; }
+.my-product-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 14px; background: #f8f8f8; border-radius: 10px;
+}
+.my-product-name { font-size: 15px; font-weight: 600; color: var(--vino-dark); }
+.my-product-key { font-size: 12px; color: #999; font-family: monospace; }
 
 /* ===== Hot Services ===== */
 .service-list { display: flex; gap: 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-bottom: 2px; }

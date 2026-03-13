@@ -195,6 +195,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <div class="dash-nav-item" onclick="switchPage('orders')">订单管理</div>
     <div class="dash-nav-item" onclick="switchPage('users')">用户管理</div>
     <div class="dash-nav-item" onclick="switchPage('guides')">商品配置</div>
+    <div class="dash-nav-item" onclick="switchPage('inventory')">商品库存</div>
     <div class="dash-nav-item" onclick="switchPage('homeConfig')">首页配置</div>
     <div class="dash-nav-item" onclick="switchPage('mineConfig')">个人中心配置</div>
     <div class="dash-nav-item" onclick="switchPage('messages')">留言板</div>
@@ -234,10 +235,39 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <button class="refresh-btn" onclick="loadUsers()">刷新</button>
         </div>
         <table class="order-table" id="userTable">
-          <thead><tr><th>ID</th><th>用户名</th><th>手机号</th><th>邮箱</th><th>昵称</th><th>角色</th><th>订单数</th><th>地址数</th><th>注册时间</th><th>操作</th></tr></thead>
+          <thead><tr><th>ID</th><th>用户名</th><th>手机号</th><th>邮箱</th><th>昵称</th><th>角色</th><th>订单数</th><th>地址数</th><th>已绑定商品</th><th>注册时间</th><th>操作</th></tr></thead>
           <tbody id="userTableBody"></tbody>
         </table>
         <div class="order-empty" id="userEmpty" style="display:none">暂无用户</div>
+      </div>
+    </div>
+
+    <!-- 商品库存 Page -->
+    <div class="dash-page" id="page-inventory">
+      <div class="dash-section">
+        <div class="section-header">
+          <h3>库存种类</h3>
+          <button class="refresh-btn" style="background:#059669" onclick="openInvCategoryEditor()">+ 新增种类</button>
+        </div>
+        <p style="font-size:13px;color:#666;margin-bottom:12px">先配置种类，再在下方商品列表中为每个商品选择种类；商品序列号作为 key，用于扫码绑定。</p>
+        <table class="order-table">
+          <thead><tr><th>ID</th><th>种类名称</th><th>排序</th><th>状态</th><th>操作</th></tr></thead>
+          <tbody id="invCategoryTableBody"></tbody>
+        </table>
+      </div>
+      <div class="dash-section" style="margin-top:24px">
+        <div class="section-header">
+          <h3>库存商品</h3>
+          <div style="display:flex;gap:8px">
+            <button class="refresh-btn" onclick="loadInventoryProducts()">刷新</button>
+            <button class="refresh-btn" style="background:#059669" onclick="openInvProductEditor()">+ 新增商品</button>
+          </div>
+        </div>
+        <table class="order-table">
+          <thead><tr><th>ID</th><th>种类</th><th>名称</th><th>序列号 (key)</th><th>排序</th><th>状态</th><th>二维码</th><th>操作</th></tr></thead>
+          <tbody id="invProductTableBody"></tbody>
+        </table>
+        <div class="order-empty" id="invProductEmpty" style="display:none">暂无商品</div>
       </div>
     </div>
 
@@ -554,6 +584,58 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       </div>
     </div>
 
+    <!-- 商品库存：种类编辑 -->
+    <div class="modal-overlay" id="invCategoryModal" style="display:none" onclick="if(event.target===this)closeInvCategoryEditor()">
+      <div class="modal-content" style="max-width:400px">
+        <div class="modal-header">
+          <h3 id="invCategoryModalTitle">新增种类</h3>
+          <span class="modal-close" onclick="closeInvCategoryEditor()">&times;</span>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="invCategoryEditId" />
+          <div class="form-group"><label>种类名称 *</label><input class="form-input" id="invCategoryName" placeholder="如：空调" /></div>
+          <div class="form-group"><label>排序</label><input type="number" class="form-input" id="invCategorySort" value="0" /></div>
+          <div class="form-group"><label>状态</label><select class="form-input" id="invCategoryStatus"><option value="active">启用</option><option value="inactive">禁用</option></select></div>
+          <button class="submit-btn" onclick="saveInvCategory()">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 商品库存：商品编辑 -->
+    <div class="modal-overlay" id="invProductModal" style="display:none" onclick="if(event.target===this)closeInvProductEditor()">
+      <div class="modal-content" style="max-width:480px">
+        <div class="modal-header">
+          <h3 id="invProductModalTitle">新增商品</h3>
+          <span class="modal-close" onclick="closeInvProductEditor()">&times;</span>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="invProductEditId" />
+          <div class="form-group"><label>种类 *</label><select class="form-input" id="invProductCategoryId"><option value="">请选择种类</option></select></div>
+          <div class="form-group"><label>商品名称 *</label><input class="form-input" id="invProductName" placeholder="如：某某型号空调" /></div>
+          <div class="form-group"><label>序列号 (key) * <span style="font-weight:normal;color:#999;font-size:12px">（唯一，扫码绑定时作为参数）</span></label><input class="form-input" id="invProductSerialNumber" placeholder="如：AC-2024-001" /></div>
+          <div class="form-group"><label>排序</label><input type="number" class="form-input" id="invProductSort" value="0" /></div>
+          <div class="form-group"><label>状态</label><select class="form-input" id="invProductStatus"><option value="active">启用</option><option value="inactive">禁用</option></select></div>
+          <button class="submit-btn" onclick="saveInvProduct()">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 商品库存：绑定二维码弹窗 -->
+    <div class="modal-overlay" id="invQrModal" style="display:none" onclick="if(event.target===this)document.getElementById('invQrModal').style.display='none'">
+      <div class="modal-content" style="max-width:420px;text-align:center">
+        <div class="modal-header">
+          <h3>绑定二维码</h3>
+          <span class="modal-close" onclick="document.getElementById('invQrModal').style.display='none'">&times;</span>
+        </div>
+        <div style="padding:24px">
+          <div id="invQrUrlText" style="margin-bottom:16px;font-size:13px;color:#666;word-break:break-all;background:#f9f9f9;padding:10px 14px;border-radius:8px"></div>
+          <div id="invQrPlaceholder" style="padding:30px;color:#999;font-size:14px">加载中...</div>
+          <div id="invQrImageWrap" style="display:none"><img id="invQrImage" style="width:256px;height:256px;margin:0 auto;display:block;border:1px solid #eee;border-radius:8px" /></div>
+          <p style="font-size:12px;color:#999;margin-top:12px">用户扫码后可将该商品绑定到其账号</p>
+        </div>
+      </div>
+    </div>
+
     <!-- Orders Page -->
     <div class="dash-page" id="page-orders">
       <div class="dash-stats" id="orderStats"></div>
@@ -640,13 +722,14 @@ async function api(path, options = {}) {
 function switchPage(page) {
   document.querySelectorAll('.dash-nav-item').forEach(n => n.classList.remove('active'));
   document.querySelectorAll('.dash-page').forEach(p => p.classList.remove('active'));
-  const navMap = { overview: 0, orders: 1, users: 2, guides: 3, homeConfig: 4, mineConfig: 5, messages: 6 };
+  const navMap = { overview: 0, orders: 1, users: 2, guides: 3, inventory: 4, homeConfig: 5, mineConfig: 6, messages: 7 };
   const navItems = document.querySelectorAll('.dash-nav-item');
   if (navItems[navMap[page]]) navItems[navMap[page]].classList.add('active');
   document.getElementById('page-' + page).classList.add('active');
   if (page === 'orders') loadOrders();
   if (page === 'users') loadUsers();
   if (page === 'guides') { loadCategories(); loadGuides(); }
+  if (page === 'inventory') { loadInventoryCategories(); loadInventoryProducts(); }
   if (page === 'homeConfig') loadHomeConfig();
   if (page === 'mineConfig') loadMineConfig();
   if (page === 'messages') { loadConversations(); startMsgPolling(); }
@@ -711,9 +794,9 @@ function showDashboard(user) {
   document.getElementById('healthLink').textContent = 'http://' + host + ':5202/api/health';
   const navItems = document.querySelectorAll('.dash-nav-item');
   if (user.role !== 'admin') {
-    [1,2,3].forEach(i => { if (navItems[i]) navItems[i].style.display = 'none'; });
+    [1,2,3,4].forEach(i => { if (navItems[i]) navItems[i].style.display = 'none'; });
   } else {
-    [1,2,3].forEach(i => { if (navItems[i]) navItems[i].style.display = ''; });
+    [1,2,3,4].forEach(i => { if (navItems[i]) navItems[i].style.display = ''; });
   }
   loadOrderStats();
   loadDashHeaderLogo();
@@ -929,7 +1012,7 @@ const expandedUsers = new Set();
 async function loadUsers() {
   const tbody = document.getElementById('userTableBody');
   const empty = document.getElementById('userEmpty');
-  tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:#999">加载中...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:30px;color:#999">加载中...</td></tr>';
   try {
     const res = await api('/auth/admin/users');
     if (res.code === 0) {
@@ -951,7 +1034,7 @@ async function loadUsers() {
       renderUserTable();
     }
   } catch {
-    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:#B91C1C">加载失败</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:30px;color:#B91C1C">加载失败</td></tr>';
   }
 }
 
@@ -960,6 +1043,8 @@ function renderUserTable() {
   let html = '';
   allUsers.forEach(u => {
     const addrCount = u.addresses ? u.addresses.length : 0;
+    const boundKeys = u.boundProductKeys || [];
+    const boundStr = boundKeys.length ? boundKeys.join('、') : '-';
     const roleTag = u.role === 'admin' ? '<span class="role-tag admin">管理员</span>' : '<span class="role-tag user">用户</span>';
     const regTime = u.createdAt ? new Date(u.createdAt).toLocaleString('zh-CN', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }) : '-';
     const isExpanded = expandedUsers.has(u.id);
@@ -972,16 +1057,23 @@ function renderUserTable() {
       <td>${roleTag}</td>
       <td>${u.orderCount}</td>
       <td>${addrCount}</td>
+      <td style="font-size:12px;max-width:180px;word-break:break-all" title="${boundStr}">${boundKeys.length ? boundKeys.length + ' 个' : '-'}</td>
       <td style="font-size:12px">${regTime}</td>
       <td><button class="detail-btn" onclick="toggleUserDetail(${u.id})">${isExpanded ? '收起' : '详情'}</button></td>
     </tr>`;
     if (isExpanded) {
-      html += `<tr class="user-detail-row"><td colspan="10"><div class="user-detail-inner">`;
+      html += `<tr class="user-detail-row"><td colspan="11"><div class="user-detail-inner">`;
       html += `<div style="margin-bottom:10px"><strong>用户信息</strong>
         <span style="margin-left:16px;font-size:13px;color:#666">状态: ${u.status === 'active' ? '✅ 正常' : '❌ 禁用'}</span>
       </div>`;
+      html += `<div style="font-size:14px;font-weight:600;margin-bottom:4px">已绑定的商品 (${boundKeys.length})</div>`;
+      if (boundKeys.length) {
+        html += '<div style="font-size:13px;color:#333;word-break:break-all">' + boundKeys.join('、') + '</div>';
+      } else {
+        html += '<div class="no-addr">该用户暂无绑定商品</div>';
+      }
       if (addrCount > 0) {
-        html += `<div style="font-size:14px;font-weight:600;margin-bottom:4px">收货地址 (${addrCount})</div>`;
+        html += `<div style="font-size:14px;font-weight:600;margin:12px 0 4px">收货地址 (${addrCount})</div>`;
         html += '<div class="addr-grid">';
         u.addresses.forEach(a => {
           const parts = [];
@@ -1002,7 +1094,7 @@ function renderUserTable() {
         });
         html += '</div>';
       } else {
-        html += '<div class="no-addr">该用户暂无收货地址</div>';
+        html += '<div class="no-addr" style="margin-top:8px">该用户暂无收货地址</div>';
       }
       html += '</div></td></tr>';
     }
@@ -1358,6 +1450,142 @@ async function deleteGuide(id) {
     if (res.code === 0) loadGuides();
     else alert(res.message || '删除失败');
   } catch { alert('删除失败'); }
+}
+
+/* ===== 商品库存 ===== */
+let allInvCategories = [];
+let allInvProducts = [];
+
+async function loadInventoryCategories() {
+  try {
+    const res = await api('/inventory/categories');
+    allInvCategories = (res.data || []).filter(c => c);
+    const tbody = document.getElementById('invCategoryTableBody');
+    if (!allInvCategories.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#999;padding:20px">暂无种类，请先新增</td></tr>'; return; }
+    tbody.innerHTML = allInvCategories.map(c => `<tr>
+      <td>${c.id}</td>
+      <td>${c.name}</td>
+      <td>${c.sortOrder}</td>
+      <td>${c.status === 'active' ? '启用' : '禁用'}</td>
+      <td><button class="detail-btn" onclick="editInvCategory(${c.id})">编辑</button> <button class="history-btn" onclick="deleteInvCategory(${c.id})">删除</button></td>
+    </tr>`).join('');
+  } catch { document.getElementById('invCategoryTableBody').innerHTML = '<tr><td colspan="5" style="text-align:center;color:#B91C1C">加载失败</td></tr>'; }
+}
+
+async function loadInventoryProducts() {
+  const tbody = document.getElementById('invProductTableBody');
+  const empty = document.getElementById('invProductEmpty');
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:#999">加载中...</td></tr>';
+  try {
+    const res = await api('/inventory/products');
+    allInvProducts = res.data || [];
+    if (!allInvProducts.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    tbody.innerHTML = allInvProducts.map(p => `<tr>
+      <td>${p.id}</td>
+      <td>${p.category ? p.category.name : '-'}</td>
+      <td>${p.name}</td>
+      <td style="font-family:monospace;font-size:12px">${p.serialNumber}</td>
+      <td>${p.sortOrder}</td>
+      <td>${p.status === 'active' ? '启用' : '禁用'}</td>
+      <td><button class="detail-btn" onclick="showInvProductQR(${p.id})">生成二维码</button></td>
+      <td><button class="detail-btn" onclick="editInvProduct(${p.id})">编辑</button> <button class="history-btn" onclick="deleteInvProduct(${p.id})">删除</button></td>
+    </tr>`).join('');
+  } catch { tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#B91C1C">加载失败</td></tr>'; }
+}
+
+function openInvCategoryEditor(cat) {
+  document.getElementById('invCategoryModalTitle').textContent = cat ? '编辑种类' : '新增种类';
+  document.getElementById('invCategoryEditId').value = cat ? cat.id : '';
+  document.getElementById('invCategoryName').value = cat ? cat.name : '';
+  document.getElementById('invCategorySort').value = cat ? cat.sortOrder : 0;
+  document.getElementById('invCategoryStatus').value = cat ? cat.status : 'active';
+  document.getElementById('invCategoryModal').style.display = 'flex';
+}
+function closeInvCategoryEditor() { document.getElementById('invCategoryModal').style.display = 'none'; }
+function editInvCategory(id) { const c = allInvCategories.find(x => x.id === id); if (c) openInvCategoryEditor(c); }
+
+async function saveInvCategory() {
+  const id = document.getElementById('invCategoryEditId').value;
+  const name = document.getElementById('invCategoryName').value.trim();
+  if (!name) { alert('种类名称不能为空'); return; }
+  try {
+    const body = { name, sortOrder: parseInt(document.getElementById('invCategorySort').value) || 0, status: document.getElementById('invCategoryStatus').value };
+    const res = id ? await api('/inventory/categories/' + id, { method: 'PUT', body }) : await api('/inventory/categories', { method: 'POST', body });
+    if (res.code === 0) { closeInvCategoryEditor(); loadInventoryCategories(); loadInventoryProducts(); }
+    else alert(res.message || '保存失败');
+  } catch { alert('保存失败'); }
+}
+
+async function deleteInvCategory(id) {
+  if (!confirm('确定删除该种类？其下商品需先删除或移出。')) return;
+  try {
+    const res = await api('/inventory/categories/' + id, { method: 'DELETE' });
+    if (res.code === 0) { loadInventoryCategories(); loadInventoryProducts(); }
+    else alert(res.message || '删除失败');
+  } catch { alert('删除失败'); }
+}
+
+function openInvProductEditor(product) {
+  document.getElementById('invProductModalTitle').textContent = product ? '编辑商品' : '新增商品';
+  document.getElementById('invProductEditId').value = product ? product.id : '';
+  const sel = document.getElementById('invProductCategoryId');
+  sel.innerHTML = '<option value="">请选择种类</option>' + (allInvCategories || []).map(c => '<option value="'+c.id+'">'+c.name+'</option>').join('');
+  sel.value = product && product.categoryId ? product.categoryId : '';
+  document.getElementById('invProductName').value = product ? product.name : '';
+  document.getElementById('invProductSerialNumber').value = product ? product.serialNumber : '';
+  document.getElementById('invProductSort').value = product ? product.sortOrder : 0;
+  document.getElementById('invProductStatus').value = product ? product.status : 'active';
+  document.getElementById('invProductModal').style.display = 'flex';
+}
+function closeInvProductEditor() { document.getElementById('invProductModal').style.display = 'none'; }
+function editInvProduct(id) { const p = allInvProducts.find(x => x.id === id); if (p) openInvProductEditor(p); }
+
+async function saveInvProduct() {
+  const id = document.getElementById('invProductEditId').value;
+  const categoryId = document.getElementById('invProductCategoryId').value;
+  const name = document.getElementById('invProductName').value.trim();
+  const serialNumber = document.getElementById('invProductSerialNumber').value.trim();
+  if (!categoryId) { alert('请选择种类'); return; }
+  if (!name) { alert('商品名称不能为空'); return; }
+  if (!serialNumber) { alert('序列号不能为空'); return; }
+  try {
+    const body = { categoryId: parseInt(categoryId, 10), name, serialNumber, sortOrder: parseInt(document.getElementById('invProductSort').value) || 0, status: document.getElementById('invProductStatus').value };
+    const res = id ? await api('/inventory/products/' + id, { method: 'PUT', body }) : await api('/inventory/products', { method: 'POST', body });
+    if (res.code === 0) { closeInvProductEditor(); loadInventoryProducts(); }
+    else alert(res.message || '保存失败');
+  } catch { alert('保存失败'); }
+}
+
+async function deleteInvProduct(id) {
+  if (!confirm('确定删除该商品？')) return;
+  try {
+    const res = await api('/inventory/products/' + id, { method: 'DELETE' });
+    if (res.code === 0) loadInventoryProducts();
+    else alert(res.message || '删除失败');
+  } catch { alert('删除失败'); }
+}
+
+let currentInvQrProductId = null;
+async function showInvProductQR(productId) {
+  currentInvQrProductId = productId;
+  document.getElementById('invQrModal').style.display = 'flex';
+  document.getElementById('invQrPlaceholder').style.display = 'block';
+  document.getElementById('invQrImageWrap').style.display = 'none';
+  document.getElementById('invQrUrlText').textContent = '';
+  try {
+    const res = await api('/inventory/products/' + productId + '/bind-qr-url');
+    if (res.code === 0 && res.data) {
+      document.getElementById('invQrUrlText').textContent = res.data.url;
+      if (res.data.dataUrl) {
+        document.getElementById('invQrImage').src = res.data.dataUrl;
+        document.getElementById('invQrPlaceholder').style.display = 'none';
+        document.getElementById('invQrImageWrap').style.display = 'block';
+      }
+    } else document.getElementById('invQrPlaceholder').textContent = '生成失败';
+  } catch {
+    document.getElementById('invQrPlaceholder').textContent = '加载失败';
+  }
 }
 
 /* ===== Home Config ===== */

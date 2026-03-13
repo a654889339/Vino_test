@@ -174,8 +174,7 @@ exports.login = async (req, res) => {
 
 exports.adminGetUsers = async (req, res) => {
   try {
-    const { User, Address, Order } = require('../models');
-    const { Op } = require('sequelize');
+    const { User, Address, Order, UserProduct } = require('../models');
     const users = await User.findAll({
       attributes: { exclude: ['password'] },
       include: [
@@ -193,9 +192,18 @@ exports.adminGetUsers = async (req, res) => {
     });
     const countMap = {};
     orderCounts.forEach(r => { countMap[r.userId] = parseInt(r.orderCount, 10); });
+
+    const boundProducts = await UserProduct.findAll({ raw: true });
+    const boundByUser = {};
+    boundProducts.forEach(b => {
+      if (!boundByUser[b.userId]) boundByUser[b.userId] = [];
+      boundByUser[b.userId].push(b.productKey);
+    });
+
     const result = users.map(u => {
       const plain = u.toJSON();
       plain.orderCount = countMap[u.id] || 0;
+      plain.boundProductKeys = boundByUser[u.id] || [];
       return plain;
     });
     res.json({ code: 0, data: result });
@@ -362,6 +370,48 @@ exports.getProfile = async (req, res) => {
   } catch (err) {
     console.error('[Auth] getProfile error:', err.message);
     res.status(500).json({ code: 500, message: '获取用户信息失败' });
+  }
+};
+
+/** 当前用户绑定商品（扫码后调用，序列号作为参数） */
+exports.bindProduct = async (req, res) => {
+  try {
+    const { sn } = req.body;
+    const productKey = sn != null ? String(sn).trim() : '';
+    if (!productKey) return res.status(400).json({ code: 400, message: '序列号不能为空' });
+
+    const { InventoryProduct, UserProduct } = require('../models');
+    const product = await InventoryProduct.findOne({ where: { serialNumber: productKey, status: 'active' } });
+    if (!product) return res.status(404).json({ code: 404, message: '未找到该序列号对应的商品' });
+
+    const [binding] = await UserProduct.findOrCreate({
+      where: { userId: req.user.id, productKey },
+      defaults: { userId: req.user.id, productKey },
+    });
+    res.json({ code: 0, data: { productKey, productName: product.name }, message: '绑定成功' });
+  } catch (err) {
+    console.error('[Auth] bindProduct error:', err.message);
+    res.status(500).json({ code: 500, message: err.message || '绑定失败' });
+  }
+};
+
+/** 当前用户已绑定的商品 key 列表 */
+exports.myProducts = async (req, res) => {
+  try {
+    const { UserProduct, InventoryProduct } = require('../models');
+    const list = await UserProduct.findAll({
+      where: { userId: req.user.id },
+      order: [['createdAt', 'DESC']],
+    });
+    const keys = list.map(l => l.productKey);
+    const products = await InventoryProduct.findAll({ where: { serialNumber: keys } });
+    const nameMap = {};
+    products.forEach(p => { nameMap[p.serialNumber] = p.name; });
+    const data = list.map(l => ({ productKey: l.productKey, productName: nameMap[l.productKey] || l.productKey, boundAt: l.createdAt }));
+    res.json({ code: 0, data });
+  } catch (err) {
+    console.error('[Auth] myProducts error:', err.message);
+    res.status(500).json({ code: 500, message: '获取失败' });
   }
 };
 

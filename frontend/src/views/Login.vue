@@ -99,12 +99,13 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { showToast } from 'vant';
 import { homeConfigApi, authApi } from '@/api';
 
 const router = useRouter();
+const route = useRoute();
 const userStore = useUserStore();
 const loading = ref(false);
 const splashImageUrl = ref('');
@@ -176,7 +177,12 @@ const handleLogin = async () => {
       : { username: form.username, password: form.password };
     await userStore.login(payload);
     showToast('登录成功');
-    router.replace('/');
+    const redirect = route.query.redirect;
+    if (redirect && typeof redirect === 'string' && redirect.startsWith('/')) {
+      router.replace(decodeURIComponent(redirect));
+    } else {
+      router.replace('/');
+    }
   } catch (err) {
     showToast(err.message || '登录失败');
   } finally {

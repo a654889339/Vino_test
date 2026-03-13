@@ -8,9 +8,18 @@ const DeviceGuide = require('./DeviceGuide');
 const ProductCategory = require('./ProductCategory');
 const HomeConfig = require('./HomeConfig');
 const Message = require('./Message');
+const InventoryCategory = require('./InventoryCategory');
+const InventoryProduct = require('./InventoryProduct');
+const UserProduct = require('./UserProduct');
 
 ProductCategory.hasMany(DeviceGuide, { foreignKey: 'categoryId', as: 'guides' });
 DeviceGuide.belongsTo(ProductCategory, { foreignKey: 'categoryId', as: 'category' });
+
+InventoryCategory.hasMany(InventoryProduct, { foreignKey: 'categoryId', as: 'products' });
+InventoryProduct.belongsTo(InventoryCategory, { foreignKey: 'categoryId', as: 'category' });
+
+User.hasMany(UserProduct, { foreignKey: 'userId', as: 'boundProducts' });
+UserProduct.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 User.hasMany(Order, { foreignKey: 'userId', as: 'orders' });
 Order.belongsTo(User, { foreignKey: 'userId', as: 'user' });
@@ -22,7 +31,7 @@ Address.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 User.hasMany(Message, { foreignKey: 'userId', as: 'messages' });
 Message.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
-const models = { User, Service, Order, OrderLog, Address, DeviceGuide, ProductCategory, HomeConfig, Message };
+const models = { User, Service, Order, OrderLog, Address, DeviceGuide, ProductCategory, HomeConfig, Message, InventoryCategory, InventoryProduct, UserProduct };
 
 const ADMIN_PASSWORD = 'Vino@2024admin';
 
