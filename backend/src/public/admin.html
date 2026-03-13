@@ -197,6 +197,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <div class="dash-nav-item" onclick="switchPage('guides')">商品配置</div>
     <div class="dash-nav-item" onclick="switchPage('inventory')">商品库存</div>
     <div class="dash-nav-item" onclick="switchPage('homeConfig')">首页配置</div>
+    <div class="dash-nav-item" onclick="switchPage('homeAnimConfig')">首页动画配置</div>
     <div class="dash-nav-item" onclick="switchPage('mineConfig')">个人中心配置</div>
     <div class="dash-nav-item" onclick="switchPage('messages')">留言板</div>
   </div>
@@ -356,19 +357,36 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <button class="btn" id="hcFilterNavSm" onclick="filterHC('navSm')" title="点击筛选；点击「改」可修改名称并同步前台"><span id="hcFilterNavSmText">自助预约(小)</span> <a href="javascript:void(0)" class="hc-edit-name" onclick="event.preventDefault();event.stopPropagation();handleHCFilterDblclick('navSectionTitle','自助预约',this)">改</a></button>
           <button class="btn" id="hcFilterHotService" onclick="filterHC('hotService')" title="点击筛选；点击「改」可修改名称并同步前台"><span id="hcFilterHotServiceText">热门服务</span> <a href="javascript:void(0)" class="hc-edit-name" onclick="event.preventDefault();event.stopPropagation();handleHCFilterDblclick('hotServiceTitle','热门服务',this)">改</a></button>
           <button class="btn" id="hcFilterRecommend" onclick="filterHC('recommend')" title="点击筛选；点击「改」可修改名称并同步前台"><span id="hcFilterRecommendText">为你推荐</span> <a href="javascript:void(0)" class="hc-edit-name" onclick="event.preventDefault();event.stopPropagation();handleHCFilterDblclick('recommendTitle','为你推荐',this)">改</a></button>
-          <button class="btn" onclick="filterHC('splash')" id="hcFilterSplash">开场动画</button>
-          <button class="btn" onclick="filterHC('headerLogo')" id="hcFilterHeaderLogo">首页Logo</button>
-          <button class="btn" onclick="filterHC('homeBg')" id="hcFilterHomeBg">首页背景</button>
-          <button class="btn" onclick="filterHC('hotServiceSpacing')" id="hcFilterHotServiceSpacing">热门服务距上</button>
-          <button class="btn" onclick="filterHC('recommendSpacing')" id="hcFilterRecommendSpacing">为你推荐距上</button>
+          <button class="btn" onclick="filterHC('myProducts')" id="hcFilterMyProducts" title="首页「我的商品」区块，数据来自商品库存">我的商品</button>
           <button class="btn" onclick="openHCEditor()" style="margin-left:auto;background:#059669;color:#fff">+ 新增项目</button>
-          <button class="btn" onclick="generateThumbs()" style="background:#6366F1;color:#fff" title="为商品配置与首页背景中已有图片生成缩略图并上传到 COS">为已有图片生成缩略图</button>
         </div>
         <table class="order-table" id="hcTable">
           <thead><tr><th>ID</th><th>板块</th><th>标题</th><th>描述</th><th>图标</th><th>图片</th><th>颜色/背景</th><th>跳转</th><th>价格</th><th>排序</th><th>状态</th><th>操作</th></tr></thead>
           <tbody id="hcBody"></tbody>
         </table>
         <div class="order-empty" id="hcEmpty" style="display:none">暂无配置项</div>
+      </div>
+    </div>
+
+    <!-- 首页动画配置 Page（开场动画、首页Logo、首页背景） -->
+    <div class="dash-page" id="page-homeAnimConfig">
+      <div class="dash-section">
+        <div class="section-header">
+          <h3>首页动画配置管理</h3>
+        </div>
+        <p style="font-size:13px;color:#666;margin-bottom:16px">配置开场动画、首页 Logo、首页背景图。与「首页配置」中的自助预约/自助服务/服务产品分开管理。</p>
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+          <button class="btn" onclick="filterHCAnim('all')" id="hcAnimFilterAll" style="background:var(--primary);color:#fff">全部</button>
+          <button class="btn" onclick="filterHCAnim('splash')" id="hcAnimFilterSplash">开场动画</button>
+          <button class="btn" onclick="filterHCAnim('headerLogo')" id="hcAnimFilterHeaderLogo">首页Logo</button>
+          <button class="btn" onclick="filterHCAnim('homeBg')" id="hcAnimFilterHomeBg">首页背景</button>
+          <button class="btn" onclick="openHCEditorFromAnim()" style="margin-left:auto;background:#059669;color:#fff">+ 新增项目</button>
+        </div>
+        <table class="order-table" id="hcAnimTable">
+          <thead><tr><th>ID</th><th>板块</th><th>标题</th><th>描述</th><th>图标</th><th>图片</th><th>颜色/背景</th><th>跳转</th><th>价格</th><th>排序</th><th>状态</th><th>操作</th></tr></thead>
+          <tbody id="hcAnimBody"></tbody>
+        </table>
+        <div class="order-empty" id="hcAnimEmpty" style="display:none">暂无配置项</div>
       </div>
     </div>
 
@@ -432,19 +450,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <div class="form-group">
           <label>板块类型</label>
           <select class="form-input" id="hcSection" onchange="onHCSectionChange()">
-            <!-- <option value="banner">轮播横幅 (Banner)</option> -->
-            <option value="navLg">自助预约-大图标 (NavLg)</option>
-            <option value="navSm">自助预约-小图标 (NavSm)</option>
-            <option value="hotService">热门服务 (HotService)</option>
-            <option value="recommend">为你推荐 (Recommend)</option>
-            <option value="splash">开场动画 (Splash)</option>
-            <option value="headerLogo">首页Logo (HeaderLogo)</option>
-            <option value="homeBg">首页背景图 (HomeBg)</option>
-            <option value="navSectionTitle">自助预约区块标题</option>
-            <option value="hotServiceTitle">热门服务区块标题</option>
-            <option value="recommendTitle">为你推荐区块标题</option>
-            <option value="hotServiceSpacing">热门服务-距上高度</option>
-            <option value="recommendSpacing">为你推荐-距上高度</option>
+            <!-- 选项由 openHCEditor 按当前页面（首页配置 / 首页动画配置）动态填充 -->
           </select>
         </div>
         <div class="form-group" id="hcTitleGroup">
@@ -733,18 +739,22 @@ async function api(path, options = {}) {
   return res.json();
 }
 
+let currentHCPage = 'homeConfig'; // 'homeConfig' | 'homeAnimConfig'
+
 function switchPage(page) {
   document.querySelectorAll('.dash-nav-item').forEach(n => n.classList.remove('active'));
   document.querySelectorAll('.dash-page').forEach(p => p.classList.remove('active'));
-  const navMap = { overview: 0, orders: 1, users: 2, guides: 3, inventory: 4, homeConfig: 5, mineConfig: 6, messages: 7 };
+  const navMap = { overview: 0, orders: 1, users: 2, guides: 3, inventory: 4, homeConfig: 5, homeAnimConfig: 6, mineConfig: 7, messages: 8 };
   const navItems = document.querySelectorAll('.dash-nav-item');
   if (navItems[navMap[page]]) navItems[navMap[page]].classList.add('active');
-  document.getElementById('page-' + page).classList.add('active');
+  const pageEl = document.getElementById('page-' + page);
+  if (pageEl) pageEl.classList.add('active');
   if (page === 'orders') loadOrders();
   if (page === 'users') loadUsers();
   if (page === 'guides') { loadCategories(); loadGuides(); }
   if (page === 'inventory') { loadInventoryCategories(); loadInventoryProducts(); }
-  if (page === 'homeConfig') loadHomeConfig();
+  if (page === 'homeConfig') { currentHCPage = 'homeConfig'; loadHomeConfig(); }
+  if (page === 'homeAnimConfig') { currentHCPage = 'homeAnimConfig'; loadHomeConfig(); }
   if (page === 'mineConfig') loadMineConfig();
   if (page === 'messages') { loadConversations(); startMsgPolling(); }
   else { stopMsgPolling(); currentChatUserId = null; }
@@ -1619,7 +1629,10 @@ async function showInvProductQR(productId) {
 /* ===== Home Config ===== */
 let allHCItems = [];
 let hcFilterSection = 'all';
-const SECTION_LABELS = { banner: '轮播横幅', nav: '快捷导航', navLg: '自助预约(大)', navSm: '自助预约(小)', hotService: '热门服务', recommend: '为你推荐', splash: '开场动画', headerLogo: '首页Logo', homeBg: '首页背景', navSectionTitle: '自助预约区块标题', hotServiceTitle: '热门服务区块标题', recommendTitle: '为你推荐区块标题', hotServiceSpacing: '热门服务-距上高度', recommendSpacing: '为你推荐-距上高度' };
+let hcAnimFilterSection = 'all';
+const HOME_CONFIG_SECTIONS = ['navLg', 'navSm', 'hotService', 'recommend', 'navSectionTitle', 'hotServiceTitle', 'recommendTitle', 'myProducts'];
+const HOME_ANIM_SECTIONS = ['splash', 'headerLogo', 'homeBg'];
+const SECTION_LABELS = { banner: '轮播横幅', nav: '快捷导航', navLg: '自助预约(大)', navSm: '自助预约(小)', hotService: '热门服务', recommend: '为你推荐', splash: '开场动画', headerLogo: '首页Logo', homeBg: '首页背景', navSectionTitle: '自助预约区块标题', hotServiceTitle: '热门服务区块标题', recommendTitle: '为你推荐区块标题', hotServiceSpacing: '热门服务-距上高度', recommendSpacing: '为你推荐-距上高度', myProducts: '我的商品' };
 
 async function loadHomeConfig() {
   try {
@@ -1627,6 +1640,7 @@ async function loadHomeConfig() {
     allHCItems = res.data || [];
     renderHCTable();
     updateHCFilterButtonLabels();
+    if (currentHCPage === 'homeAnimConfig') renderHCAnimTable();
     loadDashHeaderLogo();
   } catch { document.getElementById('hcBody').innerHTML = ''; }
 }
@@ -1673,8 +1687,17 @@ function filterHC(section) {
   renderHCTable();
 }
 
+function filterHCAnim(section) {
+  hcAnimFilterSection = section;
+  document.querySelectorAll('[id^="hcAnimFilter"]').forEach(b => { b.style.background = ''; b.style.color = ''; });
+  const btn = document.getElementById('hcAnimFilter' + (section === 'all' ? 'All' : section.charAt(0).toUpperCase() + section.slice(1)));
+  if (btn) { btn.style.background = 'var(--primary)'; btn.style.color = '#fff'; }
+  renderHCAnimTable();
+}
+
 function renderHCTable() {
-  const items = hcFilterSection === 'all' ? allHCItems : allHCItems.filter(i => i.section === hcFilterSection);
+  const base = hcFilterSection === 'all' ? allHCItems.filter(i => HOME_CONFIG_SECTIONS.includes(i.section)) : allHCItems.filter(i => i.section === hcFilterSection);
+  const items = base;
   const tbody = document.getElementById('hcBody');
   const empty = document.getElementById('hcEmpty');
   if (!items.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
@@ -1699,6 +1722,39 @@ function renderHCTable() {
   setTimeout(upgradeLodImages, 0);
 }
 
+function renderHCAnimTable() {
+  const base = hcAnimFilterSection === 'all' ? allHCItems.filter(i => HOME_ANIM_SECTIONS.includes(i.section)) : allHCItems.filter(i => i.section === hcAnimFilterSection);
+  const items = base;
+  const tbody = document.getElementById('hcAnimBody');
+  const empty = document.getElementById('hcAnimEmpty');
+  if (!tbody) return;
+  if (!items.length) { tbody.innerHTML = ''; if (empty) empty.style.display = 'block'; return; }
+  if (empty) empty.style.display = 'none';
+  tbody.innerHTML = items.map(h => `<tr>
+    <td>${h.id}</td>
+    <td><span style="padding:2px 8px;border-radius:10px;font-size:12px;background:#F3F4F6">${SECTION_LABELS[h.section]||h.section}</span></td>
+    <td style="font-weight:500">${h.title}</td>
+    <td style="color:#666;font-size:13px">${h.desc||''}</td>
+    <td>${h.icon ? '<span style="font-family:monospace;font-size:12px;background:#F3F4F6;padding:2px 6px;border-radius:4px">'+h.icon+'</span>' : '-'}</td>
+    <td>${h.imageUrl ? '<img src="'+(h.imageUrlThumb||h.imageUrl)+'" data-full-src="'+(h.imageUrlThumb?(h.imageUrl||''):'')+'" style="max-width:60px;max-height:30px;border-radius:4px;background:#1a1a1a;padding:2px" class="lod-img" />' : '-'}</td>
+    <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px" title="${h.color||''}">${h.color ? '<span style="display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:middle;margin-right:4px;background:'+h.color+'"></span>'+h.color.substring(0,25) : '-'}</td>
+    <td style="font-size:12px">${h.path||'-'}</td>
+    <td>${h.price ? '¥'+h.price : '-'}</td>
+    <td>${h.sortOrder}</td>
+    <td><span style="display:inline-block;padding:4px 14px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:500;transition:all .2s;${h.status==='active'?'background:#D1FAE5;color:#059669':'background:#F3F4F6;color:#999'}" onclick="toggleHCStatus(${h.id},'${h.status}')">${h.status==='active'?'启用':'禁用'}</span></td>
+    <td style="white-space:nowrap">
+      <button class="btn btn-sm" onclick="openHCEditor(${h.id})" style="background:#2563EB;color:#fff;margin-right:4px">编辑</button>
+      <button class="btn btn-sm" onclick="deleteHC(${h.id})" style="background:#DC2626;color:#fff">删除</button>
+    </td>
+  </tr>`).join('');
+  setTimeout(upgradeLodImages, 0);
+}
+
+function openHCEditorFromAnim() {
+  currentHCPage = 'homeAnimConfig';
+  openHCEditor();
+}
+
 function upgradeLodImages() {
   document.querySelectorAll('img.lod-img[data-full-src]').forEach(img => {
     const full = img.getAttribute('data-full-src');
@@ -1720,10 +1776,10 @@ async function generateThumbs() {
 
 function onHCSectionChange() {
   const sec = document.getElementById('hcSection').value;
-  const noIcon = ['banner', 'splash', 'headerLogo', 'homeBg', 'navSectionTitle', 'hotServiceTitle', 'recommendTitle', 'hotServiceSpacing', 'recommendSpacing'];
-  const noPath = ['banner', 'splash', 'headerLogo', 'homeBg', 'navSectionTitle', 'hotServiceTitle', 'recommendTitle', 'hotServiceSpacing', 'recommendSpacing'];
+  const noIcon = ['banner', 'splash', 'headerLogo', 'homeBg', 'navSectionTitle', 'hotServiceTitle', 'recommendTitle', 'hotServiceSpacing', 'recommendSpacing', 'myProducts'];
+  const noPath = ['banner', 'splash', 'headerLogo', 'homeBg', 'navSectionTitle', 'hotServiceTitle', 'recommendTitle', 'hotServiceSpacing', 'recommendSpacing', 'myProducts'];
   const showImage = ['splash', 'headerLogo', 'homeBg', 'navLg', 'navSm'];
-  const hideColor = ['headerLogo', 'homeBg', 'navSectionTitle', 'hotServiceTitle', 'recommendTitle', 'hotServiceSpacing', 'recommendSpacing'];
+  const hideColor = ['headerLogo', 'homeBg', 'navSectionTitle', 'hotServiceTitle', 'recommendTitle', 'hotServiceSpacing', 'recommendSpacing', 'myProducts'];
   const isSpacing = sec === 'hotServiceSpacing' || sec === 'recommendSpacing';
   const titleLabel = document.getElementById('hcTitleLabel');
   const titleInput = document.getElementById('hcTitle');
@@ -1766,11 +1822,25 @@ function onHCSectionChange() {
   document.getElementById('hcColorPreview').style.background = colorInput.value || 'transparent';
 }
 
+const HC_SECTION_OPTS_HOME = [
+  { v: 'navLg', l: '自助预约-大图标 (NavLg)' }, { v: 'navSm', l: '自助预约-小图标 (NavSm)' },
+  { v: 'hotService', l: '热门服务 (HotService)' }, { v: 'recommend', l: '为你推荐 (Recommend)' },
+  { v: 'navSectionTitle', l: '自助预约区块标题' }, { v: 'hotServiceTitle', l: '热门服务区块标题' }, { v: 'recommendTitle', l: '为你推荐区块标题' }, { v: 'myProducts', l: '我的商品' }
+];
+const HC_SECTION_OPTS_ANIM = [
+  { v: 'splash', l: '开场动画 (Splash)' }, { v: 'headerLogo', l: '首页Logo (HeaderLogo)' }, { v: 'homeBg', l: '首页背景图 (HomeBg)' }
+];
+
 function openHCEditor(id) {
   const item = id ? allHCItems.find(i => i.id === id) : null;
+  if (item) currentHCPage = HOME_ANIM_SECTIONS.includes(item.section) ? 'homeAnimConfig' : 'homeConfig';
+  const opts = currentHCPage === 'homeAnimConfig' ? HC_SECTION_OPTS_ANIM : HC_SECTION_OPTS_HOME;
+  const sel = document.getElementById('hcSection');
+  sel.innerHTML = opts.map(o => '<option value="'+o.v+'">'+o.l+'</option>').join('');
+  sel.value = item ? item.section : opts[0].v;
+
   document.getElementById('hcEditId').value = item ? item.id : '';
   document.getElementById('hcModalTitle').textContent = item ? '编辑配置项' : '新增配置项';
-  document.getElementById('hcSection').value = item ? item.section : 'banner';
   document.getElementById('hcTitle').value = item ? item.title : '';
   document.getElementById('hcDesc').value = item ? (item.desc||'') : '';
   document.getElementById('hcIcon').value = item ? (item.icon||'') : '';
@@ -1782,7 +1852,6 @@ function openHCEditor(id) {
   document.getElementById('hcImageUrlThumb').value = item ? (item.imageUrlThumb||'') : '';
   document.getElementById('hcSortOrder').value = item ? item.sortOrder : 0;
   document.getElementById('hcStatus').value = item ? item.status : 'active';
-  // 更新图片预览
   const preview = document.getElementById('hcImagePreview');
   if (item && item.imageUrl) { preview.src = item.imageUrl; preview.style.display = 'block'; }
   else { preview.style.display = 'none'; }

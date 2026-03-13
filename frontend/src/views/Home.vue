@@ -76,10 +76,10 @@
       </div>
     </div>
 
-    <!-- 我的商品（仅在有绑定商品时显示） -->
+    <!-- 我的商品（数据来自商品库存，标题可在首页配置中设置） -->
     <div class="section card-section" v-if="myProducts.length">
       <div class="section-header">
-        <h3>我的商品</h3>
+        <h3>{{ myProductsTitle }}</h3>
       </div>
       <div class="my-products-list">
         <div v-for="(item, i) in myProducts" :key="item.productKey || i" class="my-product-item">
@@ -90,7 +90,7 @@
     </div>
 
     <!-- Hot Services -->
-    <div class="section card-section section-hot-service" :style="hotServiceSpacingPx ? { marginTop: hotServiceSpacingPx } : undefined">
+    <div class="section card-section section-hot-service">
       <div class="section-header">
         <h3>{{ hotServiceTitle }}</h3>
         <span class="more" @click="$router.push('/services')">查看全部 ›</span>
@@ -110,7 +110,7 @@
     </div>
 
     <!-- Recommend：层级低于底栏，避免遮挡首页/产品/我的底部导航 -->
-    <div class="section card-section section-recommend" :style="recommendSpacingPx ? { marginTop: recommendSpacingPx } : undefined">
+    <div class="section card-section section-recommend">
       <div class="section-header">
         <h3>{{ recommendTitle }}</h3>
       </div>
@@ -180,15 +180,9 @@ const recommendTitle = computed(() => {
   const item = allItems.value.find(i => i.section === 'recommendTitle' && i.status === 'active');
   return (item?.title || '').trim() || '为你推荐';
 });
-const hotServiceSpacingPx = computed(() => {
-  const item = allItems.value.find(i => i.section === 'hotServiceSpacing' && i.status === 'active');
-  const v = parseInt((item?.title || '').trim(), 10);
-  return Number.isNaN(v) ? undefined : v + 'px';
-});
-const recommendSpacingPx = computed(() => {
-  const item = allItems.value.find(i => i.section === 'recommendSpacing' && i.status === 'active');
-  const v = parseInt((item?.title || '').trim(), 10);
-  return Number.isNaN(v) ? undefined : v + 'px';
+const myProductsTitle = computed(() => {
+  const item = allItems.value.find(i => i.section === 'myProducts' && i.status === 'active');
+  return (item?.title || '').trim() || '我的商品';
 });
 
 const navLgItems = computed(() =>

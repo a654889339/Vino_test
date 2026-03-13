@@ -25,29 +25,31 @@ Page({
   },
 
   loadHomeConfig() {
+    const base = (app.globalData.baseUrl || '').replace(/\/api\/?$/, '') || 'http://106.54.50.88:5202';
+    const toFull = (u) => {
+      if (!u || typeof u !== 'string') return u || '';
+      const t = u.trim();
+      if (t.startsWith('http://') || t.startsWith('https://')) return t;
+      return base + (t.startsWith('/') ? t : '/' + t);
+    };
     app.request({ url: '/home-config?all=1' })
       .then(res => {
         const items = res.data || [];
         const headerLogo = items.find(i => i.section === 'headerLogo' && i.status === 'active');
         const homeBgItems = items.filter(i => i.section === 'homeBg' && i.status === 'active');
         const homeBgList = homeBgItems.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
-          .map(i => ({
-            url: i.imageUrl,
-            thumb: (i.imageUrlThumb && i.imageUrlThumb.trim()) ? i.imageUrlThumb.trim() : '',
-            displayUrl: (i.imageUrlThumb && i.imageUrlThumb.trim()) ? i.imageUrlThumb.trim() : (i.imageUrl || ''),
-          }))
+          .map(i => {
+            const url = toFull(i.imageUrl);
+            const thumb = (i.imageUrlThumb && i.imageUrlThumb.trim()) ? toFull(i.imageUrlThumb.trim()) : '';
+            const displayUrl = thumb || url;
+            return { url, thumb, displayUrl };
+          })
           .filter(i => i.url);
         const singleBg = homeBgList[0] ? homeBgList[0].displayUrl : '';
         const navSectionTitleItem = items.find(i => i.section === 'navSectionTitle' && i.status === 'active');
         const hotServiceTitleItem = items.find(i => i.section === 'hotServiceTitle' && i.status === 'active');
         const recommendTitleItem = items.find(i => i.section === 'recommendTitle' && i.status === 'active');
-        const hotServiceSpacingItem = items.find(i => i.section === 'hotServiceSpacing' && i.status === 'active');
-        const recommendSpacingItem = items.find(i => i.section === 'recommendSpacing' && i.status === 'active');
-        const parsePx = (item) => {
-          if (!item || !item.title) return '';
-          const v = parseInt(String(item.title).trim(), 10);
-          return Number.isNaN(v) ? '' : v + 'px';
-        };
+        const myProductsTitleItem = items.find(i => i.section === 'myProducts' && i.status === 'active');
         const navLg = items.filter(i => i.section === 'navLg' && i.status === 'active')
           .sort((a, b) => a.sortOrder - b.sortOrder)
           .map(i => ({ id: i.id, title: i.title, imageUrl: i.imageUrl, imageUrlThumb: i.imageUrlThumb || '', icon: i.icon, path: i.path || '/pages/service/service', color: i.color }));
@@ -55,14 +57,13 @@ Page({
           .sort((a, b) => a.sortOrder - b.sortOrder)
           .map(i => ({ id: i.id, title: i.title, imageUrl: i.imageUrl, imageUrlThumb: i.imageUrlThumb || '', icon: i.icon, path: i.path || '/pages/service/service', color: i.color }));
         this.setData({
-          headerLogoUrl: headerLogo ? headerLogo.imageUrl : '',
+          headerLogoUrl: headerLogo ? toFull(headerLogo.imageUrl) : '',
           heroBgUrl: singleBg,
           heroBgList: homeBgList,
           navSectionTitle: (navSectionTitleItem && navSectionTitleItem.title) ? navSectionTitleItem.title.trim() : '自助预约',
           hotServiceTitle: (hotServiceTitleItem && hotServiceTitleItem.title) ? hotServiceTitleItem.title.trim() : '热门服务',
           recommendTitle: (recommendTitleItem && recommendTitleItem.title) ? recommendTitleItem.title.trim() : '为你推荐',
-          hotServiceSpacingPx: parsePx(hotServiceSpacingItem),
-          recommendSpacingPx: parsePx(recommendSpacingItem),
+          myProductsTitle: (myProductsTitleItem && myProductsTitleItem.title) ? myProductsTitleItem.title.trim() : '我的商品',
           navLgItems: navLg,
           navSmItems: navSm,
         });
