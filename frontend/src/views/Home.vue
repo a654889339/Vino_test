@@ -1,5 +1,5 @@
 <template>
-  <div class="home" :style="homeSectionOffsetStyle">
+  <div class="home">
     <!-- 独立背景层：铺在整页最底层，红框处（卡片两侧）才能透出背景图 -->
     <div class="home-bg" aria-hidden="true">
       <van-swipe v-if="heroBgList.length" class="home-bg-swipe" :autoplay="4000" indicator-color="rgba(255,255,255,0.5)">
@@ -48,6 +48,8 @@
       </div>
     </van-overlay>
 
+    <!-- 首页配置管理区域：仅此区域受「板块整体偏移」影响，不移动首页动画配置（背景/Logo/Hero） -->
+    <div class="home-config-wrap" :style="homeSectionOffsetStyle">
     <!-- 自助预约（仅此区块上移，与下方我的商品/热门服务同层级） -->
     <div class="section card-section first-card" v-if="navLgItems.length || navSmItems.length">
       <div class="section-header">
@@ -126,6 +128,7 @@
     </div>
 
     <div class="footer-space"></div>
+    </div>
   </div>
 </template>
 
@@ -433,6 +436,9 @@ const copyUrl = async () => {
 .recommend-icon { width: 50px; height: 50px; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; }
 .recommend-card h4 { font-size: 15px; font-weight: 600; margin-bottom: 4px; color: var(--vino-dark); }
 .recommend-card p { font-size: 13px; color: var(--vino-text-secondary); line-height: 1.5; }
+
+/* 首页配置管理区域包装器，仅此区域受后台「板块整体偏移」影响 */
+.home-config-wrap { position: relative; }
 
 /* 底部留白，避免内容被底部导航遮挡（tabbar 高度 + 安全区，与 .home padding-bottom 配合） */
 .footer-space {
