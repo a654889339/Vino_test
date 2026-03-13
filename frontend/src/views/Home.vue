@@ -228,8 +228,10 @@ const copyUrl = async () => {
 <style scoped>
 .home {
   position: relative;
-  padding-bottom: 80px;
+  /* 底部预留 ≥ tabbar 高度 + 安全区，避免内容遮挡底部导航 */
+  padding-bottom: 180px;
   background: transparent;
+  min-height: 100vh;
 }
 
 /* ===== 独立背景层：置于最底层，背景图铺满整区，无蓝色遮挡 ===== */
@@ -300,12 +302,16 @@ const copyUrl = async () => {
   -webkit-backdrop-filter: blur(12px);
   box-shadow: 0 2px 12px rgba(0,0,0,0.06);
 }
-/* 仅「自助预约」区块上移，避免「我的商品」被顶到遮挡 */
+/* 仅「自助预约」区块上移；我的商品、热门服务等同层级，不设负 margin */
 .card-section.first-card {
   margin-top: -32vh;
   min-height: 0;
 }
-/* 为你推荐区块层级低于底栏，避免遮挡首页/产品/我的底部导航 */
+/* 任意连续卡片之间统一留白，避免「我的商品」与自助服务/热门服务重叠 */
+.card-section + .card-section {
+  margin-top: 20px;
+}
+/* 为你推荐与卡片区同级，层级低于 tabbar */
 .section-recommend {
   z-index: 1;
 }
@@ -424,8 +430,12 @@ const copyUrl = async () => {
 .recommend-card h4 { font-size: 15px; font-weight: 600; margin-bottom: 4px; color: var(--vino-dark); }
 .recommend-card p { font-size: 13px; color: var(--vino-text-secondary); line-height: 1.5; }
 
-/* 底部留白，避免内容被底部导航遮挡 */
-.footer-space { height: 88px; }
+/* 底部留白，避免内容被底部导航遮挡（tabbar 高度 + 安全区，与 .home padding-bottom 配合） */
+.footer-space {
+  height: calc(140px + env(safe-area-inset-bottom, 0px));
+  min-height: 140px;
+  flex-shrink: 0;
+}
 
 /* ===== Share ===== */
 .share-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.2); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer; transition: all 0.25s; }
