@@ -174,11 +174,11 @@ const navSectionTitle = computed(() => {
 });
 const hotServiceTitle = computed(() => {
   const item = allItems.value.find(i => i.section === 'hotServiceTitle' && i.status === 'active');
-  return (item?.title || '').trim() || '热门服务';
+  return (item?.title || '').trim() || '自助服务';
 });
 const recommendTitle = computed(() => {
   const item = allItems.value.find(i => i.section === 'recommendTitle' && i.status === 'active');
-  return (item?.title || '').trim() || '为你推荐';
+  return (item?.title || '').trim() || '服务产品';
 });
 const myProductsTitle = computed(() => {
   const item = allItems.value.find(i => i.section === 'myProducts' && i.status === 'active');
