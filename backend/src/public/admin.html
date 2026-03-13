@@ -301,11 +301,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
           <button class="btn" onclick="filterHC('all')" id="hcFilterAll" style="background:var(--primary);color:#fff">全部</button>
           <!-- banner removed from frontend, hidden filter -->
-
-          <button class="btn" onclick="filterHC('navLg')" id="hcFilterNavLg">自助预约(大)</button>
-          <button class="btn" onclick="filterHC('navSm')" id="hcFilterNavSm">自助预约(小)</button>
-          <button class="btn" onclick="filterHC('hotService')" id="hcFilterHotService">热门服务</button>
-          <button class="btn" onclick="filterHC('recommend')" id="hcFilterRecommend">为你推荐</button>
+          <button class="btn" onclick="filterHC('navLg')" id="hcFilterNavLg" data-section-type="navSectionTitle" title="双击可修改名称，将同步到前台" ondblclick="handleHCFilterDblclick('navSectionTitle','自助预约',this)">自助预约(大)</button>
+          <button class="btn" onclick="filterHC('navSm')" id="hcFilterNavSm" data-section-type="navSectionTitle" title="双击可修改名称，将同步到前台" ondblclick="handleHCFilterDblclick('navSectionTitle','自助预约',this)">自助预约(小)</button>
+          <button class="btn" onclick="filterHC('hotService')" id="hcFilterHotService" data-section-type="hotServiceTitle" title="双击可修改名称，将同步到前台" ondblclick="handleHCFilterDblclick('hotServiceTitle','热门服务',this)">热门服务</button>
+          <button class="btn" onclick="filterHC('recommend')" id="hcFilterRecommend" data-section-type="recommendTitle" title="双击可修改名称，将同步到前台" ondblclick="handleHCFilterDblclick('recommendTitle','为你推荐',this)">为你推荐</button>
           <button class="btn" onclick="filterHC('splash')" id="hcFilterSplash">开场动画</button>
           <button class="btn" onclick="filterHC('headerLogo')" id="hcFilterHeaderLogo">首页Logo</button>
           <button class="btn" onclick="filterHC('homeBg')" id="hcFilterHomeBg">首页背景</button>
@@ -389,6 +388,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
             <option value="splash">开场动画 (Splash)</option>
             <option value="headerLogo">首页Logo (HeaderLogo)</option>
             <option value="homeBg">首页背景图 (HomeBg)</option>
+            <option value="navSectionTitle">自助预约区块标题</option>
             <option value="hotServiceTitle">热门服务区块标题</option>
             <option value="recommendTitle">为你推荐区块标题</option>
             <option value="hotServiceSpacing">热门服务-距上高度</option>
@@ -1319,14 +1319,49 @@ async function deleteGuide(id) {
 /* ===== Home Config ===== */
 let allHCItems = [];
 let hcFilterSection = 'all';
-const SECTION_LABELS = { banner: '轮播横幅', nav: '快捷导航', navLg: '自助预约(大)', navSm: '自助预约(小)', hotService: '热门服务', recommend: '为你推荐', splash: '开场动画', headerLogo: '首页Logo', homeBg: '首页背景', hotServiceTitle: '热门服务区块标题', recommendTitle: '为你推荐区块标题', hotServiceSpacing: '热门服务-距上高度', recommendSpacing: '为你推荐-距上高度' };
+const SECTION_LABELS = { banner: '轮播横幅', nav: '快捷导航', navLg: '自助预约(大)', navSm: '自助预约(小)', hotService: '热门服务', recommend: '为你推荐', splash: '开场动画', headerLogo: '首页Logo', homeBg: '首页背景', navSectionTitle: '自助预约区块标题', hotServiceTitle: '热门服务区块标题', recommendTitle: '为你推荐区块标题', hotServiceSpacing: '热门服务-距上高度', recommendSpacing: '为你推荐-距上高度' };
 
 async function loadHomeConfig() {
   try {
     const res = await api('/home-config?all=1');
     allHCItems = res.data || [];
     renderHCTable();
+    updateHCFilterButtonLabels();
   } catch { document.getElementById('hcBody').innerHTML = ''; }
+}
+
+function updateHCFilterButtonLabels() {
+  const getTitle = (section) => {
+    const item = (allHCItems || []).find(i => i.section === section && i.status === 'active');
+    const t = (item && item.title) ? String(item.title).trim() : '';
+    return t;
+  };
+  const navTitle = getTitle('navSectionTitle') || '自助预约';
+  const elLg = document.getElementById('hcFilterNavLg'); if (elLg) elLg.textContent = navTitle + '(大)';
+  const elSm = document.getElementById('hcFilterNavSm'); if (elSm) elSm.textContent = navTitle + '(小)';
+  const hotTitle = getTitle('hotServiceTitle') || '热门服务';
+  const hotEl = document.getElementById('hcFilterHotService'); if (hotEl) hotEl.textContent = hotTitle;
+  const recTitle = getTitle('recommendTitle') || '为你推荐';
+  const recEl = document.getElementById('hcFilterRecommend'); if (recEl) recEl.textContent = recTitle;
+}
+
+async function handleHCFilterDblclick(sectionType, defaultLabel, btnEl) {
+  const item = (allHCItems || []).find(i => i.section === sectionType && i.status === 'active');
+  const current = (item && item.title) ? String(item.title).trim() : '';
+  const label = current || defaultLabel;
+  const newTitle = prompt('修改板块显示名称（将同步到前台首页）', label);
+  if (newTitle === null) return;
+  const title = String(newTitle).trim();
+  try {
+    if (item) {
+      const res = await api('/home-config/' + item.id, { method: 'PUT', body: { ...item, title } });
+      if (res.code !== 0) { alert(res.message || '保存失败'); return; }
+    } else {
+      const res = await api('/home-config', { method: 'POST', body: { section: sectionType, title, status: 'active', sortOrder: 0 } });
+      if (res.code !== 0) { alert(res.message || '保存失败'); return; }
+    }
+    await loadHomeConfig();
+  } catch (e) { alert('保存失败'); }
 }
 
 function filterHC(section) {
@@ -1364,10 +1399,10 @@ function renderHCTable() {
 
 function onHCSectionChange() {
   const sec = document.getElementById('hcSection').value;
-  const noIcon = ['banner', 'splash', 'headerLogo', 'homeBg', 'hotServiceTitle', 'recommendTitle', 'hotServiceSpacing', 'recommendSpacing'];
-  const noPath = ['banner', 'splash', 'headerLogo', 'homeBg', 'hotServiceTitle', 'recommendTitle', 'hotServiceSpacing', 'recommendSpacing'];
+  const noIcon = ['banner', 'splash', 'headerLogo', 'homeBg', 'navSectionTitle', 'hotServiceTitle', 'recommendTitle', 'hotServiceSpacing', 'recommendSpacing'];
+  const noPath = ['banner', 'splash', 'headerLogo', 'homeBg', 'navSectionTitle', 'hotServiceTitle', 'recommendTitle', 'hotServiceSpacing', 'recommendSpacing'];
   const showImage = ['splash', 'headerLogo', 'homeBg', 'navLg', 'navSm'];
-  const hideColor = ['headerLogo', 'homeBg', 'hotServiceTitle', 'recommendTitle', 'hotServiceSpacing', 'recommendSpacing'];
+  const hideColor = ['headerLogo', 'homeBg', 'navSectionTitle', 'hotServiceTitle', 'recommendTitle', 'hotServiceSpacing', 'recommendSpacing'];
   const isSpacing = sec === 'hotServiceSpacing' || sec === 'recommendSpacing';
   const titleLabel = document.getElementById('hcTitleLabel');
   const titleInput = document.getElementById('hcTitle');

@@ -51,7 +51,7 @@
     <!-- 自助预约 -->
     <div class="section card-section" v-if="navLgItems.length || navSmItems.length">
       <div class="section-header">
-        <h3>自助预约</h3>
+        <h3>{{ navSectionTitle }}</h3>
         <span class="more" @click="$router.push('/services')">进度查询 ›</span>
       </div>
       <!-- 大图标行 -->
@@ -143,6 +143,10 @@ const heroBgList = computed(() => {
   return (list || []).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0)).map(i => i.imageUrl).filter(Boolean);
 });
 const heroBgFallback = computed(() => allItems.value.find(i => i.section === 'homeBg' && i.status === 'active')?.imageUrl || '');
+const navSectionTitle = computed(() => {
+  const item = allItems.value.find(i => i.section === 'navSectionTitle' && i.status === 'active');
+  return (item?.title || '').trim() || '自助预约';
+});
 const hotServiceTitle = computed(() => {
   const item = allItems.value.find(i => i.section === 'hotServiceTitle' && i.status === 'active');
   return (item?.title || '').trim() || '热门服务';

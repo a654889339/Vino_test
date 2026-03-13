@@ -23,7 +23,7 @@
   <!-- 自助预约 -->
   <view class="card-section" a:if="{{navLgItems.length || navSmItems.length}}">
     <view class="section-header">
-      <text class="section-title">自助预约</text>
+      <text class="section-title">{{navSectionTitle}}</text>
       <text class="section-more" onTap="goService">进度查询 ›</text>
     </view>
     <scroll-view scroll-x class="nav-lg-row" a:if="{{navLgItems.length}}">

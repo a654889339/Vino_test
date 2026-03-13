@@ -5,6 +5,7 @@ Page({
     headerLogoUrl: '',
     heroBgUrl: '',
     heroBgList: [],
+    navSectionTitle: '自助预约',
     hotServiceTitle: '热门服务',
     recommendTitle: '为你推荐',
     navLgItems: [],
@@ -31,6 +32,7 @@ Page({
         const homeBgItems = items.filter(i => i.section === 'homeBg' && i.status === 'active');
         const homeBgList = homeBgItems.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0)).map(i => i.imageUrl).filter(Boolean);
         const singleBg = homeBgItems[0] ? homeBgItems[0].imageUrl : '';
+        const navSectionTitleItem = items.find(i => i.section === 'navSectionTitle' && i.status === 'active');
         const hotServiceTitleItem = items.find(i => i.section === 'hotServiceTitle' && i.status === 'active');
         const recommendTitleItem = items.find(i => i.section === 'recommendTitle' && i.status === 'active');
         const hotServiceSpacingItem = items.find(i => i.section === 'hotServiceSpacing' && i.status === 'active');
@@ -50,6 +52,7 @@ Page({
           headerLogoUrl: headerLogo ? headerLogo.imageUrl : '',
           heroBgUrl: singleBg,
           heroBgList: homeBgList,
+          navSectionTitle: (navSectionTitleItem && navSectionTitleItem.title) ? navSectionTitleItem.title.trim() : '自助预约',
           hotServiceTitle: (hotServiceTitleItem && hotServiceTitleItem.title) ? hotServiceTitleItem.title.trim() : '热门服务',
           recommendTitle: (recommendTitleItem && recommendTitleItem.title) ? recommendTitleItem.title.trim() : '为你推荐',
           hotServiceSpacingPx: parsePx(hotServiceSpacingItem),

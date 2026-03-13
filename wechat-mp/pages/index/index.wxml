@@ -23,7 +23,7 @@
   <!-- 自助预约 -->
   <view class="card-section" wx:if="{{navLgItems.length || navSmItems.length}}">
     <view class="section-header">
-      <text class="section-title">自助预约</text>
+      <text class="section-title">{{navSectionTitle}}</text>
       <text class="section-more" bindtap="goService">进度查询 ›</text>
     </view>
     <!-- 大图标 -->
