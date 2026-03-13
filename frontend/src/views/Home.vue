@@ -48,8 +48,8 @@
       </div>
     </van-overlay>
 
-    <!-- 自助预约 -->
-    <div class="section card-section" v-if="navLgItems.length || navSmItems.length">
+    <!-- 自助预约（仅此区块上移，与下方我的商品/热门服务同层级） -->
+    <div class="section card-section first-card" v-if="navLgItems.length || navSmItems.length">
       <div class="section-header">
         <h3>{{ navSectionTitle }}</h3>
         <span class="more" @click="$router.push('/services')">进度查询 ›</span>
@@ -300,8 +300,8 @@ const copyUrl = async () => {
   -webkit-backdrop-filter: blur(12px);
   box-shadow: 0 2px 12px rgba(0,0,0,0.06);
 }
-/* 首个卡片区（自助预约/热门服务）上移到红线位置 */
-.card-section:first-of-type {
+/* 仅「自助预约」区块上移，避免「我的商品」被顶到遮挡 */
+.card-section.first-card {
   margin-top: -32vh;
   min-height: 0;
 }
@@ -424,7 +424,8 @@ const copyUrl = async () => {
 .recommend-card h4 { font-size: 15px; font-weight: 600; margin-bottom: 4px; color: var(--vino-dark); }
 .recommend-card p { font-size: 13px; color: var(--vino-text-secondary); line-height: 1.5; }
 
-.footer-space { height: 24px; }
+/* 底部留白，避免内容被底部导航遮挡 */
+.footer-space { height: 88px; }
 
 /* ===== Share ===== */
 .share-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.2); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer; transition: all 0.25s; }

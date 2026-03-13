@@ -395,19 +395,29 @@ exports.bindProduct = async (req, res) => {
   }
 };
 
-/** 当前用户已绑定的商品 key 列表 */
+/** 当前用户已绑定的商品列表（含种类、名称、序列号、绑定时间） */
 exports.myProducts = async (req, res) => {
   try {
-    const { UserProduct, InventoryProduct } = require('../models');
+    const { UserProduct, InventoryProduct, InventoryCategory } = require('../models');
     const list = await UserProduct.findAll({
       where: { userId: req.user.id },
       order: [['createdAt', 'DESC']],
     });
     const keys = list.map(l => l.productKey);
-    const products = await InventoryProduct.findAll({ where: { serialNumber: keys } });
-    const nameMap = {};
-    products.forEach(p => { nameMap[p.serialNumber] = p.name; });
-    const data = list.map(l => ({ productKey: l.productKey, productName: nameMap[l.productKey] || l.productKey, boundAt: l.createdAt }));
+    const products = await InventoryProduct.findAll({
+      where: { serialNumber: keys },
+      include: [{ model: InventoryCategory, as: 'category', attributes: ['id', 'name'] }],
+    });
+    const infoMap = {};
+    products.forEach(p => {
+      infoMap[p.serialNumber] = { productName: p.name, categoryName: (p.category && p.category.name) || '' };
+    });
+    const data = list.map(l => ({
+      productKey: l.productKey,
+      productName: (infoMap[l.productKey] && infoMap[l.productKey].productName) || l.productKey,
+      categoryName: (infoMap[l.productKey] && infoMap[l.productKey].categoryName) || '',
+      boundAt: l.createdAt,
+    }));
     res.json({ code: 0, data });
   } catch (err) {
     console.error('[Auth] myProducts error:', err.message);

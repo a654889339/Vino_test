@@ -1,0 +1,25 @@
+<view class="page">
+  <view class="empty" a:if="{{!list.length && !loading}}">
+    <text class="empty-icon">📦</text>
+    <text class="empty-text">暂无绑定商品</text>
+  </view>
+
+  <view class="card" a:for="{{list}}" a:key="productKey">
+    <view class="row">
+      <text class="label">种类</text>
+      <text class="value">{{item.categoryName || '-'}}</text>
+    </view>
+    <view class="row">
+      <text class="label">名称</text>
+      <text class="value">{{item.productName || item.productKey}}</text>
+    </view>
+    <view class="row">
+      <text class="label">序列号</text>
+      <text class="value sn">{{item.productKey}}</text>
+    </view>
+    <view class="row">
+      <text class="label">绑定时间</text>
+      <text class="value">{{item.boundAtStr}}</text>
+    </view>
+  </view>
+</view>

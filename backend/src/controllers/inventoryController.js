@@ -59,12 +59,21 @@ exports.removeCategory = async (req, res) => {
   }
 };
 
-/** 管理端：商品列表（可按种类筛选） */
+/** 管理端：商品列表（支持种类、状态筛选与名称/序列号关键词查找） */
 exports.listProducts = async (req, res) => {
   try {
-    const { categoryId } = req.query;
+    const { Op } = require('sequelize');
+    const { categoryId, status, keyword } = req.query;
     const where = {};
     if (categoryId != null && categoryId !== '') where.categoryId = categoryId;
+    if (status != null && status !== '') where.status = status;
+    if (keyword != null && String(keyword).trim() !== '') {
+      const kw = '%' + String(keyword).trim().replace(/%/g, '\\%') + '%';
+      where[Op.or] = [
+        { name: { [Op.like]: kw } },
+        { serialNumber: { [Op.like]: kw } },
+      ];
+    }
     const list = await InventoryProduct.findAll({
       where,
       include: [{ model: InventoryCategory, as: 'category', attributes: ['id', 'name'] }],
