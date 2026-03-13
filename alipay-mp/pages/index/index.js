@@ -33,6 +33,13 @@ Page({
         const singleBg = homeBgItems[0] ? homeBgItems[0].imageUrl : '';
         const hotServiceTitleItem = items.find(i => i.section === 'hotServiceTitle' && i.status === 'active');
         const recommendTitleItem = items.find(i => i.section === 'recommendTitle' && i.status === 'active');
+        const hotServiceSpacingItem = items.find(i => i.section === 'hotServiceSpacing' && i.status === 'active');
+        const recommendSpacingItem = items.find(i => i.section === 'recommendSpacing' && i.status === 'active');
+        const parsePx = (item) => {
+          if (!item || !item.title) return '';
+          const v = parseInt(String(item.title).trim(), 10);
+          return Number.isNaN(v) ? '' : v + 'px';
+        };
         const navLg = items.filter(i => i.section === 'navLg' && i.status === 'active')
           .sort((a, b) => a.sortOrder - b.sortOrder)
           .map(i => ({ id: i.id, title: i.title, imageUrl: i.imageUrl, icon: i.icon, path: i.path || '/pages/service/service', color: i.color }));
@@ -45,6 +52,8 @@ Page({
           heroBgList: homeBgList,
           hotServiceTitle: (hotServiceTitleItem && hotServiceTitleItem.title) ? hotServiceTitleItem.title.trim() : '热门服务',
           recommendTitle: (recommendTitleItem && recommendTitleItem.title) ? recommendTitleItem.title.trim() : '为你推荐',
+          hotServiceSpacingPx: parsePx(hotServiceSpacingItem),
+          recommendSpacingPx: parsePx(recommendSpacingItem),
           navLgItems: navLg,
           navSmItems: navSm,
         });

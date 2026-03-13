@@ -47,7 +47,7 @@
   </view>
 
   <!-- Hot Services -->
-  <view class="card-section">
+  <view class="card-section" style="{{hotServiceSpacingPx ? 'margin-top:' + hotServiceSpacingPx : ''}}">
     <view class="section-header">
       <text class="section-title">{{hotServiceTitle}}</text>
       <text class="section-more" onTap="goServiceList">查看全部 ›</text>
@@ -67,7 +67,7 @@
   </view>
 
   <!-- Recommend：层级低于底栏 -->
-  <view class="card-section section-recommend">
+  <view class="card-section section-recommend" style="{{recommendSpacingPx ? 'margin-top:' + recommendSpacingPx : ''}}">
     <text class="section-title" style="display:block;margin-bottom:20rpx">{{recommendTitle}}</text>
     <view class="recommend-grid">
       <view class="recommend-item" a:for="{{recommends}}" a:key="id">

@@ -77,7 +77,7 @@
     </div>
 
     <!-- Hot Services -->
-    <div class="section card-section">
+    <div class="section card-section section-hot-service" :style="hotServiceSpacingPx ? { marginTop: hotServiceSpacingPx } : undefined">
       <div class="section-header">
         <h3>{{ hotServiceTitle }}</h3>
         <span class="more" @click="$router.push('/services')">查看全部 ›</span>
@@ -97,7 +97,7 @@
     </div>
 
     <!-- Recommend：层级低于底栏，避免遮挡首页/产品/我的底部导航 -->
-    <div class="section card-section section-recommend">
+    <div class="section card-section section-recommend" :style="recommendSpacingPx ? { marginTop: recommendSpacingPx } : undefined">
       <div class="section-header">
         <h3>{{ recommendTitle }}</h3>
       </div>
@@ -151,6 +151,16 @@ const recommendTitle = computed(() => {
   const item = allItems.value.find(i => i.section === 'recommendTitle' && i.status === 'active');
   return (item?.title || '').trim() || '为你推荐';
 });
+const hotServiceSpacingPx = computed(() => {
+  const item = allItems.value.find(i => i.section === 'hotServiceSpacing' && i.status === 'active');
+  const v = parseInt((item?.title || '').trim(), 10);
+  return Number.isNaN(v) ? undefined : v + 'px';
+});
+const recommendSpacingPx = computed(() => {
+  const item = allItems.value.find(i => i.section === 'recommendSpacing' && i.status === 'active');
+  const v = parseInt((item?.title || '').trim(), 10);
+  return Number.isNaN(v) ? undefined : v + 'px';
+});
 
 const navLgItems = computed(() =>
   allItems.value.filter(i => i.section === 'navLg' && i.status === 'active')
@@ -193,7 +203,7 @@ const copyUrl = async () => {
   background: transparent;
 }
 
-/* ===== 独立背景层：置于最底层，延展到卡片下方，红框处才能透出 ===== */
+/* ===== 独立背景层：置于最底层，背景图铺满整区，无蓝色遮挡 ===== */
 .home-bg {
   position: absolute;
   top: 0;
@@ -202,7 +212,7 @@ const copyUrl = async () => {
   height: 78vh;
   min-height: 480px;
   z-index: 0;
-  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 40%, #16213e 100%);
+  background: transparent;
 }
 .home-bg-swipe {
   position: absolute;
@@ -218,11 +228,10 @@ const copyUrl = async () => {
   top: 0;
   left: 0;
   right: 0;
-  height: 50vh;
-  max-height: 300px;
-  min-height: 200px;
+  bottom: 0;
+  height: 100%;
   background-size: cover;
-  background-position: top center;
+  background-position: center center;
   background-repeat: no-repeat;
 }
 
@@ -264,9 +273,9 @@ const copyUrl = async () => {
   -webkit-backdrop-filter: blur(12px);
   box-shadow: 0 2px 12px rgba(0,0,0,0.06);
 }
-/* 首个卡片区（自助预约/热门服务）上移，参考小程序位置比例 */
+/* 首个卡片区（自助预约/热门服务）上移到红线位置 */
 .card-section:first-of-type {
-  margin-top: -24vh;
+  margin-top: -32vh;
   min-height: 0;
 }
 /* 为你推荐区块层级低于底栏，避免遮挡首页/产品/我的底部导航 */
