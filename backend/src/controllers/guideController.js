@@ -93,7 +93,8 @@ exports.create = async (req, res) => {
     res.json({ code: 0, data: guide });
   } catch (err) {
     console.error('[Guide] create error:', err.message);
-    res.status(500).json({ code: 500, message: '创建失败' });
+    const msg = err.message || '创建失败';
+    res.status(500).json({ code: 500, message: msg });
   }
 };
 
@@ -116,7 +117,8 @@ exports.update = async (req, res) => {
     res.json({ code: 0, data: guide });
   } catch (err) {
     console.error('[Guide] update error:', err.message);
-    res.status(500).json({ code: 500, message: '更新失败' });
+    const msg = err.message || '更新失败';
+    res.status(500).json({ code: 500, message: msg });
   }
 };
 

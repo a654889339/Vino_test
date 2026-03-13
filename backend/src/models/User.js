@@ -11,12 +11,10 @@ const User = sequelize.define('User', {
   username: {
     type: DataTypes.STRING(50),
     allowNull: false,
-    unique: true,
   },
   email: {
     type: DataTypes.STRING(255),
     allowNull: true,
-    unique: true,
   },
   password: {
     type: DataTypes.STRING(255),
@@ -29,12 +27,10 @@ const User = sequelize.define('User', {
   openid: {
     type: DataTypes.STRING(100),
     allowNull: true,
-    unique: true,
   },
   alipayId: {
     type: DataTypes.STRING(100),
     allowNull: true,
-    unique: true,
   },
   avatar: {
     type: DataTypes.STRING(500),
@@ -55,6 +51,12 @@ const User = sequelize.define('User', {
 }, {
   tableName: 'users',
   timestamps: true,
+  indexes: [
+    { unique: true, fields: ['username'], name: 'username' },
+    { unique: true, fields: ['email'], name: 'email' },
+    { unique: true, fields: ['openid'], name: 'openid' },
+    { unique: true, fields: ['alipayId'], name: 'alipayId' },
+  ],
   hooks: {
     beforeCreate: async (user) => {
       if (!user.password || String(user.password).trim().length === 0) {

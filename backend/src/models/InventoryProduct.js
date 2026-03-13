@@ -18,7 +18,6 @@ const InventoryProduct = sequelize.define('InventoryProduct', {
   serialNumber: {
     type: DataTypes.STRING(100),
     allowNull: false,
-    unique: true,
     comment: '商品序列号，作为 key，扫码绑定时的参数',
   },
   guideSlug: {
@@ -38,6 +37,9 @@ const InventoryProduct = sequelize.define('InventoryProduct', {
 }, {
   tableName: 'inventory_products',
   timestamps: true,
+  indexes: [
+    { unique: true, fields: ['serialNumber'], name: 'serialNumber' },
+  ],
 });
 
 module.exports = InventoryProduct;

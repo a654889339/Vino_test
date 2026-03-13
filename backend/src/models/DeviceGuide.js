@@ -14,7 +14,6 @@ const DeviceGuide = sequelize.define('DeviceGuide', {
   slug: {
     type: DataTypes.STRING(100),
     allowNull: true,
-    unique: true,
   },
   subtitle: {
     type: DataTypes.STRING(200),
@@ -126,6 +125,9 @@ const DeviceGuide = sequelize.define('DeviceGuide', {
 }, {
   tableName: 'device_guides',
   timestamps: true,
+  indexes: [
+    { unique: true, fields: ['slug'], name: 'slug' },
+  ],
 });
 
 module.exports = DeviceGuide;

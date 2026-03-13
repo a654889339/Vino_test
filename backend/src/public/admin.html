@@ -741,7 +741,13 @@ async function api(path, options = {}) {
   const headers = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = 'Bearer ' + token;
   const res = await fetch(API + path, { headers, ...options, body: options.body ? JSON.stringify(options.body) : undefined });
-  return res.json();
+  const contentType = res.headers.get('content-type') || '';
+  try {
+    return contentType.includes('application/json') ? await res.json() : { code: res.status, message: res.statusText || '请求异常' };
+  } catch (_) {
+    const text = await res.text();
+    throw new Error(res.status + ' ' + (text ? text.slice(0, 120) : res.statusText));
+  }
 }
 
 let currentHCPage = 'homeConfig'; // 'homeConfig' | 'homeAnimConfig'
@@ -1460,7 +1466,9 @@ async function saveGuide() {
       : await api('/guides/admin', { method: 'POST', body });
     if (res.code === 0) { closeGuideEditor(); loadGuides(); }
     else alert(res.message || '保存失败');
-  } catch { alert('保存失败'); }
+  } catch (e) {
+    alert('保存失败：' + (e.message || String(e)));
+  }
 }
 
 async function toggleGuideStatus(id, currentStatus) {
