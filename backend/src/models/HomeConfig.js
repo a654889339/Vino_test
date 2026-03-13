@@ -3,7 +3,7 @@ const sequelize = require('../config/database');
 
 const HomeConfig = sequelize.define('HomeConfig', {
   section: {
-    type: DataTypes.ENUM('banner', 'nav', 'navLg', 'navSm', 'hotService', 'recommend', 'splash', 'headerLogo', 'homeBg', 'mineBg', 'navSectionTitle', 'hotServiceTitle', 'recommendTitle', 'hotServiceSpacing', 'recommendSpacing', 'myProducts'),
+    type: DataTypes.ENUM('banner', 'nav', 'navLg', 'navSm', 'hotService', 'recommend', 'splash', 'headerLogo', 'homeBg', 'mineBg', 'navSectionTitle', 'hotServiceTitle', 'recommendTitle', 'hotServiceSpacing', 'recommendSpacing', 'myProducts', 'homeSectionOffset'),
     allowNull: false,
   },
   title: {

@@ -1,5 +1,5 @@
 <template>
-  <div class="home">
+  <div class="home" :style="homeSectionOffsetStyle">
     <!-- 独立背景层：铺在整页最底层，红框处（卡片两侧）才能透出背景图 -->
     <div class="home-bg" aria-hidden="true">
       <van-swipe v-if="heroBgList.length" class="home-bg-swipe" :autoplay="4000" indicator-color="rgba(255,255,255,0.5)">
@@ -184,6 +184,16 @@ const myProductsTitle = computed(() => {
   const item = allItems.value.find(i => i.section === 'myProducts' && i.status === 'active');
   return (item?.title || '').trim() || '我的商品';
 });
+// 首页板块整体上下偏移量(px)，来自后台首页配置
+const homeSectionOffsetPx = computed(() => {
+  const item = allItems.value.find(i => i.section === 'homeSectionOffset' && i.status === 'active');
+  if (!item || item.title === undefined || item.title === '') return 0;
+  const n = parseInt(String(item.title).trim(), 10);
+  return Number.isNaN(n) ? 0 : n;
+});
+const homeSectionOffsetStyle = computed(() =>
+  homeSectionOffsetPx.value !== 0 ? { marginTop: homeSectionOffsetPx.value + 'px' } : undefined
+);
 
 const navLgItems = computed(() =>
   allItems.value.filter(i => i.section === 'navLg' && i.status === 'active')
