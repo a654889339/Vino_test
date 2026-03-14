@@ -1,4 +1,4 @@
-const { InventoryCategory, InventoryProduct } = require('../models');
+const { InventoryCategory, InventoryProduct, UserProduct } = require('../models');
 
 /** 管理端：种类列表 */
 exports.listCategories = async (req, res) => {
@@ -79,7 +79,23 @@ exports.listProducts = async (req, res) => {
       include: [{ model: InventoryCategory, as: 'category', attributes: ['id', 'name'] }],
       order: [['categoryId', 'ASC'], ['sortOrder', 'ASC'], ['id', 'ASC']],
     });
-    res.json({ code: 0, data: list });
+    const serialNumbers = list.map(p => p.serialNumber);
+    const bindings = await UserProduct.findAll({
+      where: { productKey: serialNumbers },
+      attributes: ['userId', 'productKey'],
+      raw: true,
+    });
+    const boundByProduct = {};
+    bindings.forEach(b => {
+      if (!boundByProduct[b.productKey]) boundByProduct[b.productKey] = [];
+      boundByProduct[b.productKey].push(b.userId);
+    });
+    const data = list.map(p => {
+      const plain = p.toJSON ? p.toJSON() : p;
+      plain.boundUserIds = boundByProduct[p.serialNumber] || [];
+      return plain;
+    });
+    res.json({ code: 0, data });
   } catch (err) {
     console.error('[Inventory] listProducts error:', err.message);
     res.status(500).json({ code: 500, message: '获取商品列表失败' });

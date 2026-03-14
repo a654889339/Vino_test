@@ -213,6 +213,26 @@ exports.adminGetUsers = async (req, res) => {
   }
 };
 
+/** 管理端：解除用户与商品的绑定 */
+exports.adminUnbindProduct = async (req, res) => {
+  try {
+    const userId = parseInt(req.params.userId, 10);
+    const productKey = req.params.productKey != null ? String(req.params.productKey).trim() : '';
+    if (!userId || !productKey) {
+      return res.status(400).json({ code: 400, message: '参数无效' });
+    }
+    const { UserProduct } = require('../models');
+    const n = await UserProduct.destroy({
+      where: { userId, productKey },
+    });
+    if (n === 0) return res.status(404).json({ code: 404, message: '该用户未绑定此商品' });
+    res.json({ code: 0, message: '已解除绑定' });
+  } catch (err) {
+    console.error('[Auth] adminUnbindProduct error:', err.message);
+    res.status(500).json({ code: 500, message: err.message || '操作失败' });
+  }
+};
+
 exports.wxLogin = async (req, res) => {
   try {
     const { code } = req.body;

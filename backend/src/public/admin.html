@@ -279,7 +279,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <button class="refresh-btn" style="padding:6px 16px" onclick="loadInventoryProducts()">查找</button>
         </div>
         <table class="order-table">
-          <thead><tr><th>ID</th><th>种类</th><th>名称</th><th>序列号 (key)</th><th>排序</th><th>状态</th><th>二维码</th><th>操作</th></tr></thead>
+          <thead><tr><th>ID</th><th>种类</th><th>名称</th><th>序列号 (key)</th><th>排序</th><th>状态</th><th>二维码</th><th>被绑定的用户ID</th><th>操作</th></tr></thead>
           <tbody id="invProductTableBody"></tbody>
         </table>
         <div class="order-empty" id="invProductEmpty" style="display:none">暂无商品</div>
@@ -1103,7 +1103,11 @@ function renderUserTable() {
       </div>`;
       html += `<div style="font-size:14px;font-weight:600;margin-bottom:4px">已绑定的商品 (${boundKeys.length})</div>`;
       if (boundKeys.length) {
-        html += '<div style="font-size:13px;color:#333;word-break:break-all">' + boundKeys.join('、') + '</div>';
+        html += '<div style="font-size:13px;color:#333;word-break:break-all">';
+        boundKeys.forEach(k => {
+          html += '<span style="display:inline-flex;align-items:center;gap:6px;margin-right:12px;margin-bottom:4px">' + k + ' <button type="button" class="history-btn" style="padding:2px 8px;font-size:12px" onclick="unbindUserProduct(' + u.id + ',' + JSON.stringify(k) + ')">删除</button></span>';
+        });
+        html += '</div>';
       } else {
         html += '<div class="no-addr">该用户暂无绑定商品</div>';
       }
@@ -1141,6 +1145,20 @@ function toggleUserDetail(userId) {
   if (expandedUsers.has(userId)) expandedUsers.delete(userId);
   else expandedUsers.add(userId);
   renderUserTable();
+}
+
+async function unbindUserProduct(userId, productKey) {
+  if (!confirm('确定解除该用户与商品「' + productKey + '」的绑定？')) return;
+  try {
+    const res = await api('/auth/admin/users/' + userId + '/products/' + encodeURIComponent(productKey), { method: 'DELETE' });
+    if (res.code === 0) {
+      loadUsers();
+    } else {
+      alert(res.message || '操作失败');
+    }
+  } catch (e) {
+    alert(e.message || '操作失败');
+  }
 }
 
 let allGuides = [];
@@ -1518,7 +1536,7 @@ async function loadInventoryCategories() {
 async function loadInventoryProducts() {
   const tbody = document.getElementById('invProductTableBody');
   const empty = document.getElementById('invProductEmpty');
-  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:#999">加载中...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#999">加载中...</td></tr>';
   const categoryId = document.getElementById('invFilterCategoryId') && document.getElementById('invFilterCategoryId').value;
   const status = document.getElementById('invFilterStatus') && document.getElementById('invFilterStatus').value;
   const keyword = document.getElementById('invFilterKeyword') && document.getElementById('invFilterKeyword').value.trim();
@@ -1532,6 +1550,7 @@ async function loadInventoryProducts() {
     allInvProducts = res.data || [];
     if (!allInvProducts.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
     empty.style.display = 'none';
+    const boundStr = (p) => (p.boundUserIds && p.boundUserIds.length) ? p.boundUserIds.join(', ') : '-';
     tbody.innerHTML = allInvProducts.map(p => `<tr>
       <td>${p.id}</td>
       <td>${p.category ? p.category.name : '-'}</td>
@@ -1540,9 +1559,10 @@ async function loadInventoryProducts() {
       <td>${p.sortOrder}</td>
       <td>${p.status === 'active' ? '启用' : '禁用'}</td>
       <td><button class="detail-btn" onclick="showInvProductQR(${p.id})">生成二维码</button></td>
+      <td style="font-size:12px">${boundStr(p)}</td>
       <td><button class="detail-btn" onclick="editInvProduct(${p.id})">编辑</button> <button class="history-btn" onclick="deleteInvProduct(${p.id})">删除</button></td>
     </tr>`).join('');
-  } catch { tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#B91C1C">加载失败</td></tr>'; }
+  } catch { tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#B91C1C">加载失败</td></tr>'; }
 }
 
 function openInvCategoryEditor(cat) {
