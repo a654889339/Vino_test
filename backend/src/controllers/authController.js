@@ -401,8 +401,9 @@ exports.bindProduct = async (req, res) => {
     if (!productKey) return res.status(400).json({ code: 400, message: '序列号不能为空' });
 
     const { InventoryProduct, UserProduct } = require('../models');
-    const product = await InventoryProduct.findOne({ where: { serialNumber: productKey, status: 'active' } });
+    const product = await InventoryProduct.findOne({ where: { serialNumber: productKey } });
     if (!product) return res.status(404).json({ code: 404, message: '未找到该序列号对应的商品' });
+    if (product.status !== 'active') return res.status(400).json({ code: 400, message: '商品已下架' });
 
     const existing = await UserProduct.findOne({ where: { productKey } });
     if (existing) {
@@ -458,10 +459,9 @@ exports.bindByQrImage = async (req, res) => {
       return res.status(400).json({ code: 400, message: '二维码中未包含序列号，请使用商品绑定二维码' });
     }
     const { InventoryProduct, UserProduct } = require('../models');
-    const product = await InventoryProduct.findOne({ where: { serialNumber: sn, status: 'active' } });
-    if (!product) {
-      return res.status(404).json({ code: 404, message: '未找到该序列号对应的商品' });
-    }
+    const product = await InventoryProduct.findOne({ where: { serialNumber: sn } });
+    if (!product) return res.status(404).json({ code: 404, message: '未找到该序列号对应的商品' });
+    if (product.status !== 'active') return res.status(400).json({ code: 400, message: '商品已下架' });
     const existing = await UserProduct.findOne({ where: { productKey: sn } });
     if (existing) {
       if (existing.userId === req.user.id) {

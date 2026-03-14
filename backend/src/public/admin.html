@@ -1613,7 +1613,7 @@ async function loadInventoryProducts() {
       <td>${p.name}</td>
       <td style="font-family:monospace;font-size:12px">${p.serialNumber}</td>
       <td>${p.sortOrder}</td>
-      <td>${p.status === 'active' ? '启用' : '禁用'}</td>
+      <td><span style="display:inline-block;padding:4px 14px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:500;transition:all .2s;${p.status==='active'?'background:#D1FAE5;color:#059669':'background:#F3F4F6;color:#999'}" onclick="toggleInvProductStatus(${p.id},'${p.status}')">${p.status==='active'?'启用':'禁用'}</span></td>
       <td><button class="detail-btn" onclick="showInvProductQR(${p.id})">生成二维码</button></td>
       <td style="font-size:12px">${boundStr(p)}</td>
       <td><button class="detail-btn" onclick="editInvProduct(${p.id})">编辑</button> <button class="history-btn" onclick="deleteInvProduct(${p.id})">删除</button></td>
@@ -1693,6 +1693,18 @@ async function deleteInvProduct(id) {
     if (res.code === 0) loadInventoryProducts();
     else alert(res.message || '删除失败');
   } catch { alert('删除失败'); }
+}
+
+async function toggleInvProductStatus(id, currentStatus) {
+  const p = (allInvProducts || []).find(x => x.id === id);
+  if (!p) return;
+  const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+  try {
+    const body = { categoryId: p.categoryId || (p.category && p.category.id), name: p.name, serialNumber: p.serialNumber, guideSlug: p.guideSlug || '', sortOrder: p.sortOrder ?? 0, status: newStatus };
+    const res = await api('/inventory/products/' + id, { method: 'PUT', body });
+    if (res.code === 0) loadInventoryProducts();
+    else alert(res.message || '操作失败');
+  } catch { alert('操作失败'); }
 }
 
 let currentInvQrProductId = null;
