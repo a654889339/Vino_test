@@ -17,7 +17,7 @@ ProductCategory.hasMany(DeviceGuide, { foreignKey: 'categoryId', as: 'guides' })
 DeviceGuide.belongsTo(ProductCategory, { foreignKey: 'categoryId', as: 'category' });
 
 ServiceCategory.hasMany(Service, { foreignKey: 'categoryId', as: 'services' });
-Service.belongsTo(ServiceCategory, { foreignKey: 'categoryId', as: 'category' });
+Service.belongsTo(ServiceCategory, { foreignKey: 'categoryId', as: 'serviceCategory' });
 
 InventoryCategory.hasMany(InventoryProduct, { foreignKey: 'categoryId', as: 'products' });
 InventoryProduct.belongsTo(InventoryCategory, { foreignKey: 'categoryId', as: 'category' });

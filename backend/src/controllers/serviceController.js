@@ -19,9 +19,9 @@ exports.list = async (req, res) => {
 
     const rows = await Service.findAll({
       where,
-      include: [{ model: ServiceCategory, as: 'category', attributes: ['id', 'name', 'key'], where: { status: 'active' }, required: true }],
+      include: [{ model: ServiceCategory, as: 'serviceCategory', attributes: ['id', 'name', 'key'], where: { status: 'active' }, required: true }],
       order: [
-        [{ model: ServiceCategory, as: 'category' }, 'sortOrder', 'ASC'],
+        [{ model: ServiceCategory, as: 'serviceCategory' }, 'sortOrder', 'ASC'],
         ['sortOrder', 'ASC'],
         ['id', 'ASC'],
       ],
@@ -39,7 +39,7 @@ exports.detail = async (req, res) => {
     const id = parseInt(req.params.id, 10);
     if (isNaN(id)) return res.status(400).json({ code: 400, message: '无效的服务ID' });
     const service = await Service.findByPk(id, {
-      include: [{ model: ServiceCategory, as: 'category', attributes: ['id', 'name', 'key'] }],
+      include: [{ model: ServiceCategory, as: 'serviceCategory', attributes: ['id', 'name', 'key'] }],
     });
     if (!service) return res.status(404).json({ code: 404, message: '服务不存在' });
     res.json({ code: 0, data: service });
@@ -53,9 +53,9 @@ exports.detail = async (req, res) => {
 exports.adminList = async (req, res) => {
   try {
     const rows = await Service.findAll({
-      include: [{ model: ServiceCategory, as: 'category', attributes: ['id', 'name', 'key'] }],
+      include: [{ model: ServiceCategory, as: 'serviceCategory', attributes: ['id', 'name', 'key'] }],
       order: [
-        [{ model: ServiceCategory, as: 'category' }, 'sortOrder', 'ASC'],
+        [{ model: ServiceCategory, as: 'serviceCategory' }, 'sortOrder', 'ASC'],
         ['sortOrder', 'ASC'],
         ['id', 'ASC'],
       ],
@@ -77,7 +77,7 @@ exports.create = async (req, res) => {
     if (data.sortOrder !== undefined) data.sortOrder = parseInt(data.sortOrder, 10) || 0;
     if (data.categoryId !== undefined) data.categoryId = parseInt(data.categoryId, 10) || null;
     const service = await Service.create(data);
-    const withCat = await Service.findByPk(service.id, { include: [{ model: ServiceCategory, as: 'category' }] });
+    const withCat = await Service.findByPk(service.id, { include: [{ model: ServiceCategory, as: 'serviceCategory' }] });
     res.json({ code: 0, data: withCat || service });
   } catch (err) {
     console.error('[Service] create error:', err.message);
@@ -97,7 +97,7 @@ exports.update = async (req, res) => {
     if (data.sortOrder !== undefined) data.sortOrder = parseInt(data.sortOrder, 10) || 0;
     if (data.categoryId !== undefined) data.categoryId = parseInt(data.categoryId, 10) || null;
     await service.update(data);
-    const withCat = await Service.findByPk(service.id, { include: [{ model: ServiceCategory, as: 'category' }] });
+    const withCat = await Service.findByPk(service.id, { include: [{ model: ServiceCategory, as: 'serviceCategory' }] });
     res.json({ code: 0, data: withCat || service });
   } catch (err) {
     console.error('[Service] update error:', err.message);

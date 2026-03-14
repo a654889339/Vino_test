@@ -125,8 +125,9 @@ onMounted(async () => {
     if (services.length) {
       const catMap = {};
       services.forEach(s => {
-        const catKey = s.category?.key ?? s.category?.id ?? s.category ?? 'repair';
-        const catName = s.category?.name ?? (typeof s.category === 'string' ? s.category : '维修');
+        const cat = s.serviceCategory || s.category;
+        const catKey = cat?.key ?? cat?.id ?? (typeof cat === 'string' ? cat : 'repair');
+        const catName = cat?.name ?? (typeof cat === 'string' ? cat : '维修');
         if (!catMap[catKey]) catMap[catKey] = { key: String(catKey), name: catName, items: [] };
         catMap[catKey].items.push({
           id: s.id,

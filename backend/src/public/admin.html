@@ -1423,7 +1423,7 @@ async function loadServices() {
       empty.style.display = 'none';
       tbody.innerHTML = allServices.map(s => `<tr>
         <td>${s.sortOrder}</td>
-        <td style="font-size:12px;color:#666">${s.category ? s.category.name : '-'}</td>
+        <td style="font-size:12px;color:#666">${s.serviceCategory ? s.serviceCategory.name : '-'}</td>
         <td><strong>${s.title}</strong></td>
         <td style="font-size:12px;color:#666;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escapeHtml(s.description||'')}">${(s.description||'').slice(0,24)}${(s.description||'').length>24?'…':''}</td>
         <td style="font-size:12px">${s.icon || '-'}</td>
@@ -2559,7 +2559,7 @@ async function sendAdminImage(input) {
   fd.append('image', file);
   try {
     showUploadLoading();
-    const uploadRes = await fetch('/api/messages/upload-image', { method: 'POST', headers: { 'Authorization': 'Bearer ' + localStorage.getItem('admin_token') }, body: fd }).then(r => r.json());
+    const uploadRes = await fetch('/api/messages/upload-image', { method: 'POST', headers: { 'Authorization': 'Bearer ' + localStorage.getItem('vino_admin_token') }, body: fd }).then(r => r.json());
     hideUploadLoading();
     if (uploadRes.code === 0 && uploadRes.data && uploadRes.data.url) {
       const res = await api('/messages/admin/' + currentChatUserId + '/reply', { method: 'POST', body: { content: uploadRes.data.url, type: 'image' } });
