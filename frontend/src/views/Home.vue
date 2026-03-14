@@ -78,14 +78,14 @@
       </div>
     </div>
 
-    <!-- 我的商品（数据来自商品库存，标题可在首页配置中设置） -->
-    <div class="section card-section">
+    <!-- 我的商品：为空时整栏隐藏，自助服务紧贴自助预约 -->
+    <div v-if="myProducts.length" class="section card-section">
       <div class="section-header">
         <h3>{{ myProductsTitle }}</h3>
         <span class="more" @click="$router.push('/mine/products')">查看全部 ›</span>
       </div>
       <input ref="qrFileInputRef" type="file" accept="image/*" class="hidden-input" @change="onQrFileChange" />
-      <div v-if="myProducts.length" class="my-products-list">
+      <div class="my-products-list">
         <div v-for="(item, i) in myProducts" :key="item.productKey || i" class="my-product-item">
           <span class="my-product-category">{{ item.categoryName || '-' }}</span>
           <div class="my-product-icon-wrap">
@@ -95,7 +95,6 @@
           <span class="my-product-name">{{ item.productName || item.productKey }}</span>
         </div>
       </div>
-      <div v-else class="my-products-empty">暂无绑定商品</div>
     </div>
 
     <!-- Hot Services -->

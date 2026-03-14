@@ -46,13 +46,13 @@
     </view>
   </view>
 
-  <!-- 我的商品：不显示添加商品按钮和序列号 -->
-  <view class="card-section">
+  <!-- 我的商品：为空时整栏隐藏，自助服务紧贴自助预约 -->
+  <view a:if="{{myProducts.length}}" class="card-section">
     <view class="section-header">
       <text class="section-title">{{myProductsTitle}}</text>
       <text class="section-more" onTap="goMyProducts">查看全部 ›</text>
     </view>
-    <view a:if="{{myProducts.length}}" class="my-products-list">
+    <view class="my-products-list">
       <view class="my-product-item" a:for="{{myProducts}}" a:key="productKey">
         <text class="my-product-category">{{item.categoryName || '-'}}</text>
         <view class="my-product-icon-wrap">
@@ -62,7 +62,6 @@
         <text class="my-product-name">{{item.productName || item.productKey}}</text>
       </view>
     </view>
-    <view a:else class="my-products-empty">暂无绑定商品</view>
   </view>
 
   <!-- Hot Services -->
