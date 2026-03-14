@@ -91,6 +91,10 @@
       <div v-if="myProducts.length" class="my-products-list">
         <div v-for="(item, i) in myProducts" :key="item.productKey || i" class="my-product-item">
           <span class="my-product-category">{{ item.categoryName || '-' }}</span>
+          <div class="my-product-icon-wrap">
+            <img v-if="productIconUrl(item)" :src="productIconUrl(item)" class="my-product-icon" alt="" />
+            <van-icon v-else name="photo-o" class="my-product-icon-placeholder" />
+          </div>
           <span class="my-product-name">{{ item.productName || item.productKey }}</span>
           <span class="my-product-key">序列号：{{ item.productKey }}</span>
         </div>
@@ -157,6 +161,11 @@ const allItems = ref([]);
 const myProducts = ref([]);
 const addProductLoading = ref(false);
 
+function productIconUrl(item) {
+  const u = (item && (item.iconUrlThumb || item.iconUrl)) || '';
+  if (!u) return '';
+  return u.startsWith('http') ? u : (window.location.origin + (u.startsWith('/') ? u : '/' + u));
+}
 async function loadMyProducts() {
   if (!localStorage.getItem('vino_token')) return;
   try {
@@ -259,7 +268,7 @@ const heroBgList = computed(() => {
   const list = allItems.value.filter(i => i.section === 'homeBg' && i.status === 'active');
   return (list || [])
     .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
-    .map(i => ({ url: i.imageUrl, thumb: (i.imageUrlThumb && i.imageUrlThumb.trim()) ? i.imageUrlThumb.trim() : '' }))
+    .map(i => ({ url: i.imageUrl, thumb: '' }))
     .filter(i => i.url);
 });
 const heroBgFallback = computed(() => allItems.value.find(i => i.section === 'homeBg' && i.status === 'active')?.imageUrl || '');
@@ -390,10 +399,10 @@ const copyUrl = async () => {
 .hero-logo-svg { width: 64px; height: 26px; }
 .hero-actions { display: flex; gap: 8px; }
 
-/* ===== Card Sections：半透明 + 两侧留白，红框处透出底层 home-bg 背景图 ===== */
+/* ===== Card Sections：半透明 + 两侧留白，层级低于底部 tabbar，避免遮挡首页/产品等按钮 ===== */
 .card-section {
   position: relative;
-  z-index: 2;
+  z-index: 1;
   margin: 12px;
   border-radius: 16px;
   background: linear-gradient(to bottom, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.72) 50%, rgba(255,255,255,0.5) 100%);
@@ -502,6 +511,9 @@ const copyUrl = async () => {
   padding: 12px 14px; background: #f8f8f8; border-radius: 10px;
 }
 .my-product-category { font-size: 13px; color: #666; min-width: 48px; flex-shrink: 0; }
+.my-product-icon-wrap { width: 40px; height: 40px; flex-shrink: 0; border-radius: 10px; overflow: hidden; background: #eee; display: flex; align-items: center; justify-content: center; }
+.my-product-icon { width: 100%; height: 100%; object-fit: contain; }
+.my-product-icon-placeholder { font-size: 22px; color: #bbb; }
 .my-product-name { flex: 1; font-size: 15px; font-weight: 600; color: var(--vino-dark); min-width: 0; }
 .my-product-key { font-size: 12px; color: #999; font-family: monospace; flex-shrink: 0; }
 

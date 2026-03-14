@@ -72,10 +72,6 @@
         </div>
       </div>
 
-      <div class="section-card guide-footer-actions">
-        <van-button type="primary" color="#B91C1C" block round class="btn-home" @click="$router.replace('/')">返回主页</van-button>
-      </div>
-
       <div style="height:24px"></div>
     </template>
 
@@ -86,12 +82,16 @@
         <div class="video-close" @click="closeVideo()"><van-icon name="cross" size="24" color="#fff" /></div>
       </div>
     </div>
+    <!-- 固定底部：返回主页（始终可见可点） -->
+    <div class="guide-footer-fixed">
+      <van-button type="primary" color="#B91C1C" block round class="btn-home" @click="goHome">返回主页</van-button>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { showImagePreview } from 'vant';
 import { guideApi } from '@/api';
 import LodImg from '@/components/LodImg.vue';
@@ -159,6 +159,11 @@ const closeVideo = () => {
 
 const previewImage = (url) => {
   showImagePreview({ images: [url], closeable: true });
+};
+
+const router = useRouter();
+const goHome = () => {
+  router.replace('/');
 };
 
 const openMedia = (m) => {
@@ -429,13 +434,22 @@ onMounted(async () => {
   font-weight: 500;
 }
 
-.guide-footer-actions {
-  margin-bottom: 16px;
+/* ===== 固定底部返回主页（层级低于视频浮层，始终可见） ===== */
+.guide-footer-fixed {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 150;
+  padding: 12px 16px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+  background: linear-gradient(to top, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.95) 100%);
+  backdrop-filter: blur(8px);
 }
-
-.guide-footer-actions .btn-home {
+.guide-footer-fixed .btn-home {
   max-width: 280px;
   margin: 0 auto;
+  display: block;
 }
 
 /* ===== Video Overlay ===== */

@@ -482,7 +482,8 @@ exports.bindByQrImage = async (req, res) => {
 /** 当前用户已绑定的商品列表（含种类、名称、序列号、绑定时间） */
 exports.myProducts = async (req, res) => {
   try {
-    const { UserProduct, InventoryProduct, InventoryCategory } = require('../models');
+    const { Op } = require('sequelize');
+    const { UserProduct, InventoryProduct, InventoryCategory, DeviceGuide } = require('../models');
     const list = await UserProduct.findAll({
       where: { userId: req.user.id },
       order: [['createdAt', 'DESC']],
@@ -493,20 +494,37 @@ exports.myProducts = async (req, res) => {
       include: [{ model: InventoryCategory, as: 'category', attributes: ['id', 'name'] }],
     });
     const infoMap = {};
+    const slugs = [];
     products.forEach(p => {
+      const guideSlug = (p.guideSlug && String(p.guideSlug).trim()) ? String(p.guideSlug).trim() : '';
+      if (guideSlug) slugs.push(guideSlug);
       infoMap[p.serialNumber] = {
         productName: p.name,
         categoryName: (p.category && p.category.name) || '',
-        guideSlug: (p.guideSlug && String(p.guideSlug).trim()) ? String(p.guideSlug).trim() : '',
+        guideSlug,
       };
     });
-    const data = list.map(l => ({
-      productKey: l.productKey,
-      productName: (infoMap[l.productKey] && infoMap[l.productKey].productName) || l.productKey,
-      categoryName: (infoMap[l.productKey] && infoMap[l.productKey].categoryName) || '',
-      guideSlug: (infoMap[l.productKey] && infoMap[l.productKey].guideSlug) || '',
-      boundAt: l.createdAt,
-    }));
+    const guideBySlug = {};
+    if (slugs.length) {
+      const guides = await DeviceGuide.findAll({
+        where: { slug: { [Op.in]: [...new Set(slugs)] } },
+        attributes: ['slug', 'iconUrl', 'iconUrlThumb'],
+      });
+      guides.forEach(g => { guideBySlug[g.slug || ''] = { iconUrl: g.iconUrl || '', iconUrlThumb: g.iconUrlThumb || '' }; });
+    }
+    const data = list.map(l => {
+      const info = infoMap[l.productKey];
+      const guide = info && info.guideSlug ? guideBySlug[info.guideSlug] : null;
+      return {
+        productKey: l.productKey,
+        productName: (info && info.productName) || l.productKey,
+        categoryName: (info && info.categoryName) || '',
+        guideSlug: (info && info.guideSlug) || '',
+        iconUrl: (guide && guide.iconUrl) || '',
+        iconUrlThumb: (guide && guide.iconUrlThumb) || '',
+        boundAt: l.createdAt,
+      };
+    });
     res.json({ code: 0, data });
   } catch (err) {
     console.error('[Auth] myProducts error:', err.message);
