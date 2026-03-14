@@ -125,9 +125,17 @@ onMounted(async () => {
     if (services.length) {
       const catMap = {};
       services.forEach(s => {
-        const cat = s.category || 'repair';
-        if (!catMap[cat]) catMap[cat] = { key: cat, name: cat === 'repair' ? '维修' : cat === 'clean' ? '清洁' : cat === 'inspect' ? '检测' : cat === 'data' ? '数据' : cat, items: [] };
-        catMap[cat].items.push({ id: s.id, title: s.title, desc: s.description || '', icon: s.icon || 'setting-o', price: s.price || 0, bg: categoryColors[cat] || '#B91C1C' });
+        const catKey = s.category?.key ?? s.category?.id ?? s.category ?? 'repair';
+        const catName = s.category?.name ?? (typeof s.category === 'string' ? s.category : '维修');
+        if (!catMap[catKey]) catMap[catKey] = { key: String(catKey), name: catName, items: [] };
+        catMap[catKey].items.push({
+          id: s.id,
+          title: s.title,
+          desc: s.description || '',
+          icon: s.icon || 'setting-o',
+          price: String(s.price ?? 0),
+          bg: s.bg || categoryColors[catKey] || '#B91C1C',
+        });
       });
       categories.value = Object.values(catMap);
     } else {

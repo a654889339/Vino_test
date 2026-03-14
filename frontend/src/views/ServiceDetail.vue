@@ -337,7 +337,10 @@ onMounted(async () => {
   const id = route.params.id;
   try {
     const res = await serviceApi.detail(id);
-    serviceData.value = res.data;
+    const d = res.data;
+    serviceData.value = { title: d.title, description: d.description, price: d.price, originPrice: d.originPrice };
+    serviceIcon.value = d.icon || 'setting-o';
+    coverBg.value = d.bg || 'linear-gradient(135deg, #B91C1C, #7F1D1D)';
   } catch {
     const fb = fallbackServices[id] || fallbackServices[1];
     serviceData.value = { title: fb.title, description: fb.description, price: fb.price, originPrice: fb.originPrice };
