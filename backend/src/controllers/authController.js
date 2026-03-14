@@ -393,7 +393,7 @@ exports.getProfile = async (req, res) => {
   }
 };
 
-/** 当前用户绑定商品（扫码后调用，序列号作为参数） */
+/** 当前用户绑定商品（扫码后调用，序列号作为参数）。一个库存商品只能被一个用户绑定。 */
 exports.bindProduct = async (req, res) => {
   try {
     const { sn } = req.body;
@@ -404,10 +404,15 @@ exports.bindProduct = async (req, res) => {
     const product = await InventoryProduct.findOne({ where: { serialNumber: productKey, status: 'active' } });
     if (!product) return res.status(404).json({ code: 404, message: '未找到该序列号对应的商品' });
 
-    const [binding] = await UserProduct.findOrCreate({
-      where: { userId: req.user.id, productKey },
-      defaults: { userId: req.user.id, productKey },
-    });
+    const existing = await UserProduct.findOne({ where: { productKey } });
+    if (existing) {
+      if (existing.userId === req.user.id) {
+        const guideSlug = (product.guideSlug && String(product.guideSlug).trim()) ? String(product.guideSlug).trim() : '';
+        return res.json({ code: 0, data: { productKey, productName: product.name, guideSlug }, message: '绑定成功' });
+      }
+      return res.status(400).json({ code: 400, message: '该商品已被其他账号绑定' });
+    }
+    await UserProduct.create({ userId: req.user.id, productKey });
     const guideSlug = (product.guideSlug && String(product.guideSlug).trim()) ? String(product.guideSlug).trim() : '';
     res.json({ code: 0, data: { productKey, productName: product.name, guideSlug }, message: '绑定成功' });
   } catch (err) {
@@ -457,10 +462,15 @@ exports.bindByQrImage = async (req, res) => {
     if (!product) {
       return res.status(404).json({ code: 404, message: '未找到该序列号对应的商品' });
     }
-    const [binding] = await UserProduct.findOrCreate({
-      where: { userId: req.user.id, productKey: sn },
-      defaults: { userId: req.user.id, productKey: sn },
-    });
+    const existing = await UserProduct.findOne({ where: { productKey: sn } });
+    if (existing) {
+      if (existing.userId === req.user.id) {
+        const guideSlug = (product.guideSlug && String(product.guideSlug).trim()) ? String(product.guideSlug).trim() : (guide || '');
+        return res.json({ code: 0, data: { productKey: sn, productName: product.name, guideSlug }, message: '绑定成功' });
+      }
+      return res.status(400).json({ code: 400, message: '该商品已被其他账号绑定' });
+    }
+    await UserProduct.create({ userId: req.user.id, productKey: sn });
     const guideSlug = (product.guideSlug && String(product.guideSlug).trim()) ? String(product.guideSlug).trim() : (guide || '');
     res.json({ code: 0, data: { productKey: sn, productName: product.name, guideSlug }, message: '绑定成功' });
   } catch (err) {

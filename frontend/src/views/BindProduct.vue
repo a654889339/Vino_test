@@ -12,7 +12,7 @@
       </template>
       <template v-else-if="result === 'error'">
         <van-icon name="cross" size="64" color="#ee0a24" />
-        <h3>绑定失败</h3>
+        <h3>{{ errorTitle }}</h3>
         <p class="err-msg">{{ errorMsg }}</p>
         <van-button type="primary" color="#B91C1C" block round class="btn-home" @click="$router.replace('/')">返回首页</van-button>
       </template>
@@ -34,6 +34,9 @@ const productName = ref('');
 const errorMsg = ref('');
 
 const sn = computed(() => route.query.sn || '');
+const errorTitle = computed(() =>
+  (errorMsg.value && errorMsg.value.indexOf('其他账号') !== -1) ? '已被其他账号绑定' : '绑定失败'
+);
 
 onMounted(async () => {
   const token = localStorage.getItem('vino_token');
@@ -64,7 +67,7 @@ onMounted(async () => {
     }
   } catch (err) {
     result.value = 'error';
-    errorMsg.value = err.message || '绑定失败';
+    errorMsg.value = (err && err.message) || '绑定失败';
   } finally {
     loading.value = false;
   }

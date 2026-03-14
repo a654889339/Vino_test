@@ -21,7 +21,7 @@ const UserProduct = sequelize.define('UserProduct', {
   timestamps: true,
   updatedAt: false,
   indexes: [
-    { unique: true, fields: ['userId', 'productKey'] },
+    { unique: true, fields: ['productKey'], name: 'productKey' },
   ],
 });
 
