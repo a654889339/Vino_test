@@ -6,10 +6,12 @@ Page({
     heroBgUrl: '',
     heroBgList: [],
     navSectionTitle: '自助预约',
+    myProductsTitle: '我的商品',
     hotServiceTitle: '热门服务',
     recommendTitle: '为你推荐',
     navLgItems: [],
     navSmItems: [],
+    myProducts: [],
     hotServices: [],
     recommends: [
       { id: 1, title: '会员权益', desc: '专属折扣', emoji: '🏅', bg: 'linear-gradient(135deg, #F59E0B, #D97706)' },
@@ -25,6 +27,36 @@ Page({
     }
     this.loadHomeConfig();
     this.loadHotServices();
+    this.loadMyProducts();
+  },
+
+  loadMyProducts() {
+    if (!(getApp().globalData.token || wx.getStorageSync('vino_token'))) {
+      this.setData({ myProducts: [] });
+      return;
+    }
+    getApp().request({ url: '/auth/my-products' })
+      .then(res => {
+        const list = res.data || [];
+        const base = (getApp().globalData.baseUrl || '').replace(/\/api\/?$/, '') || 'http://106.54.50.88:5202';
+        const toFull = (u) => {
+          if (!u || typeof u !== 'string') return u || '';
+          const t = String(u).trim();
+          if (t.startsWith('http')) return t;
+          return base + (t.startsWith('/') ? t : '/' + t);
+        };
+        const myProducts = list.map(item => ({
+          ...item,
+          iconUrl: item.iconUrl ? toFull(item.iconUrl) : '',
+          iconUrlThumb: item.iconUrlThumb ? toFull(item.iconUrlThumb) : '',
+        }));
+        this.setData({ myProducts });
+      })
+      .catch(() => this.setData({ myProducts: [] }));
+  },
+
+  goMyProducts() {
+    wx.navigateTo({ url: '/pages/my-products/my-products' });
   },
 
   loadHomeConfig() {

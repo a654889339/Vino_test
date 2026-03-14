@@ -48,6 +48,25 @@
     </view>
   </view>
 
+  <!-- 我的商品：不显示添加商品按钮和序列号 -->
+  <view class="card-section">
+    <view class="section-header">
+      <text class="section-title">{{myProductsTitle}}</text>
+      <text class="section-more" bindtap="goMyProducts">查看全部 ›</text>
+    </view>
+    <view wx:if="{{myProducts.length}}" class="my-products-list">
+      <view class="my-product-item" wx:for="{{myProducts}}" wx:key="productKey">
+        <text class="my-product-category">{{item.categoryName || '-'}}</text>
+        <view class="my-product-icon-wrap">
+          <image wx:if="{{item.iconUrlThumb || item.iconUrl}}" src="{{item.iconUrlThumb || item.iconUrl}}" class="my-product-icon" mode="aspectFit" />
+          <text wx:else class="my-product-icon-placeholder">📦</text>
+        </view>
+        <text class="my-product-name">{{item.productName || item.productKey}}</text>
+      </view>
+    </view>
+    <view wx:else class="my-products-empty">暂无绑定商品</view>
+  </view>
+
   <!-- Hot Services -->
   <view class="card-section">
     <view class="section-header">

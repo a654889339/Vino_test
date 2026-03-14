@@ -84,9 +84,6 @@
         <h3>{{ myProductsTitle }}</h3>
         <span class="more" @click="$router.push('/mine/products')">查看全部 ›</span>
       </div>
-      <div class="my-products-actions">
-        <van-button size="small" type="primary" color="#B91C1C" plain round icon="plus" @click="onAddProductClick">添加商品</van-button>
-      </div>
       <input ref="qrFileInputRef" type="file" accept="image/*" class="hidden-input" @change="onQrFileChange" />
       <div v-if="myProducts.length" class="my-products-list">
         <div v-for="(item, i) in myProducts" :key="item.productKey || i" class="my-product-item">
@@ -96,10 +93,9 @@
             <van-icon v-else name="photo-o" class="my-product-icon-placeholder" />
           </div>
           <span class="my-product-name">{{ item.productName || item.productKey }}</span>
-          <span class="my-product-key">序列号：{{ item.productKey }}</span>
         </div>
       </div>
-      <div v-else class="my-products-empty">暂无绑定商品，点击「添加商品」上传二维码</div>
+      <div v-else class="my-products-empty">暂无绑定商品</div>
     </div>
 
     <!-- Hot Services -->
@@ -502,7 +498,6 @@ const copyUrl = async () => {
 .nav-sm-label { font-size: 11px; color: #666; text-align: center; }
 
 /* ===== 我的商品 ===== */
-.my-products-actions { margin-bottom: 12px; }
 .my-products-empty { padding: 16px; text-align: center; color: #999; font-size: 14px; }
 .hidden-input { position: absolute; width: 0; height: 0; opacity: 0; pointer-events: none; }
 .my-products-list { display: flex; flex-direction: column; gap: 10px; }
