@@ -67,7 +67,8 @@ onMounted(async () => {
     }
   } catch (err) {
     result.value = 'error';
-    errorMsg.value = (err && err.message) || '绑定失败';
+    const msg = err?.response?.data?.message || err?.message || '绑定失败';
+    errorMsg.value = msg;
   } finally {
     loading.value = false;
   }

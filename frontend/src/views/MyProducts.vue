@@ -132,7 +132,8 @@ async function onQrFileChange(e) {
       showToast(res.message || '绑定失败');
     }
   } catch (err) {
-    showToast(err.message || '识别或绑定失败');
+    const msg = err?.response?.data?.message || err?.message || '识别或绑定失败';
+    showToast(msg);
   } finally {
     addProductLoading.value = false;
   }
