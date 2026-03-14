@@ -370,6 +370,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         </table>
         <div class="order-empty" id="hcEmpty" style="display:none">暂无配置项</div>
       </div>
+
+      <!-- 底部栏配置（与首页配置管理同层级） -->
+      <div class="dash-section" style="margin-top:32px">
+        <div class="section-header">
+          <h3>底部栏配置</h3>
+        </div>
+        <p style="font-size:13px;color:#666;margin-bottom:16px">配置前端底部导航栏的图标和名称（如首页、产品、服务、订单、我的）。图标使用 Vant 图标名，如 wap-home-o、label-o、apps-o、bill-o、contact-o。</p>
+        <div style="margin-bottom:16px">
+          <button class="btn" onclick="openTabbarEditor()" style="background:#059669;color:#fff">+ 新增项目</button>
+        </div>
+        <table class="order-table" id="tbTabbarTable">
+          <thead><tr><th>ID</th><th>名称</th><th>图标</th><th>跳转路径</th><th>排序</th><th>状态</th><th>操作</th></tr></thead>
+          <tbody id="tbTabbarBody"></tbody>
+        </table>
+        <div class="order-empty" id="tbTabbarEmpty" style="display:none">暂无底部栏配置，将使用默认五项（首页/产品/服务/订单/我的）</div>
+      </div>
     </div>
 
     <!-- 首页动画配置 Page（开场动画、首页Logo、首页背景） -->
@@ -515,6 +531,45 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <div style="text-align:right;margin-top:16px">
             <button class="btn" onclick="closeHCEditor()">取消</button>
             <button class="btn" onclick="saveHC()" style="background:var(--primary);color:#fff;margin-left:8px">保存</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 底部栏配置编辑 Modal -->
+    <div class="modal-overlay" id="tbModal" style="display:none" onclick="if(event.target===this)closeTabbarEditor()">
+      <div class="modal-content" style="max-width:420px">
+        <div class="modal-header">
+          <h3 id="tbModalTitle">新增底部栏项</h3>
+          <span class="modal-close" onclick="closeTabbarEditor()">&times;</span>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>名称</label>
+            <input class="form-input" id="tbTitle" placeholder="如 首页、产品、服务" />
+          </div>
+          <div class="form-group">
+            <label>Vant 图标名</label>
+            <input class="form-input" id="tbIcon" placeholder="如 wap-home-o、label-o、apps-o" />
+          </div>
+          <div class="form-group">
+            <label>跳转路径</label>
+            <input class="form-input" id="tbPath" placeholder="如 /、/products、/services" />
+          </div>
+          <div class="form-group">
+            <label>排序 (越小越靠左)</label>
+            <input class="form-input" type="number" id="tbSortOrder" value="0" />
+          </div>
+          <div class="form-group">
+            <label>状态</label>
+            <select class="form-input" id="tbStatus">
+              <option value="active">启用</option>
+              <option value="inactive">禁用</option>
+            </select>
+          </div>
+          <div style="text-align:right;margin-top:16px">
+            <button class="btn" onclick="closeTabbarEditor()">取消</button>
+            <button class="btn" onclick="saveTabbarItem()" style="background:var(--primary);color:#fff;margin-left:8px">保存</button>
           </div>
         </div>
       </div>
@@ -1668,7 +1723,7 @@ let hcFilterSection = 'all';
 let hcAnimFilterSection = 'all';
 const HOME_CONFIG_SECTIONS = ['navLg', 'navSm', 'hotService', 'recommend', 'myProducts'];
 const HOME_ANIM_SECTIONS = ['splash', 'headerLogo', 'homeBg'];
-const SECTION_LABELS = { banner: '轮播横幅', nav: '快捷导航', navLg: '自助预约(大)', navSm: '自助预约(小)', hotService: '自助服务', recommend: '服务产品', splash: '开场动画', headerLogo: '首页Logo', homeBg: '首页背景', navSectionTitle: '自助预约区块标题', hotServiceTitle: '自助服务区块标题', recommendTitle: '服务产品区块标题', myProducts: '我的商品' };
+const SECTION_LABELS = { banner: '轮播横幅', nav: '快捷导航', navLg: '自助预约(大)', navSm: '自助预约(小)', hotService: '自助服务', recommend: '服务产品', splash: '开场动画', headerLogo: '首页Logo', homeBg: '首页背景', navSectionTitle: '自助预约区块标题', hotServiceTitle: '自助服务区块标题', recommendTitle: '服务产品区块标题', myProducts: '我的商品', tabbar: '底部栏' };
 
 async function loadHomeConfig() {
   try {
@@ -1679,8 +1734,85 @@ async function loadHomeConfig() {
     if (offsetEl) offsetEl.value = (offsetItem && offsetItem.title !== undefined && offsetItem.title !== '') ? String(offsetItem.title).trim() : '0';
     renderHCTable();
     if (currentHCPage === 'homeAnimConfig') renderHCAnimTable();
+    renderTabbarTable();
     loadDashHeaderLogo();
   } catch { document.getElementById('hcBody').innerHTML = ''; }
+}
+
+function renderTabbarTable() {
+  const items = (allHCItems || []).filter(i => i.section === 'tabbar').sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+  const tbody = document.getElementById('tbTabbarBody');
+  const empty = document.getElementById('tbTabbarEmpty');
+  if (!tbody) return;
+  if (!items.length) { tbody.innerHTML = ''; if (empty) empty.style.display = 'block'; return; }
+  if (empty) empty.style.display = 'none';
+  tbody.innerHTML = items.map(h => `<tr>
+    <td>${h.id}</td>
+    <td style="font-weight:500">${h.title || '-'}</td>
+    <td><span style="font-family:monospace;font-size:12px;background:#F3F4F6;padding:2px 6px;border-radius:4px">${h.icon || '-'}</span></td>
+    <td style="font-size:12px">${h.path || '-'}</td>
+    <td>${h.sortOrder}</td>
+    <td><span style="display:inline-block;padding:4px 14px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:500;${h.status==='active'?'background:#D1FAE5;color:#059669':'background:#F3F4F6;color:#999'}" onclick="toggleTabbarStatus(${h.id},'${h.status}')">${h.status==='active'?'启用':'禁用'}</span></td>
+    <td style="white-space:nowrap">
+      <button class="btn btn-sm" onclick="openTabbarEditor(${h.id})" style="background:#2563EB;color:#fff;margin-right:4px">编辑</button>
+      <button class="btn btn-sm" onclick="deleteTabbarItem(${h.id})" style="background:#DC2626;color:#fff">删除</button>
+    </td>
+  </tr>`).join('');
+}
+
+let tabbarEditId = '';
+function openTabbarEditor(id) {
+  tabbarEditId = id || '';
+  const item = id ? (allHCItems || []).find(i => i.id === id) : null;
+  document.getElementById('tbModalTitle').textContent = item ? '编辑底部栏项' : '新增底部栏项';
+  document.getElementById('tbTitle').value = item ? (item.title || '') : '';
+  document.getElementById('tbIcon').value = item ? (item.icon || '') : '';
+  document.getElementById('tbPath').value = item ? (item.path || '/') : '/';
+  document.getElementById('tbSortOrder').value = item ? (item.sortOrder ?? 0) : 0;
+  document.getElementById('tbStatus').value = item ? (item.status || 'active') : 'active';
+  document.getElementById('tbModal').style.display = 'flex';
+}
+
+function closeTabbarEditor() { document.getElementById('tbModal').style.display = 'none'; }
+
+async function saveTabbarItem() {
+  const title = document.getElementById('tbTitle').value.trim();
+  if (!title) { alert('请填写名称'); return; }
+  const body = {
+    section: 'tabbar',
+    title,
+    icon: document.getElementById('tbIcon').value.trim() || 'wap-home-o',
+    path: document.getElementById('tbPath').value.trim() || '/',
+    sortOrder: parseInt(document.getElementById('tbSortOrder').value) || 0,
+    status: document.getElementById('tbStatus').value || 'active',
+  };
+  try {
+    const res = tabbarEditId
+      ? await api('/home-config/' + tabbarEditId, { method: 'PUT', body })
+      : await api('/home-config', { method: 'POST', body });
+    if (res.code === 0) { closeTabbarEditor(); loadHomeConfig(); }
+    else alert(res.message || '保存失败');
+  } catch { alert('保存失败'); }
+}
+
+async function deleteTabbarItem(id) {
+  if (!confirm('确定删除该项？')) return;
+  try {
+    const res = await api('/home-config/' + id, { method: 'DELETE' });
+    if (res.code === 0) loadHomeConfig();
+    else alert(res.message || '删除失败');
+  } catch { alert('删除失败'); }
+}
+
+async function toggleTabbarStatus(id, current) {
+  const newStatus = current === 'active' ? 'inactive' : 'active';
+  const item = (allHCItems || []).find(i => i.id === id);
+  if (!item) return;
+  try {
+    const res = await api('/home-config/' + id, { method: 'PUT', body: { ...item, status: newStatus } });
+    if (res.code === 0) loadHomeConfig();
+    else alert(res.message || '操作失败');
+  } catch { alert('操作失败'); }
 }
 
 async function saveHCSectionOffset() {

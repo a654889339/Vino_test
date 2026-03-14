@@ -1,12 +1,8 @@
 <template>
   <SplashScreen v-if="showSplash" />
   <router-view />
-  <van-tabbar v-if="showTabbar" v-model="activeTab" route active-color="var(--vino-primary)">
-    <van-tabbar-item to="/" icon="wap-home-o">首页</van-tabbar-item>
-    <van-tabbar-item to="/products" icon="label-o">产品</van-tabbar-item>
-    <van-tabbar-item to="/services" icon="apps-o">服务</van-tabbar-item>
-    <van-tabbar-item to="/orders" icon="bill-o">订单</van-tabbar-item>
-    <van-tabbar-item to="/mine" icon="contact-o">我的</van-tabbar-item>
+  <van-tabbar v-if="showTabbar && tabbarItems.length" route active-color="var(--vino-primary)">
+    <van-tabbar-item v-for="(item, i) in tabbarItems" :key="item.path || i" :to="item.path" :icon="item.icon">{{ item.title }}</van-tabbar-item>
   </van-tabbar>
   <ChatWidget v-if="showChatWidget" ref="chatWidgetRef" />
 </template>
@@ -16,9 +12,37 @@ import { ref, computed, onMounted, provide } from 'vue';
 import { useRoute } from 'vue-router';
 import SplashScreen from '@/components/SplashScreen.vue';
 import ChatWidget from '@/components/ChatWidget.vue';
+import { homeConfigApi } from '@/api';
 
 const route = useRoute();
-const activeTab = ref(0);
+
+const DEFAULT_TABBAR = [
+  { title: '首页', icon: 'wap-home-o', path: '/' },
+  { title: '产品', icon: 'label-o', path: '/products' },
+  { title: '服务', icon: 'apps-o', path: '/services' },
+  { title: '订单', icon: 'bill-o', path: '/orders' },
+  { title: '我的', icon: 'contact-o', path: '/mine' },
+];
+
+const tabbarItems = ref([...DEFAULT_TABBAR]);
+
+async function loadTabbarConfig() {
+  try {
+    const res = await homeConfigApi.tabbar();
+    const list = (res.data || []).sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+    if (list.length) {
+      tabbarItems.value = list.map((i) => ({
+        title: i.title || '',
+        icon: (i.icon && i.icon.trim()) || 'wap-home-o',
+        path: (i.path && i.path.trim()) || '/',
+      }));
+    }
+  } catch {
+    tabbarItems.value = [...DEFAULT_TABBAR];
+  }
+}
+
+onMounted(loadTabbarConfig);
 
 const hiddenTabRoutes = ['/login', '/register', '/service/', '/address', '/guide/'];
 const showTabbar = computed(() => {

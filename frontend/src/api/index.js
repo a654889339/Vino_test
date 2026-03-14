@@ -53,7 +53,8 @@ export const messageApi = {
 };
 
 export const homeConfigApi = {
-  list: () => request.get('/home-config'),
+  list: (params) => request.get('/home-config', { params }),
+  tabbar: () => request.get('/home-config', { params: { section: 'tabbar' } }),
 };
 
 export const addressApi = {
