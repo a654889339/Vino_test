@@ -23,5 +23,6 @@ router.post('/upload-avatar', authMiddleware, upload.single('avatar'), authContr
 router.get('/admin/users', authMiddleware, adminMiddleware, authController.adminGetUsers);
 router.get('/my-products', authMiddleware, authController.myProducts);
 router.post('/bind-product', authMiddleware, authController.bindProduct);
+router.post('/bind-by-qr-image', authMiddleware, upload.single('image'), authController.bindByQrImage);
 
 module.exports = router;

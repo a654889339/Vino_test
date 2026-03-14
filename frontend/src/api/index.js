@@ -15,6 +15,11 @@ export const authApi = {
   bindPhone: (data) => request.post('/auth/bind-phone', data),
   myProducts: () => request.get('/auth/my-products'),
   bindProduct: (data) => request.post('/auth/bind-product', data),
+  bindByQrImage: (file) => {
+    const fd = new FormData();
+    fd.append('image', file);
+    return request.post('/auth/bind-by-qr-image', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+  },
 };
 
 export const serviceApi = {

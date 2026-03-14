@@ -1,4 +1,6 @@
 .page { padding: 20rpx; background: #f7f7f7; min-height: 100vh; }
+.add-bar { margin-bottom: 24rpx; }
+.add-btn { background: #fff; color: #B91C1C; border: 1rpx solid #B91C1C; border-radius: 40rpx; font-size: 28rpx; }
 .empty { display: flex; flex-direction: column; align-items: center; padding: 120rpx 0; }
 .empty-icon { font-size: 80rpx; margin-bottom: 20rpx; }
 .empty-text { font-size: 28rpx; color: #999; }

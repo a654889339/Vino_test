@@ -79,16 +79,22 @@
     </div>
 
     <!-- 我的商品（数据来自商品库存，标题可在首页配置中设置） -->
-    <div class="section card-section" v-if="myProducts.length">
+    <div class="section card-section">
       <div class="section-header">
         <h3>{{ myProductsTitle }}</h3>
+        <span class="more" @click="$router.push('/mine/products')">查看全部 ›</span>
       </div>
-      <div class="my-products-list">
+      <div class="my-products-actions">
+        <van-button size="small" type="primary" color="#B91C1C" plain round icon="plus" @click="onAddProductClick">添加商品</van-button>
+      </div>
+      <input ref="qrFileInputRef" type="file" accept="image/*" class="hidden-input" @change="onQrFileChange" />
+      <div v-if="myProducts.length" class="my-products-list">
         <div v-for="(item, i) in myProducts" :key="item.productKey || i" class="my-product-item">
           <span class="my-product-name">{{ item.productName || item.productKey }}</span>
           <span class="my-product-key">序列号：{{ item.productKey }}</span>
         </div>
       </div>
+      <div v-else class="my-products-empty">暂无绑定商品，点击「添加商品」上传二维码</div>
     </div>
 
     <!-- Hot Services -->
@@ -134,29 +140,114 @@
 
 <script setup>
 import { ref, watch, nextTick, onMounted, computed } from 'vue';
+import { useRouter } from 'vue-router';
 import QRCode from 'qrcode';
+import jsQR from 'jsqr';
 import { showToast } from 'vant';
 import { homeConfigApi, authApi } from '@/api';
 import LodImg from '@/components/LodImg.vue';
 
+const router = useRouter();
 const showShare = ref(false);
 const qrCanvas = ref(null);
+const qrFileInputRef = ref(null);
 const shareUrl = window.location.origin;
 const allItems = ref([]);
 const myProducts = ref([]);
+const addProductLoading = ref(false);
+
+async function loadMyProducts() {
+  if (!localStorage.getItem('vino_token')) return;
+  try {
+    const r = await authApi.myProducts();
+    myProducts.value = r.data || [];
+  } catch { myProducts.value = []; }
+}
 
 onMounted(async () => {
   try {
     const res = await homeConfigApi.list();
     allItems.value = res.data || [];
   } catch { /* use empty */ }
-  if (localStorage.getItem('vino_token')) {
-    try {
-      const r = await authApi.myProducts();
-      myProducts.value = r.data || [];
-    } catch { myProducts.value = []; }
-  }
+  await loadMyProducts();
 });
+
+function onAddProductClick() {
+  if (!localStorage.getItem('vino_token')) {
+    router.push('/login?redirect=' + encodeURIComponent('/mine/products'));
+    return;
+  }
+  qrFileInputRef.value?.click();
+}
+
+function parseSnAndGuideFromUrl(raw) {
+  let sn = '';
+  let guide = '';
+  try {
+    const url = raw.startsWith('http') ? new URL(raw) : new URL(raw, 'http://dummy');
+    sn = url.searchParams.get('sn') || '';
+    guide = url.searchParams.get('guide') || '';
+  } catch {
+    const snMatch = raw.match(/[?&]sn=([^&]+)/);
+    const guideMatch = raw.match(/[?&]guide=([^&]+)/);
+    if (snMatch) sn = decodeURIComponent(snMatch[1].replace(/\+/g, ' '));
+    if (guideMatch) guide = decodeURIComponent(guideMatch[1].replace(/\+/g, ' '));
+  }
+  return { sn: sn.trim(), guide: guide.trim() };
+}
+
+async function onQrFileChange(e) {
+  const file = e.target?.files?.[0];
+  e.target.value = '';
+  if (!file) return;
+  if (!localStorage.getItem('vino_token')) {
+    router.push('/login?redirect=' + encodeURIComponent('/mine/products'));
+    return;
+  }
+  addProductLoading.value = true;
+  try {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    await new Promise((resolve, reject) => {
+      img.onload = resolve;
+      img.onerror = reject;
+      img.src = url;
+    });
+    const canvas = document.createElement('canvas');
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    URL.revokeObjectURL(url);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const decoded = jsQR(imageData.data, imageData.width, imageData.height);
+    if (!decoded || !decoded.data) {
+      showToast('未能识别二维码，请上传清晰的商品二维码图片');
+      return;
+    }
+    const { sn, guide } = parseSnAndGuideFromUrl(decoded.data);
+    if (!sn) {
+      showToast('二维码中未包含序列号，请使用商品绑定二维码');
+      return;
+    }
+    const res = await authApi.bindProduct({ sn });
+    if (res.code === 0) {
+      const guideSlug = (res.data && res.data.guideSlug && String(res.data.guideSlug).trim()) || guide;
+      if (guideSlug) {
+        router.push('/guide/' + encodeURIComponent(guideSlug));
+        return;
+      }
+      showToast('绑定成功');
+      await loadMyProducts();
+    } else {
+      showToast(res.message || '绑定失败');
+    }
+  } catch (err) {
+    showToast(err.message || '识别或绑定失败');
+  } finally {
+    addProductLoading.value = false;
+  }
+}
 
 const headerLogoUrl = computed(() => {
   const logo = allItems.value.find(i => i.section === 'headerLogo' && i.status === 'active');
@@ -401,6 +492,9 @@ const copyUrl = async () => {
 .nav-sm-label { font-size: 11px; color: #666; text-align: center; }
 
 /* ===== 我的商品 ===== */
+.my-products-actions { margin-bottom: 12px; }
+.my-products-empty { padding: 16px; text-align: center; color: #999; font-size: 14px; }
+.hidden-input { position: absolute; width: 0; height: 0; opacity: 0; pointer-events: none; }
 .my-products-list { display: flex; flex-direction: column; gap: 10px; }
 .my-product-item {
   display: flex; justify-content: space-between; align-items: center;

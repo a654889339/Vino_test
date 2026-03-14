@@ -9,7 +9,6 @@
   },
   "dependencies": {
     "alipay-sdk": "^4.14.0",
-    "sharp": "^0.33.5",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "cos-nodejs-sdk-v5": "^2.15.4",
@@ -17,12 +16,14 @@
     "express": "^4.21.0",
     "express-validator": "^7.2.0",
     "jsonwebtoken": "^9.0.2",
+    "jsqr": "^1.4.0",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
     "mysql2": "^3.11.0",
     "nodemailer": "^8.0.2",
     "qrcode": "^1.5.4",
     "sequelize": "^6.37.0",
+    "sharp": "^0.33.5",
     "tencentcloud-sdk-nodejs": "^4.0.0"
   },
   "devDependencies": {

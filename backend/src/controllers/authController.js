@@ -396,6 +396,59 @@ exports.bindProduct = async (req, res) => {
   }
 };
 
+/** 上传二维码图片，解码后绑定商品（小程序/网页上传图片用） */
+exports.bindByQrImage = async (req, res) => {
+  try {
+    if (!req.file || !req.file.buffer) {
+      return res.status(400).json({ code: 400, message: '请上传图片' });
+    }
+    const sharp = require('sharp');
+    const jsQR = require('jsqr');
+    let buf = req.file.buffer;
+    const meta = await sharp(buf).metadata();
+    if ((meta.width || 0) > 1200 || (meta.height || 0) > 1200) {
+      buf = await sharp(buf).resize(1200, 1200, { fit: 'inside' }).toBuffer();
+    }
+    const { data, info } = await sharp(buf).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    const arr = new Uint8ClampedArray(data);
+    const decoded = jsQR(arr, info.width, info.height);
+    if (!decoded || !decoded.data) {
+      return res.status(400).json({ code: 400, message: '未能识别二维码，请上传清晰的商品二维码图片' });
+    }
+    const raw = String(decoded.data).trim();
+    let sn = '';
+    let guide = '';
+    try {
+      const url = raw.startsWith('http') ? new URL(raw) : new URL(raw, 'http://dummy');
+      sn = url.searchParams.get('sn') || '';
+      guide = url.searchParams.get('guide') || '';
+    } catch {
+      const snMatch = raw.match(/[?&]sn=([^&]+)/);
+      const guideMatch = raw.match(/[?&]guide=([^&]+)/);
+      if (snMatch) sn = decodeURIComponent(snMatch[1].replace(/\+/g, ' '));
+      if (guideMatch) guide = decodeURIComponent(guideMatch[1].replace(/\+/g, ' '));
+    }
+    sn = sn.trim();
+    if (!sn) {
+      return res.status(400).json({ code: 400, message: '二维码中未包含序列号，请使用商品绑定二维码' });
+    }
+    const { InventoryProduct, UserProduct } = require('../models');
+    const product = await InventoryProduct.findOne({ where: { serialNumber: sn, status: 'active' } });
+    if (!product) {
+      return res.status(404).json({ code: 404, message: '未找到该序列号对应的商品' });
+    }
+    const [binding] = await UserProduct.findOrCreate({
+      where: { userId: req.user.id, productKey: sn },
+      defaults: { userId: req.user.id, productKey: sn },
+    });
+    const guideSlug = (product.guideSlug && String(product.guideSlug).trim()) ? String(product.guideSlug).trim() : (guide || '');
+    res.json({ code: 0, data: { productKey: sn, productName: product.name, guideSlug }, message: '绑定成功' });
+  } catch (err) {
+    console.error('[Auth] bindByQrImage error:', err.message);
+    res.status(500).json({ code: 500, message: err.message || '绑定失败' });
+  }
+};
+
 /** 当前用户已绑定的商品列表（含种类、名称、序列号、绑定时间） */
 exports.myProducts = async (req, res) => {
   try {
