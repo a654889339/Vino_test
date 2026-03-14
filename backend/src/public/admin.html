@@ -1105,7 +1105,8 @@ function renderUserTable() {
       if (boundKeys.length) {
         html += '<div style="font-size:13px;color:#333;word-break:break-all">';
         boundKeys.forEach(k => {
-          html += '<span style="display:inline-flex;align-items:center;gap:6px;margin-right:12px;margin-bottom:4px">' + k + ' <button type="button" class="history-btn" style="padding:2px 8px;font-size:12px" onclick="unbindUserProduct(' + u.id + ',' + JSON.stringify(k) + ')">删除</button></span>';
+          const safeArg = JSON.stringify(k).replace(/"/g, '&quot;');
+          html += '<span style="display:inline-flex;align-items:center;gap:6px;margin-right:12px;margin-bottom:4px">' + k + ' <button type="button" class="history-btn" style="padding:2px 8px;font-size:12px" onclick="unbindUserProduct(' + u.id + ',' + safeArg + ')">删除</button></span>';
         });
         html += '</div>';
       } else {
