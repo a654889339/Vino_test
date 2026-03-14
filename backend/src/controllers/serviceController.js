@@ -1,6 +1,6 @@
 const { Service, ServiceCategory } = require('../models');
 
-const ALLOWED_FIELDS = ['title', 'description', 'icon', 'cover', 'category', 'categoryId', 'price', 'originPrice', 'bg', 'status', 'sortOrder'];
+const ALLOWED_FIELDS = ['title', 'description', 'icon', 'iconUrl', 'cover', 'category', 'categoryId', 'price', 'originPrice', 'bg', 'status', 'sortOrder'];
 
 const pickFields = (body) => {
   const result = {};

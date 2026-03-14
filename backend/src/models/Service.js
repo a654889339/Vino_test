@@ -19,6 +19,11 @@ const Service = sequelize.define('Service', {
     type: DataTypes.STRING(500),
     defaultValue: '',
   },
+  iconUrl: {
+    type: DataTypes.STRING(500),
+    defaultValue: '',
+    comment: '图标图片 URL，有则前台显示图片，否则显示 icon 图标名',
+  },
   cover: {
     type: DataTypes.STRING(500),
     defaultValue: '',

@@ -6,7 +6,8 @@
 
     <template v-else>
       <div class="detail-cover" :style="{ background: coverBg }">
-        <van-icon :name="serviceIcon" size="60" color="#fff" />
+        <img v-if="serviceIconUrl" :src="serviceIconUrl" class="detail-cover-icon-img" alt="" />
+        <van-icon v-else :name="serviceIcon" size="60" color="#fff" />
       </div>
 
       <div class="detail-body">
@@ -15,8 +16,10 @@
 
         <div class="price-row">
           <span class="detail-price">¥{{ serviceData.price }}</span>
-          <span class="origin-price" v-if="serviceData.originPrice">¥{{ serviceData.originPrice }}</span>
-          <van-tag type="primary" color="#B91C1C">限时优惠</van-tag>
+          <template v-if="showOriginPrice">
+            <span class="origin-price">¥{{ serviceData.originPrice }}</span>
+            <van-tag type="primary" color="#B91C1C">限时优惠</van-tag>
+          </template>
         </div>
 
         <van-divider />
@@ -57,7 +60,8 @@
           <h3>预约服务</h3>
           <div class="order-service-info">
             <div class="order-service-icon" :style="{ background: coverBg }">
-              <van-icon :name="serviceIcon" size="24" color="#fff" />
+              <img v-if="serviceIconUrl" :src="serviceIconUrl" class="order-service-icon-img" alt="" />
+              <van-icon v-else :name="serviceIcon" size="24" color="#fff" />
             </div>
             <div>
               <h4>{{ serviceData.title }}</h4>
@@ -324,7 +328,13 @@ const fallbackServices = {
 
 const serviceData = ref({ title: '', description: '', price: '0' });
 const serviceIcon = ref('setting-o');
+const serviceIconUrl = ref('');
 const coverBg = ref('linear-gradient(135deg, #B91C1C, #7F1D1D)');
+
+const showOriginPrice = computed(() => {
+  const op = serviceData.value.originPrice;
+  return op != null && Number(op) > 0;
+});
 
 const features = [
   { title: '品质保障', desc: '全部原装配件', icon: 'shield-o' },
@@ -340,11 +350,13 @@ onMounted(async () => {
     const d = res.data;
     serviceData.value = { title: d.title, description: d.description, price: d.price, originPrice: d.originPrice };
     serviceIcon.value = d.icon || 'setting-o';
+    serviceIconUrl.value = d.iconUrl || '';
     coverBg.value = d.bg || 'linear-gradient(135deg, #B91C1C, #7F1D1D)';
   } catch {
     const fb = fallbackServices[id] || fallbackServices[1];
     serviceData.value = { title: fb.title, description: fb.description, price: fb.price, originPrice: fb.originPrice };
     serviceIcon.value = fb.icon;
+    serviceIconUrl.value = '';
     coverBg.value = fb.bg;
   } finally {
     loading.value = false;
@@ -401,6 +413,12 @@ const submitOrder = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.detail-cover-icon-img {
+  max-width: 80px;
+  max-height: 80px;
+  object-fit: contain;
 }
 
 .detail-body {
@@ -526,6 +544,12 @@ const submitOrder = async () => {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+}
+
+.order-service-icon-img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
 }
 
 .order-service-info h4 {

@@ -10,7 +10,8 @@
             @click="$router.push(`/service/${item.id}`)"
           >
             <div class="grid-icon" :style="{ background: item.bg }">
-              <van-icon :name="item.icon" size="26" color="#fff" />
+              <img v-if="item.iconUrl" :src="item.iconUrl" class="grid-icon-img" alt="" />
+              <van-icon v-else :name="item.icon" size="26" color="#fff" />
             </div>
             <h4>{{ item.title }}</h4>
             <p>{{ item.desc }}</p>
@@ -134,6 +135,7 @@ onMounted(async () => {
           title: s.title,
           desc: s.description || '',
           icon: s.icon || 'setting-o',
+          iconUrl: s.iconUrl || '',
           price: String(s.price ?? 0),
           bg: s.bg || categoryColors[catKey] || '#B91C1C',
         });
@@ -202,6 +204,12 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   margin-bottom: 12px;
+}
+
+.grid-icon-img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
 }
 
 .grid-card h4 {
