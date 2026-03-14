@@ -5,7 +5,8 @@
     <van-loading v-if="loading" class="page-loading" size="36" vertical>加载中...</van-loading>
 
     <template v-else>
-      <div class="detail-cover" :style="{ background: coverBg }">
+      <div class="detail-cover">
+        <div class="detail-cover-bg" :style="{ background: coverBg, opacity: coverOpacity }"></div>
         <img v-if="serviceIconUrl" :src="serviceIconUrl" class="detail-cover-icon-img" alt="" />
         <van-icon v-else :name="serviceIcon" size="60" color="#fff" />
       </div>
@@ -330,6 +331,7 @@ const serviceData = ref({ title: '', description: '', price: '0' });
 const serviceIcon = ref('setting-o');
 const serviceIconUrl = ref('');
 const coverBg = ref('linear-gradient(135deg, #B91C1C, #7F1D1D)');
+const coverOpacity = ref(1);
 
 const showOriginPrice = computed(() => {
   const op = serviceData.value.originPrice;
@@ -352,12 +354,14 @@ onMounted(async () => {
     serviceIcon.value = d.icon || 'setting-o';
     serviceIconUrl.value = d.iconUrl || '';
     coverBg.value = d.bg || 'linear-gradient(135deg, #B91C1C, #7F1D1D)';
+    coverOpacity.value = d.bgOpacity != null ? Number(d.bgOpacity) / 100 : 1;
   } catch {
     const fb = fallbackServices[id] || fallbackServices[1];
     serviceData.value = { title: fb.title, description: fb.description, price: fb.price, originPrice: fb.originPrice };
     serviceIcon.value = fb.icon;
     serviceIconUrl.value = '';
     coverBg.value = fb.bg;
+    coverOpacity.value = 1;
   } finally {
     loading.value = false;
   }
@@ -413,6 +417,19 @@ const submitOrder = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+}
+
+.detail-cover-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.detail-cover .detail-cover-icon-img,
+.detail-cover .van-icon {
+  position: relative;
+  z-index: 1;
 }
 
 .detail-cover-icon-img {

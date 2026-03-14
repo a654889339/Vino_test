@@ -52,6 +52,11 @@ const Service = sequelize.define('Service', {
     defaultValue: '#B91C1C',
     comment: '卡片/详情头部背景色',
   },
+  bgOpacity: {
+    type: DataTypes.DECIMAL(5, 2),
+    allowNull: true,
+    comment: '背景色透明度 0-100，100 为不透明，用于前台服务详情头部',
+  },
   status: {
     type: DataTypes.ENUM('active', 'inactive'),
     defaultValue: 'active',
