@@ -494,12 +494,17 @@ exports.myProducts = async (req, res) => {
     });
     const infoMap = {};
     products.forEach(p => {
-      infoMap[p.serialNumber] = { productName: p.name, categoryName: (p.category && p.category.name) || '' };
+      infoMap[p.serialNumber] = {
+        productName: p.name,
+        categoryName: (p.category && p.category.name) || '',
+        guideSlug: (p.guideSlug && String(p.guideSlug).trim()) ? String(p.guideSlug).trim() : '',
+      };
     });
     const data = list.map(l => ({
       productKey: l.productKey,
       productName: (infoMap[l.productKey] && infoMap[l.productKey].productName) || l.productKey,
       categoryName: (infoMap[l.productKey] && infoMap[l.productKey].categoryName) || '',
+      guideSlug: (infoMap[l.productKey] && infoMap[l.productKey].guideSlug) || '',
       boundAt: l.createdAt,
     }));
     res.json({ code: 0, data });

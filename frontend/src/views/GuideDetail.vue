@@ -72,6 +72,10 @@
         </div>
       </div>
 
+      <div class="section-card guide-footer-actions">
+        <van-button type="primary" color="#B91C1C" block round class="btn-home" @click="$router.replace('/')">返回主页</van-button>
+      </div>
+
       <div style="height:24px"></div>
     </template>
 
@@ -423,6 +427,15 @@ onMounted(async () => {
   font-size: 12px;
   color: var(--vino-text-secondary);
   font-weight: 500;
+}
+
+.guide-footer-actions {
+  margin-bottom: 16px;
+}
+
+.guide-footer-actions .btn-home {
+  max-width: 280px;
+  margin: 0 auto;
 }
 
 /* ===== Video Overlay ===== */

@@ -90,6 +90,7 @@
       <input ref="qrFileInputRef" type="file" accept="image/*" class="hidden-input" @change="onQrFileChange" />
       <div v-if="myProducts.length" class="my-products-list">
         <div v-for="(item, i) in myProducts" :key="item.productKey || i" class="my-product-item">
+          <span class="my-product-category">{{ item.categoryName || '-' }}</span>
           <span class="my-product-name">{{ item.productName || item.productKey }}</span>
           <span class="my-product-key">序列号：{{ item.productKey }}</span>
         </div>
@@ -497,11 +498,12 @@ const copyUrl = async () => {
 .hidden-input { position: absolute; width: 0; height: 0; opacity: 0; pointer-events: none; }
 .my-products-list { display: flex; flex-direction: column; gap: 10px; }
 .my-product-item {
-  display: flex; justify-content: space-between; align-items: center;
+  display: flex; align-items: center; gap: 10px;
   padding: 12px 14px; background: #f8f8f8; border-radius: 10px;
 }
-.my-product-name { font-size: 15px; font-weight: 600; color: var(--vino-dark); }
-.my-product-key { font-size: 12px; color: #999; font-family: monospace; }
+.my-product-category { font-size: 13px; color: #666; min-width: 48px; flex-shrink: 0; }
+.my-product-name { flex: 1; font-size: 15px; font-weight: 600; color: var(--vino-dark); min-width: 0; }
+.my-product-key { font-size: 12px; color: #999; font-family: monospace; flex-shrink: 0; }
 
 /* ===== Hot Services ===== */
 .service-list { display: flex; gap: 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-bottom: 2px; }
