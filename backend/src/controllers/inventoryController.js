@@ -63,16 +63,20 @@ exports.removeCategory = async (req, res) => {
 exports.listProducts = async (req, res) => {
   try {
     const { Op } = require('sequelize');
-    const { categoryId, status, keyword } = req.query;
+    const { categoryId, status, keyword, tag } = req.query;
     const where = {};
     if (categoryId != null && categoryId !== '') where.categoryId = categoryId;
     if (status != null && status !== '') where.status = status;
+    if (tag != null && String(tag).trim() !== '') {
+      where.tags = { [Op.like]: '%' + String(tag).trim().replace(/%/g, '\\%') + '%' };
+    }
     if (keyword != null && String(keyword).trim() !== '') {
       const kw = '%' + String(keyword).trim().replace(/%/g, '\\%') + '%';
-      where[Op.or] = [
+      where[Op.or] = where[Op.or] || [];
+      where[Op.or].push(
         { name: { [Op.like]: kw } },
         { serialNumber: { [Op.like]: kw } },
-      ];
+      );
     }
     const list = await InventoryProduct.findAll({
       where,
@@ -104,7 +108,7 @@ exports.listProducts = async (req, res) => {
 
 exports.createProduct = async (req, res) => {
   try {
-    const { categoryId, name, serialNumber, guideSlug, sortOrder, status } = req.body;
+    const { categoryId, name, serialNumber, guideSlug, sortOrder, status, tags } = req.body;
     if (!categoryId) return res.status(400).json({ code: 400, message: '请选择种类' });
     if (!name || !name.trim()) return res.status(400).json({ code: 400, message: '商品名称不能为空' });
     if (!serialNumber || !String(serialNumber).trim()) return res.status(400).json({ code: 400, message: '序列号不能为空' });
@@ -120,6 +124,7 @@ exports.createProduct = async (req, res) => {
       guideSlug: guideSlug != null ? String(guideSlug).trim() : '',
       sortOrder: parseInt(sortOrder, 10) || 0,
       status: status || 'active',
+      tags: tags != null ? String(tags).trim() : '',
     });
     res.json({ code: 0, data: product });
   } catch (err) {
@@ -132,9 +137,10 @@ exports.updateProduct = async (req, res) => {
   try {
     const product = await InventoryProduct.findByPk(req.params.id);
     if (!product) return res.status(404).json({ code: 404, message: '商品不存在' });
-    const { categoryId, name, serialNumber, guideSlug, sortOrder, status } = req.body;
+    const { categoryId, name, serialNumber, guideSlug, sortOrder, status, tags } = req.body;
     if (categoryId != null) product.categoryId = categoryId;
     if (name !== undefined) product.name = name.trim();
+    if (tags !== undefined) product.tags = String(tags).trim();
     if (serialNumber !== undefined && String(serialNumber).trim()) {
       const sn = String(serialNumber).trim();
       if (sn !== product.serialNumber) {
@@ -182,5 +188,95 @@ exports.getBindQrUrl = async (req, res) => {
   } catch (err) {
     console.error('[Inventory] getBindQrUrl error:', err.message);
     res.status(500).json({ code: 500, message: '获取失败' });
+  }
+};
+
+/** Excel 列名（与示例一致） */
+const EXCEL_COLS = ['种类名称', '商品名称', '序列号', '商品配置', '排序', '状态', '标签'];
+
+/** 管理端：导入 Excel 批量添加商品。请求体为 multipart，字段名 file */
+exports.importExcel = async (req, res) => {
+  try {
+    if (!req.file || !req.file.buffer) {
+      return res.status(400).json({ code: 400, message: '请上传 Excel 文件' });
+    }
+    const XLSX = require('xlsx');
+    const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '' });
+    if (!rows.length) return res.json({ code: 0, data: { success: 0, failed: [], message: '表格为空' } });
+    const header = rows[0].map(c => String(c).trim());
+    const dataRows = rows.slice(1);
+    const categories = await InventoryCategory.findAll();
+    const byName = {};
+    categories.forEach(c => { byName[c.name] = c.id; });
+    let success = 0;
+    const failed = [];
+    for (let i = 0; i < dataRows.length; i++) {
+      const row = dataRows[i];
+      const get = (col) => {
+        const idx = header.indexOf(col);
+        if (idx === -1) return '';
+        const v = row[idx];
+        return v != null ? String(v).trim() : '';
+      };
+      const categoryName = get('种类名称');
+      const name = get('商品名称');
+      const serialNumber = get('序列号');
+      const guideSlug = get('商品配置');
+      const sortOrder = parseInt(get('排序'), 10) || 0;
+      const statusRaw = get('状态');
+      const status = statusRaw === '停用' || statusRaw === 'inactive' ? 'inactive' : 'active';
+      const tags = get('标签');
+      if (!categoryName || !name || !serialNumber) {
+        failed.push({ row: i + 2, reason: '种类名称、商品名称、序列号不能为空' });
+        continue;
+      }
+      const categoryId = byName[categoryName];
+      if (!categoryId) {
+        failed.push({ row: i + 2, reason: `种类“${categoryName}”不存在` });
+        continue;
+      }
+      const sn = serialNumber;
+      const existing = await InventoryProduct.findOne({ where: { serialNumber: sn } });
+      if (existing) {
+        failed.push({ row: i + 2, reason: '序列号已存在' });
+        continue;
+      }
+      await InventoryProduct.create({
+        categoryId,
+        name,
+        serialNumber: sn,
+        guideSlug: guideSlug || '',
+        sortOrder,
+        status,
+        tags: tags || '',
+      });
+      success++;
+    }
+    res.json({ code: 0, data: { success, failed, message: `成功导入 ${success} 条${failed.length ? `，失败 ${failed.length} 条` : ''}` } });
+  } catch (err) {
+    console.error('[Inventory] importExcel error:', err.message);
+    res.status(500).json({ code: 500, message: '导入失败：' + err.message });
+  }
+};
+
+/** 管理端：下载示例 Excel */
+exports.getSampleExcel = (req, res) => {
+  try {
+    const XLSX = require('xlsx');
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([
+      EXCEL_COLS,
+      ['空调', '示例商品A', 'AC001', 'guide-1', 0, '启用', '常用,新品'],
+    ]);
+    XLSX.utils.book_append_sheet(wb, ws, '库存商品导入');
+    const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+    res.setHeader('Content-Disposition', 'attachment; filename="inventory_import_sample.xlsx"');
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.send(buf);
+  } catch (err) {
+    console.error('[Inventory] getSampleExcel error:', err.message);
+    res.status(500).json({ code: 500, message: '生成示例文件失败' });
   }
 };

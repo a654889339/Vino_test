@@ -34,6 +34,12 @@ const InventoryProduct = sequelize.define('InventoryProduct', {
     type: DataTypes.ENUM('active', 'inactive'),
     defaultValue: 'active',
   },
+  tags: {
+    type: DataTypes.STRING(200),
+    allowNull: true,
+    defaultValue: '',
+    comment: '标签，多个用英文逗号分隔，用于筛选',
+  },
 }, {
   tableName: 'inventory_products',
   timestamps: true,

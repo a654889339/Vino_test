@@ -295,9 +295,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <div class="dash-section" style="margin-top:24px">
         <div class="section-header">
           <h3>库存商品</h3>
-          <div style="display:flex;gap:8px">
+          <div style="display:flex;gap:8px;align-items:center">
             <button class="refresh-btn" onclick="loadInventoryProducts()">刷新</button>
             <button class="refresh-btn" style="background:#059669" onclick="openInvProductEditor()">+ 新增商品</button>
+            <button class="refresh-btn" style="background:#0ea5e9" onclick="document.getElementById('invExcelFile').click()">Excel 导入</button>
+            <input type="file" id="invExcelFile" accept=".xlsx,.xls" style="display:none" onchange="submitInvExcelImport(this)" />
+            <button class="refresh-btn" style="background:#64748b" onclick="showInvProductHelp()">帮助</button>
           </div>
         </div>
         <div class="order-filters" style="margin-bottom:12px;flex-wrap:wrap;align-items:center;gap:8px">
@@ -311,11 +314,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
             <option value="active">启用</option>
             <option value="inactive">禁用</option>
           </select>
+          <span style="font-size:13px;color:#666;margin-left:8px">标签：</span>
+          <input type="text" class="form-input" id="invFilterTag" placeholder="按标签筛选" style="width:120px;display:inline-block;padding:6px 10px" />
           <input type="text" class="form-input" id="invFilterKeyword" placeholder="名称或序列号" style="width:160px;display:inline-block;padding:6px 10px;margin-left:8px" />
           <button class="refresh-btn" style="padding:6px 16px" onclick="loadInventoryProducts()">查找</button>
         </div>
         <table class="order-table">
-          <thead><tr><th>ID</th><th>种类</th><th>名称</th><th>序列号 (key)</th><th>排序</th><th>状态</th><th>二维码</th><th>被绑定的用户ID</th><th>操作</th></tr></thead>
+          <thead><tr><th>ID</th><th>种类</th><th>名称</th><th>序列号 (key)</th><th>排序</th><th>状态</th><th>标签</th><th>添加时间</th><th>二维码</th><th>被绑定的用户ID</th><th>操作</th></tr></thead>
           <tbody id="invProductTableBody"></tbody>
         </table>
         <div class="order-empty" id="invProductEmpty" style="display:none">暂无商品</div>
@@ -731,7 +736,30 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <div class="form-group"><label>商品配置 <span style="font-weight:normal;color:#999;font-size:12px">（如 aircondition，将作为二维码链接参数，绑定后跳转 /guide/商品配置）</span></label><input class="form-input" id="invProductGuideSlug" placeholder="如：aircondition 或 Centralair-conditioning" /></div>
           <div class="form-group"><label>排序</label><input type="number" class="form-input" id="invProductSort" value="0" /></div>
           <div class="form-group"><label>状态</label><select class="form-input" id="invProductStatus"><option value="active">启用</option><option value="inactive">禁用</option></select></div>
+          <div class="form-group"><label>标签 <span style="font-weight:normal;color:#999;font-size:12px">（多个用英文逗号分隔，用于筛选）</span></label><input class="form-input" id="invProductTags" placeholder="如：常用,新品" /></div>
           <button class="submit-btn" onclick="saveInvProduct()">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 库存商品：帮助弹窗 -->
+    <div class="modal-overlay" id="invProductHelpModal" style="display:none" onclick="if(event.target===this)document.getElementById('invProductHelpModal').style.display='none'">
+      <div class="modal-content" style="max-width:520px">
+        <div class="modal-header">
+          <h3>Excel 批量导入说明</h3>
+          <span class="modal-close" onclick="document.getElementById('invProductHelpModal').style.display='none'">&times;</span>
+        </div>
+        <div class="modal-body" style="line-height:1.6;font-size:14px">
+          <p style="margin-bottom:12px">请使用与示例一致的列名（第一行为表头）：<strong>种类名称、商品名称、序列号、商品配置、排序、状态、标签</strong>。</p>
+          <ul style="margin:0 0 12px 20px;padding:0">
+            <li>种类名称：必须与「库存种类」中已配置的名称完全一致</li>
+            <li>商品名称、序列号：必填；序列号不可重复</li>
+            <li>商品配置：可选，如 aircondition，用于绑定后跳转</li>
+            <li>排序：数字，默认 0</li>
+            <li>状态：填「启用」或「停用」，其他视为启用</li>
+            <li>标签：可选，多个用英文逗号分隔</li>
+          </ul>
+          <p style="margin-bottom:16px"><a href="#" id="invProductHelpDownloadLink" style="color:var(--primary);font-weight:500">下载示例 Excel</a>，填写后通过「Excel 导入」上传即可批量添加。</p>
         </div>
       </div>
     </div>
@@ -1868,16 +1896,26 @@ async function loadInventoryCategories() {
   } catch { document.getElementById('invCategoryTableBody').innerHTML = '<tr><td colspan="5" style="text-align:center;color:#B91C1C">加载失败</td></tr>'; }
 }
 
+function formatDateTime(str) {
+  if (!str) return '-';
+  try {
+    const d = new Date(str);
+    return isNaN(d.getTime()) ? str : d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  } catch (_) { return str; }
+}
+
 async function loadInventoryProducts() {
   const tbody = document.getElementById('invProductTableBody');
   const empty = document.getElementById('invProductEmpty');
-  tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#999">加载中...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:30px;color:#999">加载中...</td></tr>';
   const categoryId = document.getElementById('invFilterCategoryId') && document.getElementById('invFilterCategoryId').value;
   const status = document.getElementById('invFilterStatus') && document.getElementById('invFilterStatus').value;
+  const tag = document.getElementById('invFilterTag') && document.getElementById('invFilterTag').value.trim();
   const keyword = document.getElementById('invFilterKeyword') && document.getElementById('invFilterKeyword').value.trim();
   const params = new URLSearchParams();
   if (categoryId) params.set('categoryId', categoryId);
   if (status) params.set('status', status);
+  if (tag) params.set('tag', tag);
   if (keyword) params.set('keyword', keyword);
   const qs = params.toString();
   try {
@@ -1893,11 +1931,13 @@ async function loadInventoryProducts() {
       <td style="font-family:monospace;font-size:12px">${p.serialNumber}</td>
       <td>${p.sortOrder}</td>
       <td><span style="display:inline-block;padding:4px 14px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:500;transition:all .2s;${p.status==='active'?'background:#D1FAE5;color:#059669':'background:#F3F4F6;color:#999'}" onclick="toggleInvProductStatus(${p.id},'${p.status}')">${p.status==='active'?'启用':'禁用'}</span></td>
+      <td style="font-size:12px">${(p.tags && p.tags.trim()) ? p.tags.trim() : '-'}</td>
+      <td style="font-size:12px;color:#666">${formatDateTime(p.createdAt)}</td>
       <td><button class="detail-btn" onclick="showInvProductQR(${p.id})">生成二维码</button></td>
       <td style="font-size:12px">${boundStr(p)}</td>
       <td><button class="detail-btn" onclick="editInvProduct(${p.id})">编辑</button> <button class="history-btn" onclick="deleteInvProduct(${p.id})">删除</button></td>
     </tr>`).join('');
-  } catch { tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#B91C1C">加载失败</td></tr>'; }
+  } catch { tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:#B91C1C">加载失败</td></tr>'; }
 }
 
 function openInvCategoryEditor(cat) {
@@ -1943,6 +1983,7 @@ function openInvProductEditor(product) {
   document.getElementById('invProductGuideSlug').value = product && product.guideSlug ? product.guideSlug : '';
   document.getElementById('invProductSort').value = product ? product.sortOrder : 0;
   document.getElementById('invProductStatus').value = product ? product.status : 'active';
+  document.getElementById('invProductTags').value = product && product.tags ? product.tags : '';
   document.getElementById('invProductModal').style.display = 'flex';
 }
 function closeInvProductEditor() { document.getElementById('invProductModal').style.display = 'none'; }
@@ -1958,7 +1999,8 @@ async function saveInvProduct() {
   if (!serialNumber) { alert('序列号不能为空'); return; }
   try {
     const guideSlug = document.getElementById('invProductGuideSlug').value.trim();
-    const body = { categoryId: parseInt(categoryId, 10), name, serialNumber, guideSlug, sortOrder: parseInt(document.getElementById('invProductSort').value) || 0, status: document.getElementById('invProductStatus').value };
+    const tags = document.getElementById('invProductTags').value.trim();
+    const body = { categoryId: parseInt(categoryId, 10), name, serialNumber, guideSlug, sortOrder: parseInt(document.getElementById('invProductSort').value) || 0, status: document.getElementById('invProductStatus').value, tags };
     const res = id ? await api('/inventory/products/' + id, { method: 'PUT', body }) : await api('/inventory/products', { method: 'POST', body });
     if (res.code === 0) { closeInvProductEditor(); loadInventoryProducts(); }
     else alert(res.message || '保存失败');
@@ -1974,12 +2016,57 @@ async function deleteInvProduct(id) {
   } catch { alert('删除失败'); }
 }
 
+function showInvProductHelp() {
+  const modal = document.getElementById('invProductHelpModal');
+  const link = document.getElementById('invProductHelpDownloadLink');
+  link.onclick = function(e) { e.preventDefault(); downloadInvSampleExcel(); };
+  modal.style.display = 'flex';
+}
+
+function downloadInvSampleExcel() {
+  if (!token) { alert('请先登录'); return; }
+  fetch(API + '/inventory/sample-excel', { headers: { 'Authorization': 'Bearer ' + token } })
+    .then(r => { if (!r.ok) throw new Error(r.statusText); return r.blob(); })
+    .then(blob => { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'inventory_import_sample.xlsx'; a.click(); URL.revokeObjectURL(a.href); })
+    .catch(() => alert('下载示例失败'));
+}
+
+async function submitInvExcelImport(fileInput) {
+  const file = fileInput && fileInput.files[0];
+  if (!file) return;
+  fileInput.value = '';
+  const fd = new FormData();
+  fd.append('file', file);
+  const overlay = document.getElementById('uploadOverlay');
+  const overlayText = document.getElementById('uploadOverlayText');
+  overlayText.textContent = '正在导入，请稍候...';
+  overlay.style.display = 'flex';
+  try {
+    const res = await fetch(API + '/inventory/import-excel', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token },
+      body: fd,
+    });
+    const data = await res.json().catch(() => ({}));
+    overlay.style.display = 'none';
+    if (data.code === 0) {
+      alert(data.data.message || '导入完成');
+      loadInventoryProducts();
+    } else {
+      alert(data.message || '导入失败');
+    }
+  } catch (e) {
+    overlay.style.display = 'none';
+    alert('导入失败：' + (e.message || '网络错误'));
+  }
+}
+
 async function toggleInvProductStatus(id, currentStatus) {
   const p = (allInvProducts || []).find(x => x.id === id);
   if (!p) return;
   const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
   try {
-    const body = { categoryId: p.categoryId || (p.category && p.category.id), name: p.name, serialNumber: p.serialNumber, guideSlug: p.guideSlug || '', sortOrder: p.sortOrder ?? 0, status: newStatus };
+    const body = { categoryId: p.categoryId || (p.category && p.category.id), name: p.name, serialNumber: p.serialNumber, guideSlug: p.guideSlug || '', sortOrder: p.sortOrder ?? 0, status: newStatus, tags: p.tags != null ? p.tags : '' };
     const res = await api('/inventory/products/' + id, { method: 'PUT', body });
     if (res.code === 0) loadInventoryProducts();
     else alert(res.message || '操作失败');
