@@ -4,7 +4,7 @@
   <van-tabbar v-if="showTabbar && tabbarItems.length" route active-color="var(--vino-primary)">
     <van-tabbar-item v-for="(item, i) in tabbarItems" :key="item.path || i" :to="item.path" :icon="item.icon">{{ item.title }}</van-tabbar-item>
   </van-tabbar>
-  <ChatWidget v-if="showChatWidget" ref="chatWidgetRef" />
+  <ChatWidget ref="chatWidgetRef" :hide-fab="hideChatFab" />
 </template>
 
 <script setup>
@@ -48,12 +48,12 @@ const hiddenTabRoutes = ['/login', '/register', '/service/', '/address', '/guide
 const showTabbar = computed(() => {
   return !hiddenTabRoutes.some((r) => route.path.startsWith(r));
 });
-// 首页、产品页、我的页面不显示聊天悬浮按钮（与小程序一致）
-const showChatWidget = computed(() => {
+// 首页、产品页、我的页面不显示聊天悬浮按钮（与小程序一致）；组件始终挂载以便「意见反馈」可打开聊天
+const hideChatFab = computed(() => {
   const p = route.path;
-  if (p === '/' || p === '/products' || p === '/mine') return false;
-  if (p.startsWith('/login') || p.startsWith('/register')) return false;
-  return true;
+  if (p === '/' || p === '/products' || p === '/mine') return true;
+  if (p.startsWith('/login') || p.startsWith('/register')) return true;
+  return false;
 });
 
 const chatWidgetRef = ref(null);

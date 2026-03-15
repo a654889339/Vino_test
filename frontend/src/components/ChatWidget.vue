@@ -1,7 +1,7 @@
 <template>
   <div class="chat-widget">
-    <!-- Floating Button -->
-    <div class="chat-fab" @click="toggleChat">
+    <!-- Floating Button（部分页面隐藏，但组件仍挂载以便意见反馈可打开） -->
+    <div v-show="!hideFab" class="chat-fab" @click="toggleChat">
       <van-icon name="chat-o" size="24" color="#fff" />
       <div v-if="unreadCount > 0" class="chat-badge">{{ unreadCount > 99 ? '99+' : unreadCount }}</div>
     </div>
@@ -74,6 +74,10 @@ import { useRouter } from 'vue-router';
 import { showToast, showImagePreview } from 'vant';
 import { messageApi } from '@/api';
 import { useUserStore } from '@/stores/user';
+
+defineProps({
+  hideFab: { type: Boolean, default: false },
+});
 
 const router = useRouter();
 const userStore = useUserStore();
