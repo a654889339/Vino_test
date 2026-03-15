@@ -19,7 +19,6 @@ Page({
       { title: '我的商品', emoji: '📦', url: '/pages/my-products/my-products' },
       { title: '地址管理', emoji: '📍', url: '/pages/address/address' },
       { title: '优惠券', emoji: '🎫', url: '' },
-      { title: '帮助中心', emoji: '❓', url: '' },
       { title: '意见反馈', emoji: '💬', url: '', chat: true },
       { title: '关于Vino', emoji: 'ℹ️', url: '', webUrl: 'www.vinotech.cn' },
     ],

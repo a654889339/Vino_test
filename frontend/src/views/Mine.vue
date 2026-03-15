@@ -35,7 +35,6 @@
     </van-cell-group>
 
     <van-cell-group inset class="menu-group">
-      <van-cell title="帮助中心" icon="question-o" is-link />
       <van-cell title="意见反馈" icon="comment-o" is-link @click="openFeedback" />
       <van-cell title="关于Vino" icon="info-o" is-link @click="openAbout" />
     </van-cell-group>
