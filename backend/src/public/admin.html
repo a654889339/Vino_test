@@ -298,9 +298,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <div style="display:flex;gap:8px;align-items:center">
             <button class="refresh-btn" onclick="loadInventoryProducts()">刷新</button>
             <button class="refresh-btn" style="background:#059669" onclick="openInvProductEditor()">+ 新增商品</button>
-            <button class="refresh-btn" style="background:#0ea5e9" onclick="document.getElementById('invExcelFile').click()">Excel 导入</button>
+            <button class="refresh-btn" style="background:#0ea5e9" onclick="document.getElementById('invExcelFile').click()">批量添加</button>
             <input type="file" id="invExcelFile" accept=".xlsx,.xls" style="display:none" onchange="submitInvExcelImport(this)" />
-            <button class="refresh-btn" style="background:#64748b" onclick="showInvProductHelp()">帮助</button>
+            <button class="refresh-btn" style="background:#64748b" onclick="showInvProductHelp()">批量添加帮助</button>
             <button class="refresh-btn" style="background:#dc2626" onclick="document.getElementById('invExcelDeleteFile').click()">批量删除</button>
             <input type="file" id="invExcelDeleteFile" accept=".xlsx,.xls" style="display:none" onchange="submitInvExcelDelete(this)" />
             <button class="refresh-btn" style="background:#78716c" onclick="showInvProductDeleteHelp()">批量删除帮助</button>
