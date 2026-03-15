@@ -16,6 +16,7 @@ router.post('/import-excel', authMiddleware, adminMiddleware, upload.single('fil
 router.get('/sample-delete-excel', authMiddleware, adminMiddleware, inventoryController.getSampleDeleteExcel);
 router.post('/delete-excel', authMiddleware, adminMiddleware, upload.single('file'), inventoryController.batchDeleteByExcel);
 
+router.get('/export-products', authMiddleware, adminMiddleware, inventoryController.exportProducts);
 router.get('/products', authMiddleware, adminMiddleware, inventoryController.listProducts);
 router.post('/products', authMiddleware, adminMiddleware, inventoryController.createProduct);
 router.put('/products/:id', authMiddleware, adminMiddleware, inventoryController.updateProduct);

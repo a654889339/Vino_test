@@ -261,6 +261,74 @@ exports.importExcel = async (req, res) => {
   }
 };
 
+/** 管理端：按当前筛选条件导出商品为 Excel（查询参数与 listProducts 一致） */
+exports.exportProducts = async (req, res) => {
+  try {
+    const { Op } = require('sequelize');
+    const { categoryId, status, keyword, tag } = req.query;
+    const where = {};
+    if (categoryId != null && categoryId !== '') where.categoryId = categoryId;
+    if (status != null && status !== '') where.status = status;
+    if (tag != null && String(tag).trim() !== '') {
+      where.tags = { [Op.like]: '%' + String(tag).trim().replace(/%/g, '\\%') + '%' };
+    }
+    if (keyword != null && String(keyword).trim() !== '') {
+      const kw = '%' + String(keyword).trim().replace(/%/g, '\\%') + '%';
+      where[Op.or] = where[Op.or] || [];
+      where[Op.or].push(
+        { name: { [Op.like]: kw } },
+        { serialNumber: { [Op.like]: kw } },
+      );
+    }
+    const list = await InventoryProduct.findAll({
+      where,
+      include: [{ model: InventoryCategory, as: 'category', attributes: ['id', 'name'] }],
+      order: [['categoryId', 'ASC'], ['sortOrder', 'ASC'], ['id', 'ASC']],
+    });
+    const serialNumbers = list.map(p => p.serialNumber);
+    const bindings = await UserProduct.findAll({
+      where: { productKey: serialNumbers },
+      attributes: ['userId', 'productKey'],
+      raw: true,
+    });
+    const boundByProduct = {};
+    bindings.forEach(b => {
+      if (!boundByProduct[b.productKey]) boundByProduct[b.productKey] = [];
+      boundByProduct[b.productKey].push(b.userId);
+    });
+    const formatDate = (d) => {
+      if (!d) return '';
+      const t = new Date(d);
+      return isNaN(t.getTime()) ? '' : t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0') + ' ' + String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0');
+    };
+    const header = ['ID', '种类', '名称', '序列号', '商品配置', '排序', '状态', '标签', '添加时间', '被绑定用户ID'];
+    const rows = list.map(p => [
+      p.id,
+      p.category ? p.category.name : '',
+      p.name || '',
+      p.serialNumber || '',
+      p.guideSlug || '',
+      p.sortOrder ?? 0,
+      p.status === 'inactive' ? '禁用' : '启用',
+      p.tags || '',
+      formatDate(p.createdAt),
+      (boundByProduct[p.serialNumber] || []).join(', '),
+    ]);
+    const XLSX = require('xlsx');
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
+    XLSX.utils.book_append_sheet(wb, ws, '库存商品');
+    const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+    const filename = 'inventory_products_' + new Date().toISOString().slice(0, 10) + '.xlsx';
+    res.setHeader('Content-Disposition', 'attachment; filename="' + filename + '"');
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.send(buf);
+  } catch (err) {
+    console.error('[Inventory] exportProducts error:', err.message);
+    res.status(500).json({ code: 500, message: '导出失败：' + err.message });
+  }
+};
+
 /** 管理端：下载示例 Excel */
 exports.getSampleExcel = (req, res) => {
   try {
