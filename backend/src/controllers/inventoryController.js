@@ -280,3 +280,68 @@ exports.getSampleExcel = (req, res) => {
     res.status(500).json({ code: 500, message: '生成示例文件失败' });
   }
 };
+
+/** 批量删除 Excel 列名 */
+const DELETE_EXCEL_COLS = ['序列号', '商品名称（选填，仅作对照）'];
+
+/** 管理端：按 Excel 批量删除商品。Excel 首列为「序列号」，按序列号删除 */
+exports.batchDeleteByExcel = async (req, res) => {
+  try {
+    if (!req.file || !req.file.buffer) {
+      return res.status(400).json({ code: 400, message: '请上传 Excel 文件' });
+    }
+    const XLSX = require('xlsx');
+    const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '' });
+    if (!rows.length) return res.json({ code: 0, data: { deleted: 0, failed: [], message: '表格为空' } });
+    const header = rows[0].map(c => String(c).trim());
+    const serialNumberIdx = header.indexOf('序列号');
+    if (serialNumberIdx === -1) {
+      return res.status(400).json({ code: 400, message: 'Excel 中需包含「序列号」列' });
+    }
+    const dataRows = rows.slice(1);
+    let deleted = 0;
+    const failed = [];
+    for (let i = 0; i < dataRows.length; i++) {
+      const row = dataRows[i];
+      const sn = row[serialNumberIdx] != null ? String(row[serialNumberIdx]).trim() : '';
+      if (!sn) {
+        failed.push({ row: i + 2, serialNumber: sn || '(空)', reason: '序列号为空' });
+        continue;
+      }
+      const product = await InventoryProduct.findOne({ where: { serialNumber: sn } });
+      if (!product) {
+        failed.push({ row: i + 2, serialNumber: sn, reason: '未找到该序列号商品' });
+        continue;
+      }
+      await product.destroy();
+      deleted++;
+    }
+    res.json({ code: 0, data: { deleted, failed, message: `成功删除 ${deleted} 条${failed.length ? `，失败 ${failed.length} 条` : ''}` } });
+  } catch (err) {
+    console.error('[Inventory] batchDeleteByExcel error:', err.message);
+    res.status(500).json({ code: 500, message: '批量删除失败：' + err.message });
+  }
+};
+
+/** 管理端：下载批量删除示例 Excel */
+exports.getSampleDeleteExcel = (req, res) => {
+  try {
+    const XLSX = require('xlsx');
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([
+      DELETE_EXCEL_COLS,
+      ['AC001'],
+      ['AC123456'],
+    ]);
+    XLSX.utils.book_append_sheet(wb, ws, '批量删除');
+    const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+    res.setHeader('Content-Disposition', 'attachment; filename="inventory_delete_sample.xlsx"');
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.send(buf);
+  } catch (err) {
+    console.error('[Inventory] getSampleDeleteExcel error:', err.message);
+    res.status(500).json({ code: 500, message: '生成示例文件失败' });
+  }
+};

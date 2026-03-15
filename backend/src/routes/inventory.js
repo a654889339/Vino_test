@@ -13,6 +13,8 @@ router.delete('/categories/:id', authMiddleware, adminMiddleware, inventoryContr
 
 router.get('/sample-excel', authMiddleware, adminMiddleware, inventoryController.getSampleExcel);
 router.post('/import-excel', authMiddleware, adminMiddleware, upload.single('file'), inventoryController.importExcel);
+router.get('/sample-delete-excel', authMiddleware, adminMiddleware, inventoryController.getSampleDeleteExcel);
+router.post('/delete-excel', authMiddleware, adminMiddleware, upload.single('file'), inventoryController.batchDeleteByExcel);
 
 router.get('/products', authMiddleware, adminMiddleware, inventoryController.listProducts);
 router.post('/products', authMiddleware, adminMiddleware, inventoryController.createProduct);

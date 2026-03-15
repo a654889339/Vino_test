@@ -301,6 +301,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
             <button class="refresh-btn" style="background:#0ea5e9" onclick="document.getElementById('invExcelFile').click()">Excel 导入</button>
             <input type="file" id="invExcelFile" accept=".xlsx,.xls" style="display:none" onchange="submitInvExcelImport(this)" />
             <button class="refresh-btn" style="background:#64748b" onclick="showInvProductHelp()">帮助</button>
+            <button class="refresh-btn" style="background:#dc2626" onclick="document.getElementById('invExcelDeleteFile').click()">批量删除</button>
+            <input type="file" id="invExcelDeleteFile" accept=".xlsx,.xls" style="display:none" onchange="submitInvExcelDelete(this)" />
+            <button class="refresh-btn" style="background:#78716c" onclick="showInvProductDeleteHelp()">批量删除帮助</button>
           </div>
         </div>
         <div class="order-filters" style="margin-bottom:12px;flex-wrap:wrap;align-items:center;gap:8px">
@@ -760,6 +763,24 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
             <li>标签：可选，多个用英文逗号分隔</li>
           </ul>
           <p style="margin-bottom:16px"><a href="#" id="invProductHelpDownloadLink" style="color:var(--primary);font-weight:500">下载示例 Excel</a>，填写后通过「Excel 导入」上传即可批量添加。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 库存商品：批量删除帮助弹窗 -->
+    <div class="modal-overlay" id="invProductDeleteHelpModal" style="display:none" onclick="if(event.target===this)document.getElementById('invProductDeleteHelpModal').style.display='none'">
+      <div class="modal-content" style="max-width:520px">
+        <div class="modal-header">
+          <h3>批量删除说明</h3>
+          <span class="modal-close" onclick="document.getElementById('invProductDeleteHelpModal').style.display='none'">&times;</span>
+        </div>
+        <div class="modal-body" style="line-height:1.6;font-size:14px">
+          <p style="margin-bottom:12px">Excel 第一行表头需包含<strong>「序列号」</strong>列，每行填写要删除的商品的序列号（key）。系统将按序列号匹配并删除，删除后不可恢复。</p>
+          <ul style="margin:0 0 12px 20px;padding:0">
+            <li>序列号：必填，与库存商品列表中的「序列号 (key)」一致</li>
+            <li>可增加「商品名称（选填，仅作对照）」列便于核对，不会参与匹配</li>
+          </ul>
+          <p style="margin-bottom:16px"><a href="#" id="invProductDeleteHelpDownloadLink" style="color:var(--primary);font-weight:500">下载示例 Excel</a>，填写要删除的序列号后，通过「批量删除」上传即可。</p>
         </div>
       </div>
     </div>
@@ -2058,6 +2079,52 @@ async function submitInvExcelImport(fileInput) {
   } catch (e) {
     overlay.style.display = 'none';
     alert('导入失败：' + (e.message || '网络错误'));
+  }
+}
+
+function showInvProductDeleteHelp() {
+  const modal = document.getElementById('invProductDeleteHelpModal');
+  const link = document.getElementById('invProductDeleteHelpDownloadLink');
+  link.onclick = function(e) { e.preventDefault(); downloadInvSampleDeleteExcel(); };
+  modal.style.display = 'flex';
+}
+
+function downloadInvSampleDeleteExcel() {
+  if (!token) { alert('请先登录'); return; }
+  fetch(API + '/inventory/sample-delete-excel', { headers: { 'Authorization': 'Bearer ' + token } })
+    .then(r => { if (!r.ok) throw new Error(r.statusText); return r.blob(); })
+    .then(blob => { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'inventory_delete_sample.xlsx'; a.click(); URL.revokeObjectURL(a.href); })
+    .catch(() => alert('下载示例失败'));
+}
+
+async function submitInvExcelDelete(fileInput) {
+  const file = fileInput && fileInput.files[0];
+  if (!file) return;
+  if (!confirm('确定按 Excel 中的序列号批量删除商品？删除后不可恢复。')) { fileInput.value = ''; return; }
+  fileInput.value = '';
+  const fd = new FormData();
+  fd.append('file', file);
+  const overlay = document.getElementById('uploadOverlay');
+  const overlayText = document.getElementById('uploadOverlayText');
+  overlayText.textContent = '正在批量删除，请稍候...';
+  overlay.style.display = 'flex';
+  try {
+    const res = await fetch(API + '/inventory/delete-excel', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token },
+      body: fd,
+    });
+    const data = await res.json().catch(() => ({}));
+    overlay.style.display = 'none';
+    if (data.code === 0) {
+      alert(data.data.message || '操作完成');
+      loadInventoryProducts();
+    } else {
+      alert(data.message || '批量删除失败');
+    }
+  } catch (e) {
+    overlay.style.display = 'none';
+    alert('批量删除失败：' + (e.message || '网络错误'));
   }
 }
 
