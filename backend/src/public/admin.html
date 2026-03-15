@@ -1288,55 +1288,60 @@ function renderUserTable() {
       <td><button class="detail-btn" onclick="toggleUserDetail(${u.id})">${isExpanded ? '收起' : '详情'}</button></td>
     </tr>`;
     if (isExpanded) {
+      const isEmptyNormal = (u.orderCount || 0) === 0 && boundKeys.length === 0 && addrCount === 0 && u.status === 'active';
       html += `<tr class="user-detail-row"><td colspan="11"><div class="user-detail-inner">`;
-      html += `<div style="margin-bottom:10px"><strong>用户信息</strong>
+      if (isEmptyNormal) {
+        html += '<div style="font-size:13px;color:#999">该用户暂无订单、绑定商品与收货地址，状态正常。</div>';
+      } else {
+        html += `<div style="margin-bottom:10px"><strong>用户信息</strong>
         <span style="margin-left:16px;font-size:13px;color:#666">状态: ${u.status === 'active' ? '✅ 正常' : '❌ 禁用'}</span>
       </div>`;
-      const orderIds = u.orderIds || [];
-      html += `<div style="font-size:14px;font-weight:600;margin-bottom:4px">该用户的订单 (${orderIds.length})</div>`;
-      if (orderIds.length) {
-        html += '<div style="font-size:13px;color:#333;margin-bottom:8px">';
-        orderIds.forEach(oid => {
-          html += '<a href="#" onclick="goToOrder(' + oid + ');return false;" style="color:var(--primary);margin-right:12px;text-decoration:underline">订单#' + oid + '</a>';
-        });
-        html += '</div>';
-      } else {
-        html += '<div class="no-addr">该用户暂无订单</div>';
-      }
-      html += `<div style="font-size:14px;font-weight:600;margin-bottom:4px">已绑定的商品 (${boundKeys.length})</div>`;
-      if (boundKeys.length) {
-        html += '<div style="font-size:13px;color:#333;word-break:break-all">';
-        boundKeys.forEach(k => {
-          const safeArg = JSON.stringify(k).replace(/"/g, '&quot;');
-          html += '<span style="display:inline-flex;align-items:center;gap:6px;margin-right:12px;margin-bottom:4px">' + k + ' <button type="button" class="history-btn" style="padding:2px 8px;font-size:12px" onclick="unbindUserProduct(' + u.id + ',' + safeArg + ')">删除</button></span>';
-        });
-        html += '</div>';
-      } else {
-        html += '<div class="no-addr">该用户暂无绑定商品</div>';
-      }
-      if (addrCount > 0) {
-        html += `<div style="font-size:14px;font-weight:600;margin:12px 0 4px">收货地址 (${addrCount})</div>`;
-        html += '<div class="addr-grid">';
-        u.addresses.forEach(a => {
-          const parts = [];
-          if (a.country === '其他') parts.push(a.customCountry || '其他');
-          else if (a.country) parts.push(a.country);
-          if (a.country === '中国大陆') {
-            if (a.province) parts.push(a.province);
-            if (a.city) parts.push(a.city);
-            if (a.district) parts.push(a.district);
-          }
-          if (a.detailAddress) parts.push(a.detailAddress);
-          html += `<div class="addr-card ${a.isDefault ? 'default' : ''}">
+        const orderIds = u.orderIds || [];
+        html += `<div style="font-size:14px;font-weight:600;margin-bottom:4px">该用户的订单 (${orderIds.length})</div>`;
+        if (orderIds.length) {
+          html += '<div style="font-size:13px;color:#333;margin-bottom:8px">';
+          orderIds.forEach(oid => {
+            html += '<a href="#" onclick="goToOrder(' + oid + ');return false;" style="color:var(--primary);margin-right:12px;text-decoration:underline">订单#' + oid + '</a>';
+          });
+          html += '</div>';
+        } else {
+          html += '<div class="no-addr">该用户暂无订单</div>';
+        }
+        html += `<div style="font-size:14px;font-weight:600;margin-bottom:4px">已绑定的商品 (${boundKeys.length})</div>`;
+        if (boundKeys.length) {
+          html += '<div style="font-size:13px;color:#333;word-break:break-all">';
+          boundKeys.forEach(k => {
+            const safeArg = JSON.stringify(k).replace(/"/g, '&quot;');
+            html += '<span style="display:inline-flex;align-items:center;gap:6px;margin-right:12px;margin-bottom:4px">' + k + ' <button type="button" class="history-btn" style="padding:2px 8px;font-size:12px" onclick="unbindUserProduct(' + u.id + ',' + safeArg + ')">删除</button></span>';
+          });
+          html += '</div>';
+        } else {
+          html += '<div class="no-addr">该用户暂无绑定商品</div>';
+        }
+        if (addrCount > 0) {
+          html += `<div style="font-size:14px;font-weight:600;margin:12px 0 4px">收货地址 (${addrCount})</div>`;
+          html += '<div class="addr-grid">';
+          u.addresses.forEach(a => {
+            const parts = [];
+            if (a.country === '其他') parts.push(a.customCountry || '其他');
+            else if (a.country) parts.push(a.country);
+            if (a.country === '中国大陆') {
+              if (a.province) parts.push(a.province);
+              if (a.city) parts.push(a.city);
+              if (a.district) parts.push(a.district);
+            }
+            if (a.detailAddress) parts.push(a.detailAddress);
+            html += `<div class="addr-card ${a.isDefault ? 'default' : ''}">
             ${a.isDefault ? '<span class="addr-default-tag">默认</span>' : ''}
             <div class="addr-name">${a.contactName}</div>
             <div class="addr-phone">${a.contactPhone}</div>
             <div class="addr-full">${parts.join(' ')}</div>
           </div>`;
-        });
-        html += '</div>';
-      } else {
-        html += '<div class="no-addr" style="margin-top:8px">该用户暂无收货地址</div>';
+          });
+          html += '</div>';
+        } else {
+          html += '<div class="no-addr" style="margin-top:8px">该用户暂无收货地址</div>';
+        }
       }
       html += '</div></td></tr>';
     }
