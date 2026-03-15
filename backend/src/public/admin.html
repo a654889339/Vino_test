@@ -1292,6 +1292,17 @@ function renderUserTable() {
       html += `<div style="margin-bottom:10px"><strong>用户信息</strong>
         <span style="margin-left:16px;font-size:13px;color:#666">状态: ${u.status === 'active' ? '✅ 正常' : '❌ 禁用'}</span>
       </div>`;
+      const orderIds = u.orderIds || [];
+      html += `<div style="font-size:14px;font-weight:600;margin-bottom:4px">该用户的订单 (${orderIds.length})</div>`;
+      if (orderIds.length) {
+        html += '<div style="font-size:13px;color:#333;margin-bottom:8px">';
+        orderIds.forEach(oid => {
+          html += '<a href="#" onclick="goToOrder(' + oid + ');return false;" style="color:var(--primary);margin-right:12px;text-decoration:underline">订单#' + oid + '</a>';
+        });
+        html += '</div>';
+      } else {
+        html += '<div class="no-addr">该用户暂无订单</div>';
+      }
       html += `<div style="font-size:14px;font-weight:600;margin-bottom:4px">已绑定的商品 (${boundKeys.length})</div>`;
       if (boundKeys.length) {
         html += '<div style="font-size:13px;color:#333;word-break:break-all">';
@@ -1337,6 +1348,11 @@ function toggleUserDetail(userId) {
   if (expandedUsers.has(userId)) expandedUsers.delete(userId);
   else expandedUsers.add(userId);
   renderUserTable();
+}
+
+function goToOrder(orderId) {
+  switchPage('orders');
+  openLogModal(orderId, '');
 }
 
 async function unbindUserProduct(userId, productKey) {

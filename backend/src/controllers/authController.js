@@ -193,6 +193,17 @@ exports.adminGetUsers = async (req, res) => {
     const countMap = {};
     orderCounts.forEach(r => { countMap[r.userId] = parseInt(r.orderCount, 10); });
 
+    const orderRows = await Order.findAll({
+      attributes: ['id', 'userId'],
+      order: [['id', 'ASC']],
+      raw: true,
+    });
+    const orderIdsByUser = {};
+    orderRows.forEach(r => {
+      if (!orderIdsByUser[r.userId]) orderIdsByUser[r.userId] = [];
+      orderIdsByUser[r.userId].push(r.id);
+    });
+
     const boundProducts = await UserProduct.findAll({ raw: true });
     const boundByUser = {};
     boundProducts.forEach(b => {
@@ -203,6 +214,7 @@ exports.adminGetUsers = async (req, res) => {
     const result = users.map(u => {
       const plain = u.toJSON();
       plain.orderCount = countMap[u.id] || 0;
+      plain.orderIds = orderIdsByUser[u.id] || [];
       plain.boundProductKeys = boundByUser[u.id] || [];
       return plain;
     });
