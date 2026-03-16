@@ -3,7 +3,14 @@
     <van-nav-bar title="注册" left-arrow @click-left="$router.back()" />
 
     <div class="register-header">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 200" class="register-logo">
+      <img
+        v-if="headerLogoUrl && !headerLogoError"
+        :src="headerLogoUrl"
+        alt="Logo"
+        class="register-logo-img"
+        @error="headerLogoError = true"
+      />
+      <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 200" class="register-logo">
         <path d="M18 35 L58 35 L100 145 L142 35 L160 35 L108 170 L92 170 Z" fill="#B91C1C"/>
         <path d="M165 35 L195 35 L195 170 L165 170 Z" fill="#B91C1C"/>
         <path d="M210 35 L240 35 L320 140 L320 35 L350 35 L350 170 L320 170 L240 65 L240 170 L210 170 Z" fill="#B91C1C"/>
@@ -68,15 +75,30 @@
 </template>
 
 <script setup>
-import { ref, reactive, onBeforeUnmount } from 'vue';
+import { ref, reactive, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
-import { authApi } from '@/api';
+import { authApi, homeConfigApi } from '@/api';
 import { showToast } from 'vant';
 
 const router = useRouter();
 const userStore = useUserStore();
 const loading = ref(false);
+const headerLogoUrl = ref('');
+const headerLogoError = ref(false);
+
+onMounted(async () => {
+  try {
+    const res = await homeConfigApi.list();
+    const items = res.data || [];
+    const splash = items.find(i => i.section === 'splash' && i.status === 'active');
+    if (splash && splash.imageUrl) headerLogoUrl.value = splash.imageUrl;
+    else {
+      const headerLogo = items.find(i => i.section === 'headerLogo' && i.status === 'active');
+      if (headerLogo && headerLogo.imageUrl) headerLogoUrl.value = headerLogo.imageUrl;
+    }
+  } catch (_) {}
+});
 const sendingCode = ref(false);
 const countdown = ref(0);
 let timer = null;
@@ -115,7 +137,8 @@ const handleSendCode = async () => {
       if (countdown.value <= 0) clearInterval(timer);
     }, 1000);
   } catch (err) {
-    showToast(err.message || '发送失败');
+    const msg = err.response?.data?.message || err.message || '发送失败';
+    showToast(msg);
   } finally {
     sendingCode.value = false;
   }
@@ -136,7 +159,8 @@ const handleSendSmsCode = async () => {
       if (smsCountdown.value <= 0) clearInterval(smsTimer);
     }, 1000);
   } catch (err) {
-    showToast(err.message || '发送失败');
+    const msg = err.response?.data?.message || err.message || '发送失败';
+    showToast(msg);
   } finally {
     sendingSmsCode.value = false;
   }
@@ -198,6 +222,14 @@ onBeforeUnmount(() => {
 .register-header {
   text-align: center;
   padding: 30px 20px 16px;
+}
+
+.register-logo-img {
+  width: 80px;
+  height: auto;
+  margin: 0 auto 12px;
+  display: block;
+  object-fit: contain;
 }
 
 .register-logo {
