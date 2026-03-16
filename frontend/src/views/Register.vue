@@ -91,11 +91,11 @@ onMounted(async () => {
   try {
     const res = await homeConfigApi.list();
     const items = res.data || [];
-    const splash = items.find(i => i.section === 'splash' && i.status === 'active');
-    if (splash && splash.imageUrl) headerLogoUrl.value = splash.imageUrl;
+    const headerLogo = items.find(i => i.section === 'headerLogo' && i.status === 'active');
+    if (headerLogo && headerLogo.imageUrl) headerLogoUrl.value = headerLogo.imageUrl;
     else {
-      const headerLogo = items.find(i => i.section === 'headerLogo' && i.status === 'active');
-      if (headerLogo && headerLogo.imageUrl) headerLogoUrl.value = headerLogo.imageUrl;
+      const splash = items.find(i => i.section === 'splash' && i.status === 'active');
+      if (splash && splash.imageUrl) headerLogoUrl.value = splash.imageUrl;
     }
   } catch (_) {}
 });

@@ -140,7 +140,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 <div class="auth-container" id="authPage">
   <div class="auth-card">
     <div class="auth-logo">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 200">
+      <img id="authLogoImg" src="" alt="Logo" style="display:none;max-width:160px;height:auto;margin:0 auto" />
+      <svg id="authLogoSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 200">
         <path d="M18 35 L58 35 L100 145 L142 35 L160 35 L108 170 L92 170 Z" fill="#B91C1C"/>
         <path d="M165 35 L195 35 L195 170 L165 170 Z" fill="#B91C1C"/>
         <path d="M210 35 L240 35 L320 140 L320 35 L350 35 L350 170 L320 170 L240 65 L240 170 L210 170 Z" fill="#B91C1C"/>
@@ -1161,6 +1162,24 @@ async function checkSession() {
     else { localStorage.removeItem('vino_admin_token'); token = null; }
   } catch { localStorage.removeItem('vino_admin_token'); token = null; }
 }
+async function loadAuthLogo() {
+  try {
+    const res = await fetch(API + '/home-config').then(r => r.json());
+    const items = (res.data || []).filter(i => i.status === 'active');
+    const headerLogo = items.find(i => i.section === 'headerLogo');
+    const splash = items.find(i => i.section === 'splash');
+    const logo = (headerLogo && headerLogo.imageUrl) ? headerLogo : (splash && splash.imageUrl ? splash : null);
+    const imgEl = document.getElementById('authLogoImg');
+    const svgEl = document.getElementById('authLogoSvg');
+    if (imgEl && svgEl && logo && logo.imageUrl) {
+      imgEl.src = logo.imageUrl;
+      imgEl.onerror = function() { imgEl.style.display = 'none'; svgEl.style.display = ''; };
+      imgEl.style.display = 'block';
+      svgEl.style.display = 'none';
+    }
+  } catch (_) {}
+}
+loadAuthLogo();
 checkSession();
 
 let currentLogOrderId = null;
