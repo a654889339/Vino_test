@@ -59,11 +59,11 @@ exports.removeCategory = async (req, res) => {
   }
 };
 
-/** 管理端：商品列表（支持种类、状态筛选与名称/序列号关键词查找） */
+/** 管理端：商品列表（支持种类、状态筛选与名称/序列号关键词查找，支持分页） */
 exports.listProducts = async (req, res) => {
   try {
     const { Op } = require('sequelize');
-    const { categoryId, status, keyword, tag } = req.query;
+    const { categoryId, status, keyword, tag, page = 1, pageSize = 50 } = req.query;
     const where = {};
     if (categoryId != null && categoryId !== '') where.categoryId = categoryId;
     if (status != null && status !== '') where.status = status;
@@ -78,28 +78,32 @@ exports.listProducts = async (req, res) => {
         { serialNumber: { [Op.like]: kw } },
       );
     }
-    const list = await InventoryProduct.findAll({
+    const pg = Math.max(1, parseInt(page));
+    const ps = Math.max(1, Math.min(200, parseInt(pageSize)));
+    const { count, rows } = await InventoryProduct.findAndCountAll({
       where,
       include: [{ model: InventoryCategory, as: 'category', attributes: ['id', 'name'] }],
       order: [['categoryId', 'ASC'], ['sortOrder', 'ASC'], ['id', 'ASC']],
+      limit: ps,
+      offset: (pg - 1) * ps,
     });
-    const serialNumbers = list.map(p => p.serialNumber);
-    const bindings = await UserProduct.findAll({
+    const serialNumbers = rows.map(p => p.serialNumber);
+    const bindings = serialNumbers.length ? await UserProduct.findAll({
       where: { productKey: serialNumbers },
       attributes: ['userId', 'productKey'],
       raw: true,
-    });
+    }) : [];
     const boundByProduct = {};
     bindings.forEach(b => {
       if (!boundByProduct[b.productKey]) boundByProduct[b.productKey] = [];
       boundByProduct[b.productKey].push(b.userId);
     });
-    const data = list.map(p => {
+    const data = rows.map(p => {
       const plain = p.toJSON ? p.toJSON() : p;
       plain.boundUserIds = boundByProduct[p.serialNumber] || [];
       return plain;
     });
-    res.json({ code: 0, data });
+    res.json({ code: 0, data: { list: data, total: count, page: pg, pageSize: ps } });
   } catch (err) {
     console.error('[Inventory] listProducts error:', err.message);
     res.status(500).json({ code: 500, message: '获取商品列表失败' });

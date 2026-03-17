@@ -175,50 +175,80 @@ exports.login = async (req, res) => {
 exports.adminGetUsers = async (req, res) => {
   try {
     const { User, Address, Order, UserProduct } = require('../models');
-    const users = await User.findAll({
+    const { page = 1, pageSize = 50 } = req.query;
+    const pg = Math.max(1, parseInt(page));
+    const ps = Math.max(1, Math.min(200, parseInt(pageSize)));
+
+    const { count, rows: users } = await User.findAndCountAll({
       attributes: { exclude: ['password'] },
       include: [
         { model: Address, as: 'addresses', required: false },
       ],
       order: [['createdAt', 'DESC']],
+      limit: ps,
+      offset: (pg - 1) * ps,
+      distinct: true,
     });
-    const orderCounts = await Order.findAll({
+
+    const userIds = users.map(u => u.id);
+    const { Op } = require('sequelize');
+
+    const orderCounts = userIds.length ? await Order.findAll({
       attributes: [
         'userId',
         [require('sequelize').fn('COUNT', require('sequelize').col('id')), 'orderCount'],
       ],
+      where: { userId: { [Op.in]: userIds } },
       group: ['userId'],
       raw: true,
-    });
+    }) : [];
     const countMap = {};
     orderCounts.forEach(r => { countMap[r.userId] = parseInt(r.orderCount, 10); });
 
-    const orderRows = await Order.findAll({
+    const orderRows = userIds.length ? await Order.findAll({
       attributes: ['id', 'userId'],
+      where: { userId: { [Op.in]: userIds } },
       order: [['id', 'ASC']],
       raw: true,
-    });
+    }) : [];
     const orderIdsByUser = {};
     orderRows.forEach(r => {
       if (!orderIdsByUser[r.userId]) orderIdsByUser[r.userId] = [];
       orderIdsByUser[r.userId].push(r.id);
     });
 
-    const boundProducts = await UserProduct.findAll({ raw: true });
+    const boundProducts = userIds.length ? await UserProduct.findAll({
+      where: { userId: { [Op.in]: userIds } },
+      raw: true,
+    }) : [];
     const boundByUser = {};
     boundProducts.forEach(b => {
       if (!boundByUser[b.userId]) boundByUser[b.userId] = [];
       boundByUser[b.userId].push(b.productKey);
     });
 
-    const result = users.map(u => {
+    const list = users.map(u => {
       const plain = u.toJSON();
       plain.orderCount = countMap[u.id] || 0;
       plain.orderIds = orderIdsByUser[u.id] || [];
       plain.boundProductKeys = boundByUser[u.id] || [];
       return plain;
     });
-    res.json({ code: 0, data: result });
+
+    const totalUsers = await User.count();
+    const adminCount = await User.count({ where: { role: 'admin' } });
+    const totalAddresses = await Address.count();
+
+    res.json({
+      code: 0,
+      data: {
+        list,
+        total: count,
+        page: pg,
+        pageSize: ps,
+        stats: { totalUsers, adminCount, totalAddresses },
+      },
+    });
   } catch (err) {
     console.error('[Auth] adminGetUsers error:', err.message);
     res.status(500).json({ code: 500, message: '获取用户列表失败' });

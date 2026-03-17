@@ -31,9 +31,9 @@ scp -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedKeyTypes=+ssh-rsa -o StrictHo
 ```
 
 ## Project Location on Server
-- **Path**: `/root/Vino_test`
+- **Path**: `/home/ubuntu/Vino_test`
 - **GitHub Repo**: `https://github.com/a654889339/Vino_test`
-- **Note**: Requires `sudo` to access /root directory
+- **Note**: ubuntu 用户家目录，无需 sudo 访问；docker 命令需 sudo
 
 ## Deployment Flow (Git Clone)
 
@@ -43,22 +43,24 @@ scp -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedKeyTypes=+ssh-rsa -o StrictHo
 git push origin main
 
 # 2. SSH to server and clone via mirror (server cannot access GitHub directly)
-ssh ... ubuntu@106.54.50.88 "sudo bash -c 'cd /root && git clone https://ghfast.top/https://github.com/a654889339/Vino_test.git Vino_test'"
+ssh ... ubuntu@106.54.50.88 "cd /home/ubuntu && git clone https://ghfast.top/https://github.com/a654889339/Vino_test.git Vino_test"
 
 # 3. Build and start containers
-ssh ... ubuntu@106.54.50.88 "sudo bash -c 'cd /root/Vino_test && docker-compose up -d --build'"
+ssh ... ubuntu@106.54.50.88 "sudo bash -c 'cd /home/ubuntu/Vino_test && docker compose up -d --build'"
 ```
 
 ### Update deployment (pull latest code)
+不执行 `docker compose down`，不重启 vino-mysql，不删 volume，避免动 DB。仅重建并更新后端与前端：
+
 ```bash
-# 1. Local: push code to GitHub
+# 1. Local: push code to GitHub (optional)
 git push origin main
 
 # 2. SSH to server and pull latest via mirror
-ssh ... ubuntu@106.54.50.88 "sudo git -C /root/Vino_test pull"
+ssh ... ubuntu@106.54.50.88 "cd /home/ubuntu/Vino_test && git pull"
 
-# 3. Rebuild and restart containers
-ssh ... ubuntu@106.54.50.88 "sudo bash -c 'cd /root/Vino_test && docker compose down && docker compose up -d --build'"
+# 3. 仅重建并启动 vino-backend、vino-frontend（不 down、不重启 MySQL）
+ssh ... ubuntu@106.54.50.88 "sudo bash -c 'cd /home/ubuntu/Vino_test && docker compose up -d --build vino-backend vino-frontend'"
 ```
 
 ## GitHub Mirror Configuration
@@ -71,8 +73,8 @@ ssh ... ubuntu@106.54.50.88 "sudo bash -c 'cd /root/Vino_test && docker compose 
 # Check containers
 ssh ... ubuntu@106.54.50.88 "sudo docker ps --filter 'name=vino'"
 
-# Rebuild and restart (use docker-compose v1 on this server)
-ssh ... ubuntu@106.54.50.88 "sudo bash -c 'cd /root/Vino_test && docker compose down && docker compose up -d --build'"
+# 仅更新应用（不 down、不重启 MySQL，见更新发布 skill）
+ssh ... ubuntu@106.54.50.88 "sudo bash -c 'cd /home/ubuntu/Vino_test && docker compose up -d --build vino-backend vino-frontend'"
 
 # View logs
 ssh ... ubuntu@106.54.50.88 "sudo docker logs vino-backend"
@@ -93,6 +95,6 @@ ssh ... ubuntu@106.54.50.88 "curl -s http://localhost:5202/api/health"
 ## Important Notes
 1. Server now has `docker compose` v2 (use `docker compose`, the old `docker-compose` v1 has compatibility issues)
 2. Server cannot access GitHub directly - git remote is configured to use `ghfast.top` mirror
-3. Always use `sudo` when accessing files in `/root/`
+3. 项目在 /home/ubuntu/ 下，git 操作无需 sudo；docker 需 sudo
 4. SSH options are required for RSA key compatibility
 5. Container names use `vino-` prefix to avoid conflicts with other projects

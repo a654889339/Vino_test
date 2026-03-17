@@ -49,20 +49,24 @@ exports.create = async (req, res) => {
 
 exports.myOrders = async (req, res) => {
   try {
-    const { status } = req.query;
+    const { status, page = 1, pageSize = 10 } = req.query;
     const where = { userId: req.user.id };
     if (status && status !== 'all') {
       where.status = status;
     }
-    const orders = await Order.findAll({
+    const pg = Math.max(1, parseInt(page));
+    const ps = Math.max(1, Math.min(100, parseInt(pageSize)));
+    const { count, rows } = await Order.findAndCountAll({
       where,
       order: [['createdAt', 'DESC']],
+      limit: ps,
+      offset: (pg - 1) * ps,
     });
-    const list = orders.map((o) => {
+    const list = rows.map((o) => {
       const s = STATUS_MAP[o.status] || STATUS_MAP.pending;
       return { ...o.toJSON(), statusText: s.text, statusType: s.type };
     });
-    res.json({ code: 0, data: list });
+    res.json({ code: 0, data: { list, total: count, page: pg, pageSize: ps } });
   } catch (err) {
     console.error('[Order] myOrders error:', err.message);
     res.status(500).json({ code: 500, message: '获取订单失败' });

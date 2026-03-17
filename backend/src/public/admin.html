@@ -227,6 +227,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <div class="info-row"><span class="label">用户前端</span><a class="value" id="frontendLink" target="_blank" style="color:var(--primary);text-decoration:none">-</a></div>
         <div class="info-row"><span class="label">API 健康检查</span><a class="value" id="healthLink" target="_blank" style="color:var(--primary);text-decoration:none">-</a></div>
       </div>
+      <div class="dash-section">
+        <h3>测试数据</h3>
+        <p style="font-size:13px;color:#666;margin-bottom:12px">点击按钮批量生成随机用户和库存商品（生产环境慎用）。</p>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <label style="font-size:13px;color:#666">用户数量：</label>
+          <input type="number" id="seedUserCount" value="10000" min="1" max="50000" style="width:100px;padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px" />
+          <label style="font-size:13px;color:#666;margin-left:8px">商品数量：</label>
+          <input type="number" id="seedProductCount" value="10000" min="1" max="50000" style="width:100px;padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px" />
+          <button class="refresh-btn" style="background:#7C3AED;padding:8px 20px" id="seedBtn" onclick="runSeed()">生成测试数据</button>
+        </div>
+        <div id="seedResult" style="margin-top:8px;font-size:13px;color:#059669"></div>
+      </div>
     </div>
 
     <!-- Users Page -->
@@ -242,6 +254,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <tbody id="userTableBody"></tbody>
         </table>
         <div class="order-empty" id="userEmpty" style="display:none">暂无用户</div>
+        <div class="pagination" id="userPagination"></div>
       </div>
     </div>
 
@@ -309,11 +322,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         </div>
         <div class="order-filters" style="margin-bottom:12px;flex-wrap:wrap;align-items:center;gap:8px">
           <span style="font-size:13px;color:#666">种类：</span>
-          <select class="form-input" id="invFilterCategoryId" style="width:140px;display:inline-block;padding:6px 10px" onchange="loadInventoryProducts()">
+          <select class="form-input" id="invFilterCategoryId" style="width:140px;display:inline-block;padding:6px 10px" onchange="loadInventoryProducts(true)">
             <option value="">全部</option>
           </select>
           <span style="font-size:13px;color:#666;margin-left:8px">状态：</span>
-          <select class="form-input" id="invFilterStatus" style="width:100px;display:inline-block;padding:6px 10px" onchange="loadInventoryProducts()">
+          <select class="form-input" id="invFilterStatus" style="width:100px;display:inline-block;padding:6px 10px" onchange="loadInventoryProducts(true)">
             <option value="">全部</option>
             <option value="active">启用</option>
             <option value="inactive">禁用</option>
@@ -321,7 +334,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <span style="font-size:13px;color:#666;margin-left:8px">标签：</span>
           <input type="text" class="form-input" id="invFilterTag" placeholder="按标签筛选" style="width:120px;display:inline-block;padding:6px 10px" />
           <input type="text" class="form-input" id="invFilterKeyword" placeholder="名称或序列号" style="width:160px;display:inline-block;padding:6px 10px;margin-left:8px" />
-          <button class="refresh-btn" style="padding:6px 16px" onclick="loadInventoryProducts()">查找</button>
+          <button class="refresh-btn" style="padding:6px 16px" onclick="loadInventoryProducts(true)">查找</button>
           <button class="refresh-btn" style="padding:6px 16px;background:#059669" onclick="exportInvProducts()">导出</button>
         </div>
         <table class="order-table">
@@ -329,6 +342,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <tbody id="invProductTableBody"></tbody>
         </table>
         <div class="order-empty" id="invProductEmpty" style="display:none">暂无商品</div>
+        <div class="pagination" id="invProductPagination"></div>
       </div>
     </div>
 
@@ -952,10 +966,10 @@ function switchPage(page) {
   const pageEl = document.getElementById('page-' + page);
   if (pageEl) pageEl.classList.add('active');
   if (page === 'orders') loadOrders();
-  if (page === 'users') loadUsers();
+  if (page === 'users') { userPage = 1; loadUsers(); }
   if (page === 'guides') { loadCategories(); loadGuides(); }
   if (page === 'serviceConfig') { loadServiceCategories(); loadServices(); }
-  if (page === 'inventory') { loadInventoryCategories(); loadInventoryProducts(); }
+  if (page === 'inventory') { invProductPage = 1; loadInventoryCategories(); loadInventoryProducts(); }
   if (page === 'homeConfig') { currentHCPage = 'homeConfig'; loadHomeConfig(); }
   if (page === 'homeAnimConfig') { currentHCPage = 'homeAnimConfig'; loadHomeConfig(); }
   if (page === 'mineConfig') loadMineConfig();
@@ -1154,6 +1168,25 @@ async function updateOrderStatus(id, status) {
   } catch { alert('网络错误'); loadOrders(); }
 }
 
+async function runSeed() {
+  const btn = document.getElementById('seedBtn');
+  const result = document.getElementById('seedResult');
+  const users = document.getElementById('seedUserCount').value || 10000;
+  const products = document.getElementById('seedProductCount').value || 10000;
+  btn.disabled = true; btn.textContent = '生成中...';
+  result.textContent = '';
+  try {
+    const res = await api('/admin/seed?users=' + users + '&products=' + products, { method: 'POST' });
+    result.style.color = '#059669';
+    result.textContent = res.message || '生成完成';
+  } catch (e) {
+    result.style.color = '#B91C1C';
+    result.textContent = '生成失败：' + (e.message || '未知错误');
+  } finally {
+    btn.disabled = false; btn.textContent = '生成测试数据';
+  }
+}
+
 async function checkSession() {
   if (!token) return;
   try {
@@ -1253,18 +1286,25 @@ async function submitPriceChange() {
 
 let allUsers = [];
 const expandedUsers = new Set();
+let userPage = 1;
+const userPageSize = 50;
 
 async function loadUsers() {
   const tbody = document.getElementById('userTableBody');
   const empty = document.getElementById('userEmpty');
   tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:30px;color:#999">加载中...</td></tr>';
   try {
-    const res = await api('/auth/admin/users');
+    const res = await api('/auth/admin/users?page=' + userPage + '&pageSize=' + userPageSize);
     if (res.code === 0) {
-      allUsers = res.data || [];
-      const totalUsers = allUsers.length;
-      const adminCount = allUsers.filter(u => u.role === 'admin').length;
-      const totalAddresses = allUsers.reduce((s, u) => s + (u.addresses ? u.addresses.length : 0), 0);
+      const d = res.data || {};
+      allUsers = d.list || [];
+      const total = d.total || 0;
+      const page = d.page || 1;
+      const pageSize = d.pageSize || userPageSize;
+      const stats = d.stats || {};
+      const totalUsers = stats.totalUsers || total;
+      const adminCount = stats.adminCount || 0;
+      const totalAddresses = stats.totalAddresses || 0;
       document.getElementById('userStats').innerHTML = `
         <div class="stat-card"><h3>总用户</h3><div class="val">${totalUsers}</div></div>
         <div class="stat-card"><h3>管理员</h3><div class="val" style="color:#B91C1C">${adminCount}</div></div>
@@ -1273,10 +1313,16 @@ async function loadUsers() {
       if (!allUsers.length) {
         tbody.innerHTML = '';
         empty.style.display = 'block';
+        document.getElementById('userPagination').innerHTML = '';
         return;
       }
       empty.style.display = 'none';
       renderUserTable();
+      const totalPages = Math.ceil(total / pageSize);
+      document.getElementById('userPagination').innerHTML = totalPages > 1 ? `
+        <button class="page-btn" onclick="userPage--;loadUsers()" ${page <= 1 ? 'disabled' : ''}>上一页</button>
+        <span class="page-info">${page} / ${totalPages}（共 ${total} 条）</span>
+        <button class="page-btn" onclick="userPage++;loadUsers()" ${page >= totalPages ? 'disabled' : ''}>下一页</button>` : `<span class="page-info">共 ${total} 条</span>`;
     }
   } catch {
     tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:30px;color:#B91C1C">加载失败</td></tr>';
@@ -1935,6 +1981,8 @@ async function deleteGuide(id) {
 /* ===== 商品库存 ===== */
 let allInvCategories = [];
 let allInvProducts = [];
+let invProductPage = 1;
+const invProductPageSize = 50;
 
 async function loadInventoryCategories() {
   try {
@@ -1966,7 +2014,8 @@ function formatDateTime(str) {
   } catch (_) { return str; }
 }
 
-async function loadInventoryProducts() {
+async function loadInventoryProducts(resetPage) {
+  if (resetPage) invProductPage = 1;
   const tbody = document.getElementById('invProductTableBody');
   const empty = document.getElementById('invProductEmpty');
   tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:30px;color:#999">加载中...</td></tr>';
@@ -1979,11 +2028,17 @@ async function loadInventoryProducts() {
   if (status) params.set('status', status);
   if (tag) params.set('tag', tag);
   if (keyword) params.set('keyword', keyword);
+  params.set('page', invProductPage);
+  params.set('pageSize', invProductPageSize);
   const qs = params.toString();
   try {
     const res = await api('/inventory/products' + (qs ? '?' + qs : ''));
-    allInvProducts = res.data || [];
-    if (!allInvProducts.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+    const d = res.data || {};
+    allInvProducts = d.list || [];
+    const total = d.total || 0;
+    const page = d.page || 1;
+    const pageSize = d.pageSize || invProductPageSize;
+    if (!allInvProducts.length) { tbody.innerHTML = ''; empty.style.display = 'block'; document.getElementById('invProductPagination').innerHTML = ''; return; }
     empty.style.display = 'none';
     const boundStr = (p) => (p.boundUserIds && p.boundUserIds.length) ? p.boundUserIds.join(', ') : '-';
     tbody.innerHTML = allInvProducts.map(p => `<tr>
@@ -1999,6 +2054,11 @@ async function loadInventoryProducts() {
       <td style="font-size:12px">${boundStr(p)}</td>
       <td><button class="detail-btn" onclick="editInvProduct(${p.id})">编辑</button> <button class="history-btn" onclick="deleteInvProduct(${p.id})">删除</button></td>
     </tr>`).join('');
+    const totalPages = Math.ceil(total / pageSize);
+    document.getElementById('invProductPagination').innerHTML = totalPages > 1 ? `
+      <button class="page-btn" onclick="invProductPage--;loadInventoryProducts()" ${page <= 1 ? 'disabled' : ''}>上一页</button>
+      <span class="page-info">${page} / ${totalPages}（共 ${total} 条）</span>
+      <button class="page-btn" onclick="invProductPage++;loadInventoryProducts()" ${page >= totalPages ? 'disabled' : ''}>下一页</button>` : `<span class="page-info">共 ${total} 条</span>`;
   } catch { tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:#B91C1C">加载失败</td></tr>'; }
 }
 

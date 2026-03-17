@@ -11,6 +11,7 @@ const messageRoutes = require('./message');
 const inventoryRoutes = require('./inventory');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 const adminController = require('../controllers/adminController');
+const seedController = require('../controllers/seedController');
 
 const router = Router();
 
@@ -26,6 +27,7 @@ router.use('/messages', messageRoutes);
 router.use('/inventory', inventoryRoutes);
 
 router.post('/admin/generate-thumbs', authMiddleware, adminMiddleware, adminController.generateThumbs);
+router.post('/admin/seed', authMiddleware, adminMiddleware, seedController.seedData);
 
 router.get('/health', (req, res) => {
   res.json({ code: 0, message: 'Vino服务运行中', timestamp: new Date().toISOString() });
