@@ -9,6 +9,7 @@ const productCategoryRoutes = require('./productCategory');
 const homeConfigRoutes = require('./homeConfig');
 const messageRoutes = require('./message');
 const inventoryRoutes = require('./inventory');
+const outletRoutes = require('./outlet');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 const adminController = require('../controllers/adminController');
 const seedController = require('../controllers/seedController');
@@ -25,6 +26,7 @@ router.use('/product-categories', productCategoryRoutes);
 router.use('/home-config', homeConfigRoutes);
 router.use('/messages', messageRoutes);
 router.use('/inventory', inventoryRoutes);
+router.use('/outlet', outletRoutes);
 
 router.post('/admin/generate-thumbs', authMiddleware, adminMiddleware, adminController.generateThumbs);
 router.post('/admin/seed', authMiddleware, adminMiddleware, seedController.seedData);

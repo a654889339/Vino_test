@@ -62,5 +62,14 @@ services:
     depends_on:
       - vino-backend
 
+  vino-frontend-outlet:
+    build: ./frontend_outlet
+    container_name: vino-frontend-outlet
+    restart: always
+    ports:
+      - "5203:5203"
+    depends_on:
+      - vino-backend
+
 volumes:
   vino-mysql-data:

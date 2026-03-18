@@ -44,12 +44,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .dash-logout{padding:6px 16px;background:rgba(255,255,255,.1);color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;transition:background .2s}
 .dash-logout:hover{background:rgba(255,255,255,.2)}
 
-.dash-nav{background:var(--card);border-bottom:1px solid var(--border);display:flex;padding:0 24px;max-width:1000px;margin:0 auto}
-.dash-nav-item{padding:14px 20px;font-size:14px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;color:var(--text-secondary);transition:all .2s}
+.dash-nav{background:var(--card);border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;padding:0 24px;max-width:1200px;margin:0 auto}
+.dash-nav-group{position:relative}
+.dash-nav-group-title{padding:14px 18px;font-size:14px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;color:var(--text);transition:all .2s;user-select:none;display:flex;align-items:center;gap:4px}
+.dash-nav-group-title:hover{color:var(--primary)}
+.dash-nav-group-title.active{color:var(--primary);border-bottom-color:var(--primary)}
+.dash-nav-group-title::after{content:'▾';font-size:10px;margin-left:2px;transition:transform .2s}
+.dash-nav-group.collapsed .dash-nav-group-title::after{transform:rotate(-90deg)}
+.dash-nav-sub{display:flex;flex-wrap:wrap}
+.dash-nav-group.collapsed .dash-nav-sub{display:none}
+.dash-nav-item{padding:14px 16px;font-size:13px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;color:var(--text-secondary);transition:all .2s}
 .dash-nav-item.active{color:var(--primary);border-bottom-color:var(--primary)}
 .dash-nav-item:hover{color:var(--primary)}
 
-.dash-body{max-width:1000px;margin:0 auto;padding:24px}
+.dash-body{max-width:1200px;margin:0 auto;padding:24px}
 .dash-page{display:none}
 .dash-page.active{display:block}
 .dash-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:24px}
@@ -192,16 +200,33 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   </div>
 
   <div class="dash-nav" id="dashNav">
-    <div class="dash-nav-item active" onclick="switchPage('overview')">概览</div>
-    <div class="dash-nav-item" onclick="switchPage('orders')">订单管理</div>
-    <div class="dash-nav-item" onclick="switchPage('users')">用户管理</div>
-    <div class="dash-nav-item" onclick="switchPage('guides')">商品配置</div>
-    <div class="dash-nav-item" onclick="switchPage('serviceConfig')">服务配置</div>
-    <div class="dash-nav-item" onclick="switchPage('inventory')">商品库存</div>
-    <div class="dash-nav-item" onclick="switchPage('homeConfig')">首页配置</div>
-    <div class="dash-nav-item" onclick="switchPage('homeAnimConfig')">首页动画配置</div>
-    <div class="dash-nav-item" onclick="switchPage('mineConfig')">个人中心配置</div>
-    <div class="dash-nav-item" onclick="switchPage('messages')">留言板</div>
+    <div class="dash-nav-group" id="navGroupToC">
+      <div class="dash-nav-group-title active" onclick="toggleNavGroup('ToC')">To C前端管理</div>
+      <div class="dash-nav-sub">
+        <div class="dash-nav-item active" data-page="overview" onclick="switchPage('overview')">概览</div>
+        <div class="dash-nav-item" data-page="orders" onclick="switchPage('orders')">订单管理</div>
+        <div class="dash-nav-item" data-page="users" onclick="switchPage('users')">用户管理</div>
+        <div class="dash-nav-item" data-page="guides" onclick="switchPage('guides')">商品配置</div>
+        <div class="dash-nav-item" data-page="serviceConfig" onclick="switchPage('serviceConfig')">服务配置</div>
+        <div class="dash-nav-item" data-page="inventory" onclick="switchPage('inventory')">商品库存</div>
+        <div class="dash-nav-item" data-page="homeConfig" onclick="switchPage('homeConfig')">首页配置</div>
+        <div class="dash-nav-item" data-page="homeAnimConfig" onclick="switchPage('homeAnimConfig')">首页动画配置</div>
+        <div class="dash-nav-item" data-page="mineConfig" onclick="switchPage('mineConfig')">个人中心配置</div>
+        <div class="dash-nav-item" data-page="messages" onclick="switchPage('messages')">留言板</div>
+      </div>
+    </div>
+    <div class="dash-nav-group collapsed" id="navGroupOutlet">
+      <div class="dash-nav-group-title" onclick="toggleNavGroup('Outlet')">服务商/分销商管理</div>
+      <div class="dash-nav-sub">
+        <div class="dash-nav-item" data-page="outletOverview" onclick="switchPage('outletOverview')">概览</div>
+        <div class="dash-nav-item" data-page="outletOrders" onclick="switchPage('outletOrders')">订单管理</div>
+        <div class="dash-nav-item" data-page="outletUsers" onclick="switchPage('outletUsers')">用户管理</div>
+        <div class="dash-nav-item" data-page="outletHomeConfig" onclick="switchPage('outletHomeConfig')">首页配置</div>
+        <div class="dash-nav-item" data-page="outletHomeAnimConfig" onclick="switchPage('outletHomeAnimConfig')">首页动画配置</div>
+        <div class="dash-nav-item" data-page="outletMineConfig" onclick="switchPage('outletMineConfig')">个人中心配置</div>
+        <div class="dash-nav-item" data-page="outletMessages" onclick="switchPage('outletMessages')">留言板</div>
+      </div>
+    </div>
   </div>
 
   <div class="dash-body">
@@ -921,6 +946,106 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <h4 style="margin-top:16px">变更历史</h4>
       <div id="logList" class="log-list"></div>
     </div>
+
+    <!-- ========== Outlet Pages ========== -->
+    <!-- Outlet Overview -->
+    <div class="dash-page" id="page-outletOverview">
+      <div class="dash-stats" id="outletOverviewStats">
+        <div class="stat-card"><h3>系统状态</h3><div class="val" style="color:#059669">运行中</div><div class="sub">服务商模块正常</div></div>
+        <div class="stat-card"><h3>总订单</h3><div class="val" id="outletStatTotal">-</div><div class="sub">全部订单</div></div>
+        <div class="stat-card"><h3>待处理</h3><div class="val" id="outletStatPending" style="color:#D97706">-</div><div class="sub">等待支付/处理</div></div>
+        <div class="stat-card"><h3>已完成</h3><div class="val" id="outletStatCompleted" style="color:#059669">-</div><div class="sub">完成的订单</div></div>
+      </div>
+      <div class="dash-section">
+        <h3>服务商/分销商管理</h3>
+        <p style="color:var(--text-secondary);font-size:14px">管理服务商/分销商的首页配置、动画、用户、订单和留言。数据完全独立于 To C 前端。</p>
+      </div>
+    </div>
+
+    <!-- Outlet Orders -->
+    <div class="dash-page" id="page-outletOrders">
+      <div class="dash-stats" id="outletOrderStats"></div>
+      <div class="dash-section">
+        <div class="section-header"><h3>服务商订单</h3>
+          <div style="display:flex;gap:8px;align-items:center">
+            <select class="form-input" id="outletOrderFilter" style="width:120px;display:inline-block;padding:6px 10px" onchange="outletOrderPage=1;loadOutletOrders()">
+              <option value="all">全部</option><option value="pending">待支付</option><option value="paid">已支付</option><option value="processing">进行中</option><option value="completed">已完成</option><option value="cancelled">已取消</option>
+            </select>
+            <button class="refresh-btn" onclick="loadOutletOrders()">刷新</button>
+          </div>
+        </div>
+        <table class="order-table"><thead><tr><th>订单号</th><th>用户</th><th>服务</th><th>金额</th><th>状态</th><th>联系人</th><th>创建时间</th><th>操作</th></tr></thead><tbody id="outletOrderTableBody"></tbody></table>
+        <div class="order-empty" id="outletOrderEmpty" style="display:none">暂无订单</div>
+        <div class="pagination" id="outletOrderPagination"></div>
+      </div>
+    </div>
+
+    <!-- Outlet Users -->
+    <div class="dash-page" id="page-outletUsers">
+      <div class="dash-stats" id="outletUserStats"></div>
+      <div class="dash-section">
+        <div class="section-header"><h3>服务商用户</h3><button class="refresh-btn" onclick="loadOutletUsers()">刷新</button></div>
+        <table class="order-table" id="outletUserTable">
+          <thead><tr><th>ID</th><th>用户名</th><th>手机号</th><th>邮箱</th><th>昵称</th><th>角色</th><th>订单数</th><th>服务商地址数</th><th>注册时间</th></tr></thead>
+          <tbody id="outletUserTableBody"></tbody>
+        </table>
+        <div class="order-empty" id="outletUserEmpty" style="display:none">暂无用户</div>
+        <div class="pagination" id="outletUserPagination"></div>
+      </div>
+    </div>
+
+    <!-- Outlet Home Config -->
+    <div class="dash-page" id="page-outletHomeConfig">
+      <div class="dash-section">
+        <div class="section-header"><h3>服务商首页配置</h3>
+          <div style="display:flex;gap:8px"><button class="refresh-btn" onclick="loadOutletHomeConfig()">刷新</button><button class="refresh-btn" style="background:#059669" onclick="openOutletHCEditor()">+ 新增</button></div>
+        </div>
+        <p style="font-size:13px;color:#666;margin-bottom:12px">管理服务商前端首页板块（自助预约/自助服务/服务产品/我的商品等）。</p>
+        <table class="order-table"><thead><tr><th>ID</th><th>板块</th><th>标题</th><th>描述</th><th>图标</th><th>图片</th><th>排序</th><th>状态</th><th>操作</th></tr></thead><tbody id="outletHCTableBody"></tbody></table>
+        <div class="order-empty" id="outletHCEmpty" style="display:none">暂无配置</div>
+      </div>
+    </div>
+
+    <!-- Outlet Home Anim Config -->
+    <div class="dash-page" id="page-outletHomeAnimConfig">
+      <div class="dash-section">
+        <div class="section-header"><h3>服务商首页动画配置</h3>
+          <div style="display:flex;gap:8px"><button class="refresh-btn" onclick="loadOutletHomeAnimConfig()">刷新</button><button class="refresh-btn" style="background:#059669" onclick="openOutletHAEditor()">+ 新增</button></div>
+        </div>
+        <p style="font-size:13px;color:#666;margin-bottom:12px">管理服务商前端的开场动画、首页 Logo、首页背景图。</p>
+        <table class="order-table"><thead><tr><th>ID</th><th>板块</th><th>标题</th><th>图片</th><th>排序</th><th>状态</th><th>操作</th></tr></thead><tbody id="outletHATableBody"></tbody></table>
+        <div class="order-empty" id="outletHAEmpty" style="display:none">暂无配置</div>
+      </div>
+    </div>
+
+    <!-- Outlet Mine Config -->
+    <div class="dash-page" id="page-outletMineConfig">
+      <div class="dash-section">
+        <div class="section-header"><h3>服务商个人中心配置</h3>
+          <div style="display:flex;gap:8px"><button class="refresh-btn" onclick="loadOutletMineConfig()">刷新</button><button class="refresh-btn" style="background:#059669" onclick="openOutletMineEditor()">+ 新增</button></div>
+        </div>
+        <table class="order-table"><thead><tr><th>ID</th><th>板块</th><th>标题</th><th>描述</th><th>图标</th><th>图片</th><th>排序</th><th>状态</th><th>操作</th></tr></thead><tbody id="outletMineTableBody"></tbody></table>
+        <div class="order-empty" id="outletMineEmpty" style="display:none">暂无配置</div>
+      </div>
+    </div>
+
+    <!-- Outlet Messages -->
+    <div class="dash-page" id="page-outletMessages">
+      <div class="dash-section">
+        <div class="section-header"><h3>服务商留言板</h3><button class="refresh-btn" onclick="loadOutletConversations()">刷新</button></div>
+        <div id="outletConversationList"></div>
+        <div class="order-empty" id="outletMsgEmpty" style="display:none">暂无会话</div>
+      </div>
+      <div class="dash-section" id="outletChatBox" style="display:none;margin-top:16px">
+        <div class="section-header"><h3 id="outletChatTitle">聊天</h3></div>
+        <div id="outletChatMessages" style="max-height:400px;overflow-y:auto;padding:8px 0"></div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <input class="form-input" id="outletChatInput" placeholder="输入回复内容..." style="flex:1;padding:8px 12px" onkeydown="if(event.key==='Enter')sendOutletReply()" />
+          <button class="refresh-btn" style="background:#7C3AED;padding:8px 20px" onclick="sendOutletReply()">发送</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -957,12 +1082,30 @@ async function api(path, options = {}) {
 
 let currentHCPage = 'homeConfig'; // 'homeConfig' | 'homeAnimConfig'
 
+function toggleNavGroup(group) {
+  const el = document.getElementById('navGroup' + group);
+  if (el) el.classList.toggle('collapsed');
+}
+
+const tocPages = ['overview','orders','users','guides','serviceConfig','inventory','homeConfig','homeAnimConfig','mineConfig','messages'];
+const outletPages = ['outletOverview','outletOrders','outletUsers','outletHomeConfig','outletHomeAnimConfig','outletMineConfig','outletMessages'];
+
 function switchPage(page) {
   document.querySelectorAll('.dash-nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.dash-nav-group-title').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.dash-page').forEach(p => p.classList.remove('active'));
-  const navMap = { overview: 0, orders: 1, users: 2, guides: 3, serviceConfig: 4, inventory: 5, homeConfig: 6, homeAnimConfig: 7, mineConfig: 8, messages: 9 };
-  const navItems = document.querySelectorAll('.dash-nav-item');
-  if (navItems[navMap[page]]) navItems[navMap[page]].classList.add('active');
+  const navItem = document.querySelector('.dash-nav-item[data-page="' + page + '"]');
+  if (navItem) navItem.classList.add('active');
+  if (tocPages.includes(page)) {
+    document.querySelector('#navGroupToC .dash-nav-group-title').classList.add('active');
+    const g = document.getElementById('navGroupToC');
+    if (g.classList.contains('collapsed')) g.classList.remove('collapsed');
+  }
+  if (outletPages.includes(page)) {
+    document.querySelector('#navGroupOutlet .dash-nav-group-title').classList.add('active');
+    const g = document.getElementById('navGroupOutlet');
+    if (g.classList.contains('collapsed')) g.classList.remove('collapsed');
+  }
   const pageEl = document.getElementById('page-' + page);
   if (pageEl) pageEl.classList.add('active');
   if (page === 'orders') loadOrders();
@@ -975,6 +1118,14 @@ function switchPage(page) {
   if (page === 'mineConfig') loadMineConfig();
   if (page === 'messages') { loadConversations(); startMsgPolling(); }
   else { stopMsgPolling(); currentChatUserId = null; }
+  if (page === 'outletOverview') loadOutletStats();
+  if (page === 'outletOrders') { outletOrderPage = 1; loadOutletOrders(); }
+  if (page === 'outletUsers') { outletUserPage = 1; loadOutletUsers(); }
+  if (page === 'outletHomeConfig') { outletCurrentHCPage = 'homeConfig'; loadOutletHomeConfig(); }
+  if (page === 'outletHomeAnimConfig') { outletCurrentHCPage = 'homeAnimConfig'; loadOutletHomeAnimConfig(); }
+  if (page === 'outletMineConfig') loadOutletMineConfig();
+  if (page === 'outletMessages') { loadOutletConversations(); startOutletMsgPolling(); }
+  else { stopOutletMsgPolling(); outletCurrentChatUserId = null; }
 }
 
 async function handleLogin(e) {
@@ -1033,12 +1184,13 @@ function showDashboard(user) {
   document.getElementById('frontendLink').textContent = 'http://' + host + ':5201';
   document.getElementById('healthLink').href = 'http://' + host + ':5202/api/health';
   document.getElementById('healthLink').textContent = 'http://' + host + ':5202/api/health';
-  const navItems = document.querySelectorAll('.dash-nav-item');
-  if (user.role !== 'admin') {
-    [1,2,3,4,5].forEach(i => { if (navItems[i]) navItems[i].style.display = 'none'; });
-  } else {
-    [1,2,3,4,5].forEach(i => { if (navItems[i]) navItems[i].style.display = ''; });
-  }
+  const adminOnlyPages = ['guides','serviceConfig','inventory'];
+  document.querySelectorAll('.dash-nav-item').forEach(n => {
+    const p = n.getAttribute('data-page');
+    if (adminOnlyPages.includes(p)) n.style.display = user.role !== 'admin' ? 'none' : '';
+  });
+  const outletGroup = document.getElementById('navGroupOutlet');
+  if (outletGroup) outletGroup.style.display = user.role !== 'admin' ? 'none' : '';
   loadOrderStats();
   loadDashHeaderLogo();
 }
@@ -2986,6 +3138,264 @@ function copyQRUrl() {
     alert('链接已复制');
   });
 }
+
+// ========== Outlet Management JS ==========
+const OUTLET_API_PREFIX = '/outlet';
+function outletApi(path, opts) { return api(OUTLET_API_PREFIX + path, opts); }
+
+// --- Outlet Stats ---
+async function loadOutletStats() {
+  try {
+    const res = await outletApi('/admin/orders/stats');
+    if (res.code === 0) {
+      const d = res.data;
+      document.getElementById('outletStatTotal').textContent = d.total;
+      document.getElementById('outletStatPending').textContent = d.pending + d.processing;
+      document.getElementById('outletStatCompleted').textContent = d.completed;
+    }
+  } catch {}
+}
+
+// --- Outlet Orders ---
+let outletOrderPage = 1;
+const outletOrderPageSize = 20;
+async function loadOutletOrders() {
+  try {
+    const filter = document.getElementById('outletOrderFilter').value;
+    const qs = `?status=${filter}&page=${outletOrderPage}&pageSize=${outletOrderPageSize}`;
+    const res = await outletApi('/admin/orders' + qs);
+    if (res.code !== 0) return;
+    const { list, total } = res.data;
+    const tbody = document.getElementById('outletOrderTableBody');
+    const empty = document.getElementById('outletOrderEmpty');
+    const stats = document.getElementById('outletOrderStats');
+    try {
+      const sr = await outletApi('/admin/orders/stats');
+      if (sr.code === 0) {
+        const d = sr.data;
+        stats.innerHTML = `<div class="stat-card"><h3>总订单</h3><div class="val">${d.total}</div></div><div class="stat-card"><h3>待支付</h3><div class="val" style="color:#D97706">${d.pending}</div></div><div class="stat-card"><h3>进行中</h3><div class="val" style="color:#2563EB">${d.processing}</div></div><div class="stat-card"><h3>已完成</h3><div class="val" style="color:#059669">${d.completed}</div></div><div class="stat-card"><h3>已取消</h3><div class="val" style="color:#6B7280">${d.cancelled}</div></div>`;
+      }
+    } catch {}
+    if (!list.length) { tbody.innerHTML = ''; empty.style.display = ''; return; }
+    empty.style.display = 'none';
+    tbody.innerHTML = list.map(o => `<tr>
+      <td style="font-size:12px">${o.orderNo}</td>
+      <td>${o.user ? (o.user.nickname || o.user.username) : o.userId}</td>
+      <td>${o.serviceTitle}</td>
+      <td>¥${Number(o.price).toFixed(2)}</td>
+      <td><span class="status-badge status-${o.status}">${o.statusText}</span></td>
+      <td>${o.contactName || '-'} ${o.contactPhone || ''}</td>
+      <td style="font-size:12px">${new Date(o.createdAt).toLocaleString('zh-CN')}</td>
+      <td><select style="padding:4px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px" onchange="updateOutletOrderStatus(${o.id},this.value)">
+        <option value="pending" ${o.status==='pending'?'selected':''}>待支付</option><option value="paid" ${o.status==='paid'?'selected':''}>已支付</option>
+        <option value="processing" ${o.status==='processing'?'selected':''}>进行中</option><option value="completed" ${o.status==='completed'?'selected':''}>已完成</option>
+        <option value="cancelled" ${o.status==='cancelled'?'selected':''}>已取消</option></select></td>
+    </tr>`).join('');
+    const totalPages = Math.ceil(total / outletOrderPageSize);
+    const pag = document.getElementById('outletOrderPagination');
+    pag.innerHTML = `<span style="font-size:13px;color:#666">共 ${total} 条，第 ${outletOrderPage}/${totalPages} 页</span>
+      <button class="refresh-btn" style="padding:4px 12px" ${outletOrderPage<=1?'disabled':''} onclick="outletOrderPage--;loadOutletOrders()">上一页</button>
+      <button class="refresh-btn" style="padding:4px 12px" ${outletOrderPage>=totalPages?'disabled':''} onclick="outletOrderPage++;loadOutletOrders()">下一页</button>`;
+  } catch (e) { console.error('loadOutletOrders', e); }
+}
+async function updateOutletOrderStatus(id, status) {
+  try { await outletApi('/admin/orders/' + id + '/status', { method: 'PUT', body: { status } }); loadOutletOrders(); } catch {}
+}
+
+// --- Outlet Users ---
+let outletUserPage = 1;
+const outletUserPageSize = 50;
+async function loadOutletUsers() {
+  try {
+    const res = await outletApi('/admin/users?page=' + outletUserPage + '&pageSize=' + outletUserPageSize);
+    if (res.code !== 0) return;
+    const { list, total, stats } = res.data;
+    const tbody = document.getElementById('outletUserTableBody');
+    const empty = document.getElementById('outletUserEmpty');
+    const statsEl = document.getElementById('outletUserStats');
+    if (stats) {
+      statsEl.innerHTML = `<div class="stat-card"><h3>总用户</h3><div class="val">${stats.totalUsers}</div></div>
+        <div class="stat-card"><h3>服务商</h3><div class="val" style="color:#7C3AED">${stats.outletCount}</div></div>
+        <div class="stat-card"><h3>服务商地址</h3><div class="val">${stats.totalAddresses}</div></div>`;
+    }
+    if (!list.length) { tbody.innerHTML = ''; empty.style.display = ''; return; }
+    empty.style.display = 'none';
+    tbody.innerHTML = list.map(u => `<tr>
+      <td>${u.id}</td><td>${u.username}</td><td>${u.phone || '-'}</td><td>${u.email || '-'}</td>
+      <td>${u.nickname || '-'}</td>
+      <td><span style="color:${u.role==='admin'?'#B91C1C':'#7C3AED'};font-weight:600">${u.role==='admin'?'管理员':'服务商'}</span></td>
+      <td>${u.orderCount || 0}</td><td>${u.addresses ? u.addresses.length : 0}</td>
+      <td style="font-size:12px">${new Date(u.createdAt).toLocaleString('zh-CN')}</td>
+    </tr>`).join('');
+    const totalPages = Math.ceil(total / outletUserPageSize);
+    document.getElementById('outletUserPagination').innerHTML = `<span style="font-size:13px;color:#666">共 ${total} 条，第 ${outletUserPage}/${totalPages} 页</span>
+      <button class="refresh-btn" style="padding:4px 12px" ${outletUserPage<=1?'disabled':''} onclick="outletUserPage--;loadOutletUsers()">上一页</button>
+      <button class="refresh-btn" style="padding:4px 12px" ${outletUserPage>=totalPages?'disabled':''} onclick="outletUserPage++;loadOutletUsers()">下一页</button>`;
+  } catch (e) { console.error('loadOutletUsers', e); }
+}
+
+// --- Outlet HomeConfig / HomeAnimConfig / MineConfig ---
+let outletCurrentHCPage = 'homeConfig';
+const outletHCSections = { homeConfig: ['banner','nav','hotService','recommend','navSmall','myProduct'], homeAnimConfig: ['splash','headerLogo','headerBg'], mineConfig: ['mineConfig'] };
+
+async function loadOutletHomeConfig() { await _loadOutletHC('homeConfig', 'outletHCTableBody', 'outletHCEmpty'); }
+async function loadOutletHomeAnimConfig() { await _loadOutletHC('homeAnimConfig', 'outletHATableBody', 'outletHAEmpty'); }
+async function loadOutletMineConfig() { await _loadOutletHC('mineConfig', 'outletMineTableBody', 'outletMineEmpty'); }
+
+async function _loadOutletHC(type, tbodyId, emptyId) {
+  try {
+    const res = await outletApi('/home-config?all=1');
+    if (res.code !== 0) return;
+    const sections = outletHCSections[type] || [];
+    const items = res.data.filter(i => sections.includes(i.section));
+    const tbody = document.getElementById(tbodyId);
+    const empty = document.getElementById(emptyId);
+    if (!items.length) { tbody.innerHTML = ''; empty.style.display = ''; return; }
+    empty.style.display = 'none';
+    const isAnim = type === 'homeAnimConfig';
+    tbody.innerHTML = items.map(i => `<tr>
+      <td>${i.id}</td><td>${i.section}</td><td>${i.title || '-'}</td>
+      ${isAnim ? '' : `<td>${i.desc || '-'}</td><td>${i.icon || '-'}</td>`}
+      <td>${i.imageUrl ? `<img src="${i.imageUrl}" style="max-height:40px;border-radius:4px" />` : '-'}</td>
+      <td>${i.sortOrder}</td><td><span class="status-badge status-${i.status==='active'?'completed':'cancelled'}">${i.status==='active'?'启用':'禁用'}</span></td>
+      <td><button class="refresh-btn" style="padding:4px 12px;font-size:12px" onclick="editOutletHC(${i.id},'${type}')">编辑</button>
+        <button class="refresh-btn" style="padding:4px 12px;font-size:12px;background:#B91C1C" onclick="deleteOutletHC(${i.id},'${type}')">删除</button></td>
+    </tr>`).join('');
+  } catch (e) { console.error('_loadOutletHC', e); }
+}
+
+function openOutletHCEditor(item) { _openOutletHCModal('homeConfig', item); }
+function openOutletHAEditor(item) { _openOutletHCModal('homeAnimConfig', item); }
+function openOutletMineEditor(item) { _openOutletHCModal('mineConfig', item); }
+
+function _openOutletHCModal(type, item) {
+  const sections = outletHCSections[type] || [];
+  const sectionOpts = sections.map(s => `<option value="${s}" ${item && item.section === s ? 'selected' : ''}>${s}</option>`).join('');
+  const html = `<div style="display:grid;gap:12px">
+    <div><label style="font-size:13px;font-weight:600">板块</label><select id="ohcSection" class="form-input" style="width:100%;padding:8px">${sectionOpts}</select></div>
+    <div><label style="font-size:13px;font-weight:600">标题</label><input id="ohcTitle" class="form-input" style="width:100%;padding:8px" value="${item?item.title:''}"></div>
+    <div><label style="font-size:13px;font-weight:600">描述</label><input id="ohcDesc" class="form-input" style="width:100%;padding:8px" value="${item?item.desc:''}"></div>
+    <div><label style="font-size:13px;font-weight:600">图标</label><input id="ohcIcon" class="form-input" style="width:100%;padding:8px" value="${item?item.icon:''}"></div>
+    <div><label style="font-size:13px;font-weight:600">颜色</label><input id="ohcColor" class="form-input" style="width:100%;padding:8px" value="${item?item.color:''}"></div>
+    <div><label style="font-size:13px;font-weight:600">路径</label><input id="ohcPath" class="form-input" style="width:100%;padding:8px" value="${item?item.path:'/services'}"></div>
+    <div><label style="font-size:13px;font-weight:600">价格</label><input id="ohcPrice" class="form-input" style="width:100%;padding:8px" value="${item?item.price:''}"></div>
+    <div><label style="font-size:13px;font-weight:600">排序</label><input id="ohcSort" type="number" class="form-input" style="width:100%;padding:8px" value="${item?item.sortOrder:0}"></div>
+    <div><label style="font-size:13px;font-weight:600">状态</label><select id="ohcStatus" class="form-input" style="width:100%;padding:8px"><option value="active" ${!item||item.status==='active'?'selected':''}>启用</option><option value="inactive" ${item&&item.status==='inactive'?'selected':''}>禁用</option></select></div>
+    <div><label style="font-size:13px;font-weight:600">图片</label><input type="file" id="ohcFile" accept="image/*"></div>
+    ${item && item.imageUrl ? `<div><img src="${item.imageUrl}" style="max-height:80px;border-radius:4px" /></div>` : ''}
+    <button class="submit-btn" onclick="saveOutletHC(${item?item.id:'null'},'${type}')">${item?'保存':'新增'}</button>
+  </div>`;
+  const d = document.createElement('div');
+  d.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center';
+  d.id = 'outletHCModal';
+  d.innerHTML = `<div style="background:#fff;border-radius:12px;padding:24px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto;position:relative">
+    <button onclick="document.getElementById('outletHCModal').remove()" style="position:absolute;top:12px;right:12px;background:none;border:none;font-size:18px;cursor:pointer">×</button>
+    <h3 style="margin-bottom:16px">${item?'编辑':'新增'}配置</h3>${html}</div>`;
+  document.body.appendChild(d);
+}
+
+async function saveOutletHC(id, type) {
+  const body = {
+    section: document.getElementById('ohcSection').value,
+    title: document.getElementById('ohcTitle').value,
+    desc: document.getElementById('ohcDesc').value,
+    icon: document.getElementById('ohcIcon').value,
+    color: document.getElementById('ohcColor').value,
+    path: document.getElementById('ohcPath').value,
+    price: document.getElementById('ohcPrice').value,
+    sortOrder: parseInt(document.getElementById('ohcSort').value) || 0,
+    status: document.getElementById('ohcStatus').value,
+  };
+  const file = document.getElementById('ohcFile').files[0];
+  if (file) {
+    const fd = new FormData(); fd.append('file', file);
+    const ur = await fetch(API + '/outlet/home-config/upload', { method: 'POST', headers: { Authorization: 'Bearer ' + token }, body: fd }).then(r => r.json());
+    if (ur.code === 0) { body.imageUrl = ur.data.url; if (ur.data.thumbUrl) body.imageUrlThumb = ur.data.thumbUrl; }
+  }
+  try {
+    if (id) await outletApi('/home-config/' + id, { method: 'PUT', body });
+    else await outletApi('/home-config', { method: 'POST', body });
+    document.getElementById('outletHCModal')?.remove();
+    if (type === 'homeConfig') loadOutletHomeConfig();
+    else if (type === 'homeAnimConfig') loadOutletHomeAnimConfig();
+    else loadOutletMineConfig();
+  } catch (e) { alert(e.message || '保存失败'); }
+}
+
+async function editOutletHC(id, type) {
+  try {
+    const res = await outletApi('/home-config?all=1');
+    const item = res.data.find(i => i.id === id);
+    if (item) _openOutletHCModal(type, item);
+  } catch {}
+}
+
+async function deleteOutletHC(id, type) {
+  if (!confirm('确认删除？')) return;
+  try {
+    await outletApi('/home-config/' + id, { method: 'DELETE' });
+    if (type === 'homeConfig') loadOutletHomeConfig();
+    else if (type === 'homeAnimConfig') loadOutletHomeAnimConfig();
+    else loadOutletMineConfig();
+  } catch {}
+}
+
+// --- Outlet Messages ---
+let outletCurrentChatUserId = null;
+let outletMsgPollTimer = null;
+
+async function loadOutletConversations() {
+  try {
+    const res = await outletApi('/admin/messages/conversations');
+    if (res.code !== 0) return;
+    const list = res.data;
+    const el = document.getElementById('outletConversationList');
+    const empty = document.getElementById('outletMsgEmpty');
+    if (!list.length) { el.innerHTML = ''; empty.style.display = ''; return; }
+    empty.style.display = 'none';
+    el.innerHTML = list.map(c => `<div onclick="openOutletChat(${c.userId},'${c.nickname||c.username}')" style="padding:12px;border-bottom:1px solid #eee;cursor:pointer;display:flex;justify-content:space-between;align-items:center${outletCurrentChatUserId===c.userId?';background:#f5f3ff':''}">
+      <div><strong>${c.nickname||c.username}</strong><div style="font-size:12px;color:#888;margin-top:2px">${c.lastType==='image'?'[图片]':c.lastMessage.slice(0,30)}</div></div>
+      <div style="text-align:right"><span style="font-size:11px;color:#999">${new Date(c.lastTime).toLocaleString('zh-CN')}</span>${c.unread?`<span style="background:#B91C1C;color:#fff;border-radius:50%;font-size:11px;display:inline-block;width:20px;height:20px;line-height:20px;text-align:center;margin-left:6px">${c.unread}</span>`:''}</div>
+    </div>`).join('');
+  } catch {}
+}
+
+async function openOutletChat(userId, name) {
+  outletCurrentChatUserId = userId;
+  document.getElementById('outletChatBox').style.display = '';
+  document.getElementById('outletChatTitle').textContent = '与 ' + name + ' 的对话';
+  await loadOutletChatMessages(userId);
+  loadOutletConversations();
+}
+
+async function loadOutletChatMessages(userId) {
+  try {
+    const res = await outletApi('/admin/messages/' + userId);
+    if (res.code !== 0) return;
+    const el = document.getElementById('outletChatMessages');
+    el.innerHTML = res.data.map(m => `<div style="margin:8px 0;text-align:${m.sender==='admin'?'right':'left'}">
+      <div style="display:inline-block;padding:8px 14px;border-radius:${m.sender==='admin'?'12px 12px 4px 12px':'12px 12px 12px 4px'};background:${m.sender==='admin'?'#7C3AED':'#f3f4f6'};color:${m.sender==='admin'?'#fff':'#333'};max-width:70%;text-align:left;font-size:14px">
+        ${m.type==='image'?`<img src="${m.content}" style="max-width:200px;border-radius:6px" />`:m.content}
+      </div><div style="font-size:11px;color:#999;margin-top:2px">${new Date(m.createdAt).toLocaleString('zh-CN')}</div>
+    </div>`).join('');
+    el.scrollTop = el.scrollHeight;
+  } catch {}
+}
+
+async function sendOutletReply() {
+  const input = document.getElementById('outletChatInput');
+  const content = input.value.trim();
+  if (!content || !outletCurrentChatUserId) return;
+  try {
+    await outletApi('/admin/messages/' + outletCurrentChatUserId + '/reply', { method: 'POST', body: { content } });
+    input.value = '';
+    await loadOutletChatMessages(outletCurrentChatUserId);
+    loadOutletConversations();
+  } catch {}
+}
+
+function startOutletMsgPolling() { stopOutletMsgPolling(); outletMsgPollTimer = setInterval(() => { loadOutletConversations(); if (outletCurrentChatUserId) loadOutletChatMessages(outletCurrentChatUserId); }, 10000); }
+function stopOutletMsgPolling() { if (outletMsgPollTimer) { clearInterval(outletMsgPollTimer); outletMsgPollTimer = null; } }
 </script>
 </body>
 </html>

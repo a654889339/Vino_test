@@ -12,6 +12,12 @@ const Message = require('./Message');
 const InventoryCategory = require('./InventoryCategory');
 const InventoryProduct = require('./InventoryProduct');
 const UserProduct = require('./UserProduct');
+const OutletUser = require('./OutletUser');
+const OutletOrder = require('./OutletOrder');
+const OutletOrderLog = require('./OutletOrderLog');
+const OutletAddress = require('./OutletAddress');
+const OutletHomeConfig = require('./OutletHomeConfig');
+const OutletMessage = require('./OutletMessage');
 
 ProductCategory.hasMany(DeviceGuide, { foreignKey: 'categoryId', as: 'guides' });
 DeviceGuide.belongsTo(ProductCategory, { foreignKey: 'categoryId', as: 'category' });
@@ -35,7 +41,16 @@ Address.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 User.hasMany(Message, { foreignKey: 'userId', as: 'messages' });
 Message.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
-const models = { User, Service, ServiceCategory, Order, OrderLog, Address, DeviceGuide, ProductCategory, HomeConfig, Message, InventoryCategory, InventoryProduct, UserProduct };
+OutletUser.hasMany(OutletOrder, { foreignKey: 'userId', as: 'orders' });
+OutletOrder.belongsTo(OutletUser, { foreignKey: 'userId', as: 'user' });
+OutletOrder.hasMany(OutletOrderLog, { foreignKey: 'orderId', as: 'logs' });
+OutletOrderLog.belongsTo(OutletOrder, { foreignKey: 'orderId', as: 'order' });
+OutletUser.hasMany(OutletAddress, { foreignKey: 'userId', as: 'addresses' });
+OutletAddress.belongsTo(OutletUser, { foreignKey: 'userId', as: 'user' });
+OutletUser.hasMany(OutletMessage, { foreignKey: 'userId', as: 'messages' });
+OutletMessage.belongsTo(OutletUser, { foreignKey: 'userId', as: 'user' });
+
+const models = { User, Service, ServiceCategory, Order, OrderLog, Address, DeviceGuide, ProductCategory, HomeConfig, Message, InventoryCategory, InventoryProduct, UserProduct, OutletUser, OutletOrder, OutletOrderLog, OutletAddress, OutletHomeConfig, OutletMessage };
 
 const ADMIN_PASSWORD = 'Vino@2024admin';
 
