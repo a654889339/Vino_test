@@ -33,7 +33,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .msg.success{display:block;background:#D1FAE5;color:#065F46}
 
 .dashboard{display:none}
-.dash-header{background:#1a1a1a;color:#fff;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.dash-header{background:#1a1a1a;color:#fff;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;height:60px}
 .dash-header .dash-header-logo{display:flex;align-items:center;height:36px}
 .dash-header .dash-header-logo img{max-height:36px;width:auto;object-fit:contain}
 .dash-header .dash-header-logo svg{width:80px;height:auto}
@@ -44,20 +44,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .dash-logout{padding:6px 16px;background:rgba(255,255,255,.1);color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;transition:background .2s}
 .dash-logout:hover{background:rgba(255,255,255,.2)}
 
-.dash-nav{background:var(--card);border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;padding:0 24px;max-width:1200px;margin:0 auto}
-.dash-nav-group{position:relative}
-.dash-nav-group-title{padding:14px 18px;font-size:14px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;color:var(--text);transition:all .2s;user-select:none;display:flex;align-items:center;gap:4px}
-.dash-nav-group-title:hover{color:var(--primary)}
-.dash-nav-group-title.active{color:var(--primary);border-bottom-color:var(--primary)}
-.dash-nav-group-title::after{content:'▾';font-size:10px;margin-left:2px;transition:transform .2s}
-.dash-nav-group.collapsed .dash-nav-group-title::after{transform:rotate(-90deg)}
-.dash-nav-sub{display:flex;flex-wrap:wrap}
-.dash-nav-group.collapsed .dash-nav-sub{display:none}
-.dash-nav-item{padding:14px 16px;font-size:13px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;color:var(--text-secondary);transition:all .2s}
+.dash-layout{display:flex;min-height:calc(100vh - 60px)}
+.dash-sidebar{width:180px;min-width:180px;background:#1a1a1a;border-right:1px solid #333;padding:12px 0;overflow-y:auto}
+.dash-sidebar-item{padding:14px 20px;font-size:14px;font-weight:500;cursor:pointer;color:rgba(255,255,255,.6);transition:all .2s;border-left:3px solid transparent;user-select:none}
+.dash-sidebar-item:hover{color:#fff;background:rgba(255,255,255,.05)}
+.dash-sidebar-item.active{color:#fff;background:rgba(185,28,28,.3);border-left-color:var(--primary)}
+.dash-topnav{background:var(--card);border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;padding:0 20px;position:sticky;top:60px;z-index:90}
+.dash-nav-item{padding:12px 16px;font-size:13px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;color:var(--text-secondary);transition:all .2s;white-space:nowrap}
 .dash-nav-item.active{color:var(--primary);border-bottom-color:var(--primary)}
 .dash-nav-item:hover{color:var(--primary)}
+.dash-main{flex:1;min-width:0;display:flex;flex-direction:column}
 
-.dash-body{max-width:1200px;margin:0 auto;padding:24px}
+.dash-body{padding:24px;flex:1}
 .dash-page{display:none}
 .dash-page.active{display:block}
 .dash-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:24px}
@@ -199,36 +197,24 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     </div>
   </div>
 
-  <div class="dash-nav" id="dashNav">
-    <div class="dash-nav-group" id="navGroupToC">
-      <div class="dash-nav-group-title active" onclick="toggleNavGroup('ToC')">To C前端管理</div>
-      <div class="dash-nav-sub">
-        <div class="dash-nav-item active" data-page="overview" onclick="switchPage('overview')">概览</div>
-        <div class="dash-nav-item" data-page="orders" onclick="switchPage('orders')">订单管理</div>
-        <div class="dash-nav-item" data-page="users" onclick="switchPage('users')">用户管理</div>
-        <div class="dash-nav-item" data-page="guides" onclick="switchPage('guides')">商品配置</div>
-        <div class="dash-nav-item" data-page="serviceConfig" onclick="switchPage('serviceConfig')">服务配置</div>
-        <div class="dash-nav-item" data-page="inventory" onclick="switchPage('inventory')">商品库存</div>
-        <div class="dash-nav-item" data-page="homeConfig" onclick="switchPage('homeConfig')">首页配置</div>
-        <div class="dash-nav-item" data-page="homeAnimConfig" onclick="switchPage('homeAnimConfig')">首页动画配置</div>
-        <div class="dash-nav-item" data-page="mineConfig" onclick="switchPage('mineConfig')">个人中心配置</div>
-        <div class="dash-nav-item" data-page="messages" onclick="switchPage('messages')">留言板</div>
-      </div>
-    </div>
-    <div class="dash-nav-group collapsed" id="navGroupOutlet">
-      <div class="dash-nav-group-title" onclick="toggleNavGroup('Outlet')">服务商/分销商管理</div>
-      <div class="dash-nav-sub">
-        <div class="dash-nav-item" data-page="outletOverview" onclick="switchPage('outletOverview')">概览</div>
-        <div class="dash-nav-item" data-page="outletOrders" onclick="switchPage('outletOrders')">订单管理</div>
-        <div class="dash-nav-item" data-page="outletUsers" onclick="switchPage('outletUsers')">用户管理</div>
-        <div class="dash-nav-item" data-page="outletHomeConfig" onclick="switchPage('outletHomeConfig')">首页配置</div>
-        <div class="dash-nav-item" data-page="outletHomeAnimConfig" onclick="switchPage('outletHomeAnimConfig')">首页动画配置</div>
-        <div class="dash-nav-item" data-page="outletMineConfig" onclick="switchPage('outletMineConfig')">个人中心配置</div>
-        <div class="dash-nav-item" data-page="outletMessages" onclick="switchPage('outletMessages')">留言板</div>
-      </div>
-    </div>
+  <div class="dash-layout">
+  <div class="dash-sidebar" id="dashSidebar">
+    <div class="dash-sidebar-item active" id="sidebarToC" onclick="switchGroup('ToC')">To C管理</div>
+    <div class="dash-sidebar-item" id="sidebarOutlet" onclick="switchGroup('Outlet')">服务商/分销商管理</div>
   </div>
-
+  <div class="dash-main">
+  <div class="dash-topnav" id="dashTopNav">
+    <div class="dash-nav-item active" data-page="overview" onclick="switchPage('overview')">概览</div>
+    <div class="dash-nav-item" data-page="orders" onclick="switchPage('orders')">订单管理</div>
+    <div class="dash-nav-item" data-page="users" onclick="switchPage('users')">用户管理</div>
+    <div class="dash-nav-item" data-page="guides" onclick="switchPage('guides')">商品配置</div>
+    <div class="dash-nav-item" data-page="serviceConfig" onclick="switchPage('serviceConfig')">服务配置</div>
+    <div class="dash-nav-item" data-page="inventory" onclick="switchPage('inventory')">商品库存</div>
+    <div class="dash-nav-item" data-page="homeConfig" onclick="switchPage('homeConfig')">首页配置</div>
+    <div class="dash-nav-item" data-page="homeAnimConfig" onclick="switchPage('homeAnimConfig')">首页动画配置</div>
+    <div class="dash-nav-item" data-page="mineConfig" onclick="switchPage('mineConfig')">个人中心配置</div>
+    <div class="dash-nav-item" data-page="messages" onclick="switchPage('messages')">留言板</div>
+  </div>
   <div class="dash-body">
     <!-- Overview Page -->
     <div class="dash-page active" id="page-overview">
@@ -1047,6 +1033,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     </div>
 
   </div>
+  </div>
+  </div>
 </div>
 
 <script>
@@ -1080,34 +1068,61 @@ async function api(path, options = {}) {
   }
 }
 
-let currentHCPage = 'homeConfig'; // 'homeConfig' | 'homeAnimConfig'
-
-function toggleNavGroup(group) {
-  const el = document.getElementById('navGroup' + group);
-  if (el) el.classList.toggle('collapsed');
-}
+let currentHCPage = 'homeConfig';
+let currentGroup = 'ToC';
 
 const tocPages = ['overview','orders','users','guides','serviceConfig','inventory','homeConfig','homeAnimConfig','mineConfig','messages'];
 const outletPages = ['outletOverview','outletOrders','outletUsers','outletHomeConfig','outletHomeAnimConfig','outletMineConfig','outletMessages'];
 
+const tocNavItems = [
+  {page:'overview',label:'概览'},{page:'orders',label:'订单管理'},{page:'users',label:'用户管理'},
+  {page:'guides',label:'商品配置'},{page:'serviceConfig',label:'服务配置'},{page:'inventory',label:'商品库存'},
+  {page:'homeConfig',label:'首页配置'},{page:'homeAnimConfig',label:'首页动画配置'},
+  {page:'mineConfig',label:'个人中心配置'},{page:'messages',label:'留言板'}
+];
+const outletNavItems = [
+  {page:'outletOverview',label:'概览'},{page:'outletOrders',label:'订单管理'},{page:'outletUsers',label:'用户管理'},
+  {page:'outletHomeConfig',label:'首页配置'},{page:'outletHomeAnimConfig',label:'首页动画配置'},
+  {page:'outletMineConfig',label:'个人中心配置'},{page:'outletMessages',label:'留言板'}
+];
+
+function renderTopNav(items, activePage) {
+  const nav = document.getElementById('dashTopNav');
+  const adminOnlyPages = ['guides','serviceConfig','inventory'];
+  const isAdmin = currentUser && currentUser.role === 'admin';
+  nav.innerHTML = items.map(it => {
+    if (adminOnlyPages.includes(it.page) && !isAdmin) return '';
+    return `<div class="dash-nav-item${it.page===activePage?' active':''}" data-page="${it.page}" onclick="switchPage('${it.page}')">${it.label}</div>`;
+  }).join('');
+}
+
+function switchGroup(group) {
+  currentGroup = group;
+  document.querySelectorAll('.dash-sidebar-item').forEach(s => s.classList.remove('active'));
+  document.getElementById('sidebar' + group).classList.add('active');
+  const firstPage = group === 'ToC' ? 'overview' : 'outletOverview';
+  const items = group === 'ToC' ? tocNavItems : outletNavItems;
+  renderTopNav(items, firstPage);
+  switchPage(firstPage);
+}
+
 function switchPage(page) {
   document.querySelectorAll('.dash-nav-item').forEach(n => n.classList.remove('active'));
-  document.querySelectorAll('.dash-nav-group-title').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.dash-page').forEach(p => p.classList.remove('active'));
   const navItem = document.querySelector('.dash-nav-item[data-page="' + page + '"]');
   if (navItem) navItem.classList.add('active');
-  if (tocPages.includes(page)) {
-    document.querySelector('#navGroupToC .dash-nav-group-title').classList.add('active');
-    const g = document.getElementById('navGroupToC');
-    if (g.classList.contains('collapsed')) g.classList.remove('collapsed');
-  }
-  if (outletPages.includes(page)) {
-    document.querySelector('#navGroupOutlet .dash-nav-group-title').classList.add('active');
-    const g = document.getElementById('navGroupOutlet');
-    if (g.classList.contains('collapsed')) g.classList.remove('collapsed');
-  }
   const pageEl = document.getElementById('page-' + page);
   if (pageEl) pageEl.classList.add('active');
+  if (tocPages.includes(page)) {
+    document.getElementById('sidebarToC').classList.add('active');
+    document.getElementById('sidebarOutlet').classList.remove('active');
+  }
+  if (outletPages.includes(page)) {
+    document.getElementById('sidebarOutlet').classList.add('active');
+    document.getElementById('sidebarToC').classList.remove('active');
+  }
+  if (page !== 'messages') { stopMsgPolling(); currentChatUserId = null; }
+  if (page !== 'outletMessages') { stopOutletMsgPolling(); outletCurrentChatUserId = null; }
   if (page === 'orders') loadOrders();
   if (page === 'users') { userPage = 1; loadUsers(); }
   if (page === 'guides') { loadCategories(); loadGuides(); }
@@ -1117,7 +1132,6 @@ function switchPage(page) {
   if (page === 'homeAnimConfig') { currentHCPage = 'homeAnimConfig'; loadHomeConfig(); }
   if (page === 'mineConfig') loadMineConfig();
   if (page === 'messages') { loadConversations(); startMsgPolling(); }
-  else { stopMsgPolling(); currentChatUserId = null; }
   if (page === 'outletOverview') loadOutletStats();
   if (page === 'outletOrders') { outletOrderPage = 1; loadOutletOrders(); }
   if (page === 'outletUsers') { outletUserPage = 1; loadOutletUsers(); }
@@ -1125,7 +1139,6 @@ function switchPage(page) {
   if (page === 'outletHomeAnimConfig') { outletCurrentHCPage = 'homeAnimConfig'; loadOutletHomeAnimConfig(); }
   if (page === 'outletMineConfig') loadOutletMineConfig();
   if (page === 'outletMessages') { loadOutletConversations(); startOutletMsgPolling(); }
-  else { stopOutletMsgPolling(); outletCurrentChatUserId = null; }
 }
 
 async function handleLogin(e) {
@@ -1184,13 +1197,9 @@ function showDashboard(user) {
   document.getElementById('frontendLink').textContent = 'http://' + host + ':5201';
   document.getElementById('healthLink').href = 'http://' + host + ':5202/api/health';
   document.getElementById('healthLink').textContent = 'http://' + host + ':5202/api/health';
-  const adminOnlyPages = ['guides','serviceConfig','inventory'];
-  document.querySelectorAll('.dash-nav-item').forEach(n => {
-    const p = n.getAttribute('data-page');
-    if (adminOnlyPages.includes(p)) n.style.display = user.role !== 'admin' ? 'none' : '';
-  });
-  const outletGroup = document.getElementById('navGroupOutlet');
-  if (outletGroup) outletGroup.style.display = user.role !== 'admin' ? 'none' : '';
+  const outletSidebar = document.getElementById('sidebarOutlet');
+  if (outletSidebar) outletSidebar.style.display = user.role !== 'admin' ? 'none' : '';
+  renderTopNav(tocNavItems, 'overview');
   loadOrderStats();
   loadDashHeaderLogo();
 }
