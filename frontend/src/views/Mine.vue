@@ -37,6 +37,7 @@
     <van-cell-group inset class="menu-group">
       <van-cell title="意见反馈" icon="comment-o" is-link @click="openFeedback" />
       <van-cell title="关于Vino" icon="info-o" is-link @click="openAbout" />
+      <van-cell title="联系我们" icon="phone-o" is-link @click="openContact" />
     </van-cell-group>
 
     <div class="logout-area" v-if="userStore.isLoggedIn">
@@ -51,7 +52,7 @@
 import { ref, inject, onMounted, computed } from 'vue';
 import { useUserStore } from '@/stores/user';
 import { useRouter } from 'vue-router';
-import { showToast } from 'vant';
+import { showToast, showDialog } from 'vant';
 import { homeConfigApi } from '@/api';
 
 const userStore = useUserStore();
@@ -96,6 +97,20 @@ const openFeedback = () => {
 
 const openAbout = () => {
   window.open('https://www.vinotech.cn/', '_blank');
+};
+
+const CONTACT_PHONE = '400-8030-683';
+
+const openContact = () => {
+  showDialog({
+    title: '联系我们',
+    message: '客服电话：' + CONTACT_PHONE,
+    showCancelButton: true,
+    cancelButtonText: '关闭',
+    confirmButtonText: '复制',
+  }).then(() => {
+    navigator.clipboard.writeText(CONTACT_PHONE).then(() => showToast('已复制'));
+  }).catch(() => {});
 };
 
 const stats = [

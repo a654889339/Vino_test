@@ -21,6 +21,7 @@ Page({
       { title: '优惠券', emoji: '🎫', url: '' },
       { title: '意见反馈', emoji: '💬', url: '', chat: true },
       { title: '关于Vino', emoji: 'ℹ️', url: '', webUrl: 'www.vinotech.cn' },
+      { title: '联系我们', emoji: '📞', url: '', contact: true },
     ],
   },
 
@@ -89,6 +90,20 @@ Page({
       wx.navigateTo({ url: '/pages/chat/chat' });
     } else if (item.webUrl) {
       wx.navigateTo({ url: '/pages/webview/webview?url=' + encodeURIComponent(item.webUrl) });
+    } else if (item.contact) {
+      wx.showModal({
+        title: '联系我们',
+        content: '客服电话：400-8030-683',
+        cancelText: '复制',
+        confirmText: '立刻拨打',
+        success: (res) => {
+          if (res.confirm) {
+            wx.makePhoneCall({ phoneNumber: '4008030683' });
+          } else {
+            wx.setClipboardData({ data: '400-8030-683', success: () => wx.showToast({ title: '已复制' }) });
+          }
+        },
+      });
     } else if (item.url) {
       wx.navigateTo({ url: item.url, fail() { wx.switchTab({ url: item.url }); } });
     } else {
