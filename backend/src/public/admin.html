@@ -902,36 +902,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <div class="pagination" id="orderPagination"></div>
       </div>
     </div>
-  </div>
-</div>
-
-<!-- 订单历史记录弹窗 -->
-<div class="modal-overlay" id="logModal" style="display:none" onclick="if(event.target===this)closeLogModal()">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h3>订单变更记录</h3>
-      <span class="modal-close" onclick="closeLogModal()">&times;</span>
-    </div>
-    <div class="modal-body">
-      <div class="admin-remark-section">
-        <h4>后台备注</h4>
-        <div id="adminRemarkDisplay" style="color:#666;font-size:13px;margin-bottom:8px"></div>
-        <div style="display:flex;gap:8px">
-          <input type="text" id="adminRemarkInput" placeholder="输入后台备注..." style="flex:1;padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px" />
-          <button onclick="submitAdminRemark()" style="padding:6px 16px;background:#B91C1C;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px">添加</button>
-        </div>
-      </div>
-      <div class="admin-remark-section" style="margin-top:16px">
-        <h4>修改金额</h4>
-        <div style="display:flex;gap:8px;align-items:center">
-          <span style="font-size:13px;color:#666">¥</span>
-          <input type="number" id="priceInput" placeholder="新金额" step="0.01" min="0" style="width:120px;padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px" />
-          <button onclick="submitPriceChange()" style="padding:6px 16px;background:#D97706;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px">修改</button>
-        </div>
-      </div>
-      <h4 style="margin-top:16px">变更历史</h4>
-      <div id="logList" class="log-list"></div>
-    </div>
 
     <!-- ========== Outlet Pages ========== -->
     <!-- Outlet Overview -->
@@ -1034,6 +1004,36 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
   </div>
   </div>
+  </div>
+</div>
+
+<!-- 订单历史记录弹窗 -->
+<div class="modal-overlay" id="logModal" style="display:none" onclick="if(event.target===this)closeLogModal()">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>订单变更记录</h3>
+      <span class="modal-close" onclick="closeLogModal()">&times;</span>
+    </div>
+    <div class="modal-body">
+      <div class="admin-remark-section">
+        <h4>后台备注</h4>
+        <div id="adminRemarkDisplay" style="color:#666;font-size:13px;margin-bottom:8px"></div>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="adminRemarkInput" placeholder="输入后台备注..." style="flex:1;padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px" />
+          <button onclick="submitAdminRemark()" style="padding:6px 16px;background:#B91C1C;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px">添加</button>
+        </div>
+      </div>
+      <div class="admin-remark-section" style="margin-top:16px">
+        <h4>修改金额</h4>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span style="font-size:13px;color:#666">¥</span>
+          <input type="number" id="priceInput" placeholder="新金额" step="0.01" min="0" style="width:120px;padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px" />
+          <button onclick="submitPriceChange()" style="padding:6px 16px;background:#D97706;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px">修改</button>
+        </div>
+      </div>
+      <h4 style="margin-top:16px">变更历史</h4>
+      <div id="logList" class="log-list"></div>
+    </div>
   </div>
 </div>
 
