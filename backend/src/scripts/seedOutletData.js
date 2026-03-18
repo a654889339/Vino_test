@@ -52,19 +52,20 @@ async function main() {
       // 首页动画配置 - Logo
       { section: 'headerLogo', title: '服务商Logo', desc: 'VINO服务商', sortOrder: 1, status: 'active' },
       // 首页动画配置 - 背景
-      { section: 'headerBg', title: '服务商首页背景1', desc: '紫色渐变', color: 'linear-gradient(180deg, #7C3AED 0%, #4C1D95 100%)', sortOrder: 1, status: 'active' },
-      { section: 'headerBg', title: '服务商首页背景2', desc: '深蓝渐变', color: 'linear-gradient(180deg, #1E40AF 0%, #1E3A5F 100%)', sortOrder: 2, status: 'active' },
+      { section: 'homeBg', title: '服务商首页背景1', desc: '紫色渐变', color: 'linear-gradient(180deg, #7C3AED 0%, #4C1D95 100%)', sortOrder: 1, status: 'active' },
+      { section: 'homeBg', title: '服务商首页背景2', desc: '深蓝渐变', color: 'linear-gradient(180deg, #1E40AF 0%, #1E3A5F 100%)', sortOrder: 2, status: 'active' },
       // 首页动画配置 - 开场动画
       { section: 'splash', title: '服务商开场动画', desc: '即将进入VINO服务商', sortOrder: 1, status: 'active' },
       // 首页配置 - 自助预约（大）
-      { section: 'nav', title: '全部服务', icon: 'apps-o', path: '/services', color: '#7C3AED', sortOrder: 1, status: 'active' },
-      { section: 'nav', title: '预约', icon: 'calendar-o', path: '/services', color: '#D97706', sortOrder: 2, status: 'active' },
-      { section: 'nav', title: '维修', icon: 'setting-o', path: '/services', color: '#2563EB', sortOrder: 3, status: 'active' },
-      { section: 'nav', title: '安装', icon: 'logistics', path: '/services', color: '#059669', sortOrder: 4, status: 'active' },
-      { section: 'nav', title: '咨询', icon: 'chat-o', path: '/services', color: '#B91C1C', sortOrder: 5, status: 'active' },
-      { section: 'nav', title: '检测', icon: 'scan', path: '/services', color: '#EA580C', sortOrder: 6, status: 'active' },
-      { section: 'nav', title: '保养', icon: 'shield-o', path: '/services', color: '#DC2626', sortOrder: 7, status: 'active' },
-      { section: 'nav', title: '更多', icon: 'more-o', path: '/services', color: '#6B7280', sortOrder: 8, status: 'active' },
+      { section: 'navLg', title: '全部服务', icon: 'apps-o', path: '/services', color: '#7C3AED', sortOrder: 1, status: 'active' },
+      { section: 'navLg', title: '预约', icon: 'calendar-o', path: '/services', color: '#D97706', sortOrder: 2, status: 'active' },
+      { section: 'navLg', title: '维修', icon: 'setting-o', path: '/services', color: '#2563EB', sortOrder: 3, status: 'active' },
+      { section: 'navLg', title: '安装', icon: 'logistics', path: '/services', color: '#059669', sortOrder: 4, status: 'active' },
+      // 首页配置 - 自助预约（小）
+      { section: 'navSm', title: '咨询', icon: 'chat-o', path: '/services', color: '#B91C1C', sortOrder: 1, status: 'active' },
+      { section: 'navSm', title: '检测', icon: 'scan', path: '/services', color: '#EA580C', sortOrder: 2, status: 'active' },
+      { section: 'navSm', title: '保养', icon: 'shield-o', path: '/services', color: '#DC2626', sortOrder: 3, status: 'active' },
+      { section: 'navSm', title: '更多', icon: 'more-o', path: '/services', color: '#6B7280', sortOrder: 4, status: 'active' },
       // 首页配置 - 自助服务（hotService）
       { section: 'hotService', title: '设备维修', desc: '专业工程师上门服务', price: '99', icon: 'setting-o', color: 'linear-gradient(135deg, #7C3AED, #6D28D9)', path: '/service/1', sortOrder: 1, status: 'active' },
       { section: 'hotService', title: '深度清洁', desc: '全方位清洁保养', price: '149', icon: 'brush-o', color: 'linear-gradient(135deg, #2563EB, #1D4ED8)', path: '/service/2', sortOrder: 2, status: 'active' },

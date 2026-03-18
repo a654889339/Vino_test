@@ -50,15 +50,16 @@ async function main() {
 
   // 3. Ensure home config items exist for all sections
   const desiredHC = [
-    // nav (导航/自助预约)
-    { section: 'nav', title: '全部服务', icon: 'apps-o', path: '/services', color: '#7C3AED', sortOrder: 1 },
-    { section: 'nav', title: '预约', icon: 'calendar-o', path: '/services', color: '#D97706', sortOrder: 2 },
-    { section: 'nav', title: '维修', icon: 'setting-o', path: '/services', color: '#2563EB', sortOrder: 3 },
-    { section: 'nav', title: '安装', icon: 'logistics', path: '/services', color: '#059669', sortOrder: 4 },
-    { section: 'nav', title: '咨询', icon: 'chat-o', path: '/services', color: '#B91C1C', sortOrder: 5 },
-    { section: 'nav', title: '检测', icon: 'scan', path: '/services', color: '#EA580C', sortOrder: 6 },
-    { section: 'nav', title: '保养', icon: 'shield-o', path: '/services', color: '#DC2626', sortOrder: 7 },
-    { section: 'nav', title: '更多', icon: 'more-o', path: '/services', color: '#6B7280', sortOrder: 8 },
+    // navLg (导航/自助预约-大)
+    { section: 'navLg', title: '全部服务', icon: 'apps-o', path: '/services', color: '#7C3AED', sortOrder: 1 },
+    { section: 'navLg', title: '预约', icon: 'calendar-o', path: '/services', color: '#D97706', sortOrder: 2 },
+    { section: 'navLg', title: '维修', icon: 'setting-o', path: '/services', color: '#2563EB', sortOrder: 3 },
+    { section: 'navLg', title: '安装', icon: 'logistics', path: '/services', color: '#059669', sortOrder: 4 },
+    // navSm (导航/自助预约-小)
+    { section: 'navSm', title: '咨询', icon: 'chat-o', path: '/services', color: '#B91C1C', sortOrder: 1 },
+    { section: 'navSm', title: '检测', icon: 'scan', path: '/services', color: '#EA580C', sortOrder: 2 },
+    { section: 'navSm', title: '保养', icon: 'shield-o', path: '/services', color: '#DC2626', sortOrder: 3 },
+    { section: 'navSm', title: '更多', icon: 'more-o', path: '/services', color: '#6B7280', sortOrder: 4 },
     // hotService (自助服务)
     { section: 'hotService', title: '设备维修', desc: '专业工程师上门服务', price: '99', icon: 'setting-o', color: 'linear-gradient(135deg, #7C3AED, #6D28D9)', path: '/service/1', sortOrder: 1 },
     { section: 'hotService', title: '深度清洁', desc: '全方位清洁保养', price: '149', icon: 'brush-o', color: 'linear-gradient(135deg, #2563EB, #1D4ED8)', path: '/service/2', sortOrder: 2 },

@@ -3564,7 +3564,7 @@ function deleteOutletService(id) {
 
 // --- Outlet HomeConfig / HomeAnimConfig / MineConfig ---
 let outletCurrentHCPage = 'homeConfig';
-const outletHCSections = { homeConfig: ['banner','nav','hotService','recommend','navSmall','myProduct'], homeAnimConfig: ['splash','headerLogo','headerBg'], mineConfig: ['mineConfig'] };
+const outletHCSections = { homeConfig: ['navLg','navSm','hotService','recommend','myProducts'], homeAnimConfig: ['splash','headerLogo','homeBg'], mineConfig: ['mineConfig'] };
 
 async function loadOutletHomeConfig() { await _loadOutletHC('homeConfig', 'outletHCTableBody', 'outletHCEmpty'); }
 async function loadOutletHomeAnimConfig() { await _loadOutletHC('homeAnimConfig', 'outletHATableBody', 'outletHAEmpty'); }
