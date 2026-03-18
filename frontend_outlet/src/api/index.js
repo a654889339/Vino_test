@@ -47,8 +47,9 @@ export const addressApi = {
 };
 
 export const serviceApi = {
-  list: (params) => request.get('/home-config', { params: { ...params, section: 'hotService' } }),
-  detail: (id) => request.get('/home-config', { params: { all: 1 } }),
+  // 服务商前端：仅访问 /outlet 下的服务配置
+  list: (params) => request.get('/services', { params }),
+  detail: (id) => request.get(`/services/${id}`),
 };
 
 export const guideApi = {

@@ -951,6 +951,40 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     </div>
 
     <!-- Outlet Home Config -->
+    <div class="dash-page" id="page-outletServiceConfig">
+      <div class="dash-section">
+        <div class="section-header">
+          <h3>服务商服务种类</h3>
+          <button class="refresh-btn" style="background:#059669" onclick="openOutletServiceCategoryEditor()">+ 新增种类</button>
+        </div>
+        <p style="font-size:13px;color:#666;margin-bottom:12px">先配置服务种类，再在下方具体服务中为每个服务选择种类。</p>
+        <table class="order-table">
+          <thead><tr><th>ID</th><th>种类名称</th><th>key</th><th>排序</th><th>状态</th><th>操作</th></tr></thead>
+          <tbody id="outletServiceCategoryTableBody"></tbody>
+        </table>
+      </div>
+      <div class="dash-section" style="margin-top:24px">
+        <div class="section-header">
+          <h3>服务商具体服务</h3>
+          <div style="display:flex;gap:8px">
+            <button class="refresh-btn" onclick="loadOutletServices()">刷新</button>
+            <button class="refresh-btn" style="background:#059669" onclick="openOutletServiceItemEditor()">+ 新增服务</button>
+          </div>
+        </div>
+        <div class="order-filters" style="margin-bottom:12px;flex-wrap:wrap;align-items:center;gap:8px">
+          <span style="font-size:13px;color:#666">种类：</span>
+          <select class="form-input" id="outletServiceFilterCategoryId" style="width:140px;display:inline-block;padding:6px 10px" onchange="renderOutletServicesTable()">
+            <option value="">全部</option>
+          </select>
+        </div>
+        <table class="order-table">
+          <thead><tr><th>排序</th><th>种类</th><th>名称</th><th>描述</th><th>图标</th><th>价格</th><th>原价</th><th>背景色</th><th>状态</th><th>操作</th></tr></thead>
+          <tbody id="outletServiceTableBody"></tbody>
+        </table>
+        <div class="order-empty" id="outletServiceEmpty" style="display:none">暂无具体服务</div>
+      </div>
+    </div>
+
     <div class="dash-page" id="page-outletHomeConfig">
       <div class="dash-section">
         <div class="section-header"><h3>服务商首页配置</h3>
@@ -1082,7 +1116,7 @@ const tocNavItems = [
 ];
 const outletNavItems = [
   {page:'outletOverview',label:'概览'},{page:'outletOrders',label:'订单管理'},{page:'outletUsers',label:'用户管理'},
-  {page:'outletHomeConfig',label:'首页配置'},{page:'outletHomeAnimConfig',label:'首页动画配置'},
+  {page:'outletServiceConfig',label:'服务配置'},{page:'outletHomeConfig',label:'首页配置'},{page:'outletHomeAnimConfig',label:'首页动画配置'},
   {page:'outletMineConfig',label:'个人中心配置'},{page:'outletMessages',label:'留言板'}
 ];
 
@@ -1135,6 +1169,7 @@ function switchPage(page) {
   if (page === 'outletOverview') loadOutletStats();
   if (page === 'outletOrders') { outletOrderPage = 1; loadOutletOrders(); }
   if (page === 'outletUsers') { outletUserPage = 1; loadOutletUsers(); }
+  if (page === 'outletServiceConfig') { loadOutletServiceCategories(); loadOutletServices(); }
   if (page === 'outletHomeConfig') { outletCurrentHCPage = 'homeConfig'; loadOutletHomeConfig(); }
   if (page === 'outletHomeAnimConfig') { outletCurrentHCPage = 'homeAnimConfig'; loadOutletHomeAnimConfig(); }
   if (page === 'outletMineConfig') loadOutletMineConfig();
@@ -3316,6 +3351,215 @@ let outletOrderUserFilterId = null;
 function goToOutletOrder(orderNo, orderId, userId) {
   outletOrderUserFilterId = userId || null;
   switchPage('outletOrders');
+}
+
+// --- Outlet Service Config ---
+let outletServiceCategories = [];
+let outletServices = [];
+
+async function loadOutletServiceCategories() {
+  try {
+    const res = await outletApi('/service-categories');
+    if (res.code !== 0) return;
+    outletServiceCategories = res.data || [];
+    const tbody = document.getElementById('outletServiceCategoryTableBody');
+    tbody.innerHTML = outletServiceCategories.map(c => `<tr>
+      <td>${c.id}</td><td>${c.name}</td><td>${c.key || '-'}</td>
+      <td>${c.sortOrder}</td>
+      <td><span class="status-badge status-${c.status==='active'?'completed':'cancelled'}">${c.status==='active'?'启用':'禁用'}</span></td>
+      <td><button class="refresh-btn" style="padding:4px 12px;font-size:12px" onclick="openOutletServiceCategoryEditor(${c.id})">编辑</button>
+          <button class="refresh-btn" style="padding:4px 12px;font-size:12px;background:#B91C1C" onclick="deleteOutletServiceCategory(${c.id})">删除</button></td>
+    </tr>`).join('');
+    const select = document.getElementById('outletServiceFilterCategoryId');
+    if (select) {
+      const current = select.value;
+      select.innerHTML = '<option value=\"\">全部</option>' + outletServiceCategories.map(c => `<option value=\"${c.id}\">${c.name}</option>`).join('');
+      if (current) select.value = current;
+    }
+  } catch (e) { console.error('loadOutletServiceCategories', e); }
+}
+
+async function loadOutletServices() {
+  try {
+    const res = await outletApi('/services/admin/list');
+    if (res.code !== 0) return;
+    outletServices = res.data || [];
+    renderOutletServicesTable();
+  } catch (e) { console.error('loadOutletServices', e); }
+}
+
+function renderOutletServicesTable() {
+  const tbody = document.getElementById('outletServiceTableBody');
+  const empty = document.getElementById('outletServiceEmpty');
+  if (!tbody || !empty) return;
+  const catId = document.getElementById('outletServiceFilterCategoryId')?.value || '';
+  const list = (!catId ? outletServices : outletServices.filter(s => String(s.categoryId) === String(catId)));
+  if (!list.length) { tbody.innerHTML = ''; empty.style.display = ''; return; }
+  empty.style.display = 'none';
+  tbody.innerHTML = list.map(s => {
+    const cat = s.serviceCategory || {};
+    return `<tr>
+      <td>${s.sortOrder}</td>
+      <td>${cat.name || '-'}</td>
+      <td>${s.title}</td>
+      <td>${s.description || '-'}</td>
+      <td>${s.iconUrl ? `<img src="${s.iconUrl}" style="max-height:32px;border-radius:4px" />` : (s.icon || '-')}</td>
+      <td>¥${Number(s.price || 0).toFixed(2)}</td>
+      <td>${s.originPrice != null ? '¥' + Number(s.originPrice).toFixed(2) : '-'}</td>
+      <td>${s.bg || '-'}</td>
+      <td><span class="status-badge status-${s.status==='active'?'completed':'cancelled'}">${s.status==='active'?'启用':'禁用'}</span></td>
+      <td><button class="refresh-btn" style="padding:4px 12px;font-size:12px" onclick="openOutletServiceItemEditor(${s.id})">编辑</button>
+          <button class="refresh-btn" style="padding:4px 12px;font-size:12px;background:#B91C1C" onclick="deleteOutletService(${s.id})">删除</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function openOutletServiceCategoryEditor(id) {
+  const cat = outletServiceCategories.find(c => c.id === id);
+  const name = prompt('种类名称', cat ? cat.name : '');
+  if (name == null || !name.trim()) return;
+  const key = prompt('key（可选，如 repair、clean 等）', cat ? (cat.key || '') : '');
+  const sort = prompt('排序（数字，越小越靠前）', cat ? String(cat.sortOrder || 0) : '0');
+  const status = prompt('状态（active/inactive）', cat ? cat.status : 'active') || 'active';
+  const body = { name, key, sortOrder: parseInt(sort, 10) || 0, status };
+  if (cat) {
+    outletApi('/service-categories/' + cat.id, { method: 'PUT', body }).then(() => loadOutletServiceCategories());
+  } else {
+    outletApi('/service-categories', { method: 'POST', body }).then(() => loadOutletServiceCategories());
+  }
+}
+
+function deleteOutletServiceCategory(id) {
+  if (!confirm('确认删除该服务种类？')) return;
+  outletApi('/service-categories/' + id, { method: 'DELETE' }).then(res => {
+    if (res.code === 0) loadOutletServiceCategories();
+    else alert(res.message || '删除失败');
+  });
+}
+
+function openOutletServiceItemEditor(id) {
+  const svc = outletServices.find(s => s.id === id);
+  const modal = document.createElement('div');
+  modal.id = 'outletServiceItemModal';
+  modal.className = 'modal-overlay';
+  const opts = outletServiceCategories.map(c => `<option value="${c.id}" ${svc && svc.categoryId===c.id?'selected':''}>${c.name}</option>`).join('');
+  modal.innerHTML = `<div class="modal-content" style="max-width:720px;width:96%">
+    <div class="modal-header">
+      <h3>${svc ? '编辑' : '新增'}服务</h3>
+      <span class="modal-close" onclick="closeOutletServiceItemModal()">&times;</span>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label>所属种类</label>
+        <select id="osCategoryId" class="form-input">${opts}</select>
+      </div>
+      <div class="form-group"><label>名称</label>
+        <input id="osTitle" class="form-input" value="${svc ? svc.title : ''}">
+      </div>
+      <div class="form-group"><label>描述</label>
+        <input id="osDesc" class="form-input" value="${svc ? (svc.description || '') : ''}">
+      </div>
+      <div class="form-group"><label>Vant 图标名（无图标图片时使用）</label>
+        <input id="osIcon" class="form-input" value="${svc ? (svc.icon || '') : ''}" placeholder="如 setting-o">
+      </div>
+      <div class="form-group"><label>图标图片 URL</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input id="osIconUrl" class="form-input" style="flex:1" value="${svc ? (svc.iconUrl || '') : ''}">
+          <label style="padding:8px 14px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">
+            上传图片<input type="file" accept="image/*" style="display:none" onchange="uploadOutletServiceIcon(this)">
+          </label>
+        </div>
+      </div>
+      <div class="form-group"><label>价格</label>
+        <input id="osPrice" type="number" step="0.01" class="form-input" value="${svc && svc.price != null ? svc.price : ''}">
+      </div>
+      <div class="form-group"><label>原价（可选）</label>
+        <input id="osOriginPrice" type="number" step="0.01" class="form-input" value="${svc && svc.originPrice != null ? svc.originPrice : ''}">
+      </div>
+      <div class="form-group"><label>背景色（如 #B91C1C 或渐变）</label>
+        <input id="osBg" class="form-input" value="${svc ? (svc.bg || '') : ''}">
+      </div>
+      <div class="form-group"><label>背景透明度（0-100，可选）</label>
+        <input id="osBgOpacity" type="number" class="form-input" value="${svc && svc.bgOpacity != null ? svc.bgOpacity : ''}">
+      </div>
+      <div class="form-group"><label>排序</label>
+        <input id="osSort" type="number" class="form-input" value="${svc ? svc.sortOrder : 0}">
+      </div>
+      <div class="form-group"><label>状态</label>
+        <select id="osStatus" class="form-input">
+          <option value="active" ${!svc || svc.status==='active'?'selected':''}>启用</option>
+          <option value="inactive" ${svc && svc.status==='inactive'?'selected':''}>禁用</option>
+        </select>
+      </div>
+      <button class="submit-btn" onclick="saveOutletService(${svc ? svc.id : 'null'})">${svc ? '保存' : '新增'}</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+}
+
+function closeOutletServiceItemModal() {
+  document.getElementById('outletServiceItemModal')?.remove();
+}
+
+async function uploadOutletServiceIcon(input) {
+  const file = input.files[0];
+  if (!file) return;
+  try {
+    showUploadLoading(file.name);
+    const fd = new FormData();
+    fd.append('file', file);
+    const res = await fetch(API + '/outlet/home-config/upload', { method: 'POST', headers: { Authorization: 'Bearer ' + token }, body: fd }).then(r => r.json());
+    if (res.code === 0 && res.data && res.data.url) {
+      document.getElementById('osIconUrl').value = res.data.url;
+    } else {
+      alert(res.message || '上传失败');
+    }
+  } catch (e) {
+    console.error('uploadOutletServiceIcon', e);
+    alert('上传失败');
+  } finally {
+    hideUploadLoading();
+    input.value = '';
+  }
+}
+
+async function saveOutletService(id) {
+  const body = {
+    categoryId: parseInt(document.getElementById('osCategoryId').value, 10) || null,
+    title: document.getElementById('osTitle').value.trim(),
+    description: document.getElementById('osDesc').value.trim(),
+    icon: document.getElementById('osIcon').value.trim(),
+    iconUrl: document.getElementById('osIconUrl').value.trim(),
+    price: document.getElementById('osPrice').value,
+    originPrice: document.getElementById('osOriginPrice').value,
+    bg: document.getElementById('osBg').value.trim(),
+    bgOpacity: document.getElementById('osBgOpacity').value,
+    sortOrder: parseInt(document.getElementById('osSort').value, 10) || 0,
+    status: document.getElementById('osStatus').value,
+  };
+  if (!body.title) { alert('名称不能为空'); return; }
+  if (!body.categoryId) { alert('请选择服务种类'); return; }
+  try {
+    const method = id ? 'PUT' : 'POST';
+    const path = id ? '/services/' + id : '/services';
+    const res = await outletApi(path, { method, body });
+    if (res.code === 0) {
+      closeOutletServiceItemModal();
+      await loadOutletServices();
+    } else {
+      alert(res.message || '保存失败');
+    }
+  } catch (e) {
+    console.error('saveOutletService', e);
+    alert('保存失败');
+  }
+}
+
+function deleteOutletService(id) {
+  if (!confirm('确认删除该服务？')) return;
+  outletApi('/services/' + id, { method: 'DELETE' }).then(res => {
+    if (res.code === 0) loadOutletServices();
+    else alert(res.message || '删除失败');
+  });
 }
 
 // --- Outlet HomeConfig / HomeAnimConfig / MineConfig ---
