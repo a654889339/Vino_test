@@ -83,9 +83,10 @@ exports.cancel = async (req, res) => {
 
 exports.adminList = async (req, res) => {
   try {
-    const { status, page = 1, pageSize = 20 } = req.query;
+    const { status, page = 1, pageSize = 20, userId } = req.query;
     const where = {};
     if (status && status !== 'all') where.status = status;
+    if (userId) where.userId = parseInt(userId, 10) || 0;
     const { count, rows } = await OutletOrder.findAndCountAll({
       where, include: [{ model: OutletUser, as: 'user', attributes: ['id', 'username', 'email', 'nickname'] }],
       order: [['createdAt', 'DESC']], limit: parseInt(pageSize), offset: (parseInt(page) - 1) * parseInt(pageSize),

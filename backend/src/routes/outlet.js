@@ -50,6 +50,7 @@ router.get('/messages/unread', auth, outletMsgCtrl.unreadCount);
 
 // ===== Admin endpoints (for admin panel managing outlet) =====
 router.get('/admin/users', authMiddleware, adminMiddleware, outletAuthCtrl.adminGetUsers);
+router.get('/admin/users/:id/detail', authMiddleware, adminMiddleware, outletAuthCtrl.adminGetUserDetail);
 router.get('/admin/orders', authMiddleware, adminMiddleware, outletOrderCtrl.adminList);
 router.get('/admin/orders/stats', authMiddleware, adminMiddleware, outletOrderCtrl.adminStats);
 router.put('/admin/orders/:id/status', authMiddleware, adminMiddleware, outletOrderCtrl.adminUpdateStatus);

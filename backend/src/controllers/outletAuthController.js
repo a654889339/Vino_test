@@ -212,3 +212,42 @@ exports.adminGetUsers = async (req, res) => {
     res.status(500).json({ code: 500, message: '获取用户列表失败' });
   }
 };
+
+// 管理端查看单个服务商详情：基础信息、地址列表、订单列表
+exports.adminGetUserDetail = async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id, 10);
+    if (!userId) return res.status(400).json({ code: 400, message: '无效用户ID' });
+    const { OutletOrder } = require('../models');
+    const user = await OutletUser.findByPk(userId, {
+      attributes: { exclude: ['password'] },
+      include: [{ model: OutletAddress, as: 'addresses', required: false }],
+      order: [[{ model: OutletAddress, as: 'addresses' }, 'createdAt', 'DESC']],
+    });
+    if (!user) return res.status(404).json({ code: 404, message: '用户不存在' });
+    const orders = await OutletOrder.findAll({
+      where: { userId },
+      order: [['createdAt', 'DESC']],
+      attributes: ['id', 'orderNo', 'status', 'price', 'createdAt'],
+    });
+    const STATUS_MAP = {
+      pending: '待支付',
+      paid: '已支付',
+      processing: '进行中',
+      completed: '已完成',
+      cancelled: '已取消',
+    };
+    const orderList = orders.map(o => ({
+      id: o.id,
+      orderNo: o.orderNo,
+      status: o.status,
+      statusText: STATUS_MAP[o.status] || o.status,
+      price: o.price,
+      createdAt: o.createdAt,
+    }));
+    res.json({ code: 0, data: { user, orders: orderList } });
+  } catch (err) {
+    console.error('[OutletAuth] adminGetUserDetail error:', err.message);
+    res.status(500).json({ code: 500, message: '获取用户详情失败' });
+  }
+};
