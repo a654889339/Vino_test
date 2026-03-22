@@ -2,6 +2,7 @@ const app = getApp();
 
 const statusMap = {
   pending: { text: '待支付', type: 'warning' },
+  paid: { text: '已支付', type: 'primary' },
   processing: { text: '进行中', type: 'primary' },
   completed: { text: '已完成', type: 'success' },
   cancelled: { text: '已取消', type: 'default' },
@@ -14,6 +15,7 @@ Page({
     tabs: [
       { key: 'all', name: '全部' },
       { key: 'pending', name: '待支付' },
+      { key: 'paid', name: '已支付' },
       { key: 'processing', name: '进行中' },
       { key: 'completed', name: '已完成' },
     ],

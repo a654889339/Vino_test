@@ -62,6 +62,7 @@ const pageSize = 10;
 const tabs = [
   { key: 'all', name: '全部' },
   { key: 'pending', name: '待支付' },
+  { key: 'paid', name: '已支付' },
   { key: 'processing', name: '进行中' },
   { key: 'completed', name: '已完成' },
 ];

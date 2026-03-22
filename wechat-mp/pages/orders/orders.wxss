@@ -14,9 +14,10 @@
 
 .tab-item {
   flex: 1;
+  min-width: 0;
   text-align: center;
-  padding: 24rpx 0;
-  font-size: 28rpx;
+  padding: 24rpx 8rpx;
+  font-size: 24rpx;
   color: #666;
   border-bottom: 4rpx solid transparent;
 }
@@ -67,6 +68,11 @@
 .status-pending {
   background: #FEF3C7;
   color: #D97706;
+}
+
+.status-paid {
+  background: #ECFDF5;
+  color: #059669;
 }
 
 .status-processing {
