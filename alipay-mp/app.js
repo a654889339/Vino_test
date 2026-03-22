@@ -1,3 +1,22 @@
+function getJwtExpMs(token) {
+  if (!token || typeof token !== 'string') return null;
+  const parts = token.split('.');
+  if (parts.length < 2) return null;
+  try {
+    let b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const pad = b64.length % 4;
+    if (pad) b64 += '='.repeat(4 - pad);
+    const buf = my.base64ToArrayBuffer(b64);
+    const arr = new Uint8Array(buf);
+    let str = '';
+    for (let i = 0; i < arr.length; i++) str += String.fromCharCode(arr[i]);
+    const payload = JSON.parse(str);
+    return typeof payload.exp === 'number' ? payload.exp * 1000 : null;
+  } catch (e) {
+    return null;
+  }
+}
+
 App({
   globalData: {
     baseUrl: 'http://106.54.50.88:5202/api',
@@ -10,6 +29,11 @@ App({
       const res = my.getStorageSync({ key: 'vino_token' });
       const token = res && res.data ? res.data : '';
       if (token) {
+        const expMs = getJwtExpMs(token);
+        if (expMs != null && Date.now() >= expMs) {
+          this.clearToken();
+          return;
+        }
         this.globalData.token = token;
         this.fetchProfile();
       }
@@ -19,13 +43,28 @@ App({
   },
 
   fetchProfile() {
-    this.request({ url: '/auth/profile' })
-      .then(res => {
-        this.globalData.userInfo = res.data;
-      })
-      .catch(() => {
-        this.clearToken();
-      });
+    const app = this;
+    const { baseUrl, token } = app.globalData;
+    if (!token) return;
+    my.request({
+      url: baseUrl + '/auth/profile',
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + token,
+      },
+      success(res) {
+        const status = res.status != null ? res.status : res.statusCode;
+        if (status === 401) {
+          app.clearToken();
+          return;
+        }
+        const body = res.data;
+        if (body && body.code === 0 && body.data) {
+          app.globalData.userInfo = body.data;
+        }
+      },
+    });
   },
 
   request(options) {

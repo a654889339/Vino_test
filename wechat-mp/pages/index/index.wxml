@@ -4,7 +4,7 @@
     <swiper wx:if="{{heroBgList.length}}" class="home-bg-swiper" autoplay circular interval="4000" indicator-dots indicator-color="rgba(255,255,255,0.5)">
       <block wx:for="{{heroBgList}}" wx:key="url">
         <swiper-item>
-          <image class="home-bg-image" src="{{item.displayUrl}}" mode="aspectFill" data-idx="{{index}}" bindload="onHeroBgLoad" />
+          <image class="home-bg-image" src="{{item.displayUrl}}" mode="aspectFill" data-idx="{{index}}" binderror="onHeroBgError" />
         </swiper-item>
       </block>
     </swiper>

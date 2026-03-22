@@ -12,7 +12,8 @@ exports.list = async (req, res) => {
     const items = await HomeConfig.findAll({ where, order: [['section','ASC'],['sortOrder','ASC'],['id','ASC']] });
     const data = items.map(it => {
       const o = it.get ? it.get({ plain: true }) : it;
-      const thumb = (o.imageUrlThumb && o.imageUrlThumb.trim()) ? o.imageUrlThumb.trim() : (cosUpload.getThumbUrl(o.imageUrl) || null);
+      // 仅返回数据库中的缩略图；不再用 getThumbUrl 推导（COS 上可能未生成 thumb 文件会导致 404）
+      const thumb = (o.imageUrlThumb && o.imageUrlThumb.trim()) ? o.imageUrlThumb.trim() : null;
       return { ...o, imageUrlThumb: thumb };
     });
     res.json({ code: 0, data });

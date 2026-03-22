@@ -1,3 +1,23 @@
+/** 解析 JWT 过期时间（毫秒），失败返回 null */
+function getJwtExpMs(token) {
+  if (!token || typeof token !== 'string') return null;
+  const parts = token.split('.');
+  if (parts.length < 2) return null;
+  try {
+    let b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const pad = b64.length % 4;
+    if (pad) b64 += '='.repeat(4 - pad);
+    const buf = wx.base64ToArrayBuffer(b64);
+    const arr = new Uint8Array(buf);
+    let str = '';
+    for (let i = 0; i < arr.length; i++) str += String.fromCharCode(arr[i]);
+    const payload = JSON.parse(str);
+    return typeof payload.exp === 'number' ? payload.exp * 1000 : null;
+  } catch (e) {
+    return null;
+  }
+}
+
 App({
   globalData: {
     baseUrl: 'http://106.54.50.88:5202/api',
@@ -8,19 +28,38 @@ App({
   onLaunch() {
     const token = wx.getStorageSync('vino_token');
     if (token) {
+      const expMs = getJwtExpMs(token);
+      if (expMs != null && Date.now() >= expMs) {
+        this.clearToken();
+        return;
+      }
       this.globalData.token = token;
       this.fetchProfile();
     }
   },
 
+  /** 使用 wx.request，避免无效 token 时 Promise 链报错；401 静默清 token */
   fetchProfile() {
-    this.request({ url: '/auth/profile' })
-      .then(res => {
-        this.globalData.userInfo = res.data;
-      })
-      .catch(() => {
-        this.clearToken();
-      });
+    const app = this;
+    const { baseUrl, token } = app.globalData;
+    if (!token) return;
+    wx.request({
+      url: baseUrl + '/auth/profile',
+      method: 'GET',
+      header: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + token,
+      },
+      success(res) {
+        if (res.statusCode === 401) {
+          app.clearToken();
+          return;
+        }
+        if (res.data && res.data.code === 0 && res.data.data) {
+          app.globalData.userInfo = res.data.data;
+        }
+      },
+    });
   },
 
   request(options) {

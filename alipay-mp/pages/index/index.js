@@ -74,7 +74,7 @@ Page({
           .map(i => {
             const url = toFull(i.imageUrl);
             const thumb = (i.imageUrlThumb && i.imageUrlThumb.trim()) ? toFull(i.imageUrlThumb.trim()) : '';
-            const displayUrl = thumb || url;
+            const displayUrl = url;
             return { url, thumb, displayUrl };
           })
           .filter(i => i.url);
@@ -104,13 +104,13 @@ Page({
       .catch(() => {});
   },
 
-  onHeroBgLoad(e) {
+  onHeroBgError(e) {
     const idx = e.currentTarget.dataset.idx;
     const list = this.data.heroBgList || [];
-    if (list[idx] && list[idx].thumb && list[idx].url && list[idx].displayUrl === list[idx].thumb) {
-      list[idx] = { ...list[idx], displayUrl: list[idx].url };
-      this.setData({ heroBgList: list });
-    }
+    if (!list[idx] || !list[idx].url) return;
+    if (list[idx].displayUrl === list[idx].url) return;
+    list[idx] = { ...list[idx], displayUrl: list[idx].url };
+    this.setData({ heroBgList: list });
   },
 
   loadHotServices() {

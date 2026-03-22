@@ -12,7 +12,7 @@ exports.list = async (req, res) => {
     const items = await OutletHomeConfig.findAll({ where, order: [['section','ASC'],['sortOrder','ASC'],['id','ASC']] });
     const data = items.map(it => {
       const o = it.get ? it.get({ plain: true }) : it;
-      const thumb = (o.imageUrlThumb && o.imageUrlThumb.trim()) ? o.imageUrlThumb.trim() : (cosUpload.getThumbUrl(o.imageUrl) || null);
+      const thumb = (o.imageUrlThumb && o.imageUrlThumb.trim()) ? o.imageUrlThumb.trim() : null;
       return { ...o, imageUrlThumb: thumb };
     });
     res.json({ code: 0, data });
