@@ -57,6 +57,17 @@ Page({
     my.navigateTo({ url: '/pages/my-products/my-products' });
   },
 
+  goMyProductGuide(e) {
+    const slug = (e.currentTarget.dataset.slug && String(e.currentTarget.dataset.slug).trim()) || '';
+    if (!slug) {
+      my.showToast({ content: '暂无产品指南', type: 'none' });
+      return;
+    }
+    my.navigateTo({
+      url: '/pages/guide-detail/guide-detail?id=' + encodeURIComponent(slug),
+    });
+  },
+
   loadHomeConfig() {
     const base = (app.globalData.baseUrl || '').replace(/\/api\/?$/, '') || 'http://106.54.50.88:5202';
     const toFull = (u) => {

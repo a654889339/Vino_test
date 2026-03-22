@@ -86,7 +86,13 @@
       </div>
       <input ref="qrFileInputRef" type="file" accept="image/*" class="hidden-input" @change="onQrFileChange" />
       <div class="my-products-list">
-        <div v-for="(item, i) in myProducts" :key="item.productKey || i" class="my-product-item">
+        <div
+          v-for="(item, i) in myProducts"
+          :key="item.productKey || i"
+          class="my-product-item"
+          :class="{ 'my-product-item--clickable': !!productGuideSlug(item) }"
+          @click="onMyProductItemClick(item)"
+        >
           <span class="my-product-category">{{ item.categoryName || '-' }}</span>
           <div class="my-product-icon-wrap">
             <img v-if="productIconUrl(item)" :src="productIconUrl(item)" class="my-product-icon" alt="" />
@@ -160,6 +166,21 @@ function productIconUrl(item) {
   const u = (item && (item.iconUrlThumb || item.iconUrl)) || '';
   if (!u) return '';
   return u.startsWith('http') ? u : (window.location.origin + (u.startsWith('/') ? u : '/' + u));
+}
+
+/** 商品配置 slug（后台 guideSlug / 兼容 guide），用于跳转 /guide/{slug} */
+function productGuideSlug(item) {
+  const s = item && (item.guideSlug != null && item.guideSlug !== '' ? item.guideSlug : item.guide);
+  return s != null ? String(s).trim() : '';
+}
+
+function onMyProductItemClick(item) {
+  const slug = productGuideSlug(item);
+  if (!slug) {
+    showToast('暂无产品指南');
+    return;
+  }
+  router.push('/guide/' + encodeURIComponent(slug));
 }
 async function loadMyProducts() {
   if (!localStorage.getItem('vino_token')) return;
@@ -505,6 +526,8 @@ const copyUrl = async () => {
   display: flex; align-items: center; gap: 10px;
   padding: 12px 14px; background: #f8f8f8; border-radius: 10px;
 }
+.my-product-item--clickable { cursor: pointer; transition: opacity 0.2s; }
+.my-product-item--clickable:active { opacity: 0.85; }
 .my-product-category { font-size: 13px; color: #666; min-width: 48px; flex-shrink: 0; }
 .my-product-icon-wrap { width: 40px; height: 40px; flex-shrink: 0; border-radius: 10px; overflow: hidden; background: #eee; display: flex; align-items: center; justify-content: center; }
 .my-product-icon { width: 100%; height: 100%; object-fit: contain; }

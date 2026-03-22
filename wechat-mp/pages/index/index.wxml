@@ -55,7 +55,7 @@
       <text class="section-more" bindtap="goMyProducts">查看全部 ›</text>
     </view>
     <view class="my-products-list">
-      <view class="my-product-item" wx:for="{{myProducts}}" wx:key="productKey">
+      <view class="my-product-item {{item.guideSlug || item.guide ? 'my-product-item--clickable' : ''}}" wx:for="{{myProducts}}" wx:key="productKey" bindtap="goMyProductGuide" data-slug="{{item.guideSlug || item.guide}}">
         <text class="my-product-category">{{item.categoryName || '-'}}</text>
         <view class="my-product-icon-wrap">
           <image wx:if="{{item.iconUrlThumb || item.iconUrl}}" src="{{item.iconUrlThumb || item.iconUrl}}" class="my-product-icon" mode="aspectFit" />
