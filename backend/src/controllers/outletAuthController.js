@@ -184,12 +184,28 @@ exports.bindPhone = async (req, res) => {
 
 exports.adminGetUsers = async (req, res) => {
   try {
-    const { page = 1, pageSize = 50 } = req.query;
+    const { page = 1, pageSize = 50, searchType, q } = req.query;
     const pg = Math.max(1, parseInt(page));
     const ps = Math.max(1, Math.min(200, parseInt(pageSize)));
     const { OutletOrder } = require('../models');
     const { Op } = require('sequelize');
+
+    const userWhere = {};
+    const kw = q != null ? String(q).trim() : '';
+    if (kw && searchType) {
+      if (searchType === 'id') {
+        const id = parseInt(kw, 10);
+        if (!Number.isNaN(id) && id > 0) userWhere.id = id;
+        else userWhere.id = -1;
+      } else if (searchType === 'username') {
+        userWhere.username = { [Op.like]: '%' + kw.replace(/%/g, '\\%') + '%' };
+      } else if (searchType === 'phone') {
+        userWhere.phone = { [Op.like]: '%' + kw.replace(/%/g, '\\%') + '%' };
+      }
+    }
+
     const { count, rows: users } = await OutletUser.findAndCountAll({
+      where: userWhere,
       attributes: { exclude: ['password'] },
       include: [{ model: OutletAddress, as: 'addresses', required: false }],
       order: [['createdAt', 'DESC']],

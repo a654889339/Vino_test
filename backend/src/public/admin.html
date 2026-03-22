@@ -260,6 +260,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <h3>全部用户</h3>
           <button class="refresh-btn" onclick="loadUsers()">刷新</button>
         </div>
+        <div class="order-filters" style="flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:12px">
+          <span style="font-size:13px;color:#666">检索：</span>
+          <select id="userSearchType" class="form-input" style="width:120px;padding:6px 10px">
+            <option value="">全部</option>
+            <option value="id">用户ID</option>
+            <option value="username">用户名</option>
+            <option value="phone">手机号</option>
+          </select>
+          <input type="text" id="userSearchKeyword" class="form-input" placeholder="输入关键词" style="width:200px;padding:6px 10px" onkeydown="if(event.key==='Enter'){userPage=1;loadUsers()}" />
+          <button type="button" class="refresh-btn" onclick="userPage=1;loadUsers()">搜索</button>
+          <button type="button" class="refresh-btn" style="background:#64748b" onclick="document.getElementById('userSearchKeyword').value='';document.getElementById('userSearchType').value='';userPage=1;loadUsers()">重置</button>
+        </div>
         <table class="order-table" id="userTable">
           <thead><tr><th>ID</th><th>用户名</th><th>手机号</th><th>邮箱</th><th>昵称</th><th>角色</th><th>订单数</th><th>地址数</th><th>已绑定商品</th><th>注册时间</th><th>操作</th></tr></thead>
           <tbody id="userTableBody"></tbody>
@@ -892,9 +904,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <button class="filter-btn" onclick="filterOrders('completed')">已完成</button>
           <button class="filter-btn" onclick="filterOrders('cancelled')">已取消</button>
         </div>
+        <div class="order-filters" style="flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:12px">
+          <span style="font-size:13px;color:#666">订单号：</span>
+          <input type="text" id="orderSearchOrderNo" class="form-input" placeholder="模糊搜索" style="width:160px;padding:6px 10px" onkeydown="if(event.key==='Enter'){orderPage=1;loadOrders()}" />
+          <span style="font-size:13px;color:#666">用户ID：</span>
+          <input type="number" id="orderSearchUserId" class="form-input" placeholder="精确" style="width:100px;padding:6px 10px" min="1" onkeydown="if(event.key==='Enter'){orderPage=1;loadOrders()}" />
+          <button type="button" class="refresh-btn" onclick="orderPage=1;loadOrders()">搜索</button>
+          <button type="button" class="refresh-btn" style="background:#64748b" onclick="document.getElementById('orderSearchOrderNo').value='';document.getElementById('orderSearchUserId').value='';orderPage=1;loadOrders()">重置</button>
+        </div>
         <div id="orderTableWrap">
           <table class="order-table">
-            <thead><tr><th>订单号</th><th>用户</th><th>服务</th><th>金额</th><th>状态</th><th>联系人</th><th>地址</th><th>时间</th><th>操作</th></tr></thead>
+            <thead><tr><th>订单号</th><th>用户ID</th><th>用户</th><th>服务</th><th>金额</th><th>状态</th><th>联系人</th><th>地址</th><th>时间</th><th>操作</th></tr></thead>
             <tbody id="orderTableBody"></tbody>
           </table>
           <div class="order-empty" id="orderEmpty" style="display:none">暂无订单数据</div>
@@ -941,6 +961,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <div class="dash-stats" id="outletUserStats"></div>
       <div class="dash-section">
         <div class="section-header"><h3>服务商用户</h3><button class="refresh-btn" onclick="loadOutletUsers()">刷新</button></div>
+        <div class="order-filters" style="flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:12px">
+          <span style="font-size:13px;color:#666">检索：</span>
+          <select id="outletUserSearchType" class="form-input" style="width:120px;padding:6px 10px">
+            <option value="">全部</option>
+            <option value="id">用户ID</option>
+            <option value="username">用户名</option>
+            <option value="phone">手机号</option>
+          </select>
+          <input type="text" id="outletUserSearchKeyword" class="form-input" placeholder="输入关键词" style="width:200px;padding:6px 10px" onkeydown="if(event.key==='Enter'){outletUserPage=1;loadOutletUsers()}" />
+          <button type="button" class="refresh-btn" onclick="outletUserPage=1;loadOutletUsers()">搜索</button>
+          <button type="button" class="refresh-btn" style="background:#64748b" onclick="document.getElementById('outletUserSearchKeyword').value='';document.getElementById('outletUserSearchType').value='';outletUserPage=1;loadOutletUsers()">重置</button>
+        </div>
         <table class="order-table" id="outletUserTable">
           <thead><tr><th>ID</th><th>用户名</th><th>手机号</th><th>邮箱</th><th>昵称</th><th>角色</th><th>订单数</th><th>服务商地址数</th><th>注册时间</th><th>操作</th></tr></thead>
           <tbody id="outletUserTableBody"></tbody>
@@ -1076,7 +1108,45 @@ const API = window.location.origin + '/api';
 let token = localStorage.getItem('vino_admin_token');
 let currentUser = null;
 let orderPage = 1;
+const orderPageSize = 50;
 let orderFilter = 'all';
+
+function jumpUserPageGo() {
+  const el = document.getElementById('userPageJump');
+  if (!el) return;
+  const max = parseInt(el.getAttribute('max'), 10) || 1;
+  const p = parseInt(el.value, 10);
+  if (Number.isNaN(p)) { alert('请输入有效页码'); return; }
+  userPage = Math.min(Math.max(1, p), max);
+  loadUsers();
+}
+function jumpOutletUserPageGo() {
+  const el = document.getElementById('outletUserPageJump');
+  if (!el) return;
+  const max = parseInt(el.getAttribute('max'), 10) || 1;
+  const p = parseInt(el.value, 10);
+  if (Number.isNaN(p)) { alert('请输入有效页码'); return; }
+  outletUserPage = Math.min(Math.max(1, p), max);
+  loadOutletUsers();
+}
+function jumpInvProductPageGo() {
+  const el = document.getElementById('invProductPageJump');
+  if (!el) return;
+  const max = parseInt(el.getAttribute('max'), 10) || 1;
+  const p = parseInt(el.value, 10);
+  if (Number.isNaN(p)) { alert('请输入有效页码'); return; }
+  invProductPage = Math.min(Math.max(1, p), max);
+  loadInventoryProducts();
+}
+function jumpOrderPageGo() {
+  const el = document.getElementById('orderPageJump');
+  if (!el) return;
+  const max = parseInt(el.getAttribute('max'), 10) || 1;
+  const p = parseInt(el.value, 10);
+  if (Number.isNaN(p)) { alert('请输入有效页码'); return; }
+  orderPage = Math.min(Math.max(1, p), max);
+  loadOrders();
+}
 
 function switchTab(tab) {
   document.querySelectorAll('.auth-tab').forEach((t, i) => {
@@ -1317,10 +1387,14 @@ async function loadOrders() {
   loadOrderStats();
   const tbody = document.getElementById('orderTableBody');
   const empty = document.getElementById('orderEmpty');
-  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:#999">加载中...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:#999">加载中...</td></tr>';
   try {
-    const params = new URLSearchParams({ page: orderPage, pageSize: 15 });
+    const params = new URLSearchParams({ page: orderPage, pageSize: orderPageSize });
     if (orderFilter !== 'all') params.set('status', orderFilter);
+    const ono = document.getElementById('orderSearchOrderNo') && document.getElementById('orderSearchOrderNo').value.trim();
+    if (ono) params.set('orderNo', ono);
+    const uid = document.getElementById('orderSearchUserId') && document.getElementById('orderSearchUserId').value.trim();
+    if (uid) params.set('userId', uid);
     const res = await api('/orders/admin/list?' + params);
     if (res.code === 0) {
       const { list, total, page, pageSize } = res.data;
@@ -1329,7 +1403,8 @@ async function loadOrders() {
         empty.style.display = 'none';
         tbody.innerHTML = list.map(o => `<tr>
           <td style="font-size:12px;color:var(--text-secondary)">${o.orderNo}</td>
-          <td>${o.user ? o.user.nickname || o.user.username : 'ID:' + o.userId}</td>
+          <td style="font-size:12px;font-weight:600">${o.userId}</td>
+          <td>${o.user ? (o.user.nickname || o.user.username) : '-'}</td>
           <td><strong>${o.serviceTitle}</strong></td>
           <td style="color:var(--primary);font-weight:600">¥${o.price}</td>
           <td><span class="status-badge ${o.status}">${statusLabels[o.status] || o.status}</span></td>
@@ -1352,9 +1427,13 @@ async function loadOrders() {
       document.getElementById('orderPagination').innerHTML = totalPages > 1 ? `
         <button class="page-btn" onclick="orderPage--;loadOrders()" ${page <= 1 ? 'disabled' : ''}>上一页</button>
         <span class="page-info">${page} / ${totalPages}（共 ${total} 条）</span>
+        <span style="display:inline-flex;align-items:center;gap:6px;margin:0 8px;font-size:13px;color:var(--text-secondary)">
+          跳至 <input type="number" id="orderPageJump" min="1" max="${totalPages}" value="${page}" style="width:56px;padding:4px 8px;border:1px solid var(--border);border-radius:6px" onkeydown="if(event.key==='Enter'){jumpOrderPageGo()}" /> 页
+          <button type="button" class="page-btn" onclick="jumpOrderPageGo()">跳转</button>
+        </span>
         <button class="page-btn" onclick="orderPage++;loadOrders()" ${page >= totalPages ? 'disabled' : ''}>下一页</button>` : `<span class="page-info">共 ${total} 条</span>`;
     }
-  } catch { tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:#B91C1C">加载失败，请检查权限</td></tr>'; }
+  } catch { tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:#B91C1C">加载失败，请检查权限</td></tr>'; }
 }
 
 async function updateOrderStatus(id, status) {
@@ -1490,7 +1569,11 @@ async function loadUsers() {
   const empty = document.getElementById('userEmpty');
   tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:30px;color:#999">加载中...</td></tr>';
   try {
-    const res = await api('/auth/admin/users?page=' + userPage + '&pageSize=' + userPageSize);
+    const params = new URLSearchParams({ page: userPage, pageSize: userPageSize });
+    const st = document.getElementById('userSearchType') && document.getElementById('userSearchType').value;
+    const kw = document.getElementById('userSearchKeyword') && document.getElementById('userSearchKeyword').value.trim();
+    if (st && kw) { params.set('searchType', st); params.set('q', kw); }
+    const res = await api('/auth/admin/users?' + params.toString());
     if (res.code === 0) {
       const d = res.data || {};
       allUsers = d.list || [];
@@ -1518,6 +1601,10 @@ async function loadUsers() {
       document.getElementById('userPagination').innerHTML = totalPages > 1 ? `
         <button class="page-btn" onclick="userPage--;loadUsers()" ${page <= 1 ? 'disabled' : ''}>上一页</button>
         <span class="page-info">${page} / ${totalPages}（共 ${total} 条）</span>
+        <span style="display:inline-flex;align-items:center;gap:6px;margin:0 8px;font-size:13px;color:var(--text-secondary)">
+          跳至 <input type="number" id="userPageJump" min="1" max="${totalPages}" value="${page}" style="width:56px;padding:4px 8px;border:1px solid var(--border);border-radius:6px" onkeydown="if(event.key==='Enter'){jumpUserPageGo()}" /> 页
+          <button type="button" class="page-btn" onclick="jumpUserPageGo()">跳转</button>
+        </span>
         <button class="page-btn" onclick="userPage++;loadUsers()" ${page >= totalPages ? 'disabled' : ''}>下一页</button>` : `<span class="page-info">共 ${total} 条</span>`;
     }
   } catch {
@@ -2254,6 +2341,10 @@ async function loadInventoryProducts(resetPage) {
     document.getElementById('invProductPagination').innerHTML = totalPages > 1 ? `
       <button class="page-btn" onclick="invProductPage--;loadInventoryProducts()" ${page <= 1 ? 'disabled' : ''}>上一页</button>
       <span class="page-info">${page} / ${totalPages}（共 ${total} 条）</span>
+      <span style="display:inline-flex;align-items:center;gap:6px;margin:0 8px;font-size:13px;color:var(--text-secondary)">
+        跳至 <input type="number" id="invProductPageJump" min="1" max="${totalPages}" value="${page}" style="width:56px;padding:4px 8px;border:1px solid var(--border);border-radius:6px" onkeydown="if(event.key==='Enter'){jumpInvProductPageGo()}" /> 页
+        <button type="button" class="page-btn" onclick="jumpInvProductPageGo()">跳转</button>
+      </span>
       <button class="page-btn" onclick="invProductPage++;loadInventoryProducts()" ${page >= totalPages ? 'disabled' : ''}>下一页</button>` : `<span class="page-info">共 ${total} 条</span>`;
   } catch { tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:#B91C1C">加载失败</td></tr>'; }
 }
@@ -3252,7 +3343,11 @@ let outletUserPage = 1;
 const outletUserPageSize = 50;
 async function loadOutletUsers() {
   try {
-    const res = await outletApi('/admin/users?page=' + outletUserPage + '&pageSize=' + outletUserPageSize);
+    const params = new URLSearchParams({ page: outletUserPage, pageSize: outletUserPageSize });
+    const st = document.getElementById('outletUserSearchType') && document.getElementById('outletUserSearchType').value;
+    const kw = document.getElementById('outletUserSearchKeyword') && document.getElementById('outletUserSearchKeyword').value.trim();
+    if (st && kw) { params.set('searchType', st); params.set('q', kw); }
+    const res = await outletApi('/admin/users?' + params.toString());
     if (res.code !== 0) return;
     const { list, total, stats } = res.data;
     const tbody = document.getElementById('outletUserTableBody');
@@ -3263,7 +3358,7 @@ async function loadOutletUsers() {
         <div class="stat-card"><h3>服务商</h3><div class="val" style="color:#7C3AED">${stats.outletCount}</div></div>
         <div class="stat-card"><h3>服务商地址</h3><div class="val">${stats.totalAddresses}</div></div>`;
     }
-    if (!list.length) { tbody.innerHTML = ''; empty.style.display = ''; return; }
+    if (!list.length) { tbody.innerHTML = ''; empty.style.display = ''; document.getElementById('outletUserPagination').innerHTML = ''; return; }
     empty.style.display = 'none';
     tbody.innerHTML = list.map(u => `<tr>
       <td>${u.id}</td><td>${u.username}</td><td>${u.phone || '-'}</td><td>${u.email || '-'}</td>
@@ -3274,9 +3369,14 @@ async function loadOutletUsers() {
       <td><button class="refresh-btn" style="padding:4px 10px;font-size:12px" onclick="openOutletUserDetail(${u.id})">详情</button></td>
     </tr>`).join('');
     const totalPages = Math.ceil(total / outletUserPageSize);
-    document.getElementById('outletUserPagination').innerHTML = `<span style="font-size:13px;color:#666">共 ${total} 条，第 ${outletUserPage}/${totalPages} 页</span>
-      <button class="refresh-btn" style="padding:4px 12px" ${outletUserPage<=1?'disabled':''} onclick="outletUserPage--;loadOutletUsers()">上一页</button>
-      <button class="refresh-btn" style="padding:4px 12px" ${outletUserPage>=totalPages?'disabled':''} onclick="outletUserPage++;loadOutletUsers()">下一页</button>`;
+    document.getElementById('outletUserPagination').innerHTML = totalPages > 1 ? `
+      <button class="page-btn" onclick="outletUserPage--;loadOutletUsers()" ${outletUserPage <= 1 ? 'disabled' : ''}>上一页</button>
+      <span class="page-info">${outletUserPage} / ${totalPages}（共 ${total} 条）</span>
+      <span style="display:inline-flex;align-items:center;gap:6px;margin:0 8px;font-size:13px;color:var(--text-secondary)">
+        跳至 <input type="number" id="outletUserPageJump" min="1" max="${totalPages}" value="${outletUserPage}" style="width:56px;padding:4px 8px;border:1px solid var(--border);border-radius:6px" onkeydown="if(event.key==='Enter'){jumpOutletUserPageGo()}" /> 页
+        <button type="button" class="page-btn" onclick="jumpOutletUserPageGo()">跳转</button>
+      </span>
+      <button class="page-btn" onclick="outletUserPage++;loadOutletUsers()" ${outletUserPage >= totalPages ? 'disabled' : ''}>下一页</button>` : `<span class="page-info">共 ${total} 条</span>`;
   } catch (e) { console.error('loadOutletUsers', e); }
 }
 

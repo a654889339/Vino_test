@@ -109,21 +109,32 @@ exports.cancel = async (req, res) => {
 
 exports.adminList = async (req, res) => {
   try {
-    const { status, page = 1, pageSize = 20 } = req.query;
+    const { Op } = require('sequelize');
+    const { status, page = 1, pageSize = 50, orderNo, userId } = req.query;
     const where = {};
     if (status && status !== 'all') where.status = status;
+    if (orderNo != null && String(orderNo).trim() !== '') {
+      const on = String(orderNo).trim().replace(/%/g, '\\%');
+      where.orderNo = { [Op.like]: '%' + on + '%' };
+    }
+    if (userId != null && String(userId).trim() !== '') {
+      const uid = parseInt(userId, 10);
+      if (!Number.isNaN(uid) && uid > 0) where.userId = uid;
+    }
+    const pg = Math.max(1, parseInt(page, 10) || 1);
+    const ps = Math.max(1, Math.min(200, parseInt(pageSize, 10) || 50));
     const { count, rows } = await Order.findAndCountAll({
       where,
-      include: [{ model: User, as: 'user', attributes: ['id', 'username', 'email', 'nickname'] }],
+      include: [{ model: User, as: 'user', attributes: ['id', 'username', 'email', 'nickname', 'phone'] }],
       order: [['createdAt', 'DESC']],
-      limit: parseInt(pageSize),
-      offset: (parseInt(page) - 1) * parseInt(pageSize),
+      limit: ps,
+      offset: (pg - 1) * ps,
     });
     const list = rows.map((o) => {
       const s = STATUS_MAP[o.status] || STATUS_MAP.pending;
       return { ...o.toJSON(), statusText: s.text, statusType: s.type };
     });
-    res.json({ code: 0, data: { list, total: count, page: parseInt(page), pageSize: parseInt(pageSize) } });
+    res.json({ code: 0, data: { list, total: count, page: pg, pageSize: ps } });
   } catch (err) {
     console.error('[Order] adminList error:', err.message);
     res.status(500).json({ code: 500, message: '获取订单列表失败' });
