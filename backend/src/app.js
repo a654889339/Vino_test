@@ -10,6 +10,22 @@ const app = express();
 
 app.use(cors());
 app.use(morgan(config.nodeEnv === 'production' ? 'combined' : 'dev'));
+
+const orderController = require('./controllers/orderController');
+app.post(
+  '/api/orders/wechat/notify',
+  express.raw({ type: 'application/json' }),
+  (req, res) => {
+    try {
+      const text = req.body.toString('utf8');
+      req.body = JSON.parse(text);
+    } catch (e) {
+      return res.status(400).json({ code: 'FAIL', message: 'invalid body' });
+    }
+    return orderController.wechatPayNotify(req, res);
+  },
+);
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 

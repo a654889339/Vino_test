@@ -33,6 +33,7 @@
         <text class="order-price">¥{{item.price}}</text>
       </view>
       <view class="order-actions" wx:if="{{item.status === 'pending'}}">
+        <button class="btn-pay" size="mini" bindtap="payOrder" data-id="{{item.id}}">去支付</button>
         <button class="btn-cancel" size="mini" bindtap="cancelOrder" data-id="{{item.id}}">取消订单</button>
       </view>
     </view>

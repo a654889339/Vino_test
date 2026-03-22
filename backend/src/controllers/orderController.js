@@ -1,4 +1,5 @@
 const { Order, User, OrderLog } = require('../models');
+const wechatPay = require('../utils/wechatPayJsapi');
 
 function generateOrderNo() {
   const now = new Date();
@@ -245,5 +246,91 @@ exports.adminLogs = async (req, res) => {
   } catch (err) {
     console.error('[Order] adminLogs error:', err.message);
     res.status(500).json({ code: 500, message: '获取变更记录失败' });
+  }
+};
+
+/** 小程序：待支付订单发起微信支付统一下单，返回 wx.requestPayment 参数 */
+exports.payWechatPrepay = async (req, res) => {
+  try {
+    if (!wechatPay.isPayConfigured()) {
+      return res.status(503).json({ code: 503, message: '服务器未配置微信支付' });
+    }
+    const order = await Order.findByPk(req.params.id);
+    if (!order) return res.status(404).json({ code: 404, message: '订单不存在' });
+    if (order.userId !== req.user.id) return res.status(403).json({ code: 403, message: '无权操作' });
+    if (order.status !== 'pending') {
+      return res.status(400).json({ code: 400, message: '仅待支付订单可发起支付' });
+    }
+    const user = await User.findByPk(req.user.id);
+    if (!user || !user.openid) {
+      return res.status(400).json({ code: 400, message: '请使用微信登录后再支付' });
+    }
+    const totalFen = Math.round(Number(order.price) * 100);
+    if (totalFen < 1) {
+      return res.status(400).json({ code: 400, message: '订单金额无效' });
+    }
+    const prepay = await wechatPay.jsapiPrepay({
+      outTradeNo: order.orderNo,
+      description: (order.serviceTitle || '服务订单').slice(0, 120),
+      totalFen,
+      openid: user.openid,
+    });
+    const prepayId = prepay.prepay_id;
+    if (!prepayId) {
+      console.error('[Order] jsapi prepay no prepay_id', prepay);
+      const msg = prepay.message || '预下单失败';
+      return res.status(500).json({ code: 500, message: typeof msg === 'string' ? msg : '预下单失败' });
+    }
+    const paymentParams = wechatPay.buildMiniProgramPayParams(prepayId);
+    res.json({ code: 0, data: paymentParams });
+  } catch (err) {
+    const wxErr = err.response && err.response.data;
+    console.error('[Order] payWechatPrepay error:', wxErr || err.message);
+    const msg = (wxErr && (wxErr.message || wxErr.code)) || err.message || '预下单失败';
+    res.status(500).json({ code: 500, message: String(msg) });
+  }
+};
+
+/** 微信支付结果通知（APIv3），成功时订单改为进行中 */
+exports.wechatPayNotify = async (req, res) => {
+  try {
+    const body = req.body;
+    if (!body || !body.resource) {
+      return res.status(200).json({ code: 'SUCCESS', message: '成功' });
+    }
+    let data;
+    try {
+      data = wechatPay.decryptNotifyResource(body.resource);
+    } catch (decErr) {
+      console.error('[Order] wechat notify decrypt:', decErr.message);
+      return res.status(500).json({ code: 'FAIL', message: 'decrypt' });
+    }
+    const outTradeNo = data.out_trade_no;
+    const tradeState = data.trade_state;
+    const amountFen = data.amount && data.amount.payer_total != null
+      ? data.amount.payer_total
+      : (data.amount && data.amount.total);
+    if (tradeState !== 'SUCCESS') {
+      return res.status(200).json({ code: 'SUCCESS', message: '成功' });
+    }
+    const order = await Order.findOne({ where: { orderNo: outTradeNo } });
+    if (!order) {
+      console.error('[Order] wechat notify unknown order', outTradeNo);
+      return res.status(200).json({ code: 'SUCCESS', message: '成功' });
+    }
+    if (order.status !== 'pending') {
+      return res.status(200).json({ code: 'SUCCESS', message: '成功' });
+    }
+    const expectFen = Math.round(Number(order.price) * 100);
+    if (Number(amountFen) !== expectFen) {
+      console.error('[Order] wechat notify amount mismatch', amountFen, expectFen);
+      return res.status(500).json({ code: 'FAIL', message: 'amount' });
+    }
+    order.status = 'processing';
+    await order.save();
+    return res.status(200).json({ code: 'SUCCESS', message: '成功' });
+  } catch (err) {
+    console.error('[Order] wechatPayNotify error:', err.message);
+    return res.status(500).json({ code: 'FAIL', message: err.message });
   }
 };

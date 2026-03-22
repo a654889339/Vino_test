@@ -176,17 +176,22 @@ exports.removeProduct = async (req, res) => {
   }
 };
 
+function buildProductBindUrl(product) {
+  const frontendBase = process.env.FRONTEND_URL || 'http://106.54.50.88:5201';
+  let bindUrl = `${frontendBase}/bind-product?sn=${encodeURIComponent(product.serialNumber)}`;
+  if (product.guideSlug && String(product.guideSlug).trim()) {
+    bindUrl += '&guide=' + encodeURIComponent(String(product.guideSlug).trim());
+  }
+  return bindUrl;
+}
+
 /** 管理端：生成绑定用二维码 URL 及图片（dataUrl 供前端展示） */
 exports.getBindQrUrl = async (req, res) => {
   try {
     const QRCode = require('qrcode');
     const product = await InventoryProduct.findByPk(req.params.id);
     if (!product) return res.status(404).json({ code: 404, message: '商品不存在' });
-    const frontendBase = process.env.FRONTEND_URL || 'http://106.54.50.88:5201';
-    let bindUrl = `${frontendBase}/bind-product?sn=${encodeURIComponent(product.serialNumber)}`;
-    if (product.guideSlug && String(product.guideSlug).trim()) {
-      bindUrl += '&guide=' + encodeURIComponent(String(product.guideSlug).trim());
-    }
+    const bindUrl = buildProductBindUrl(product);
     const dataUrl = await QRCode.toDataURL(bindUrl, { width: 400, margin: 2 });
     res.json({ code: 0, data: { url: bindUrl, serialNumber: product.serialNumber, dataUrl } });
   } catch (err) {
@@ -305,24 +310,51 @@ exports.exportProducts = async (req, res) => {
       const t = new Date(d);
       return isNaN(t.getTime()) ? '' : t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0') + ' ' + String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0');
     };
-    const header = ['ID', '种类', '名称', '序列号', '商品配置', '排序', '状态', '标签', '添加时间', '被绑定用户ID'];
-    const rows = list.map(p => [
-      p.id,
-      p.category ? p.category.name : '',
-      p.name || '',
-      p.serialNumber || '',
-      p.guideSlug || '',
-      p.sortOrder ?? 0,
-      p.status === 'inactive' ? '禁用' : '启用',
-      p.tags || '',
-      formatDate(p.createdAt),
-      (boundByProduct[p.serialNumber] || []).join(', '),
-    ]);
-    const XLSX = require('xlsx');
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
-    XLSX.utils.book_append_sheet(wb, ws, '库存商品');
-    const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+    const QRCode = require('qrcode');
+    const ExcelJS = require('exceljs');
+    const header = ['ID', '种类', '名称', '序列号', '商品配置', '排序', '状态', '标签', '添加时间', '被绑定用户ID', '绑定链接', '绑定二维码'];
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('库存商品', {
+      views: [{ state: 'frozen', ySplit: 1 }],
+    });
+    const headerRow = ws.addRow(header);
+    headerRow.font = { bold: true };
+    ws.columns = [
+      { width: 8 }, { width: 12 }, { width: 18 }, { width: 16 }, { width: 14 },
+      { width: 8 }, { width: 8 }, { width: 20 }, { width: 20 }, { width: 22 },
+      { width: 48 }, { width: 16 },
+    ];
+    for (let i = 0; i < list.length; i++) {
+      const p = list[i];
+      const bindUrl = buildProductBindUrl(p);
+      const row = ws.addRow([
+        p.id,
+        p.category ? p.category.name : '',
+        p.name || '',
+        p.serialNumber || '',
+        p.guideSlug || '',
+        p.sortOrder ?? 0,
+        p.status === 'inactive' ? '禁用' : '启用',
+        p.tags || '',
+        formatDate(p.createdAt),
+        (boundByProduct[p.serialNumber] || []).join(', '),
+        bindUrl,
+        '',
+      ]);
+      row.height = 96;
+      try {
+        const pngBuffer = await QRCode.toBuffer(bindUrl, { type: 'png', width: 160, margin: 1 });
+        const imgId = wb.addImage({ buffer: pngBuffer, extension: 'png' });
+        const rowIdx = i + 1;
+        ws.addImage(imgId, {
+          tl: { col: 11, row: rowIdx },
+          ext: { width: 100, height: 100 },
+        });
+      } catch (qrErr) {
+        console.error('[Inventory] export QR error:', qrErr.message);
+      }
+    }
+    const buf = await wb.xlsx.writeBuffer();
     const filename = 'inventory_products_' + new Date().toISOString().slice(0, 10) + '.xlsx';
     res.setHeader('Content-Disposition', 'attachment; filename="' + filename + '"');
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');

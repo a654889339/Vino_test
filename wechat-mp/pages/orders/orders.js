@@ -48,7 +48,9 @@ Page({
     return app
       .request({ url })
       .then(res => {
-        const data = (res.data || []).map(o => ({
+        const raw = res.data || {};
+        const arr = raw.list || raw;
+        const data = (Array.isArray(arr) ? arr : []).map(o => ({
           ...o,
           statusText: (statusMap[o.status] || {}).text || o.status,
           statusType: (statusMap[o.status] || {}).type || 'default',
@@ -74,6 +76,35 @@ Page({
     if (!t) return '';
     const d = new Date(t);
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  },
+
+  payOrder(e) {
+    const id = e.currentTarget.dataset.id;
+    if (!id) return;
+    app
+      .request({ method: 'POST', url: `/orders/${id}/pay-wechat` })
+      .then((res) => {
+        const p = res.data || {};
+        wx.requestPayment({
+          timeStamp: p.timeStamp,
+          nonceStr: p.nonceStr,
+          package: p.package,
+          signType: p.signType || 'RSA',
+          paySign: p.paySign,
+          success: () => {
+            wx.showToast({ title: '支付成功', icon: 'success' });
+            this.loadOrders();
+          },
+          fail: (err) => {
+            const msg = (err && err.errMsg) || '';
+            if (msg.indexOf('cancel') !== -1) return;
+            wx.showToast({ title: '支付未完成', icon: 'none' });
+          },
+        });
+      })
+      .catch((err) => {
+        wx.showToast({ title: err.message || '无法发起支付', icon: 'none' });
+      });
   },
 
   cancelOrder(e) {

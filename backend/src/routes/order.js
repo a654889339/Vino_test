@@ -6,6 +6,7 @@ const router = Router();
 
 router.post('/', authMiddleware, orderController.create);
 router.get('/mine', authMiddleware, orderController.myOrders);
+router.post('/:id/pay-wechat', authMiddleware, orderController.payWechatPrepay);
 router.get('/admin/list', authMiddleware, adminMiddleware, orderController.adminList);
 router.get('/admin/stats', authMiddleware, adminMiddleware, orderController.adminStats);
 router.get('/:id', authMiddleware, orderController.detail);

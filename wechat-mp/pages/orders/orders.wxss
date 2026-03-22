@@ -131,9 +131,18 @@
 .order-actions {
   display: flex;
   justify-content: flex-end;
+  gap: 16rpx;
   margin-top: 20rpx;
   padding-top: 20rpx;
   border-top: 1rpx solid #f0f0f0;
+}
+
+.btn-pay {
+  font-size: 24rpx;
+  color: #fff;
+  background: #B91C1C;
+  border: none;
+  text-align: center;
 }
 
 .btn-cancel {
