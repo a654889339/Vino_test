@@ -1,5 +1,6 @@
 function getJwtExpMs(token) {
   if (!token || typeof token !== 'string') return null;
+  if (typeof my.base64ToArrayBuffer !== 'function') return null;
   const parts = token.split('.');
   if (parts.length < 2) return null;
   try {
