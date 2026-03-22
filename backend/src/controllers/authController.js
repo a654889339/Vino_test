@@ -540,7 +540,7 @@ exports.bindByQrImage = async (req, res) => {
 exports.myProducts = async (req, res) => {
   try {
     const { Op } = require('sequelize');
-    const { UserProduct, InventoryProduct, InventoryCategory, DeviceGuide } = require('../models');
+    const { UserProduct, InventoryProduct, InventoryCategory, DeviceGuide, ProductCategory } = require('../models');
     const list = await UserProduct.findAll({
       where: { userId: req.user.id },
       order: [['createdAt', 'DESC']],
@@ -550,11 +550,53 @@ exports.myProducts = async (req, res) => {
       where: { serialNumber: keys },
       include: [{ model: InventoryCategory, as: 'category', attributes: ['id', 'name'] }],
     });
+
+    const rawSlugs = products
+      .map(p => ((p.guideSlug && String(p.guideSlug).trim()) ? String(p.guideSlug).trim() : ''))
+      .filter(Boolean);
+    const slugExistsRows = rawSlugs.length
+      ? await DeviceGuide.findAll({
+        where: { slug: { [Op.in]: [...new Set(rawSlugs)] }, status: 'active' },
+        attributes: ['slug'],
+      })
+      : [];
+    const validSlugSet = new Set(slugExistsRows.map(r => r.slug).filter(Boolean));
+
+    const invCatNames = [...new Set(products.map(p => (p.category && p.category.name) || '').filter(Boolean))];
+    const productCats = invCatNames.length
+      ? await ProductCategory.findAll({ where: { name: { [Op.in]: invCatNames } }, attributes: ['id', 'name'] })
+      : [];
+    const invNameToPcId = {};
+    productCats.forEach(pc => { invNameToPcId[pc.name] = pc.id; });
+
+    const pcIds = productCats.map(pc => pc.id);
+    const defaultSlugByPcId = {};
+    if (pcIds.length) {
+      const dgList = await DeviceGuide.findAll({
+        where: { categoryId: { [Op.in]: pcIds }, status: 'active' },
+        attributes: ['slug', 'categoryId', 'sortOrder'],
+        order: [['sortOrder', 'ASC'], ['id', 'ASC']],
+      });
+      dgList.forEach(g => {
+        const cid = g.categoryId;
+        if (cid != null && g.slug && !defaultSlugByPcId[cid]) defaultSlugByPcId[cid] = String(g.slug).trim();
+      });
+    }
+
+    const resolveEffectiveSlug = (p) => {
+      const raw = (p.guideSlug && String(p.guideSlug).trim()) ? String(p.guideSlug).trim() : '';
+      if (raw && validSlugSet.has(raw)) return raw;
+      const cn = (p.category && p.category.name) || '';
+      const pcId = invNameToPcId[cn];
+      if (pcId != null && defaultSlugByPcId[pcId]) return defaultSlugByPcId[pcId];
+      return '';
+    };
+
     const infoMap = {};
-    const slugs = [];
+    const effectiveSlugs = [];
     products.forEach(p => {
-      const guideSlug = (p.guideSlug && String(p.guideSlug).trim()) ? String(p.guideSlug).trim() : '';
-      if (guideSlug) slugs.push(guideSlug);
+      const guideSlug = resolveEffectiveSlug(p);
+      if (guideSlug) effectiveSlugs.push(guideSlug);
       infoMap[p.serialNumber] = {
         productName: p.name,
         categoryName: (p.category && p.category.name) || '',
@@ -562,9 +604,9 @@ exports.myProducts = async (req, res) => {
       };
     });
     const guideBySlug = {};
-    if (slugs.length) {
+    if (effectiveSlugs.length) {
       const guides = await DeviceGuide.findAll({
-        where: { slug: { [Op.in]: [...new Set(slugs)] } },
+        where: { slug: { [Op.in]: [...new Set(effectiveSlugs)] } },
         attributes: ['slug', 'iconUrl', 'iconUrlThumb'],
       });
       guides.forEach(g => { guideBySlug[g.slug || ''] = { iconUrl: g.iconUrl || '', iconUrlThumb: g.iconUrlThumb || '' }; });

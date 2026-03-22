@@ -340,7 +340,7 @@ exports.getSampleExcel = (req, res) => {
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet([
       EXCEL_COLS,
-      ['空调', '示例商品A', 'AC001', 'guide-1', 0, '启用', '常用,新品'],
+      ['空调', '示例商品A', 'AC001', 'aircondition', 0, '启用', '常用,新品'],
     ]);
     XLSX.utils.book_append_sheet(wb, ws, '库存商品导入');
     const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
