@@ -31,8 +31,9 @@ scp -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedKeyTypes=+ssh-rsa -o StrictHo
 ```
 
 ## Project Location on Server
-- **Path**: `/home/ubuntu/Vino_test`
+- **Vino_test 路径**: `/home/ubuntu/Vino_test`
 - **GitHub Repo**: `https://github.com/a654889339/Vino_test`
+- **智科未来 zhikeweilai 路径**（与 Vino 同机并存时单独目录）: `/home/ubuntu/zhikeweilai`（自行 `git clone` 到该目录后在该目录执行 `docker compose`）
 - **Note**: ubuntu 用户家目录，无需 sudo 访问；docker 命令需 sudo
 
 ## Deployment Flow (Git Clone)
@@ -86,11 +87,19 @@ ssh ... ubuntu@106.54.50.88 "curl -s http://localhost:5202/api/health"
 ```
 
 ## Port Allocation (避免冲突)
-| 项目 | 前端 | 后端 | 数据库 |
-|------|------|------|--------|
-| ItsyourTurnMy | 5001 | 5002 / 8080 | 3306 |
-| ItsyourTurnRing | 5101 | 5102 | 3307 |
-| **Vino_test** | **5201** | **5202** | **3308** |
+| 项目 | 主前端 | 门店前端 | API | MySQL(宿主机→容器3306) |
+|------|--------|----------|-----|-------------------------|
+| ItsyourTurnMy | 5001 | — | 5002 / 8080 | 3306 |
+| ItsyourTurnRing | 5101 | — | 5102 | 3307 |
+| **Vino_test** | **5201** | **5203** | **5202** | **3308** |
+| **zhikeweilai** | **5301** | **5303** | **5302** | **3310**（3309 已被 jiuyoumi-mysql 占用） |
+
+同机双项目：`Vino_test` 使用容器名 `vino-*` 与卷 `vino-mysql-data`；`zhikeweilai` 使用 `zkwl-*` 与卷 `zkwl-mysql-data`，互不占用对方端口与容器名。
+
+```bash
+# 智科未来首次启动（在服务器 zhikeweilai 目录）
+sudo bash -c 'cd /home/ubuntu/zhikeweilai && docker compose up -d --build'
+```
 
 ## Important Notes
 1. Server now has `docker compose` v2 (use `docker compose`, the old `docker-compose` v1 has compatibility issues)
