@@ -24,7 +24,7 @@ Page({
   },
 
   loadAddress(id) {
-    app.request({ url: '/address' })
+    app.request({ url: '/addresses' })
       .then(res => {
         const addr = (res.data || []).find(a => String(a.id) === String(id));
         if (addr) {
@@ -71,7 +71,7 @@ Page({
     if (!detailAddress.trim()) return wx.showToast({ title: '请输入详细地址', icon: 'none' });
 
     const body = { contactName, contactPhone, country, customCountry, province, city, district, detailAddress, isDefault };
-    const url = editId ? '/address/' + editId : '/address';
+    const url = editId ? '/addresses/' + editId : '/addresses';
     const method = editId ? 'PUT' : 'POST';
 
     app.request({ url, method, data: body })

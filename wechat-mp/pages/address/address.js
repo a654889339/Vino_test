@@ -12,7 +12,7 @@ Page({
 
   loadAddresses() {
     this.setData({ loading: true });
-    app.request({ url: '/address' })
+    app.request({ url: '/addresses' })
       .then(res => {
         const list = (res.data || []).map(a => ({
           ...a,
@@ -34,7 +34,7 @@ Page({
 
   setDefault(e) {
     const id = e.currentTarget.dataset.id;
-    app.request({ url: '/address/' + id + '/default', method: 'PUT' })
+    app.request({ url: '/addresses/' + id + '/default', method: 'PUT' })
       .then(() => this.loadAddresses())
       .catch(() => wx.showToast({ title: '操作失败', icon: 'none' }));
   },
@@ -46,7 +46,7 @@ Page({
       content: '确定要删除这个地址吗？',
       success: res => {
         if (res.confirm) {
-          app.request({ url: '/address/' + id, method: 'DELETE' })
+          app.request({ url: '/addresses/' + id, method: 'DELETE' })
             .then(() => this.loadAddresses())
             .catch(() => wx.showToast({ title: '删除失败', icon: 'none' }));
         }
