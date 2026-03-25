@@ -98,6 +98,33 @@
               <van-field v-model="orderForm.contactPhone" label="联系电话" type="tel" placeholder="请输入联系电话" />
             </van-cell-group>
 
+            <van-cell-group inset class="mt12">
+              <van-field
+                v-model="orderForm.productSerial"
+                label="商品序列号"
+                placeholder="选填，可手动输入或点击下方我的商品"
+                maxlength="128"
+              />
+            </van-cell-group>
+            <div v-if="myProducts.length" class="saved-addr-section">
+              <div class="saved-addr-title">从「我的商品」选择序列号</div>
+              <div class="saved-addr-list">
+                <div
+                  v-for="p in myProducts"
+                  :key="p.productKey"
+                  class="saved-addr-item"
+                  :class="{ active: orderForm.productSerial === p.productKey }"
+                  @click="orderForm.productSerial = p.productKey"
+                >
+                  <div class="saved-addr-name">
+                    {{ p.productName }}
+                    <van-tag v-if="p.categoryName" type="primary" color="#B91C1C" size="mini" plain>{{ p.categoryName }}</van-tag>
+                  </div>
+                  <div class="saved-addr-detail" style="font-family:monospace;font-size:12px">{{ p.productKey }}</div>
+                </div>
+              </div>
+            </div>
+
             <!-- 国家/地区 -->
             <van-cell-group inset class="mt12">
               <div class="picker-trigger" @click="showInlineCountry = !showInlineCountry; showInlineArea = false">
@@ -170,7 +197,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted, inject } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { serviceApi, orderApi, addressApi } from '@/api';
+import { serviceApi, orderApi, addressApi, authApi } from '@/api';
 import { showToast, showDialog } from 'vant';
 import { areaList } from '@vant/area-data';
 
@@ -202,6 +229,7 @@ const orderForm = reactive({
   areaCode: '',
   detailAddress: '',
   remark: '',
+  productSerial: '',
 });
 
 const countryDisplay = computed(() => {
@@ -293,6 +321,15 @@ const loadSavedAddresses = async () => {
   } catch {}
 };
 
+const loadMyProducts = async () => {
+  try {
+    const res = await authApi.myProducts();
+    myProducts.value = res.data || [];
+  } catch {
+    myProducts.value = [];
+  }
+};
+
 const onConsult = () => {
   const s = serviceData.value;
   const msg = `我想咨询一下【${s.title || '该服务'}】${s.price ? '（¥' + s.price + '）' : ''}${s.description ? '：' + s.description : ''}`;
@@ -311,7 +348,9 @@ const onBookClick = () => {
   }
   showInlineCountry.value = false;
   showInlineArea.value = false;
+  orderForm.productSerial = '';
   loadSavedAddresses();
+  loadMyProducts();
   showOrderPopup.value = true;
 };
 
@@ -387,6 +426,7 @@ const submitOrder = async () => {
       contactPhone: orderForm.contactPhone.trim(),
       address: fullAddress,
       remark: orderForm.remark.trim(),
+      productSerial: orderForm.productSerial.trim(),
     });
     showOrderPopup.value = false;
     showDialog({ title: '预约成功', message: '您的服务已预约成功，我们会尽快安排工程师。' }).then(() => {

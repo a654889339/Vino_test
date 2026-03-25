@@ -18,6 +18,8 @@ Page({
     remark: '',
     countryList,
     countryIndex: -1,
+    productSerial: '',
+    myProducts: [],
   },
 
   onLoad(query) {
@@ -104,6 +106,16 @@ Page({
     this.setData({ remark: e.detail.value });
   },
 
+  inputProductSerial(e) {
+    const v = (e.detail.value || '').slice(0, 128);
+    this.setData({ productSerial: v });
+  },
+
+  selectProductSerial(e) {
+    const k = (e.currentTarget && e.currentTarget.dataset && e.currentTarget.dataset.key) || (e.target && e.target.dataset && e.target.dataset.key);
+    if (k) this.setData({ productSerial: String(k) });
+  },
+
   closeOrderForm() {
     this.setData({ showOrderForm: false });
   },
@@ -128,7 +140,7 @@ Page({
   },
 
   submitOrder() {
-    const { contactName, contactPhone, country, customCountry, regionText, detailAddress, serviceData } = this.data;
+    const { contactName, contactPhone, country, customCountry, regionText, detailAddress, serviceData, productSerial } = this.data;
     if (!contactName || !contactName.trim()) {
       my.showToast({ content: '请输入联系人', type: 'none' });
       return;
@@ -166,6 +178,7 @@ Page({
       contactPhone: contactPhone.trim(),
       address: fullAddress,
       remark: (this.data.remark || '').trim(),
+      productSerial: (productSerial || '').trim().slice(0, 128),
     };
 
     app.request({

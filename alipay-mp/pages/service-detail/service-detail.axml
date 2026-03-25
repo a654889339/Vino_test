@@ -67,6 +67,24 @@
       </view>
 
       <view class="form-group">
+        <text class="form-label">商品序列号（选填）</text>
+        <input class="form-input" placeholder="可输入或点击下方我的商品" value="{{productSerial}}" maxlength="128" onInput="inputProductSerial" />
+      </view>
+      <view class="form-group" a:if="{{myProducts.length}}">
+        <text class="form-label">我的商品</text>
+        <view
+          a:for="{{myProducts}}"
+          a:key="productKey"
+          class="product-sn-item {{productSerial === item.productKey ? 'active' : ''}}"
+          data-key="{{item.productKey}}"
+          onTap="selectProductSerial"
+        >
+          <text class="product-sn-name">{{item.productName}}</text>
+          <text class="product-sn-key">{{item.productKey}}</text>
+        </view>
+      </view>
+
+      <view class="form-group">
         <text class="form-label">国家/地区</text>
         <picker mode="selector" range="{{countryList}}" value="{{countryIndex}}" onChange="onCountryChange">
           <view class="picker-value">{{country || '请选择国家/地区'}}</view>

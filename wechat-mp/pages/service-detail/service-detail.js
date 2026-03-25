@@ -11,13 +11,15 @@ Page({
     submitting: false,
     contactName: '',
     contactPhone: '',
-    country: '',
+    country: '中国大陆',
     customCountry: '',
-    region: ['', '', ''],
+    region: [],
     detailAddress: '',
     remark: '',
     countryList,
-    countryIndex: -1,
+    countryIndex: 0,
+    productSerial: '',
+    myProducts: [],
   },
 
   onLoad(options) {
@@ -71,9 +73,86 @@ Page({
     wx.navigateTo({ url: '/pages/chat/chat?autoMsg=' + encodeURIComponent(msg) });
   },
 
+  preventTouchMove() {},
+  preventClose() {},
+
   onBookTap() {
     if (!app.checkLogin()) return;
-    this.setData({ showOrderForm: true });
+    this.prefillOrderFormAndOpen();
+  },
+
+  /** 打开预约弹窗并填充默认地址 + 用户资料中的手机（地址里缺省时补齐） */
+  prefillOrderFormAndOpen() {
+    const emptyForm = {
+      showOrderForm: true,
+      contactName: '',
+      contactPhone: '',
+      country: '中国大陆',
+      customCountry: '',
+      region: [],
+      detailAddress: '',
+      remark: '',
+      countryIndex: 0,
+      productSerial: '',
+    };
+
+    const trimStr = (v) => (v != null ? String(v).trim() : '');
+
+    /** 地址与资料合并：电话优先地址，缺省用账号手机号；详细地址用默认地址 */
+    const applyAddrWithProfile = (addr, profile) => {
+      const p = profile || {};
+      const a = addr || {};
+      const list = this.data.countryList;
+      let country = trimStr(a.country) || '中国大陆';
+      let idx = list.indexOf(country);
+      if (idx < 0) {
+        country = '中国大陆';
+        idx = 0;
+      }
+      let region = [];
+      if (country === '中国大陆' && (a.province || a.city || a.district)) {
+        region = [a.province || '', a.city || '', a.district || ''];
+      }
+      const phoneFromAddr = trimStr(a.contactPhone);
+      const phoneFromUser = trimStr(p.phone);
+      const nameFromAddr = trimStr(a.contactName);
+      const nameFromUser = trimStr(p.nickname);
+      const detail = trimStr(a.detailAddress);
+
+      this.setData({
+        showOrderForm: true,
+        contactName: nameFromAddr || nameFromUser,
+        contactPhone: phoneFromAddr || phoneFromUser,
+        country,
+        countryIndex: idx,
+        customCountry: trimStr(a.customCountry),
+        region,
+        detailAddress: detail,
+        remark: '',
+      });
+    };
+
+    Promise.all([
+      app.request({ url: '/addresses' }).catch(() => ({ data: [] })),
+      app.request({ url: '/auth/profile' }).catch(() => ({ data: {} })),
+    ])
+      .then(([addrRes, profRes]) => {
+        const list = addrRes.data || [];
+        const u = profRes.data || {};
+        if (list.length) {
+          const def = list.find((a) => a.isDefault) || list[0];
+          applyAddrWithProfile(def, u);
+        } else {
+          this.setData({
+            ...emptyForm,
+            contactName: trimStr(u.nickname),
+            contactPhone: trimStr(u.phone),
+          });
+        }
+      })
+      .catch(() => {
+        this.setData(emptyForm);
+      });
   },
 
   onCountryChange(e) {
@@ -81,12 +160,14 @@ Page({
     this.setData({
       countryIndex: i,
       country: this.data.countryList[i],
-      region: ['', '', ''],
+      region: [],
     });
   },
 
   onRegionChange(e) {
-    this.setData({ region: e.detail.value });
+    const v = e.detail.value;
+    const arr = Array.isArray(v) ? v : [];
+    this.setData({ region: arr });
   },
 
   inputContactName(e) {
@@ -105,6 +186,16 @@ Page({
     this.setData({ remark: e.detail.value });
   },
 
+  inputProductSerial(e) {
+    const v = (e.detail.value || '').slice(0, 128);
+    this.setData({ productSerial: v });
+  },
+
+  selectProductSerial(e) {
+    const k = e.currentTarget.dataset.key;
+    if (k) this.setData({ productSerial: String(k) });
+  },
+
   closeOrderForm() {
     this.setData({ showOrderForm: false });
   },
@@ -117,7 +208,7 @@ Page({
     } else if (country) {
       parts.push(country);
     }
-    if (country === '中国大陆' && (region[0] || region[1] || region[2])) {
+    if (country === '中国大陆' && region && region.length === 3 && (region[0] || region[1] || region[2])) {
       parts.push(region[0], region[1], region[2]);
     }
     if (detailAddress) parts.push(detailAddress);
@@ -142,7 +233,7 @@ Page({
       wx.showToast({ title: '请输入国家/地区名称', icon: 'none' });
       return;
     }
-    if (country === '中国大陆' && !region[0]) {
+    if (country === '中国大陆' && (!region || region.length < 3 || !region[0])) {
       wx.showToast({ title: '请选择省市区', icon: 'none' });
       return;
     }
@@ -163,6 +254,7 @@ Page({
       contactPhone: contactPhone.trim(),
       address: fullAddress,
       remark: (this.data.remark || '').trim(),
+      productSerial: (productSerial || '').trim().slice(0, 128),
     };
 
     app.request({

@@ -59,6 +59,12 @@ const Order = sequelize.define('Order', {
     type: DataTypes.TEXT,
     defaultValue: '',
   },
+  /** 用户填写的商品序列号（选填），与库存商品 serialNumber 对应 */
+  productSerial: {
+    type: DataTypes.STRING(128),
+    allowNull: true,
+    defaultValue: '',
+  },
 }, {
   tableName: 'orders',
   timestamps: true,

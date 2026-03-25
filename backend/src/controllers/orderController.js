@@ -23,10 +23,12 @@ const STATUS_MAP = {
 
 exports.create = async (req, res) => {
   try {
-    const { serviceId, serviceTitle, serviceIcon, price, contactName, contactPhone, address, appointmentTime, remark } = req.body;
+    const { serviceId, serviceTitle, serviceIcon, price, contactName, contactPhone, address, appointmentTime, remark, productSerial } = req.body;
     if (!serviceTitle || !price) {
       return res.status(400).json({ code: 400, message: '服务信息不完整' });
     }
+    let serial = productSerial != null ? String(productSerial).trim() : '';
+    if (serial.length > 128) serial = serial.slice(0, 128);
     const order = await Order.create({
       orderNo: generateOrderNo(),
       userId: req.user.id,
@@ -39,6 +41,7 @@ exports.create = async (req, res) => {
       address: address || '',
       appointmentTime: appointmentTime || null,
       remark: remark || '',
+      productSerial: serial || '',
       status: 'pending',
     });
     res.json({ code: 0, data: order });
