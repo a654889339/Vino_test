@@ -20,6 +20,8 @@ Page({
     countryIndex: 0,
     productSerial: '',
     myProducts: [],
+    productSerialPickerLabels: [],
+    productSerialPickerIndex: 0,
   },
 
   onLoad(options) {
@@ -76,6 +78,17 @@ Page({
   preventTouchMove() {},
   preventClose() {},
 
+  /** 将 /auth/my-products 转为列表 + 下拉展示用文案 */
+  buildMyProductsPickerPayload(res) {
+    const list = (res && res.data) || [];
+    const productSerialPickerLabels = list.map((p) => {
+      const name = ((p && p.productName) || '商品').trim() || '商品';
+      const key = String((p && p.productKey) || '').trim();
+      return key ? `${name} · ${key}` : name;
+    });
+    return { myProducts: list, productSerialPickerLabels };
+  },
+
   onBookTap() {
     if (!app.checkLogin()) return;
     this.prefillOrderFormAndOpen();
@@ -94,12 +107,13 @@ Page({
       remark: '',
       countryIndex: 0,
       productSerial: '',
+      productSerialPickerIndex: 0,
     };
 
     const trimStr = (v) => (v != null ? String(v).trim() : '');
 
     /** 地址与资料合并：电话优先地址，缺省用账号手机号；详细地址用默认地址 */
-    const applyAddrWithProfile = (addr, profile) => {
+    const applyAddrWithProfile = (addr, profile, mpPayload = {}) => {
       const p = profile || {};
       const a = addr || {};
       const list = this.data.countryList;
@@ -129,29 +143,37 @@ Page({
         region,
         detailAddress: detail,
         remark: '',
+        ...mpPayload,
       });
     };
 
     Promise.all([
       app.request({ url: '/addresses' }).catch(() => ({ data: [] })),
       app.request({ url: '/auth/profile' }).catch(() => ({ data: {} })),
+      app.request({ url: '/auth/my-products' }).catch(() => ({ data: [] })),
     ])
-      .then(([addrRes, profRes]) => {
+      .then(([addrRes, profRes, mpRes]) => {
+        const mpPayload = this.buildMyProductsPickerPayload(mpRes);
         const list = addrRes.data || [];
         const u = profRes.data || {};
         if (list.length) {
           const def = list.find((a) => a.isDefault) || list[0];
-          applyAddrWithProfile(def, u);
+          applyAddrWithProfile(def, u, mpPayload);
         } else {
           this.setData({
             ...emptyForm,
             contactName: trimStr(u.nickname),
             contactPhone: trimStr(u.phone),
+            ...mpPayload,
           });
         }
       })
       .catch(() => {
-        this.setData(emptyForm);
+        this.setData({
+          ...emptyForm,
+          myProducts: [],
+          productSerialPickerLabels: [],
+        });
       });
   },
 
@@ -188,12 +210,24 @@ Page({
 
   inputProductSerial(e) {
     const v = (e.detail.value || '').slice(0, 128);
-    this.setData({ productSerial: v });
+    const { myProducts } = this.data;
+    let idx = this.data.productSerialPickerIndex;
+    if (Array.isArray(myProducts) && myProducts.length) {
+      const i = myProducts.findIndex((p) => String(p.productKey || '') === v);
+      if (i >= 0) idx = i;
+    }
+    this.setData({ productSerial: v, productSerialPickerIndex: idx });
   },
 
-  selectProductSerial(e) {
-    const k = e.currentTarget.dataset.key;
-    if (k) this.setData({ productSerial: String(k) });
+  onMyProductSerialPick(e) {
+    const i = parseInt(e.detail.value, 10);
+    const p = this.data.myProducts[i];
+    if (p && p.productKey) {
+      this.setData({
+        productSerialPickerIndex: i,
+        productSerial: String(p.productKey).slice(0, 128),
+      });
+    }
   },
 
   closeOrderForm() {
@@ -216,7 +250,7 @@ Page({
   },
 
   submitOrder() {
-    const { contactName, contactPhone, country, customCountry, region, detailAddress, serviceData } = this.data;
+    const { contactName, contactPhone, country, customCountry, region, detailAddress, serviceData, productSerial } = this.data;
     if (!contactName || !contactName.trim()) {
       wx.showToast({ title: '请输入联系人', icon: 'none' });
       return;

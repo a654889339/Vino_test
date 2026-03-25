@@ -88,26 +88,22 @@
           <text class="form-label">商品序列号（选填）</text>
           <input
             class="form-input"
-            placeholder="可输入或点击下方我的商品"
+            placeholder="可手动输入，或下方下拉选择「我的商品」"
             value="{{productSerial}}"
             maxlength="128"
             adjust-position="{{true}}"
             cursor-spacing="24"
             bindinput="inputProductSerial"
           />
-        </view>
-        <view class="form-group" wx:if="{{myProducts.length}}">
-          <text class="form-label">我的商品</text>
-          <view
-            wx:for="{{myProducts}}"
-            wx:key="productKey"
-            class="product-sn-item {{productSerial === item.productKey ? 'active' : ''}}"
-            data-key="{{item.productKey}}"
-            catchtap="selectProductSerial"
+          <picker
+            wx:if="{{myProducts.length}}"
+            mode="selector"
+            range="{{productSerialPickerLabels}}"
+            value="{{productSerialPickerIndex}}"
+            bindchange="onMyProductSerialPick"
           >
-            <text class="product-sn-name">{{item.productName}}</text>
-            <text class="product-sn-key">{{item.productKey}}</text>
-          </view>
+            <view class="picker-value picker-value-serial">从「我的商品」选择序列号 ▾</view>
+          </picker>
         </view>
 
         <view class="form-group">

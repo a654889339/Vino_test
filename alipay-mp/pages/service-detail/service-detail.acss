@@ -248,6 +248,12 @@
   color: #333;
 }
 
+.picker-value-serial {
+  margin-top: 16rpx;
+  color: #B91C1C;
+  font-size: 26rpx;
+}
+
 .form-submit {
   margin-top: 32rpx;
 }
@@ -280,25 +286,3 @@
   border: none;
 }
 
-.product-sn-item {
-  padding: 16rpx 20rpx;
-  margin-bottom: 12rpx;
-  background: #f9f9f9;
-  border: 2rpx solid transparent;
-  border-radius: 12rpx;
-}
-.product-sn-item.active {
-  border-color: #B91C1C;
-  background: #fff5f5;
-}
-.product-sn-name {
-  display: block;
-  font-size: 28rpx;
-  font-weight: 500;
-  margin-bottom: 6rpx;
-}
-.product-sn-key {
-  font-size: 24rpx;
-  color: #666;
-  font-family: monospace;
-}

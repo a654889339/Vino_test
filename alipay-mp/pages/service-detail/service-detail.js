@@ -20,6 +20,8 @@ Page({
     countryIndex: -1,
     productSerial: '',
     myProducts: [],
+    productSerialPickerLabels: [],
+    productSerialPickerIndex: 0,
   },
 
   onLoad(query) {
@@ -73,9 +75,30 @@ Page({
     my.navigateTo({ url: '/pages/chat/chat?autoMsg=' + encodeURIComponent(msg) });
   },
 
+  buildMyProductsPickerPayload(res) {
+    const list = (res && res.data) || [];
+    const productSerialPickerLabels = list.map((p) => {
+      const name = ((p && p.productName) || '商品').trim() || '商品';
+      const key = String((p && p.productKey) || '').trim();
+      return key ? `${name} · ${key}` : name;
+    });
+    return { myProducts: list, productSerialPickerLabels };
+  },
+
   onBookTap() {
     if (!app.checkLogin()) return;
-    this.setData({ showOrderForm: true });
+    this.setData({
+      showOrderForm: true,
+      productSerial: '',
+      productSerialPickerIndex: 0,
+    });
+    app.request({ url: '/auth/my-products' })
+      .then((res) => {
+        this.setData(this.buildMyProductsPickerPayload(res));
+      })
+      .catch(() => {
+        this.setData({ myProducts: [], productSerialPickerLabels: [] });
+      });
   },
 
   onCountryChange(e) {
@@ -108,12 +131,24 @@ Page({
 
   inputProductSerial(e) {
     const v = (e.detail.value || '').slice(0, 128);
-    this.setData({ productSerial: v });
+    const { myProducts } = this.data;
+    let idx = this.data.productSerialPickerIndex;
+    if (Array.isArray(myProducts) && myProducts.length) {
+      const i = myProducts.findIndex((p) => String(p.productKey || '') === v);
+      if (i >= 0) idx = i;
+    }
+    this.setData({ productSerial: v, productSerialPickerIndex: idx });
   },
 
-  selectProductSerial(e) {
-    const k = (e.currentTarget && e.currentTarget.dataset && e.currentTarget.dataset.key) || (e.target && e.target.dataset && e.target.dataset.key);
-    if (k) this.setData({ productSerial: String(k) });
+  onMyProductSerialPick(e) {
+    const i = parseInt(e.detail.value, 10);
+    const p = this.data.myProducts[i];
+    if (p && p.productKey) {
+      this.setData({
+        productSerialPickerIndex: i,
+        productSerial: String(p.productKey).slice(0, 128),
+      });
+    }
   },
 
   closeOrderForm() {
