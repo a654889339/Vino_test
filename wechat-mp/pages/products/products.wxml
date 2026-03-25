@@ -44,7 +44,7 @@
   <block wx:elif="{{guide.id}}">
     <view class="hero-block">
       <view class="hero" style="background:{{guide.gradient || '#333'}}">
-        <image wx:if="{{guide.coverImage}}" src="{{guide.coverImage}}" class="hero-img" mode="aspectFill" bindtap="previewCover" />
+        <image wx:if="{{guide.coverImage}}" src="{{guide.coverImage}}" class="hero-img" mode="widthFix" bindtap="previewCover" />
         <view wx:else class="hero-fallback">
           <image wx:if="{{guide.iconUrl}}" src="{{guide.iconUrl}}" class="hero-icon-img" />
           <text wx:else class="hero-emoji">{{guide.emoji}}</text>

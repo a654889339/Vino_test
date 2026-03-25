@@ -44,7 +44,7 @@
   <block a:elif="{{guide.id}}">
     <view class="hero-block">
       <view class="hero" style="background:{{guide.gradient || '#333'}}">
-        <image a:if="{{guide.coverImage}}" src="{{guide.coverImage}}" class="hero-img" mode="aspectFill" onTap="previewCover" />
+        <image a:if="{{guide.coverImage}}" src="{{guide.coverImage}}" class="hero-img" mode="widthFix" onTap="previewCover" />
         <view a:else class="hero-fallback">
           <image a:if="{{guide.iconUrl}}" src="{{guide.iconUrl}}" class="hero-icon-img" />
           <text a:else class="hero-emoji">{{guide.emoji}}</text>

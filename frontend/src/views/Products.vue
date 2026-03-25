@@ -331,7 +331,8 @@ onMounted(async () => {
 
 .hero-section { position: relative; }
 .hero-video-wrap, .hero-img-wrap { position: relative; cursor: pointer; }
-.hero-img { width: 100%; height: 260px; object-fit: cover; display: block; }
+/* 主图随图片自然高度完整展示，不裁切 */
+.hero-img { width: 100%; height: auto; display: block; }
 
 .hero-play-btn {
   position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -347,7 +348,7 @@ onMounted(async () => {
 .hero-gradient h2 { font-size: 24px; font-weight: 700; color: #fff; }
 
 .hero-placeholder {
-  width: 100%; height: 260px; display: flex; align-items: center; justify-content: center;
+  width: 100%; min-height: 220px; height: 220px; display: flex; align-items: center; justify-content: center;
 }
 
 /* ===== Media（红框区域元素居中） ===== */
