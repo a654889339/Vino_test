@@ -1,5 +1,6 @@
 <template>
   <div class="products-page">
+    <PageThemeLayer path="/products" />
     <!-- 第一栏：只显示商品种类 -->
     <div class="product-nav">
       <div class="product-nav-scroll">
@@ -124,6 +125,7 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { showImagePreview } from 'vant';
 import { guideApi } from '@/api';
 import LodImg from '@/components/LodImg.vue';
+import PageThemeLayer from '@/components/PageThemeLayer.vue';
 
 const categories = ref([]);
 const selectedCategoryId = ref(null);
@@ -258,6 +260,7 @@ onMounted(async () => {
 
 <style scoped>
 .products-page {
+  position: relative;
   background: var(--vino-bg);
   min-height: 100vh;
 }

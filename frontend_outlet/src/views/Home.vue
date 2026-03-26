@@ -1,5 +1,6 @@
 <template>
   <div class="home">
+    <PageThemeLayer :items="allItems" path="/" />
     <!-- 独立背景层：铺在整页最底层，红框处（卡片两侧）才能透出背景图 -->
     <div class="home-bg" aria-hidden="true">
       <van-swipe v-if="heroBgList.length" class="home-bg-swipe" :autoplay="4000" indicator-color="rgba(255,255,255,0.5)">
@@ -117,7 +118,7 @@
           <div class="service-info">
             <h4>{{ item.title }}</h4>
             <p>{{ item.desc }}</p>
-            <span class="price">¥{{ item.price }}</span>
+            <span class="price">{{ formatPriceDisplay(item.price) }}</span>
           </div>
         </div>
       </div>
@@ -151,7 +152,9 @@ import QRCode from 'qrcode';
 import jsQR from 'jsqr';
 import { showToast } from 'vant';
 import { homeConfigApi, authApi } from '@/api';
+import PageThemeLayer from '@/components/PageThemeLayer.vue';
 import LodImg from '@/components/LodImg.vue';
+import { formatPriceDisplay } from '@/utils/currency';
 
 const router = useRouter();
 const showShare = ref(false);
@@ -367,7 +370,7 @@ const copyUrl = async () => {
   right: 0;
   height: 78vh;
   min-height: 480px;
-  z-index: 0;
+  z-index: 1;
   background: transparent;
 }
 .home-bg-swipe {
@@ -392,7 +395,7 @@ const copyUrl = async () => {
 /* ===== Hero：仅顶部内容区，背景透明以露出 home-bg ===== */
 .hero {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   height: 54vh;
   min-height: 320px;
   max-height: 520px;
@@ -419,7 +422,7 @@ const copyUrl = async () => {
 /* ===== Card Sections：半透明 + 两侧留白，层级低于底部 tabbar，避免遮挡首页/产品等按钮 ===== */
 .card-section {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   margin: 12px;
   border-radius: 16px;
   background: linear-gradient(to bottom, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.72) 50%, rgba(255,255,255,0.5) 100%);
@@ -438,7 +441,7 @@ const copyUrl = async () => {
 }
 /* 为你推荐与卡片区同级，层级低于 tabbar */
 .section-recommend {
-  z-index: 1;
+  z-index: 2;
 }
 
 /* ===== Section common ===== */

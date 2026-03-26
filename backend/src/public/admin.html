@@ -193,6 +193,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <div class="dash-nav-item" data-page="inventory" onclick="switchPage('inventory')">商品库存</div>
     <div class="dash-nav-item" data-page="homeConfig" onclick="switchPage('homeConfig')">首页配置</div>
     <div class="dash-nav-item" data-page="homeAnimConfig" onclick="switchPage('homeAnimConfig')">首页动画配置</div>
+    <div class="dash-nav-item" data-page="pageThemeConfig" onclick="switchPage('pageThemeConfig')">页面基础配置</div>
     <div class="dash-nav-item" data-page="mineConfig" onclick="switchPage('mineConfig')">个人中心配置</div>
     <div class="dash-nav-item" data-page="messages" onclick="switchPage('messages')">留言板</div>
   </div>
@@ -264,6 +265,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
     <!-- 服务配置 Page -->
     <div class="dash-page" id="page-serviceConfig">
+      <div class="dash-section">
+        <div class="section-header">
+          <h3>币种</h3>
+        </div>
+        <p style="font-size:13px;color:#666;margin-bottom:12px">用于前台服务列表、详情、预约页及订单金额展示。价格为 0 时仅显示数字「0」，不显示币种符号。</p>
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:8px">
+          <label for="serviceCurrencySymbol" style="font-size:14px;color:var(--text)">币种符号</label>
+          <input type="text" id="serviceCurrencySymbol" class="form-input" maxlength="8" placeholder="如 ¥ $ €" style="width:120px;padding:8px 12px" />
+          <button type="button" class="refresh-btn" onclick="saveServiceCurrency()">保存</button>
+        </div>
+      </div>
       <div class="dash-section">
         <div class="section-header">
           <h3>服务种类</h3>
@@ -474,6 +486,24 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       </div>
     </div>
 
+    <!-- 页面基础配置（各主路由背景色/透明度/可选整页背景图） -->
+    <div class="dash-page" id="page-pageThemeConfig">
+      <div class="dash-section">
+        <div class="section-header">
+          <h3>页面基础配置</h3>
+        </div>
+        <p style="font-size:13px;color:#666;margin-bottom:16px">为首页、服务、产品、订单、我的等主页面配置<strong>背景色</strong>与<strong>透明度</strong>（0–100），可选上传<strong>整页背景图</strong>。与「首页动画配置」中的首页轮播图可同时存在：本配置位于最底层，首页轮播图叠在其上。</p>
+        <div style="margin-bottom:16px">
+          <button class="btn" onclick="openPageThemeEditor()" style="background:#059669;color:#fff">+ 新增页面配置</button>
+        </div>
+        <table class="order-table">
+          <thead><tr><th>ID</th><th>路由</th><th>说明</th><th>背景色</th><th>透明度</th><th>背景图</th><th>排序</th><th>状态</th><th>操作</th></tr></thead>
+          <tbody id="pageThemeBody"></tbody>
+        </table>
+        <div class="order-empty" id="pageThemeEmpty" style="display:none">暂无页面基础配置</div>
+      </div>
+    </div>
+
     <!-- 个人中心配置 Page -->
     <div class="dash-page" id="page-mineConfig">
       <div class="dash-section">
@@ -542,7 +572,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <input class="form-input" id="hcTitle" placeholder="显示标题" />
         </div>
         <div class="form-group">
-          <label>描述/副标题</label>
+          <label id="hcDescLabel">描述/副标题</label>
           <input class="form-input" id="hcDesc" placeholder="简短描述" />
         </div>
         <div class="form-group" id="hcIconGroup">
@@ -574,8 +604,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           </div>
         </div>
         <div class="form-group" id="hcPathGroup">
-          <label>跳转路径</label>
+          <label id="hcPathGroupLabel">跳转路径</label>
           <input class="form-input" id="hcPath" value="/services" placeholder="如 /services 或 /service/1" />
+          <select class="form-input" id="hcPathSelect" style="display:none;margin-top:8px" onchange="onPageThemePathChange()">
+            <option value="/">首页（/）</option>
+            <option value="/services">服务（/services）</option>
+            <option value="/products">产品（/products）</option>
+            <option value="/orders">订单（/orders）</option>
+            <option value="/mine">我的（/mine）</option>
+          </select>
         </div>
         <div class="form-group" id="hcPriceGroup" style="display:none">
           <label>价格</label>
@@ -1073,7 +1110,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <div class="admin-remark-section" style="margin-top:16px">
         <h4>修改金额</h4>
         <div style="display:flex;gap:8px;align-items:center">
-          <span style="font-size:13px;color:#666">¥</span>
+          <span id="currencyPrefixLog" style="font-size:13px;color:#666">¥</span>
           <input type="number" id="priceInput" placeholder="新金额" step="0.01" min="0" style="width:120px;padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px" />
           <button onclick="submitPriceChange()" style="padding:6px 16px;background:#D97706;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px">修改</button>
         </div>
@@ -1156,14 +1193,14 @@ async function api(path, options = {}) {
 let currentHCPage = 'homeConfig';
 let currentGroup = 'ToC';
 
-const tocPages = ['overview','orders','users','guides','serviceConfig','inventory','homeConfig','homeAnimConfig','mineConfig','messages'];
+const tocPages = ['overview','orders','users','guides','serviceConfig','inventory','homeConfig','homeAnimConfig','pageThemeConfig','mineConfig','messages'];
 const outletPages = ['outletOverview','outletOrders','outletUsers','outletHomeConfig','outletHomeAnimConfig','outletMineConfig','outletMessages'];
 
 const tocNavItems = [
   {page:'overview',label:'概览'},{page:'orders',label:'订单管理'},{page:'users',label:'用户管理'},
   {page:'guides',label:'商品配置'},{page:'serviceConfig',label:'服务配置'},{page:'inventory',label:'商品库存'},
   {page:'homeConfig',label:'首页配置'},{page:'homeAnimConfig',label:'首页动画配置'},
-  {page:'mineConfig',label:'个人中心配置'},{page:'messages',label:'留言板'}
+  {page:'pageThemeConfig',label:'页面基础配置'},{page:'mineConfig',label:'个人中心配置'},{page:'messages',label:'留言板'}
 ];
 const outletNavItems = [
   {page:'outletOverview',label:'概览'},{page:'outletOrders',label:'订单管理'},{page:'outletUsers',label:'用户管理'},
@@ -1215,6 +1252,7 @@ function switchPage(page) {
   if (page === 'inventory') { invProductPage = 1; loadInventoryCategories(); loadInventoryProducts(); }
   if (page === 'homeConfig') { currentHCPage = 'homeConfig'; loadHomeConfig(); }
   if (page === 'homeAnimConfig') { currentHCPage = 'homeAnimConfig'; loadHomeConfig(); }
+  if (page === 'pageThemeConfig') { currentHCPage = 'pageTheme'; loadHomeConfig(); }
   if (page === 'mineConfig') loadMineConfig();
   if (page === 'messages') { loadConversations(); startMsgPolling(); }
   if (page === 'outletOverview') loadOutletStats();
@@ -1287,6 +1325,7 @@ function showDashboard(user) {
   if (outletSidebar) outletSidebar.style.display = user.role !== 'admin' ? 'none' : '';
   renderTopNav(tocNavItems, 'overview');
   loadOrderStats();
+  loadServiceCurrency();
 }
 
 function handleLogout() {
@@ -1343,6 +1382,7 @@ function fmtTime(t) { return t ? new Date(t).toLocaleString('zh-CN', { month: '2
 const statusLabels = { pending: '待支付', paid: '已支付', processing: '进行中', completed: '已完成', cancelled: '已取消' };
 
 async function loadOrders() {
+  await loadServiceCurrency();
   loadOrderStats();
   const tbody = document.getElementById('orderTableBody');
   const empty = document.getElementById('orderEmpty');
@@ -1366,7 +1406,7 @@ async function loadOrders() {
           <td>${o.user ? (o.user.nickname || o.user.username) : '-'}</td>
           <td><strong>${o.serviceTitle}</strong></td>
           <td style="font-size:12px;font-family:monospace;max-width:140px;word-break:break-all">${o.productSerial ? escapeHtml(String(o.productSerial)) : '-'}</td>
-          <td style="color:var(--primary);font-weight:600">¥${o.price}</td>
+          <td style="color:var(--primary);font-weight:600">${formatAdminPrice(o.price)}</td>
           <td><span class="status-badge ${o.status}">${statusLabels[o.status] || o.status}</span></td>
           <td style="font-size:12px">${o.contactName || '-'}<br>${o.contactPhone || ''}</td>
           <td style="font-size:12px;max-width:200px;word-break:break-all">${o.address || '-'}</td>
@@ -1761,8 +1801,52 @@ async function deleteCategory(id) {
 // ---------- 服务配置 ----------
 let allServiceCategories = [];
 let allServices = [];
+let adminCurrencySymbol = '¥';
+let serviceCurrencyConfigId = null;
+
+function formatAdminPrice(amount) {
+  const sym = adminCurrencySymbol || '¥';
+  const n = Number(amount);
+  if (!Number.isFinite(n)) return String(amount ?? '-');
+  if (n === 0) return '0';
+  const s = Number.isInteger(n) ? String(n) : String(Number.parseFloat(Number(n).toFixed(2)));
+  return sym + s;
+}
+
+async function loadServiceCurrency() {
+  try {
+    const res = await api('/home-config?section=currency');
+    const list = (res.data || []).filter(i => i.status === 'active');
+    const row = list[0];
+    serviceCurrencyConfigId = row ? row.id : null;
+    adminCurrencySymbol = (row && row.title) ? String(row.title).trim() || '¥' : '¥';
+    const input = document.getElementById('serviceCurrencySymbol');
+    if (input) input.value = adminCurrencySymbol;
+    const prefix = document.getElementById('currencyPrefixLog');
+    if (prefix) prefix.textContent = adminCurrencySymbol;
+  } catch (_) {}
+}
+
+async function saveServiceCurrency() {
+  const el = document.getElementById('serviceCurrencySymbol');
+  const sym = (el && el.value.trim()) ? el.value.trim() : '¥';
+  const body = { section: 'currency', title: sym, status: 'active' };
+  try {
+    const res = serviceCurrencyConfigId
+      ? await api('/home-config/' + serviceCurrencyConfigId, { method: 'PUT', body })
+      : await api('/home-config', { method: 'POST', body });
+    if (res.code === 0) {
+      adminCurrencySymbol = sym;
+      if (res.data && res.data.id) serviceCurrencyConfigId = res.data.id;
+      const prefix = document.getElementById('currencyPrefixLog');
+      if (prefix) prefix.textContent = adminCurrencySymbol;
+      alert('已保存');
+    } else alert(res.message || '保存失败');
+  } catch (_) { alert('保存失败'); }
+}
 
 async function loadServiceCategories() {
+  await loadServiceCurrency();
   const tbody = document.getElementById('serviceCategoryTableBody');
   if (!tbody) return;
   try {
@@ -1818,8 +1902,8 @@ function renderServicesTable() {
     <td><strong>${s.title}</strong></td>
     <td style="font-size:12px;color:#666;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escapeHtml(s.description||'')}">${(s.description||'').slice(0,24)}${(s.description||'').length>24?'…':''}</td>
     <td>${s.iconUrl ? '<img src="'+escapeHtml(s.iconUrl)+'" style="width:32px;height:32px;object-fit:contain;border-radius:6px;vertical-align:middle" />' : (s.icon ? s.icon : '-')}</td>
-    <td>¥${s.price}</td>
-    <td style="font-size:12px;color:#999">${s.originPrice != null ? '¥'+s.originPrice : '-'}</td>
+    <td>${formatAdminPrice(s.price)}</td>
+    <td style="font-size:12px;color:#999">${s.originPrice != null ? formatAdminPrice(s.originPrice) : '-'}</td>
     <td><span style="display:inline-block;width:20px;height:20px;border-radius:4px;border:1px solid #eee;background:${s.bg||'#B91C1C'}"></span></td>
     <td><span style="padding:2px 8px;border-radius:4px;font-size:12px;${s.status==='active'?'background:#D1FAE5;color:#059669':'background:#F3F4F6;color:#999'}">${s.status==='active'?'启用':'禁用'}</span></td>
     <td>
@@ -2521,10 +2605,12 @@ let hcFilterSection = 'all';
 let hcAnimFilterSection = 'all';
 const HOME_CONFIG_SECTIONS = ['navLg', 'navSm', 'hotService', 'recommend', 'myProducts'];
 const HOME_ANIM_SECTIONS = ['splash', 'headerLogo', 'homeBg'];
-const SECTION_LABELS = { banner: '轮播横幅', nav: '快捷导航', navLg: '自助预约(大)', navSm: '自助预约(小)', hotService: '自助服务', recommend: '服务产品', splash: '开场动画', headerLogo: '首页Logo', homeBg: '首页背景', navSectionTitle: '自助预约区块标题', hotServiceTitle: '自助服务区块标题', recommendTitle: '服务产品区块标题', myProducts: '我的商品', tabbar: '底部栏' };
+const PAGE_THEME_PATH_LABELS = { '/': '首页', '/services': '服务', '/products': '产品', '/orders': '订单', '/mine': '我的' };
+const SECTION_LABELS = { banner: '轮播横幅', nav: '快捷导航', navLg: '自助预约(大)', navSm: '自助预约(小)', hotService: '自助服务', recommend: '服务产品', splash: '开场动画', headerLogo: '首页Logo', homeBg: '首页背景', pageTheme: '页面背景', navSectionTitle: '自助预约区块标题', hotServiceTitle: '自助服务区块标题', recommendTitle: '服务产品区块标题', myProducts: '我的商品', tabbar: '底部栏', currency: '币种' };
 
 async function loadHomeConfig() {
   try {
+    await loadServiceCurrency();
     const res = await api('/home-config?all=1');
     allHCItems = res.data || [];
     const offsetItem = allHCItems.find(i => i.section === 'homeSectionOffset' && i.status === 'active');
@@ -2533,6 +2619,7 @@ async function loadHomeConfig() {
     renderHCTable();
     if (currentHCPage === 'homeAnimConfig') renderHCAnimTable();
     renderTabbarTable();
+    renderPageThemeTable();
   } catch { document.getElementById('hcBody').innerHTML = ''; }
 }
 
@@ -2663,7 +2750,7 @@ function renderHCTable() {
     <td>${h.imageUrl ? '<img src="'+(h.imageUrlThumb||h.imageUrl)+'" data-full-src="'+(h.imageUrlThumb?(h.imageUrl||''):'')+'" style="max-width:60px;max-height:30px;border-radius:4px;background:#1a1a1a;padding:2px" class="lod-img" />' : '-'}</td>
     <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px" title="${h.color||''}">${h.color ? '<span style="display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:middle;margin-right:4px;background:'+h.color+'"></span>'+h.color.substring(0,25) : '-'}</td>
     <td style="font-size:12px">${h.path||'-'}</td>
-    <td>${h.price ? '¥'+h.price : '-'}</td>
+    <td>${h.price !== undefined && h.price !== null && String(h.price).trim() !== '' ? formatAdminPrice(h.price) : '-'}</td>
     <td>${h.sortOrder}</td>
     <td><span style="display:inline-block;padding:4px 14px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:500;transition:all .2s;${h.status==='active'?'background:#D1FAE5;color:#059669':'background:#F3F4F6;color:#999'}" onclick="toggleHCStatus(${h.id},'${h.status}')">${h.status==='active'?'启用':'禁用'}</span></td>
     <td style="white-space:nowrap">
@@ -2691,7 +2778,7 @@ function renderHCAnimTable() {
     <td>${h.imageUrl ? '<img src="'+(h.imageUrlThumb||h.imageUrl)+'" data-full-src="'+(h.imageUrlThumb?(h.imageUrl||''):'')+'" style="max-width:60px;max-height:30px;border-radius:4px;background:#1a1a1a;padding:2px" class="lod-img" />' : '-'}</td>
     <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px" title="${h.color||''}">${h.color ? '<span style="display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:middle;margin-right:4px;background:'+h.color+'"></span>'+h.color.substring(0,25) : '-'}</td>
     <td style="font-size:12px">${h.path||'-'}</td>
-    <td>${h.price ? '¥'+h.price : '-'}</td>
+    <td>${h.price !== undefined && h.price !== null && String(h.price).trim() !== '' ? formatAdminPrice(h.price) : '-'}</td>
     <td>${h.sortOrder}</td>
     <td><span style="display:inline-block;padding:4px 14px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:500;transition:all .2s;${h.status==='active'?'background:#D1FAE5;color:#059669':'background:#F3F4F6;color:#999'}" onclick="toggleHCStatus(${h.id},'${h.status}')">${h.status==='active'?'启用':'禁用'}</span></td>
     <td style="white-space:nowrap">
@@ -2700,6 +2787,39 @@ function renderHCAnimTable() {
     </td>
   </tr>`).join('');
   setTimeout(upgradeLodImages, 0);
+}
+
+function renderPageThemeTable() {
+  const items = (allHCItems || []).filter(i => i.section === 'pageTheme').sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+  const tbody = document.getElementById('pageThemeBody');
+  const empty = document.getElementById('pageThemeEmpty');
+  if (!tbody) return;
+  if (!items.length) { tbody.innerHTML = ''; if (empty) empty.style.display = 'block'; return; }
+  if (empty) empty.style.display = 'none';
+  tbody.innerHTML = items.map(h => {
+    const op = (h.desc !== undefined && h.desc !== null && String(h.desc).trim() !== '') ? escapeHtml(String(h.desc).trim()) : '100';
+    const pathKey = String(h.path || '/').trim() || '/';
+    const pathLabel = PAGE_THEME_PATH_LABELS[pathKey] || pathKey;
+    return `<tr>
+    <td>${h.id}</td>
+    <td style="font-size:12px"><span title="${escapeHtml(pathKey)}">${escapeHtml(pathLabel)}</span><br><span style="color:#999;font-family:monospace">${escapeHtml(pathKey)}</span></td>
+    <td style="font-weight:500">${escapeHtml(h.title || '-')}</td>
+    <td style="max-width:100px">${h.color ? '<span style="display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:middle;margin-right:4px;background:'+h.color+'"></span>'+escapeHtml(String(h.color).substring(0, 28)) : '-'}</td>
+    <td>${op}</td>
+    <td>${h.imageUrl ? '<img src="'+(h.imageUrlThumb||h.imageUrl)+'" style="max-width:56px;max-height:32px;border-radius:4px;object-fit:cover" />' : '-'}</td>
+    <td>${h.sortOrder}</td>
+    <td><span style="display:inline-block;padding:4px 14px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:500;${h.status==='active'?'background:#D1FAE5;color:#059669':'background:#F3F4F6;color:#999'}" onclick="toggleHCStatus(${h.id},'${h.status}')">${h.status==='active'?'启用':'禁用'}</span></td>
+    <td style="white-space:nowrap">
+      <button class="btn btn-sm" onclick="openPageThemeEditor(${h.id})" style="background:#2563EB;color:#fff;margin-right:4px">编辑</button>
+      <button class="btn btn-sm" onclick="deleteHC(${h.id})" style="background:#DC2626;color:#fff">删除</button>
+    </td>
+  </tr>`;
+  }).join('');
+}
+
+function openPageThemeEditor(id) {
+  currentHCPage = 'pageTheme';
+  openHCEditor(id);
 }
 
 function openHCEditorFromAnim() {
@@ -2718,11 +2838,21 @@ function upgradeLodImages() {
 }
 
 
+function onPageThemePathChange() {
+  if (document.getElementById('hcSection').value !== 'pageTheme') return;
+  if (document.getElementById('hcEditId').value) return;
+  const p = document.getElementById('hcPathSelect').value;
+  document.getElementById('hcTitle').value = PAGE_THEME_PATH_LABELS[p] || '';
+}
+
 function onHCSectionChange() {
   const sec = document.getElementById('hcSection').value;
-  const noIcon = ['banner', 'splash', 'headerLogo', 'homeBg', 'navSectionTitle', 'hotServiceTitle', 'recommendTitle', 'myProducts'];
+  document.getElementById('hcDescLabel').textContent = '描述/副标题';
+  document.getElementById('hcPathGroupLabel').textContent = '跳转路径';
+  document.getElementById('hcDesc').placeholder = '简短描述';
+  const noIcon = ['banner', 'splash', 'headerLogo', 'homeBg', 'navSectionTitle', 'hotServiceTitle', 'recommendTitle', 'myProducts', 'pageTheme'];
   const noPath = ['banner', 'splash', 'headerLogo', 'homeBg', 'navSectionTitle', 'hotServiceTitle', 'recommendTitle', 'myProducts'];
-  const showImage = ['splash', 'headerLogo', 'homeBg', 'navLg', 'navSm'];
+  const showImage = ['splash', 'headerLogo', 'homeBg', 'navLg', 'navSm', 'pageTheme'];
   const hideColor = ['headerLogo', 'homeBg', 'navSectionTitle', 'hotServiceTitle', 'recommendTitle', 'myProducts'];
   const titleLabel = document.getElementById('hcTitleLabel');
   const titleInput = document.getElementById('hcTitle');
@@ -2752,10 +2882,22 @@ function onHCSectionChange() {
   } else if (sec === 'hotService' || sec === 'recommend') {
     colorLabel.innerHTML = '底色 <span style="font-weight:normal;color:#999;font-size:12px">（卡片/图标背景色，如 #B91C1C 或 linear-gradient(...)）</span>';
     colorInput.placeholder = '如 #B91C1C 或 linear-gradient(135deg, #3B82F6, #1D4ED8)';
+  } else if (sec === 'pageTheme') {
+    imgLabel.innerHTML = '整页背景图（可选）<span style="font-weight:normal;color:#999;font-size:12px">（铺在页面最底层，可与首页轮播图叠加）</span>';
+    colorLabel.innerHTML = '页面背景色 <span style="font-weight:normal;color:#999;font-size:12px">（可与透明度叠加；无图时仅铺纯色）</span>';
+    colorInput.placeholder = '#ffffff 或 rgba(0,0,0,0.5)';
+    document.getElementById('hcDescLabel').textContent = '背景透明度(0–100)';
+    document.getElementById('hcDesc').placeholder = '100 为完全不透明，0 为全透明';
+    document.getElementById('hcPathGroupLabel').textContent = '前台路由';
+    titleLabel.textContent = '页面说明';
+    titleInput.placeholder = '如：首页、服务页';
   } else {
     colorLabel.textContent = '颜色/渐变背景';
     colorInput.placeholder = '如 #B91C1C 或 linear-gradient(...)';
   }
+  const isPt = sec === 'pageTheme';
+  document.getElementById('hcPath').style.display = isPt ? 'none' : '';
+  document.getElementById('hcPathSelect').style.display = isPt ? '' : 'none';
   document.getElementById('hcColorPreview').style.background = colorInput.value || 'transparent';
 }
 
@@ -2766,11 +2908,16 @@ const HC_SECTION_OPTS_HOME = [
 const HC_SECTION_OPTS_ANIM = [
   { v: 'splash', l: '开场动画 (Splash)' }, { v: 'headerLogo', l: '首页Logo (HeaderLogo)' }, { v: 'homeBg', l: '首页背景图 (HomeBg)' }
 ];
+const HC_SECTION_OPTS_THEME = [{ v: 'pageTheme', l: '页面背景' }];
 
 function openHCEditor(id) {
   const item = id ? allHCItems.find(i => i.id === id) : null;
-  if (item) currentHCPage = HOME_ANIM_SECTIONS.includes(item.section) ? 'homeAnimConfig' : 'homeConfig';
-  const opts = currentHCPage === 'homeAnimConfig' ? HC_SECTION_OPTS_ANIM : HC_SECTION_OPTS_HOME;
+  if (item) {
+    if (item.section === 'pageTheme') currentHCPage = 'pageTheme';
+    else currentHCPage = HOME_ANIM_SECTIONS.includes(item.section) ? 'homeAnimConfig' : 'homeConfig';
+  }
+  const opts = currentHCPage === 'pageTheme' ? HC_SECTION_OPTS_THEME
+    : currentHCPage === 'homeAnimConfig' ? HC_SECTION_OPTS_ANIM : HC_SECTION_OPTS_HOME;
   const sel = document.getElementById('hcSection');
   sel.innerHTML = opts.map(o => '<option value="'+o.v+'">'+o.l+'</option>').join('');
   sel.value = item ? item.section : opts[0].v;
@@ -2782,7 +2929,19 @@ function openHCEditor(id) {
   document.getElementById('hcIcon').value = item ? (item.icon||'') : '';
   document.getElementById('hcColor').value = item ? (item.color||'') : '';
   document.getElementById('hcColorPreview').style.background = (item && item.color) ? item.color : 'transparent';
-  document.getElementById('hcPath').value = item ? (item.path||'/services') : '/services';
+  if (currentHCPage === 'pageTheme') {
+    const pathSel = document.getElementById('hcPathSelect');
+    const pv = item ? String(item.path || '/').trim() || '/' : '/';
+    const ok = Array.from(pathSel.options).some(o => o.value === pv);
+    pathSel.value = ok ? pv : '/';
+    document.getElementById('hcPath').value = pathSel.value;
+    if (!item) {
+      document.getElementById('hcTitle').value = PAGE_THEME_PATH_LABELS[pathSel.value] || '';
+      document.getElementById('hcDesc').value = '100';
+    }
+  } else {
+    document.getElementById('hcPath').value = item ? (item.path||'/services') : '/services';
+  }
   document.getElementById('hcPrice').value = item ? (item.price||'') : '';
   document.getElementById('hcImageUrl').value = item ? (item.imageUrl||'') : '';
   document.getElementById('hcImageUrlThumb').value = item ? (item.imageUrlThumb||'') : '';
@@ -2799,19 +2958,31 @@ function closeHCEditor() { document.getElementById('hcModal').style.display = 'n
 
 async function saveHC() {
   const id = document.getElementById('hcEditId').value;
+  const section = document.getElementById('hcSection').value;
+  let path = document.getElementById('hcPath').value;
+  if (section === 'pageTheme') path = document.getElementById('hcPathSelect').value || '/';
   const body = {
-    section: document.getElementById('hcSection').value,
+    section,
     title: document.getElementById('hcTitle').value,
     desc: document.getElementById('hcDesc').value,
     icon: document.getElementById('hcIcon').value,
     color: document.getElementById('hcColor').value,
-    path: document.getElementById('hcPath').value,
+    path,
     price: document.getElementById('hcPrice').value,
     imageUrl: document.getElementById('hcImageUrl').value,
     imageUrlThumb: document.getElementById('hcImageUrlThumb').value,
     sortOrder: parseInt(document.getElementById('hcSortOrder').value) || 0,
     status: document.getElementById('hcStatus').value,
   };
+  if (section === 'pageTheme') {
+    const t = String(body.title || '').trim();
+    if (!t) body.title = PAGE_THEME_PATH_LABELS[body.path] || body.path;
+    const ds = String(body.desc || '').trim();
+    if (ds !== '') {
+      const n = parseInt(ds, 10);
+      if (isNaN(n) || n < 0 || n > 100) { alert('透明度请填写 0–100 的整数'); return; }
+    }
+  }
   if (!body.title) { alert('请填写标题'); return; }
   try {
     const res = id
@@ -3237,6 +3408,7 @@ let outletOrderPage = 1;
 const outletOrderPageSize = 20;
 async function loadOutletOrders() {
   try {
+    await loadServiceCurrency();
     const filter = document.getElementById('outletOrderFilter').value;
     const userFilter = outletOrderUserFilterId ? `&userId=${outletOrderUserFilterId}` : '';
     const qs = `?status=${filter}&page=${outletOrderPage}&pageSize=${outletOrderPageSize}${userFilter}`;
@@ -3259,7 +3431,7 @@ async function loadOutletOrders() {
       <td style="font-size:12px">${o.orderNo}</td>
       <td>${o.user ? (o.user.nickname || o.user.username) : o.userId}</td>
       <td>${o.serviceTitle}</td>
-      <td>¥${Number(o.price).toFixed(2)}</td>
+      <td>${formatAdminPrice(o.price)}</td>
       <td><span class="status-badge status-${o.status}">${o.statusText}</span></td>
       <td>${o.contactName || '-'} ${o.contactPhone || ''}</td>
       <td style="font-size:12px">${new Date(o.createdAt).toLocaleString('zh-CN')}</td>
@@ -3324,6 +3496,7 @@ async function loadOutletUsers() {
 // 查看服务商用户详情：地址 + 订单列表
 async function openOutletUserDetail(userId) {
   try {
+    await loadServiceCurrency();
     const res = await outletApi('/admin/users/' + userId + '/detail');
     if (res.code !== 0) return alert(res.message || '获取详情失败');
     const { user, orders } = res.data;
@@ -3341,7 +3514,7 @@ async function openOutletUserDetail(userId) {
           ${orders.map(o => `
             <tr>
               <td><a href="javascript:void(0)" onclick="goToOutletOrder('${o.orderNo}',${o.id},${user.id})">${o.orderNo}</a></td>
-              <td>¥${Number(o.price || 0).toFixed(2)}</td>
+              <td>${formatAdminPrice(o.price)}</td>
               <td>${o.statusText}</td>
               <td style="font-size:12px">${new Date(o.createdAt).toLocaleString('zh-CN')}</td>
             </tr>`).join('')}
@@ -3422,6 +3595,7 @@ async function loadOutletServiceCategories() {
 
 async function loadOutletServices() {
   try {
+    await loadServiceCurrency();
     const res = await outletApi('/services/admin/list');
     if (res.code !== 0) return;
     outletServices = res.data || [];
@@ -3445,8 +3619,8 @@ function renderOutletServicesTable() {
       <td>${s.title}</td>
       <td>${s.description || '-'}</td>
       <td>${s.iconUrl ? `<img src="${s.iconUrl}" style="max-height:32px;border-radius:4px" />` : (s.icon || '-')}</td>
-      <td>¥${Number(s.price || 0).toFixed(2)}</td>
-      <td>${s.originPrice != null ? '¥' + Number(s.originPrice).toFixed(2) : '-'}</td>
+      <td>${formatAdminPrice(s.price)}</td>
+      <td>${s.originPrice != null ? formatAdminPrice(s.originPrice) : '-'}</td>
       <td>${s.bg || '-'}</td>
       <td><span class="status-badge status-${s.status==='active'?'completed':'cancelled'}">${s.status==='active'?'启用':'禁用'}</span></td>
       <td><button class="refresh-btn" style="padding:4px 12px;font-size:12px" onclick="openOutletServiceItemEditor(${s.id})">编辑</button>

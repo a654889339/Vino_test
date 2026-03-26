@@ -1,5 +1,6 @@
 <template>
   <div class="mine-page">
+    <PageThemeLayer path="/mine" />
     <div
       class="profile-header"
       :style="profileHeaderStyle"
@@ -54,6 +55,7 @@ import { useUserStore } from '@/stores/user';
 import { useRouter } from 'vue-router';
 import { showToast, showDialog } from 'vant';
 import { homeConfigApi } from '@/api';
+import PageThemeLayer from '@/components/PageThemeLayer.vue';
 
 const userStore = useUserStore();
 const router = useRouter();
@@ -144,11 +146,14 @@ const handleLogout = () => {
 
 <style scoped>
 .mine-page {
+  position: relative;
   background: var(--vino-bg);
   min-height: 100vh;
 }
 
 .profile-header {
+  position: relative;
+  z-index: 1;
   background: linear-gradient(160deg, #1d1d1f 0%, #B91C1C 100%);
   padding: 48px 24px 36px;
   display: flex;
@@ -194,6 +199,8 @@ const handleLogout = () => {
 }
 
 .stats-row {
+  position: relative;
+  z-index: 1;
   display: flex;
   background: var(--vino-card);
   padding: 20px 0;
@@ -222,6 +229,8 @@ const handleLogout = () => {
 }
 
 .menu-group {
+  position: relative;
+  z-index: 1;
   margin: 0 12px 8px !important;
   border-radius: var(--vino-radius) !important;
   overflow: hidden;
@@ -242,6 +251,8 @@ const handleLogout = () => {
 }
 
 .logout-area {
+  position: relative;
+  z-index: 1;
   padding: 24px 20px;
 }
 

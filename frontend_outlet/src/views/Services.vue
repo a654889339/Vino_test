@@ -1,5 +1,6 @@
 <template>
   <div class="services-page">
+    <PageThemeLayer path="/services" />
     <van-tabs v-model:active="activeTab" sticky color="var(--vino-primary)">
       <van-tab v-for="cat in categories" :key="cat.key" :title="cat.name">
         <div class="service-grid">
@@ -15,7 +16,7 @@
             </div>
             <h4>{{ item.title }}</h4>
             <p>{{ item.desc }}</p>
-            <span class="grid-price">¥{{ item.price }}起</span>
+            <span class="grid-price">{{ formatPriceDisplay(item.price) }}起</span>
           </div>
         </div>
       </van-tab>
@@ -92,7 +93,9 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { serviceApi } from '@/api';
+import PageThemeLayer from '@/components/PageThemeLayer.vue';
 import LodImg from '@/components/LodImg.vue';
+import { formatPriceDisplay } from '@/utils/currency';
 
 const activeTab = ref(0);
 const categories = ref([]);
@@ -152,8 +155,13 @@ onMounted(async () => {
 
 <style scoped>
 .services-page {
+  position: relative;
   background: var(--vino-bg);
   min-height: 100vh;
+}
+.services-page :deep(.van-tabs) {
+  position: relative;
+  z-index: 1;
 }
 
 /* ===== Nav Bar ===== */
