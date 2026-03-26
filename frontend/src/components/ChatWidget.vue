@@ -263,7 +263,7 @@ onBeforeUnmount(() => {
   justify-content: center;
   box-shadow: 0 4px 16px rgba(185, 28, 28, 0.4);
   cursor: pointer;
-  z-index: 101;
+  z-index: 90;
   transition: transform 0.2s;
 }
 .chat-fab:active { transform: scale(0.92); }

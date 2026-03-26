@@ -13,6 +13,7 @@ import { useRoute } from 'vue-router';
 import SplashScreen from '@/components/SplashScreen.vue';
 import ChatWidget from '@/components/ChatWidget.vue';
 import { homeConfigApi } from '@/api';
+import { initFromHomeConfigList } from '@/utils/currency';
 
 const route = useRoute();
 
@@ -26,23 +27,48 @@ const DEFAULT_TABBAR = [
 
 const tabbarItems = ref([...DEFAULT_TABBAR]);
 
+function mergeTabbarWithDefaults(serverList) {
+  const active = (serverList || []).filter((i) => i.status === 'active');
+  const byPath = {};
+  active.forEach((i) => {
+    const p = (i.path && String(i.path).trim()) || '/';
+    byPath[p] = i;
+  });
+  return DEFAULT_TABBAR.map((def) => {
+    const s = byPath[def.path];
+    if (s) {
+      return {
+        title: (s.title && String(s.title).trim()) || def.title,
+        icon: (s.icon && String(s.icon).trim()) || def.icon,
+        path: def.path,
+      };
+    }
+    return { ...def };
+  });
+}
+
 async function loadTabbarConfig() {
   try {
     const res = await homeConfigApi.tabbar();
-    const list = (res.data || []).sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
-    if (list.length) {
-      tabbarItems.value = list.map((i) => ({
-        title: i.title || '',
-        icon: (i.icon && i.icon.trim()) || 'wap-home-o',
-        path: (i.path && i.path.trim()) || '/',
-      }));
-    }
+    const list = res.data || [];
+    tabbarItems.value = mergeTabbarWithDefaults(list);
   } catch {
     tabbarItems.value = [...DEFAULT_TABBAR];
   }
 }
 
-onMounted(loadTabbarConfig);
+async function loadCurrencyConfig() {
+  try {
+    const res = await homeConfigApi.list({ params: { section: 'currency' } });
+    initFromHomeConfigList(res.data || []);
+  } catch {
+    initFromHomeConfigList([]);
+  }
+}
+
+onMounted(async () => {
+  await Promise.all([loadTabbarConfig(), loadCurrencyConfig()]);
+});
 
 const hiddenTabRoutes = ['/login', '/register', '/service/', '/address', '/guide/'];
 const showTabbar = computed(() => {
@@ -77,7 +103,7 @@ onMounted(() => {
 :deep(.van-tabbar) {
   max-width: 750px;
   margin: 0 auto;
-  z-index: 100;
+  z-index: 3000;
 }
 :deep(.van-tabbar-item) {
   touch-action: manipulation;

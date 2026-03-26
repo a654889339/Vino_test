@@ -462,6 +462,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         </table>
         <div class="order-empty" id="tbTabbarEmpty" style="display:none">暂无底部栏配置，将使用默认五项（首页/产品/服务/订单/我的）</div>
       </div>
+
+      <!-- Vino产品（与底部栏同层，选品来自「商品配置 → 商品管理」） -->
+      <div class="dash-section" style="margin-top:32px">
+        <div class="section-header">
+          <h3>Vino产品 配置</h3>
+        </div>
+        <p style="font-size:13px;color:#666;margin-bottom:16px">从商品配置中的<strong>商品管理</strong>挑选商品，前台首页将展示为小图标 + 名称宫格（每行 4 个）。点击跳转对应商品指南页。</p>
+        <div style="margin-bottom:16px">
+          <button class="btn" onclick="openVinoHomeProductEditor()" style="background:#059669;color:#fff">+ 添加商品</button>
+        </div>
+        <table class="order-table">
+          <thead><tr><th>ID</th><th>商品名称</th><th>指南路径(slug)</th><th>预览</th><th>排序</th><th>状态</th><th>操作</th></tr></thead>
+          <tbody id="vinoHomeProductBody"></tbody>
+        </table>
+        <div class="order-empty" id="vinoHomeProductEmpty" style="display:none">暂未添加，请从商品管理中选择商品</div>
+      </div>
     </div>
 
     <!-- 首页动画配置 Page（开场动画、首页Logo、首页背景） -->
@@ -607,11 +623,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <label id="hcPathGroupLabel">跳转路径</label>
           <input class="form-input" id="hcPath" value="/services" placeholder="如 /services 或 /service/1" />
           <select class="form-input" id="hcPathSelect" style="display:none;margin-top:8px" onchange="onPageThemePathChange()">
-            <option value="/">首页（/）</option>
-            <option value="/services">服务（/services）</option>
-            <option value="/products">产品（/products）</option>
-            <option value="/orders">订单（/orders）</option>
-            <option value="/mine">我的（/mine）</option>
+            <option value="/">首页 — http://106.54.50.88:5201/</option>
+            <option value="/products">产品页 — http://106.54.50.88:5201/products</option>
+            <option value="/services">服务页 — http://106.54.50.88:5201/services</option>
+            <option value="/orders">订单 — http://106.54.50.88:5201/orders</option>
+            <option value="/mine">我的 — http://106.54.50.88:5201/mine</option>
           </select>
         </div>
         <div class="form-group" id="hcPriceGroup" style="display:none">
@@ -671,6 +687,39 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <div style="text-align:right;margin-top:16px">
             <button class="btn" onclick="closeTabbarEditor()">取消</button>
             <button class="btn" onclick="saveTabbarItem()" style="background:var(--primary);color:#fff;margin-left:8px">保存</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vino首页产品（选商品管理中的商品） -->
+    <div class="modal-overlay" id="vinoHomeProductModal" style="display:none" onclick="if(event.target===this)closeVinoHomeProductEditor()">
+      <div class="modal-content" style="max-width:480px">
+        <div class="modal-header">
+          <h3 id="vinoHomeProductModalTitle">添加 Vino 首页商品</h3>
+          <span class="modal-close" onclick="closeVinoHomeProductEditor()">&times;</span>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="vinoHomeProductEditId" />
+          <div class="form-group">
+            <label>选择商品（商品配置 → 商品管理）</label>
+            <select class="form-input" id="vinoHomeGuideSelect"></select>
+          </div>
+          <div class="form-group">
+            <label>排序 (越小越靠前)</label>
+            <input type="number" class="form-input" id="vinoHomeSortOrder" value="0" />
+          </div>
+          <div class="form-group">
+            <label>状态</label>
+            <select class="form-input" id="vinoHomeStatus">
+              <option value="active">启用</option>
+              <option value="inactive">禁用</option>
+            </select>
+          </div>
+          <p style="font-size:12px;color:#999;margin:0 0 8px">已添加的商品不会出现在下拉里，避免重复。</p>
+          <div style="text-align:right;margin-top:16px">
+            <button class="btn" onclick="closeVinoHomeProductEditor()">取消</button>
+            <button class="btn" onclick="saveVinoHomeProduct()" style="background:var(--primary);color:#fff;margin-left:8px">保存</button>
           </div>
         </div>
       </div>
@@ -1250,7 +1299,7 @@ function switchPage(page) {
   if (page === 'guides') { loadCategories(); loadGuides(); }
   if (page === 'serviceConfig') { loadServiceCategories(); loadServices(); }
   if (page === 'inventory') { invProductPage = 1; loadInventoryCategories(); loadInventoryProducts(); }
-  if (page === 'homeConfig') { currentHCPage = 'homeConfig'; loadHomeConfig(); }
+  if (page === 'homeConfig') { currentHCPage = 'homeConfig'; loadHomeConfig(); loadGuides(); }
   if (page === 'homeAnimConfig') { currentHCPage = 'homeAnimConfig'; loadHomeConfig(); }
   if (page === 'pageThemeConfig') { currentHCPage = 'pageTheme'; loadHomeConfig(); }
   if (page === 'mineConfig') loadMineConfig();
@@ -2606,7 +2655,7 @@ let hcAnimFilterSection = 'all';
 const HOME_CONFIG_SECTIONS = ['navLg', 'navSm', 'hotService', 'recommend', 'myProducts'];
 const HOME_ANIM_SECTIONS = ['splash', 'headerLogo', 'homeBg'];
 const PAGE_THEME_PATH_LABELS = { '/': '首页', '/services': '服务', '/products': '产品', '/orders': '订单', '/mine': '我的' };
-const SECTION_LABELS = { banner: '轮播横幅', nav: '快捷导航', navLg: '自助预约(大)', navSm: '自助预约(小)', hotService: '自助服务', recommend: '服务产品', splash: '开场动画', headerLogo: '首页Logo', homeBg: '首页背景', pageTheme: '页面背景', navSectionTitle: '自助预约区块标题', hotServiceTitle: '自助服务区块标题', recommendTitle: '服务产品区块标题', myProducts: '我的商品', tabbar: '底部栏', currency: '币种' };
+const SECTION_LABELS = { banner: '轮播横幅', nav: '快捷导航', navLg: '自助预约(大)', navSm: '自助预约(小)', hotService: '自助服务', recommend: '服务产品', splash: '开场动画', headerLogo: '首页Logo', homeBg: '首页背景', pageTheme: '页面背景', vinoProduct: 'Vino产品', navSectionTitle: '自助预约区块标题', hotServiceTitle: '自助服务区块标题', recommendTitle: '服务产品区块标题', myProducts: '我的商品', tabbar: '底部栏', currency: '币种' };
 
 async function loadHomeConfig() {
   try {
@@ -2620,6 +2669,7 @@ async function loadHomeConfig() {
     if (currentHCPage === 'homeAnimConfig') renderHCAnimTable();
     renderTabbarTable();
     renderPageThemeTable();
+    renderVinoHomeProductTable();
   } catch { document.getElementById('hcBody').innerHTML = ''; }
 }
 
@@ -2815,6 +2865,117 @@ function renderPageThemeTable() {
     </td>
   </tr>`;
   }).join('');
+}
+
+function renderVinoHomeProductTable() {
+  const items = (allHCItems || []).filter(i => i.section === 'vinoProduct').sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+  const tbody = document.getElementById('vinoHomeProductBody');
+  const empty = document.getElementById('vinoHomeProductEmpty');
+  if (!tbody) return;
+  if (!items.length) { tbody.innerHTML = ''; if (empty) empty.style.display = 'block'; return; }
+  if (empty) empty.style.display = 'none';
+  tbody.innerHTML = items.map(h => {
+    const prev = h.imageUrlThumb || h.imageUrl
+      ? '<img src="'+(h.imageUrlThumb||h.imageUrl)+'" style="width:40px;height:40px;object-fit:contain;border-radius:8px;background:#f5f5f5" />'
+      : (h.icon ? '<span style="font-family:monospace;font-size:12px">'+escapeHtml(h.icon)+'</span>' : '-');
+    return `<tr>
+    <td>${h.id}</td>
+    <td style="font-weight:500">${escapeHtml(h.title || '-')}</td>
+    <td style="font-size:12px;font-family:monospace">${escapeHtml(h.path || '-')}</td>
+    <td>${prev}</td>
+    <td>${h.sortOrder}</td>
+    <td><span style="display:inline-block;padding:4px 14px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:500;${h.status==='active'?'background:#D1FAE5;color:#059669':'background:#F3F4F6;color:#999'}" onclick="toggleHCStatus(${h.id},'${h.status}')">${h.status==='active'?'启用':'禁用'}</span></td>
+    <td style="white-space:nowrap">
+      <button class="btn btn-sm" onclick="openVinoHomeProductEditor(${h.id})" style="background:#2563EB;color:#fff;margin-right:4px">编辑</button>
+      <button class="btn btn-sm" onclick="deleteHC(${h.id})" style="background:#DC2626;color:#fff">删除</button>
+    </td>
+  </tr>`;
+  }).join('');
+}
+
+async function openVinoHomeProductEditor(id) {
+  try {
+    if (!allGuides || !allGuides.length) {
+      const res = await api('/guides/admin/list');
+      if (res.code === 0) allGuides = res.data || [];
+    }
+  } catch { allGuides = allGuides || []; }
+  document.getElementById('vinoHomeProductEditId').value = id ? String(id) : '';
+  document.getElementById('vinoHomeProductModalTitle').textContent = id ? '编辑 Vino 首页商品' : '添加 Vino 首页商品';
+  const sel = document.getElementById('vinoHomeGuideSelect');
+  const taken = new Set();
+  (allHCItems || []).forEach(function (i) {
+    if (i.section !== 'vinoProduct') return;
+    if (id && i.id === parseInt(id, 10)) return;
+    const p = String(i.path || '').trim();
+    if (p) taken.add(p);
+  });
+  const opts = (allGuides || []).filter(function (g) {
+    return g.status === 'active' && g.slug && String(g.slug).trim() && (!taken.has(String(g.slug).trim()));
+  }).map(function (g) {
+    return '<option value="'+g.id+'">'+escapeHtml(g.name)+' ('+escapeHtml(String(g.slug).trim())+')</option>';
+  });
+  sel.innerHTML = '<option value="">请选择商品</option>' + opts.join('');
+  if (id) {
+    const row = (allHCItems || []).find(function (i) { return i.id === parseInt(id, 10); });
+    sel.disabled = true;
+    if (row && row.path) {
+      const g = (allGuides || []).find(function (x) { return String(x.slug).trim() === String(row.path).trim(); });
+      if (g) sel.value = String(g.id);
+    }
+    document.getElementById('vinoHomeSortOrder').value = row ? (row.sortOrder ?? 0) : 0;
+    document.getElementById('vinoHomeStatus').value = row ? (row.status || 'active') : 'active';
+  } else {
+    sel.disabled = false;
+    document.getElementById('vinoHomeSortOrder').value = '0';
+    document.getElementById('vinoHomeStatus').value = 'active';
+  }
+  document.getElementById('vinoHomeProductModal').style.display = 'flex';
+}
+
+function closeVinoHomeProductEditor() {
+  document.getElementById('vinoHomeProductModal').style.display = 'none';
+}
+
+async function saveVinoHomeProduct() {
+  const id = document.getElementById('vinoHomeProductEditId').value;
+  const sortOrder = parseInt(document.getElementById('vinoHomeSortOrder').value, 10) || 0;
+  const status = document.getElementById('vinoHomeStatus').value || 'active';
+  if (id) {
+    const existing = (allHCItems || []).find(function (i) { return i.id === parseInt(id, 10); });
+    if (!existing) { alert('记录不存在'); return; }
+    try {
+      const body = Object.assign({}, existing, { sortOrder: sortOrder, status: status });
+      const res = await api('/home-config/' + id, { method: 'PUT', body: body });
+      if (res.code === 0) { closeVinoHomeProductEditor(); loadHomeConfig(); }
+      else alert(res.message || '保存失败');
+    } catch { alert('保存失败'); }
+    return;
+  }
+  const guideId = document.getElementById('vinoHomeGuideSelect').value;
+  if (!guideId) { alert('请选择商品'); return; }
+  const g = (allGuides || []).find(function (x) { return x.id === parseInt(guideId, 10); });
+  if (!g) { alert('商品不存在'); return; }
+  const slug = g.slug != null ? String(g.slug).trim() : '';
+  if (!slug) { alert('该商品缺少英文路径(slug)，请先在商品管理中补全'); return; }
+  const body = {
+    section: 'vinoProduct',
+    title: (g.name && String(g.name).trim()) || '',
+    path: slug,
+    desc: '',
+    icon: g.icon || '',
+    imageUrl: g.iconUrl || '',
+    imageUrlThumb: g.iconUrlThumb || '',
+    color: '',
+    price: '',
+    sortOrder: sortOrder,
+    status: status,
+  };
+  try {
+    const res = await api('/home-config', { method: 'POST', body: body });
+    if (res.code === 0) { closeVinoHomeProductEditor(); loadHomeConfig(); }
+    else alert(res.message || '保存失败');
+  } catch { alert('保存失败'); }
 }
 
 function openPageThemeEditor(id) {

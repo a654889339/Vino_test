@@ -79,6 +79,28 @@
       </div>
     </div>
 
+    <!-- Vino产品：来自后台商品管理选品 -->
+    <div v-if="vinoProductItems.length" class="vino-product-section">
+      <div class="vino-product-head">
+        <h3>Vino产品</h3>
+        <span class="vino-more" @click="$router.push('/products')">全部 ›</span>
+      </div>
+      <div class="vino-product-grid">
+        <div
+          v-for="item in vinoProductItems"
+          :key="item.id"
+          class="vino-product-cell"
+          @click="openVinoProductGuide(item)"
+        >
+          <div class="vino-product-icon-wrap">
+            <img v-if="vinoProductIconSrc(item)" :src="vinoProductIconSrc(item)" class="vino-product-icon-img" alt="" />
+            <van-icon v-else :name="item.icon || 'photo-o'" size="28" color="rgba(255,255,255,0.85)" />
+          </div>
+          <span class="vino-product-name">{{ item.title }}</span>
+        </div>
+      </div>
+    </div>
+
     <!-- 我的商品：为空时整栏隐藏，自助服务紧贴自助预约 -->
     <div v-if="myProducts.length" class="section card-section">
       <div class="section-header">
@@ -395,7 +417,7 @@ const copyUrl = async () => {
 /* ===== Hero：仅顶部内容区，背景透明以露出 home-bg ===== */
 .hero {
   position: relative;
-  z-index: 2;
+  z-index: 1;
   height: 54vh;
   min-height: 320px;
   max-height: 520px;
@@ -422,7 +444,7 @@ const copyUrl = async () => {
 /* ===== Card Sections：半透明 + 两侧留白，层级低于底部 tabbar，避免遮挡首页/产品等按钮 ===== */
 .card-section {
   position: relative;
-  z-index: 2;
+  z-index: 1;
   margin: 12px;
   border-radius: 16px;
   background: linear-gradient(to bottom, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.72) 50%, rgba(255,255,255,0.5) 100%);
@@ -441,7 +463,81 @@ const copyUrl = async () => {
 }
 /* 为你推荐与卡片区同级，层级低于 tabbar */
 .section-recommend {
-  z-index: 2;
+  z-index: 1;
+}
+
+/* ===== Vino产品（深色宫格，每行 4 个） ===== */
+.vino-product-section {
+  position: relative;
+  z-index: 1;
+  margin: 12px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #2c2c30 0%, #18181a 100%);
+  padding: 16px 12px 20px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.22);
+}
+.vino-product-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  padding: 0 4px;
+}
+.vino-product-head h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+.vino-more {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: 500;
+  cursor: pointer;
+}
+.vino-product-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px 8px;
+}
+.vino-product-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.vino-product-cell:active {
+  opacity: 0.85;
+}
+.vino-product-icon-wrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.vino-product-icon-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 4px;
+}
+.vino-product-name {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.72);
+  text-align: center;
+  line-height: 1.35;
+  max-width: 100%;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 /* ===== Section common ===== */
