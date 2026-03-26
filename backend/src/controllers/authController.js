@@ -607,9 +607,16 @@ exports.myProducts = async (req, res) => {
     if (effectiveSlugs.length) {
       const guides = await DeviceGuide.findAll({
         where: { slug: { [Op.in]: [...new Set(effectiveSlugs)] } },
-        attributes: ['slug', 'iconUrl', 'iconUrlThumb'],
+        attributes: ['slug', 'iconUrl', 'iconUrlThumb', 'icon'],
       });
-      guides.forEach(g => { guideBySlug[g.slug || ''] = { iconUrl: g.iconUrl || '', iconUrlThumb: g.iconUrlThumb || '' }; });
+      guides.forEach((g) => {
+        const sk = g.slug || '';
+        guideBySlug[sk] = {
+          iconUrl: g.iconUrl || '',
+          iconUrlThumb: g.iconUrlThumb || '',
+          icon: g.icon || '',
+        };
+      });
     }
     const data = list.map(l => {
       const info = infoMap[l.productKey];
@@ -621,6 +628,7 @@ exports.myProducts = async (req, res) => {
         guideSlug: (info && info.guideSlug) || '',
         iconUrl: (guide && guide.iconUrl) || '',
         iconUrlThumb: (guide && guide.iconUrlThumb) || '',
+        guideIcon: (guide && guide.icon) || '',
         boundAt: l.createdAt,
       };
     });

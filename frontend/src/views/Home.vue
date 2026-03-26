@@ -113,7 +113,7 @@
     </div>
 
     <!-- 我的商品：为空时整栏隐藏，自助服务紧贴自助预约 -->
-    <div v-if="myProducts.length" class="section card-section section-my-products">
+    <div v-if="myProductsDisplay.length" class="section card-section section-my-products">
       <div v-if="skinLayerMyProducts" class="section-skin-layer" :style="skinLayerMyProducts" aria-hidden="true" />
       <div class="section-skin-content">
       <div class="section-header">
@@ -123,7 +123,7 @@
       <input ref="qrFileInputRef" type="file" accept="image/*" class="hidden-input" @change="onQrFileChange" />
       <div class="my-products-list">
         <div
-          v-for="(item, i) in myProducts"
+          v-for="(item, i) in myProductsDisplay"
           :key="item.productKey || i"
           class="my-product-item"
           :class="{ 'my-product-item--clickable': !!productGuideSlug(item) }"
@@ -131,8 +131,15 @@
         >
           <span class="my-product-category">{{ item.categoryName || '-' }}</span>
           <div class="my-product-icon-wrap">
-            <img v-if="productIconUrl(item)" :src="productIconUrl(item)" class="my-product-icon" alt="" />
-            <van-icon v-else name="photo-o" class="my-product-icon-placeholder" />
+            <img
+              v-if="myProductShowImg(item)"
+              :src="myProductImgSrc(item)"
+              class="my-product-icon"
+              alt=""
+              referrerpolicy="no-referrer"
+              @error="onMyProductImgError(item.productKey)"
+            />
+            <van-icon v-else :name="myProductVantName(item)" class="my-product-icon-placeholder" />
           </div>
           <span class="my-product-name">{{ item.productName || item.productKey }}</span>
         </div>
@@ -209,11 +216,32 @@ const guidesList = ref([]);
 const myProducts = ref([]);
 const addProductLoading = ref(false);
 const vinoImgFailed = reactive({});
+const myProductImgFailed = reactive({});
 
 function productIconUrl(item) {
   const u = (item && (item.iconUrlThumb || item.iconUrl)) || '';
   if (!u) return '';
   return resolvePublicUrl(u);
+}
+
+function onMyProductImgError(productKey) {
+  if (productKey != null && productKey !== '') myProductImgFailed[productKey] = true;
+}
+
+function myProductImgSrc(item) {
+  const k = item && item.productKey;
+  if (k != null && myProductImgFailed[k]) return '';
+  return productIconUrl(item);
+}
+
+function myProductShowImg(item) {
+  return !!myProductImgSrc(item);
+}
+
+function myProductVantName(item) {
+  const n = String((item && item.guideIcon) || '').trim();
+  if (n && /^[a-z0-9-]+$/i.test(n)) return n;
+  return 'photo-o';
 }
 
 /** 商品配置 slug（后台 guideSlug / 兼容 guide），用于跳转 /guide/{slug} */
@@ -397,9 +425,38 @@ const guidesBySlug = computed(() => {
   const m = Object.create(null);
   for (const g of guidesList.value || []) {
     const s = String(g.slug || '').trim();
-    if (s) m[s] = g;
+    if (!s) continue;
+    m[s] = g;
+    m[s.toLowerCase()] = g;
   }
   return m;
+});
+
+function rowGuide(slug) {
+  const s = String(slug || '').trim();
+  if (!s) return null;
+  const m = guidesBySlug.value;
+  return m[s] || m[s.toLowerCase()] || null;
+}
+
+/** 与商品管理 /guides 合并后的「我的商品」行（图标 URL、名称、备用 Vant 名） */
+const myProductsDisplay = computed(() => {
+  return (myProducts.value || []).map((item) => {
+    const slug = productGuideSlug(item);
+    const g = slug ? rowGuide(slug) : null;
+    if (!g) {
+      return { ...item };
+    }
+    const iconUrl = (g.iconUrl != null && String(g.iconUrl).trim()) ? String(g.iconUrl).trim() : (item.iconUrl || '');
+    const iconUrlThumb = (g.iconUrlThumb != null && String(g.iconUrlThumb).trim()) ? String(g.iconUrlThumb).trim() : (item.iconUrlThumb || '');
+    return {
+      ...item,
+      iconUrl,
+      iconUrlThumb,
+      productName: (g.name != null && String(g.name).trim()) ? String(g.name).trim() : (item.productName || item.productKey),
+      guideIcon: (g.icon != null ? String(g.icon) : '') || (item.guideIcon || ''),
+    };
+  });
 });
 
 const vinoProductItems = computed(() => {
@@ -408,7 +465,7 @@ const vinoProductItems = computed(() => {
     .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
   return rows.map((i) => {
     const path = (i.path || '').trim();
-    const g = path ? guidesBySlug.value[path] : null;
+    const g = path ? rowGuide(path) : null;
     if (!g) {
       return {
         id: i.id,
