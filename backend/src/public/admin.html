@@ -558,6 +558,43 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         </table>
         <div class="order-empty" id="featuredRecommendEmpty" style="display:none">暂未添加甄选推荐商品</div>
       </div>
+
+      <!-- 探索 VINO：单条配置，首页最下方展示 -->
+      <div class="dash-section" style="margin-top:32px">
+        <div class="section-header" style="flex-wrap:wrap;gap:12px;align-items:flex-start">
+          <h3>探索 VINO</h3>
+        </div>
+        <p style="font-size:13px;color:#666;margin-bottom:16px">与 Vino 产品、甄选推荐同级；前台展示在<strong>首页最下方</strong>。配置背景图、跳转链接与卡片内大/小标题（参考品牌探索卡）。上传方式与<strong>商品管理 · 展示大图</strong>相同：选择文件后全屏转圈等待，成功后写入 URL。</p>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px">
+          <span style="width:96px;font-size:13px;color:#666;flex-shrink:0">栏目标题</span>
+          <input type="text" id="exploreVino_barTitle" class="form-input" style="flex:1;min-width:200px" placeholder="探索VINO" />
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px">
+          <span style="width:96px;font-size:13px;color:#666;flex-shrink:0">卡片大标题</span>
+          <input type="text" id="exploreVino_mainTitle" class="form-input" style="flex:1;min-width:200px" placeholder="VINO" />
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px">
+          <span style="width:96px;font-size:13px;color:#666;flex-shrink:0">卡片副标题</span>
+          <input type="text" id="exploreVino_subTitle" class="form-input" style="flex:1;min-width:200px" placeholder="可选" />
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px">
+          <span style="width:96px;font-size:13px;color:#666;flex-shrink:0">跳转链接</span>
+          <input type="text" id="exploreVino_link" class="form-input" style="flex:1;min-width:200px" placeholder="https://… 或 /products 等站内路径" />
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px">
+          <span style="width:96px;font-size:13px;color:#666;flex-shrink:0">背景图 URL</span>
+          <input type="text" id="exploreVino_imageUrl" class="form-input" style="flex:1;min-width:200px" placeholder="上传后自动填入" />
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px">
+          <span style="width:96px;font-size:13px;color:#666;flex-shrink:0">缩略图 URL</span>
+          <input type="text" id="exploreVino_imageUrlThumb" class="form-input" style="flex:1;min-width:200px" placeholder="可选，优先加载" />
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
+          <label style="padding:8px 14px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">上传背景图<input type="file" accept="image/*" style="display:none" onchange="uploadExploreVinoBg(this)" /></label>
+          <img id="exploreVino_preview" style="max-width:160px;max-height:100px;border-radius:8px;display:none;border:1px solid #eee;object-fit:cover" alt="" />
+        </div>
+        <button type="button" class="btn" onclick="saveExploreVinoConfig()" style="background:#059669;color:#fff">保存探索 VINO</button>
+      </div>
     </div>
 
     <!-- 首页动画配置 Page（开场动画、首页Logo、首页背景） -->
@@ -2736,7 +2773,7 @@ let hcAnimFilterSection = 'all';
 const HOME_CONFIG_SECTIONS = ['navLg', 'navSm', 'hotService', 'recommend', 'myProducts'];
 const HOME_ANIM_SECTIONS = ['splash', 'headerLogo', 'homeBg'];
 const PAGE_THEME_PATH_LABELS = { '/': '首页', '/services': '服务', '/products': '产品', '/orders': '订单', '/mine': '我的' };
-const SECTION_LABELS = { banner: '轮播横幅', nav: '快捷导航', navLg: '自助预约(大)', navSm: '自助预约(小)', hotService: '自助服务', recommend: '服务产品', splash: '开场动画', headerLogo: '首页Logo', homeBg: '首页背景', pageTheme: '页面背景', vinoProduct: 'Vino产品', featuredRecommend: '甄选推荐', navSectionTitle: '自助预约区块标题', hotServiceTitle: '自助服务区块标题', recommendTitle: '服务产品区块标题', myProducts: '我的商品', tabbar: '底部栏', currency: '币种', homeSectionSkin: '栏目外观', homeSectionOffset: '板块整体偏移' };
+const SECTION_LABELS = { banner: '轮播横幅', nav: '快捷导航', navLg: '自助预约(大)', navSm: '自助预约(小)', hotService: '自助服务', recommend: '服务产品', splash: '开场动画', headerLogo: '首页Logo', homeBg: '首页背景', pageTheme: '页面背景', vinoProduct: 'Vino产品', featuredRecommend: '甄选推荐', exploreVino: '探索VINO', navSectionTitle: '自助预约区块标题', hotServiceTitle: '自助服务区块标题', recommendTitle: '服务产品区块标题', myProducts: '我的商品', tabbar: '底部栏', currency: '币种', homeSectionSkin: '栏目外观', homeSectionOffset: '板块整体偏移' };
 /** path → 后台保存用标题 */
 const SECTION_SKIN_PATH_LABELS = { homeScroll: '首页内容区', tabbar: '底部栏', vinoProduct: 'Vino产品', featuredRecommend: '甄选推荐', myProducts: '我的商品', hotService: '自助服务' };
 const SECTION_SKIN_PATHS = ['homeScroll', 'tabbar', 'vinoProduct', 'featuredRecommend', 'myProducts', 'hotService'];
@@ -2817,7 +2854,92 @@ async function loadHomeConfig() {
     fillHomeSectionSkinForms();
     renderVinoHomeProductTable();
     renderFeaturedRecommendTable();
+    fillExploreVinoForm();
   } catch { document.getElementById('hcBody').innerHTML = ''; }
+}
+
+function fillExploreVinoForm() {
+  const row = (allHCItems || []).find(function (i) {
+    return i.section === 'exploreVino' && i.status === 'active';
+  });
+  const bt = document.getElementById('exploreVino_barTitle');
+  const mt = document.getElementById('exploreVino_mainTitle');
+  const st = document.getElementById('exploreVino_subTitle');
+  const lk = document.getElementById('exploreVino_link');
+  const iu = document.getElementById('exploreVino_imageUrl');
+  const iut = document.getElementById('exploreVino_imageUrlThumb');
+  const prev = document.getElementById('exploreVino_preview');
+  if (!bt || !mt || !st || !lk || !iu || !iut) return;
+  bt.value = row ? (row.title || '') : '';
+  mt.value = row ? (row.icon || '') : '';
+  st.value = row ? (row.desc || '') : '';
+  lk.value = row ? (row.path || '') : '';
+  iu.value = row ? (row.imageUrl || '') : '';
+  iut.value = row ? (row.imageUrlThumb || '') : '';
+  if (prev) {
+    const u = row && row.imageUrl ? adminResolvePublicUrl(row.imageUrl) : '';
+    if (u) { prev.src = u; prev.style.display = 'block'; }
+    else { prev.style.display = 'none'; }
+  }
+}
+
+async function saveExploreVinoConfig() {
+  const title = (document.getElementById('exploreVino_barTitle') && document.getElementById('exploreVino_barTitle').value || '').trim();
+  const icon = (document.getElementById('exploreVino_mainTitle') && document.getElementById('exploreVino_mainTitle').value || '').trim();
+  const desc = (document.getElementById('exploreVino_subTitle') && document.getElementById('exploreVino_subTitle').value || '').trim();
+  const path = (document.getElementById('exploreVino_link') && document.getElementById('exploreVino_link').value || '').trim();
+  const imageUrl = (document.getElementById('exploreVino_imageUrl') && document.getElementById('exploreVino_imageUrl').value || '').trim();
+  const imageUrlThumb = (document.getElementById('exploreVino_imageUrlThumb') && document.getElementById('exploreVino_imageUrlThumb').value || '').trim();
+  const existing = (allHCItems || []).find(function (i) { return i.section === 'exploreVino'; });
+  const body = {
+    section: 'exploreVino',
+    title: title || '探索VINO',
+    icon: icon || 'VINO',
+    desc: desc,
+    path: path,
+    imageUrl: imageUrl,
+    imageUrlThumb: imageUrlThumb,
+    color: '',
+    price: '',
+    sortOrder: 0,
+    status: 'active',
+  };
+  try {
+    const res = existing
+      ? await api('/home-config/' + existing.id, { method: 'PUT', body: Object.assign({}, existing, body) })
+      : await api('/home-config', { method: 'POST', body: body });
+    if (res.code === 0) { await loadHomeConfig(); alert('已保存'); }
+    else alert(res.message || '保存失败');
+  } catch (e) { alert('保存失败'); }
+}
+
+async function uploadExploreVinoBg(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 10 * 1024 * 1024) { alert('图片不能超过 10MB'); input.value = ''; return; }
+  if (!file.type.startsWith('image/')) { alert('只能上传图片'); input.value = ''; return; }
+  const token = localStorage.getItem('vino_admin_token');
+  if (!token) { alert('请先登录'); input.value = ''; return; }
+  showUploadLoading(file.name);
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await fetch(API + '/home-config/upload', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token },
+      body: formData
+    }).then(function (r) { return r.json(); });
+    if (res.code === 0 && res.data && res.data.url) {
+      var iu = document.getElementById('exploreVino_imageUrl');
+      var iut = document.getElementById('exploreVino_imageUrlThumb');
+      if (iu) iu.value = res.data.url;
+      if (res.data.thumbUrl && iut) iut.value = res.data.thumbUrl;
+      var prev = document.getElementById('exploreVino_preview');
+      if (prev) { prev.src = res.data.url; prev.style.display = 'block'; }
+    } else alert(res.message || '上传失败');
+  } catch (e) { alert('上传失败'); }
+  hideUploadLoading();
+  input.value = '';
 }
 
 function renderTabbarTable() {

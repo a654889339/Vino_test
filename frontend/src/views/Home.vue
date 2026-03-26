@@ -104,7 +104,7 @@
               alt=""
               @error="onVinoImgError(item.id)"
             />
-            <van-icon v-if="!vinoUseImg(item) || vinoImgFailed[item.id]" :name="vinoIconName(item)" size="28" color="rgba(255,255,255,0.85)" />
+            <van-icon v-if="!vinoUseImg(item) || vinoImgFailed[item.id]" :name="vinoIconName(item)" size="28" color="rgba(0,0,0,0.45)" />
           </div>
           <span class="vino-product-name">{{ item.title }}</span>
         </div>
@@ -216,6 +216,40 @@
           </div>
           <h4>{{ item.title }}</h4>
           <p>{{ item.desc }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 探索 VINO：后台单条配置，大图 + 居中标题 + 跳转 -->
+    <div v-if="exploreVinoVisible" class="explore-vino-section">
+      <div class="explore-vino-inner">
+        <div class="explore-vino-head">
+          <h3>{{ exploreVinoBarTitle }}</h3>
+        </div>
+        <div class="explore-vino-card" role="button" tabindex="0" @click="openExploreVinoLink">
+          <template v-if="exploreVinoImgSrc">
+            <img
+              :src="exploreVinoImgSrc"
+              class="explore-vino-bg-img"
+              alt=""
+              referrerpolicy="no-referrer"
+            />
+            <div class="explore-vino-dim" aria-hidden="true" />
+            <div class="explore-vino-center">
+              <div class="explore-vino-main">{{ exploreVinoMainTitle }}</div>
+              <div v-if="exploreVinoSubTitle" class="explore-vino-sub">{{ exploreVinoSubTitle }}</div>
+              <div class="explore-vino-circle">
+                <van-icon name="arrow" size="16" color="#fff" />
+              </div>
+            </div>
+          </template>
+          <div v-else class="explore-vino-center explore-vino-center--plain">
+            <div class="explore-vino-main-plain">{{ exploreVinoMainTitle }}</div>
+            <div v-if="exploreVinoSubTitle" class="explore-vino-sub-plain">{{ exploreVinoSubTitle }}</div>
+            <div class="explore-vino-circle explore-vino-circle--plain">
+              <van-icon name="arrow" size="16" color="#B91C1C" />
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -624,6 +658,46 @@ function openVinoProductGuide(item) {
   router.push('/guide/' + encodeURIComponent(slug));
 }
 
+const exploreVinoRow = computed(() =>
+  allItems.value.find((i) => i.section === 'exploreVino' && i.status === 'active') || null
+);
+const exploreVinoVisible = computed(() => {
+  const r = exploreVinoRow.value;
+  if (!r) return false;
+  const img = (r.imageUrl || '').trim();
+  const path = (r.path || '').trim();
+  return !!(img || path);
+});
+const exploreVinoBarTitle = computed(() => {
+  const t = (exploreVinoRow.value?.title || '').trim();
+  return t || '探索VINO';
+});
+const exploreVinoMainTitle = computed(() => {
+  const t = (exploreVinoRow.value?.icon || '').trim();
+  return t || 'VINO';
+});
+const exploreVinoSubTitle = computed(() => (exploreVinoRow.value?.desc || '').trim());
+const exploreVinoImgSrc = computed(() => {
+  const r = exploreVinoRow.value;
+  if (!r) return '';
+  const u = (r.imageUrlThumb || r.imageUrl || '').trim();
+  return u ? resolvePublicUrl(u) : '';
+});
+
+function openExploreVinoLink() {
+  const raw = (exploreVinoRow.value?.path || '').trim();
+  if (!raw) {
+    showToast('未配置跳转链接');
+    return;
+  }
+  if (/^https?:\/\//i.test(raw)) {
+    window.location.href = raw;
+    return;
+  }
+  const p = raw.startsWith('/') ? raw : '/' + raw;
+  router.push(p);
+}
+
 watch(showShare, async (val) => {
   if (val) {
     await nextTick();
@@ -730,30 +804,30 @@ const copyUrl = async () => {
   z-index: 1;
 }
 
-/* ===== Vino产品（深色宫格，每行 4 个） ===== */
+/* ===== Vino产品（浅色底 + 栏目外观铺底图；未加载前为白底） ===== */
 .vino-product-section {
   position: relative;
   z-index: 1;
   margin: 12px;
   border-radius: 16px;
-  background: linear-gradient(180deg, #2c2c30 0%, #18181a 100%);
+  background: #fff;
   padding: 16px 12px 20px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
 }
 .vino-product-inner {
   position: relative;
   z-index: 1;
 }
 
-/* ===== 甄选推荐：大图横滑 ===== */
+/* ===== 甄选推荐：大图横滑（浅色底，未加载外观图前为白底） ===== */
 .featured-recommend-section {
   position: relative;
   z-index: 1;
   margin: 12px;
   border-radius: 16px;
-  background: linear-gradient(180deg, #121214 0%, #0a0a0c 100%);
+  background: #fff;
   padding: 14px 0 18px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 .featured-recommend-inner {
   position: relative;
@@ -766,7 +840,7 @@ const copyUrl = async () => {
   margin: 0;
   font-size: 18px;
   font-weight: 700;
-  color: #f5f5f5;
+  color: #1a1a1a;
   letter-spacing: -0.02em;
 }
 .featured-recommend-scroll {
@@ -795,7 +869,7 @@ const copyUrl = async () => {
 }
 .featured-recommend-card-img-wrap {
   aspect-ratio: 3 / 5;
-  background: #1a1a1e;
+  background: #f5f5f5;
 }
 .featured-recommend-img {
   width: 100%;
@@ -807,7 +881,7 @@ const copyUrl = async () => {
   width: 100%;
   height: 100%;
   min-height: 200px;
-  background: #222;
+  background: #f5f5f5;
 }
 .featured-recommend-card-overlay {
   position: absolute;
@@ -844,12 +918,12 @@ const copyUrl = async () => {
   margin: 0;
   font-size: 20px;
   font-weight: 700;
-  color: #fff;
+  color: #1a1a1a;
   letter-spacing: -0.02em;
 }
 .vino-more {
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(0, 0, 0, 0.45);
   font-weight: 500;
   cursor: pointer;
 }
@@ -873,7 +947,7 @@ const copyUrl = async () => {
   width: 56px;
   height: 56px;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.04);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -887,7 +961,7 @@ const copyUrl = async () => {
 }
 .vino-product-name {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.72);
+  color: rgba(0, 0, 0, 0.65);
   text-align: center;
   line-height: 1.35;
   max-width: 100%;
@@ -895,6 +969,117 @@ const copyUrl = async () => {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* ===== 探索 VINO ===== */
+.explore-vino-section {
+  position: relative;
+  z-index: 1;
+  margin: 12px;
+  border-radius: 16px;
+  background: #fff;
+  padding: 14px 12px 18px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+.explore-vino-inner {
+  position: relative;
+  z-index: 1;
+}
+.explore-vino-head {
+  margin-bottom: 12px;
+  padding: 0 4px;
+}
+.explore-vino-head h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1a1a;
+  letter-spacing: -0.02em;
+}
+.explore-vino-card {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  min-height: 200px;
+  background: #fff;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.explore-vino-card:active {
+  opacity: 0.94;
+}
+.explore-vino-bg-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.explore-vino-dim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.35) 0%, rgba(0, 0, 0, 0.45) 50%, rgba(0, 0, 0, 0.5) 100%);
+  pointer-events: none;
+}
+.explore-vino-center {
+  position: relative;
+  z-index: 1;
+  min-height: 220px;
+  padding: 36px 24px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-sizing: border-box;
+}
+.explore-vino-main {
+  font-size: 28px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.12em;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+}
+.explore-vino-sub {
+  margin-top: 12px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.92);
+  letter-spacing: 0.35em;
+  line-height: 1.6;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.35);
+}
+.explore-vino-circle {
+  margin-top: 22px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.08);
+}
+.explore-vino-center--plain {
+  min-height: 180px;
+  background: #fff;
+}
+.explore-vino-main-plain {
+  font-size: 26px;
+  font-weight: 700;
+  color: #1a1a1a;
+  letter-spacing: 0.1em;
+}
+.explore-vino-sub-plain {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #666;
+  letter-spacing: 0.2em;
+  line-height: 1.6;
+}
+.explore-vino-circle--plain {
+  border-color: rgba(185, 28, 28, 0.5);
+  background: rgba(185, 28, 28, 0.06);
 }
 
 /* ===== Section common ===== */

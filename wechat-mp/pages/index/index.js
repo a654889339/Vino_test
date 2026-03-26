@@ -1,4 +1,5 @@
 const app = getApp();
+const { formatPriceDisplay } = require('../../utils/currency.js');
 
 Page({
   data: {
@@ -13,6 +14,9 @@ Page({
     navSmItems: [],
     myProducts: [],
     hotServices: [],
+    vinoItems: [],
+    featuredItems: [],
+    exploreVino: null,
     recommends: [
       { id: 1, title: '会员权益', desc: '专属折扣', emoji: '🏅', bg: 'linear-gradient(135deg, #F59E0B, #D97706)' },
       { id: 2, title: '服务保障', desc: '无忧售后', emoji: '🛡️', bg: 'linear-gradient(135deg, #10B981, #059669)' },
@@ -59,6 +63,54 @@ Page({
     wx.navigateTo({ url: '/pages/my-products/my-products' });
   },
 
+  goProducts() {
+    wx.switchTab({ url: '/pages/products/products' });
+  },
+
+  goVinoGuide(e) {
+    const slug = (e.currentTarget.dataset.slug && String(e.currentTarget.dataset.slug).trim()) || '';
+    if (!slug) {
+      wx.showToast({ title: '未配置商品', icon: 'none' });
+      return;
+    }
+    wx.navigateTo({
+      url: '/pages/guide-detail/guide-detail?id=' + encodeURIComponent(slug),
+    });
+  },
+
+  goFeaturedGuide(e) {
+    const slug = (e.currentTarget.dataset.slug && String(e.currentTarget.dataset.slug).trim()) || '';
+    if (!slug) {
+      wx.showToast({ title: '未配置商品', icon: 'none' });
+      return;
+    }
+    wx.navigateTo({
+      url: '/pages/guide-detail/guide-detail?id=' + encodeURIComponent(slug),
+    });
+  },
+
+  goExploreVino() {
+    const ev = this.data.exploreVino;
+    if (!ev || !ev.path) {
+      wx.showToast({ title: '未配置链接', icon: 'none' });
+      return;
+    }
+    const link = String(ev.path).trim();
+    if (link.startsWith('http://') || link.startsWith('https://')) {
+      wx.navigateTo({
+        url: '/pages/webview/webview?url=' + encodeURIComponent(link),
+      });
+      return;
+    }
+    if (link.startsWith('/pages/')) {
+      wx.navigateTo({ url: link, fail: () => wx.switchTab({ url: link }) });
+      return;
+    }
+    wx.navigateTo({
+      url: '/pages/guide-detail/guide-detail?id=' + encodeURIComponent(link),
+    });
+  },
+
   goMyProductGuide(e) {
     const slug = (e.currentTarget.dataset.slug && String(e.currentTarget.dataset.slug).trim()) || '';
     if (!slug) {
@@ -78,16 +130,28 @@ Page({
       if (t.startsWith('http://') || t.startsWith('https://')) return t;
       return base + (t.startsWith('/') ? t : '/' + t);
     };
-    app.request({ url: '/home-config?all=1' })
-      .then(res => {
-        const items = res.data || [];
+
+    const pHc = app.request({ url: '/home-config?all=1' }).catch(() => ({ data: [] }));
+    const pGuides = app.request({ url: '/guides' }).catch(() => ({ data: [] }));
+
+    Promise.all([pHc, pGuides])
+      .then(([hcRes, gRes]) => {
+        const items = hcRes.data || [];
+        const guides = gRes.data || [];
+        const guidesBySlug = {};
+        guides.forEach((g) => {
+          const s = g.slug != null ? String(g.slug).trim() : '';
+          if (!s) return;
+          guidesBySlug[s] = g;
+          guidesBySlug[s.toLowerCase()] = g;
+        });
+
         const headerLogo = items.find(i => i.section === 'headerLogo' && i.status === 'active');
         const homeBgItems = items.filter(i => i.section === 'homeBg' && i.status === 'active');
         const homeBgList = homeBgItems.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
           .map(i => {
             const url = toFull(i.imageUrl);
             const thumb = (i.imageUrlThumb && i.imageUrlThumb.trim()) ? toFull(i.imageUrlThumb.trim()) : '';
-            // 轮播必须使用原图：推导/缺失的缩略图在 COS 上常 404，会导致整页空白
             const displayUrl = url;
             return { url, thumb, displayUrl };
           })
@@ -103,6 +167,81 @@ Page({
         const navSm = items.filter(i => i.section === 'navSm' && i.status === 'active')
           .sort((a, b) => a.sortOrder - b.sortOrder)
           .map(i => ({ id: i.id, title: i.title, imageUrl: i.imageUrl, imageUrlThumb: i.imageUrlThumb || '', icon: i.icon, path: i.path || '/pages/service/service', color: i.color }));
+
+        const vinoRows = items.filter(i => i.section === 'vinoProduct' && i.status === 'active')
+          .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+        const vinoItems = vinoRows.map((row) => {
+          const path = (row.path || '').trim();
+          const g = path ? (guidesBySlug[path] || guidesBySlug[path.toLowerCase()]) : null;
+          let title = row.title || '';
+          let iconUrl = '';
+          let iconUrlThumb = '';
+          if (g) {
+            title = (g.name && String(g.name).trim()) || title;
+            iconUrl = (g.iconUrl && String(g.iconUrl).trim()) || '';
+            iconUrlThumb = (g.iconUrlThumb && String(g.iconUrlThumb).trim()) || '';
+          }
+          if (!iconUrl && row.imageUrl) iconUrl = row.imageUrl;
+          if (!iconUrlThumb && row.imageUrlThumb) iconUrlThumb = row.imageUrlThumb;
+          return {
+            id: row.id,
+            title,
+            path,
+            iconUrl: iconUrl ? toFull(iconUrl) : '',
+            iconUrlThumb: iconUrlThumb ? toFull(iconUrlThumb) : '',
+          };
+        });
+
+        const frRows = items.filter(i => i.section === 'featuredRecommend' && i.status === 'active')
+          .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+        const featuredItems = frRows.map((row) => {
+          const path = (row.path || '').trim();
+          const g = path ? (guidesBySlug[path] || guidesBySlug[path.toLowerCase()]) : null;
+          let title = row.title || '';
+          let subtitle = (row.desc || '').trim();
+          let coverImage = '';
+          let coverThumb = '';
+          if (g) {
+            title = (g.name && String(g.name).trim()) || title;
+            subtitle = (g.subtitle && String(g.subtitle).trim()) || subtitle;
+            coverImage = (g.coverImage && String(g.coverImage).trim()) || '';
+            coverThumb = (g.coverImageThumb && String(g.coverImageThumb).trim()) || '';
+          }
+          if (!coverImage && row.imageUrl) coverImage = row.imageUrl;
+          if (!coverThumb && row.imageUrlThumb) coverThumb = row.imageUrlThumb;
+          const coverUrl = toFull((coverImage || coverThumb || row.imageUrl || row.imageUrlThumb || '').trim());
+          return { id: row.id, title, subtitle, path, coverUrl };
+        });
+
+        const evRow = items.find(i => i.section === 'exploreVino' && i.status === 'active');
+        let exploreVino = null;
+        if (evRow) {
+          const img = (evRow.imageUrl || '').trim();
+          const pathEv = (evRow.path || '').trim();
+          if (img || pathEv) {
+            const thumb = (evRow.imageUrlThumb || '').trim();
+            const displayBg = thumb ? toFull(thumb) : (img ? toFull(evRow.imageUrl) : '');
+            exploreVino = {
+              barTitle: (evRow.title && String(evRow.title).trim()) || '探索VINO',
+              mainTitle: (evRow.icon && String(evRow.icon).trim()) || 'VINO',
+              subTitle: (evRow.desc || '').trim(),
+              path: pathEv,
+              displayBg,
+            };
+          }
+        }
+
+        const recRows = items.filter(i => i.section === 'recommend' && i.status === 'active');
+        const recommends = recRows.length
+          ? recRows.map((i, idx) => ({
+            id: i.id,
+            title: i.title || '',
+            desc: i.desc || '',
+            emoji: ['🏅', '🛡️', '🎁', '👥', '⭐', '📌'][idx % 6],
+            bg: i.color && String(i.color).trim() ? i.color : 'linear-gradient(135deg, #6366F1, #4F46E5)',
+          }))
+          : this.data.recommends;
+
         this.setData({
           headerLogoUrl: headerLogo ? toFull(headerLogo.imageUrl) : '',
           heroBgUrl: singleBg,
@@ -113,6 +252,10 @@ Page({
           myProductsTitle: (myProductsTitleItem && myProductsTitleItem.title) ? myProductsTitleItem.title.trim() : '我的商品',
           navLgItems: navLg,
           navSmItems: navSm,
+          vinoItems,
+          featuredItems,
+          exploreVino,
+          recommends,
         });
       })
       .catch(() => {});
@@ -129,12 +272,13 @@ Page({
   },
 
   loadHotServices() {
+    const sym = app.globalData.currencySymbol || '¥';
     app.request({ url: '/services' })
       .then(res => {
         const data = (res.data || []).slice(0, 8);
         const hotServices = data.map(s => ({
           id: s.id, title: s.title || '服务', desc: s.description || '专业服务',
-          price: s.price || 0, emoji: '🔧', bg: 'linear-gradient(135deg, #B91C1C, #991B1B)',
+          price: s.price || 0, priceDisplay: formatPriceDisplay(s.price, sym), emoji: '🔧', bg: 'linear-gradient(135deg, #B91C1C, #991B1B)',
         }));
         this.setData({ hotServices: hotServices.length ? hotServices : this.getFallbackHotServices() });
       })
@@ -142,11 +286,12 @@ Page({
   },
 
   getFallbackHotServices() {
+    const sym = app.globalData.currencySymbol || '¥';
     return [
-      { id: 1, title: '设备维修', desc: '专业工程师', price: '99', emoji: '🔧', bg: 'linear-gradient(135deg, #B91C1C, #991B1B)' },
-      { id: 2, title: '深度清洁', desc: '全方位保养', price: '149', emoji: '✨', bg: 'linear-gradient(135deg, #2563EB, #1D4ED8)' },
-      { id: 3, title: '系统检测', desc: '全面评估', price: '49', emoji: '🔍', bg: 'linear-gradient(135deg, #059669, #047857)' },
-      { id: 4, title: '数据恢复', desc: '专业找回', price: '199', emoji: '💾', bg: 'linear-gradient(135deg, #7C3AED, #6D28D9)' },
+      { id: 1, title: '设备维修', desc: '专业工程师', price: '99', priceDisplay: formatPriceDisplay('99', sym), emoji: '🔧', bg: 'linear-gradient(135deg, #B91C1C, #991B1B)' },
+      { id: 2, title: '深度清洁', desc: '全方位保养', price: '149', priceDisplay: formatPriceDisplay('149', sym), emoji: '✨', bg: 'linear-gradient(135deg, #2563EB, #1D4ED8)' },
+      { id: 3, title: '系统检测', desc: '全面评估', price: '49', priceDisplay: formatPriceDisplay('49', sym), emoji: '🔍', bg: 'linear-gradient(135deg, #059669, #047857)' },
+      { id: 4, title: '数据恢复', desc: '专业找回', price: '199', priceDisplay: formatPriceDisplay('199', sym), emoji: '💾', bg: 'linear-gradient(135deg, #7C3AED, #6D28D9)' },
     ];
   },
 
