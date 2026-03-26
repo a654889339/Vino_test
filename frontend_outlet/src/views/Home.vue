@@ -113,7 +113,7 @@
     </div>
 
     <!-- 甄选推荐：展示大图横滑（配置同 Vino，图片来自商品「展示大图」） -->
-    <div v-if="featuredRecommendItems.length" class="featured-recommend-section">
+    <div v-if="featuredRecommendItems.length" class="featured-recommend-section" :style="featuredRecommendSectionStyle">
       <div v-if="skinLayerFeaturedRecommend" class="section-skin-layer" :style="skinLayerFeaturedRecommend" aria-hidden="true" />
       <div class="featured-recommend-inner">
         <div class="featured-recommend-head">
@@ -271,7 +271,7 @@ import LodImg from '@/components/LodImg.vue';
 import PageThemeLayer from '@/components/PageThemeLayer.vue';
 import { formatPriceDisplay } from '@/utils/currency';
 import { resolvePublicUrl } from '@/utils/mediaUrl';
-import { buildSectionSkinLayerStyle } from '@/utils/sectionSkin';
+import { buildSectionSkinLayerStyle, buildSectionSkinContainerStyle } from '@/utils/sectionSkin';
 
 const router = useRouter();
 const showShare = ref(false);
@@ -646,6 +646,8 @@ function onVinoImgError(id) {
 const skinLayerHomeScroll = computed(() => buildSectionSkinLayerStyle(allItems.value, 'homeScroll'));
 const skinLayerVinoProduct = computed(() => buildSectionSkinLayerStyle(allItems.value, 'vinoProduct'));
 const skinLayerFeaturedRecommend = computed(() => buildSectionSkinLayerStyle(allItems.value, 'featuredRecommend'));
+const vinoProductSectionStyle = computed(() => buildSectionSkinContainerStyle(allItems.value, 'vinoProduct', 'vino'));
+const featuredRecommendSectionStyle = computed(() => buildSectionSkinContainerStyle(allItems.value, 'featuredRecommend', 'fr'));
 const skinLayerMyProducts = computed(() => buildSectionSkinLayerStyle(allItems.value, 'myProducts'));
 const skinLayerHotService = computed(() => buildSectionSkinLayerStyle(allItems.value, 'hotService'));
 
@@ -845,19 +847,25 @@ const copyUrl = async () => {
 }
 .featured-recommend-scroll {
   display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: center;
   gap: 12px;
   overflow-x: auto;
   scrollbar-width: none;
   padding: 0 12px 6px;
   scroll-snap-type: x mandatory;
+  scroll-padding-inline: 12px;
   -webkit-overflow-scrolling: touch;
 }
 .featured-recommend-scroll::-webkit-scrollbar {
   display: none;
 }
 .featured-recommend-card {
-  flex: 0 0 min(72vw, 280px);
-  scroll-snap-align: start;
+  flex: 0 0 auto;
+  width: fit-content;
+  max-width: min(88vw, 400px);
+  scroll-snap-align: center;
   border-radius: 16px;
   overflow: hidden;
   position: relative;
@@ -868,18 +876,23 @@ const copyUrl = async () => {
   opacity: 0.92;
 }
 .featured-recommend-card-img-wrap {
-  aspect-ratio: 3 / 5;
+  display: block;
+  width: fit-content;
+  max-width: min(88vw, 400px);
+  margin: 0 auto;
   background: #f5f5f5;
+  border-radius: 16px;
+  overflow: hidden;
 }
 .featured-recommend-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  width: auto;
+  max-width: min(88vw, 400px);
+  height: auto;
+  max-height: min(65vh, 520px);
   display: block;
 }
 .featured-recommend-placeholder {
-  width: 100%;
-  height: 100%;
+  width: min(88vw, 400px);
   min-height: 200px;
   background: #f5f5f5;
 }
@@ -888,8 +901,9 @@ const copyUrl = async () => {
   left: 0;
   right: 0;
   top: 0;
+  bottom: 0;
   padding: 14px 12px 12px;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.08) 45%, transparent 70%);
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.12) 40%, transparent 72%);
   pointer-events: none;
 }
 .featured-recommend-title {

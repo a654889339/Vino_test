@@ -194,7 +194,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <div class="dash-nav-item" data-page="homeConfig" onclick="switchPage('homeConfig')">首页配置</div>
     <div class="dash-nav-item" data-page="homeAnimConfig" onclick="switchPage('homeAnimConfig')">首页动画配置</div>
     <div class="dash-nav-item" data-page="pageThemeConfig" onclick="switchPage('pageThemeConfig')">页面基础配置</div>
-    <div class="dash-nav-item" data-page="mineConfig" onclick="switchPage('mineConfig')">个人中心配置</div>
     <div class="dash-nav-item" data-page="messages" onclick="switchPage('messages')">留言板</div>
   </div>
   <div class="dash-body">
@@ -634,29 +633,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <tbody id="pageThemeBody"></tbody>
         </table>
         <div class="order-empty" id="pageThemeEmpty" style="display:none">暂无页面基础配置</div>
-      </div>
-    </div>
-
-    <!-- 个人中心配置 Page -->
-    <div class="dash-page" id="page-mineConfig">
-      <div class="dash-section">
-        <div class="section-header">
-          <h3>个人中心配置</h3>
-        </div>
-        <p style="font-size:13px;color:#666;margin-bottom:16px">配置前台「我的」页中头像后方的背景图。留空则使用默认渐变背景。</p>
-        <div class="form-group">
-          <label>头像后方背景图</label>
-          <div style="display:flex;gap:8px;align-items:center">
-            <input class="form-input" id="mineBgImageUrl" placeholder="上传或填写图片地址" style="flex:1" />
-            <label style="padding:8px 16px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">
-              上传图片<input type="file" accept="image/*" style="display:none" onchange="uploadMineBgImage(this)" />
-            </label>
-          </div>
-          <img id="mineBgImagePreview" style="max-width:280px;max-height:140px;margin-top:12px;border-radius:8px;display:none;border:1px solid #eee;background:#f5f5f5;padding:8px" />
-        </div>
-        <div style="margin-top:16px">
-          <button class="btn" onclick="saveMineConfig()" style="background:var(--primary);color:#fff;padding:8px 24px">保存</button>
-        </div>
       </div>
     </div>
 
@@ -1360,14 +1336,14 @@ async function api(path, options = {}) {
 let currentHCPage = 'homeConfig';
 let currentGroup = 'ToC';
 
-const tocPages = ['overview','orders','users','guides','serviceConfig','inventory','homeConfig','homeAnimConfig','pageThemeConfig','mineConfig','messages'];
+const tocPages = ['overview','orders','users','guides','serviceConfig','inventory','homeConfig','homeAnimConfig','pageThemeConfig','messages'];
 const outletPages = ['outletOverview','outletOrders','outletUsers','outletHomeConfig','outletHomeAnimConfig','outletMineConfig','outletMessages'];
 
 const tocNavItems = [
   {page:'overview',label:'概览'},{page:'orders',label:'订单管理'},{page:'users',label:'用户管理'},
   {page:'guides',label:'商品配置'},{page:'serviceConfig',label:'服务配置'},{page:'inventory',label:'商品库存'},
   {page:'homeConfig',label:'首页配置'},{page:'homeAnimConfig',label:'首页动画配置'},
-  {page:'pageThemeConfig',label:'页面基础配置'},{page:'mineConfig',label:'个人中心配置'},{page:'messages',label:'留言板'}
+  {page:'pageThemeConfig',label:'页面基础配置'},{page:'messages',label:'留言板'}
 ];
 const outletNavItems = [
   {page:'outletOverview',label:'概览'},{page:'outletOrders',label:'订单管理'},{page:'outletUsers',label:'用户管理'},
@@ -1420,7 +1396,6 @@ function switchPage(page) {
   if (page === 'homeConfig') { currentHCPage = 'homeConfig'; loadHomeConfig(); loadGuides(); }
   if (page === 'homeAnimConfig') { currentHCPage = 'homeAnimConfig'; loadHomeConfig(); }
   if (page === 'pageThemeConfig') { currentHCPage = 'pageTheme'; loadHomeConfig(); }
-  if (page === 'mineConfig') loadMineConfig();
   if (page === 'messages') { loadConversations(); startMsgPolling(); }
   if (page === 'outletOverview') loadOutletStats();
   if (page === 'outletOrders') { outletOrderPage = 1; loadOutletOrders(); }
@@ -3579,71 +3554,6 @@ async function deleteHC(id) {
     if (res.code === 0) loadHomeConfig();
     else alert(res.message || '删除失败');
   } catch { alert('删除失败'); }
-}
-
-/* ===== 个人中心配置 (mineBg) ===== */
-let mineConfigEditId = '';
-
-async function loadMineConfig() {
-  try {
-    const res = await api('/home-config?all=1');
-    const items = res.data || [];
-    const mineBg = items.find(i => i.section === 'mineBg');
-    mineConfigEditId = mineBg ? mineBg.id : '';
-    document.getElementById('mineBgImageUrl').value = mineBg && mineBg.imageUrl ? mineBg.imageUrl : '';
-    const preview = document.getElementById('mineBgImagePreview');
-    if (mineBg && mineBg.imageUrl) { preview.src = mineBg.imageUrl; preview.style.display = 'block'; }
-    else { preview.style.display = 'none'; }
-  } catch { document.getElementById('mineBgImageUrl').value = ''; document.getElementById('mineBgImagePreview').style.display = 'none'; }
-}
-
-async function saveMineConfig() {
-  const imageUrl = document.getElementById('mineBgImageUrl').value.trim();
-  const body = {
-    section: 'mineBg',
-    title: '个人中心背景',
-    desc: '',
-    icon: '',
-    color: '',
-    path: '/',
-    price: '',
-    imageUrl: imageUrl,
-    sortOrder: 0,
-    status: 'active',
-  };
-  try {
-    const res = mineConfigEditId
-      ? await api('/home-config/' + mineConfigEditId, { method: 'PUT', body })
-      : await api('/home-config', { method: 'POST', body });
-    if (res.code === 0) { alert('保存成功'); loadMineConfig(); }
-    else alert(res.message || '保存失败');
-  } catch { alert('保存失败'); }
-}
-
-async function uploadMineBgImage(input) {
-  const file = input.files[0];
-  if (!file) return;
-  if (file.size > 10 * 1024 * 1024) { alert('图片不能超过 10MB'); input.value = ''; return; }
-  if (!file.type.startsWith('image/')) { alert('只能上传图片'); input.value = ''; return; }
-  const token = localStorage.getItem('vino_admin_token');
-  if (!token) { alert('未登录或已过期'); input.value = ''; return; }
-  const formData = new FormData();
-  formData.append('file', file);
-  try {
-    const res = await fetch(API + '/home-config/upload', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + token },
-      body: formData
-    }).then(r => r.json());
-    if (res.code === 0 && res.data?.url) {
-      document.getElementById('mineBgImageUrl').value = res.data.url;
-      const preview = document.getElementById('mineBgImagePreview');
-      preview.src = res.data.url;
-      preview.style.display = 'block';
-      alert('上传成功');
-    } else { alert(res.message || '上传失败'); }
-  } catch (e) { alert('上传失败: ' + (e.message || e)); }
-  input.value = '';
 }
 
 /* ===== Messages / Chat ===== */

@@ -47,7 +47,7 @@
   </view>
 
   <!-- Vino 产品（与网页一致） -->
-  <view wx:if="{{vinoItems.length}}" class="vino-section">
+  <view wx:if="{{vinoItems.length}}" class="vino-section" style="{{vinoSectionStyle}}">
     <view class="vino-inner">
       <view class="vino-head">
         <text class="vino-title">Vino产品</text>
@@ -66,14 +66,14 @@
   </view>
 
   <!-- 甄选推荐 -->
-  <view wx:if="{{featuredItems.length}}" class="fr-section">
+  <view wx:if="{{featuredItems.length}}" class="fr-section" style="{{frSectionStyle}}">
     <view class="fr-head">
       <text class="fr-title">甄选推荐</text>
     </view>
     <scroll-view scroll-x class="fr-scroll" enable-flex="true" show-scrollbar="{{false}}">
       <view class="fr-card" wx:for="{{featuredItems}}" wx:key="id" bindtap="goFeaturedGuide" data-slug="{{item.path}}">
         <view class="fr-img-wrap">
-          <image wx:if="{{item.coverUrl}}" class="fr-img" src="{{item.coverUrl}}" mode="aspectFill" />
+          <image wx:if="{{item.coverUrl}}" class="fr-img" src="{{item.coverUrl}}" mode="widthFix" />
           <view wx:else class="fr-ph" />
         </view>
         <view class="fr-overlay">
