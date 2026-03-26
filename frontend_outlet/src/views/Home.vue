@@ -112,6 +112,40 @@
       </div>
     </div>
 
+    <!-- 甄选推荐：展示大图横滑（配置同 Vino，图片来自商品「展示大图」） -->
+    <div v-if="featuredRecommendItems.length" class="featured-recommend-section">
+      <div v-if="skinLayerFeaturedRecommend" class="section-skin-layer" :style="skinLayerFeaturedRecommend" aria-hidden="true" />
+      <div class="featured-recommend-inner">
+        <div class="featured-recommend-head">
+          <h3>甄选推荐</h3>
+        </div>
+        <div class="featured-recommend-scroll">
+          <div
+            v-for="item in featuredRecommendItems"
+            :key="item.id"
+            class="featured-recommend-card"
+            @click="openFeaturedRecommendGuide(item)"
+          >
+            <div class="featured-recommend-card-img-wrap">
+              <img
+                v-if="featuredCoverSrc(item)"
+                :src="featuredCoverSrc(item)"
+                class="featured-recommend-img"
+                alt=""
+                referrerpolicy="no-referrer"
+                @error="onFeaturedImgError(item.id)"
+              />
+              <div v-else class="featured-recommend-placeholder" />
+            </div>
+            <div class="featured-recommend-card-overlay">
+              <div class="featured-recommend-title">{{ item.title }}</div>
+              <div v-if="item.subtitle" class="featured-recommend-sub">{{ item.subtitle }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 我的商品：为空时整栏隐藏，自助服务紧贴自助预约 -->
     <div v-if="myProductsDisplay.length" class="section card-section section-my-products">
       <div v-if="skinLayerMyProducts" class="section-skin-layer" :style="skinLayerMyProducts" aria-hidden="true" />
@@ -217,6 +251,7 @@ const myProducts = ref([]);
 const addProductLoading = ref(false);
 const vinoImgFailed = reactive({});
 const myProductImgFailed = reactive({});
+const featuredImgFailed = reactive({});
 
 function productIconUrl(item) {
   const u = (item && (item.iconUrlThumb || item.iconUrl)) || '';
@@ -459,6 +494,55 @@ const myProductsDisplay = computed(() => {
   });
 });
 
+const featuredRecommendItems = computed(() => {
+  const rows = allItems.value
+    .filter((i) => i.section === 'featuredRecommend' && i.status === 'active')
+    .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+  return rows.map((i) => {
+    const path = (i.path || '').trim();
+    const g = path ? rowGuide(path) : null;
+    if (!g) {
+      return {
+        id: i.id,
+        title: i.title || '',
+        subtitle: (i.desc || '').trim(),
+        path,
+        coverImage: i.imageUrl || '',
+        coverThumb: i.imageUrlThumb || '',
+      };
+    }
+    const coverImg = (g.coverImage != null && String(g.coverImage).trim()) ? String(g.coverImage).trim() : (i.imageUrl || '');
+    const coverThumb = (g.coverImageThumb != null && String(g.coverImageThumb).trim()) ? String(g.coverImageThumb).trim() : (i.imageUrlThumb || '');
+    return {
+      id: i.id,
+      title: (g.name != null && String(g.name).trim()) ? String(g.name).trim() : (i.title || ''),
+      subtitle: (g.subtitle != null && String(g.subtitle).trim()) ? String(g.subtitle).trim() : ((i.desc || '').trim()),
+      path,
+      coverImage: coverImg || (i.imageUrl || ''),
+      coverThumb: coverThumb || (i.imageUrlThumb || ''),
+    };
+  });
+});
+
+function featuredCoverSrc(item) {
+  if (!item || featuredImgFailed[item.id]) return '';
+  const u = (item.coverImage || item.coverThumb || '').trim();
+  return u ? resolvePublicUrl(u) : '';
+}
+
+function onFeaturedImgError(id) {
+  if (id != null) featuredImgFailed[id] = true;
+}
+
+function openFeaturedRecommendGuide(item) {
+  const slug = item.path;
+  if (!slug) {
+    showToast('未配置商品链接');
+    return;
+  }
+  router.push('/guide/' + encodeURIComponent(slug));
+}
+
 const vinoProductItems = computed(() => {
   const rows = allItems.value
     .filter((i) => i.section === 'vinoProduct' && i.status === 'active')
@@ -527,6 +611,7 @@ function onVinoImgError(id) {
 
 const skinLayerHomeScroll = computed(() => buildSectionSkinLayerStyle(allItems.value, 'homeScroll'));
 const skinLayerVinoProduct = computed(() => buildSectionSkinLayerStyle(allItems.value, 'vinoProduct'));
+const skinLayerFeaturedRecommend = computed(() => buildSectionSkinLayerStyle(allItems.value, 'featuredRecommend'));
 const skinLayerMyProducts = computed(() => buildSectionSkinLayerStyle(allItems.value, 'myProducts'));
 const skinLayerHotService = computed(() => buildSectionSkinLayerStyle(allItems.value, 'hotService'));
 
@@ -659,6 +744,95 @@ const copyUrl = async () => {
   position: relative;
   z-index: 1;
 }
+
+/* ===== 甄选推荐：大图横滑 ===== */
+.featured-recommend-section {
+  position: relative;
+  z-index: 1;
+  margin: 12px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #121214 0%, #0a0a0c 100%);
+  padding: 14px 0 18px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+.featured-recommend-inner {
+  position: relative;
+  z-index: 1;
+}
+.featured-recommend-head {
+  padding: 0 16px 12px;
+}
+.featured-recommend-head h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #f5f5f5;
+  letter-spacing: -0.02em;
+}
+.featured-recommend-scroll {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 0 12px 6px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+.featured-recommend-scroll::-webkit-scrollbar {
+  display: none;
+}
+.featured-recommend-card {
+  flex: 0 0 min(72vw, 280px);
+  scroll-snap-align: start;
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.featured-recommend-card:active {
+  opacity: 0.92;
+}
+.featured-recommend-card-img-wrap {
+  aspect-ratio: 3 / 5;
+  background: #1a1a1e;
+}
+.featured-recommend-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.featured-recommend-placeholder {
+  width: 100%;
+  height: 100%;
+  min-height: 200px;
+  background: #222;
+}
+.featured-recommend-card-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  padding: 14px 12px 12px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.08) 45%, transparent 70%);
+  pointer-events: none;
+}
+.featured-recommend-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.35;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
+}
+.featured-recommend-sub {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.88);
+  margin-top: 6px;
+  line-height: 1.4;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
 .vino-product-head {
   display: flex;
   justify-content: space-between;
