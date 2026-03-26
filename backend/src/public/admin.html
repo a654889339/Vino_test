@@ -423,8 +423,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <!-- Home Config Page -->
     <div class="dash-page" id="page-homeConfig">
       <div class="dash-section">
-        <div class="section-header">
+        <div class="section-header" style="flex-wrap:wrap;gap:12px;align-items:flex-start">
           <h3>首页配置管理</h3>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12px;margin-left:auto;max-width:100%">
+            <span style="color:#666;white-space:nowrap">栏目外观·首页内容区</span>
+            <input type="text" id="hcSkin_homeScroll_imageUrl" class="form-input" style="width:min(220px,42vw);padding:6px 8px;font-size:12px" placeholder="背景图 URL" />
+            <span style="color:#888">透明度</span>
+            <input type="number" id="hcSkin_homeScroll_desc" min="0" max="100" style="width:56px;padding:6px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px" placeholder="100" title="0–100" />
+            <input type="text" id="hcSkin_homeScroll_color" style="width:90px;padding:6px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px" placeholder="底色 #可选" />
+            <button type="button" class="btn" onclick="saveHomeSectionSkin('homeScroll')" style="font-size:12px;padding:6px 10px">保存外观</button>
+          </div>
         </div>
         <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
           <button class="btn" onclick="filterHC('all')" id="hcFilterAll" style="background:var(--primary);color:#fff">全部</button>
@@ -449,8 +457,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
       <!-- 底部栏配置（与首页配置管理同层级） -->
       <div class="dash-section" style="margin-top:32px">
-        <div class="section-header">
+        <div class="section-header" style="flex-wrap:wrap;gap:12px;align-items:flex-start">
           <h3>底部栏配置</h3>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12px;margin-left:auto;max-width:100%">
+            <span style="color:#666;white-space:nowrap">栏目外观·底栏</span>
+            <input type="text" id="hcSkin_tabbar_imageUrl" class="form-input" style="width:min(220px,42vw);padding:6px 8px;font-size:12px" placeholder="背景图 URL" />
+            <span style="color:#888">透明度</span>
+            <input type="number" id="hcSkin_tabbar_desc" min="0" max="100" style="width:56px;padding:6px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px" placeholder="100" title="0–100" />
+            <input type="text" id="hcSkin_tabbar_color" style="width:90px;padding:6px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px" placeholder="底色 #可选" />
+            <button type="button" class="btn" onclick="saveHomeSectionSkin('tabbar')" style="font-size:12px;padding:6px 10px">保存外观</button>
+          </div>
         </div>
         <p style="font-size:13px;color:#666;margin-bottom:16px">配置前端底部导航栏的图标和名称（如首页、产品、服务、订单、我的）。图标使用 Vant 图标名，如 wap-home-o、label-o、apps-o、bill-o、contact-o。</p>
         <div style="margin-bottom:16px">
@@ -463,10 +479,50 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <div class="order-empty" id="tbTabbarEmpty" style="display:none">暂无底部栏配置，将使用默认五项（首页/产品/服务/订单/我的）</div>
       </div>
 
+      <!-- 我的商品：仅栏目外观（数据仍在上方「首页配置」表中 myProducts 板块） -->
+      <div class="dash-section" style="margin-top:32px">
+        <div class="section-header" style="flex-wrap:wrap;gap:12px;align-items:flex-start">
+          <h3>我的商品 · 栏目外观</h3>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12px;margin-left:auto;max-width:100%">
+            <span style="color:#666;white-space:nowrap">背景图</span>
+            <input type="text" id="hcSkin_myProducts_imageUrl" class="form-input" style="width:min(220px,42vw);padding:6px 8px;font-size:12px" placeholder="背景图 URL" />
+            <span style="color:#888">透明度</span>
+            <input type="number" id="hcSkin_myProducts_desc" min="0" max="100" style="width:56px;padding:6px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px" placeholder="100" title="0–100" />
+            <input type="text" id="hcSkin_myProducts_color" style="width:90px;padding:6px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px" placeholder="底色 #可选" />
+            <button type="button" class="btn" onclick="saveHomeSectionSkin('myProducts')" style="font-size:12px;padding:6px 10px">保存外观</button>
+          </div>
+        </div>
+        <p style="font-size:13px;color:#666;margin-bottom:0">前台「我的商品」区块的容器背景；条目数据请在上方首页配置中筛选「我的商品」编辑。</p>
+      </div>
+
+      <!-- 自助服务：仅栏目外观（条目仍在首页配置 hotService） -->
+      <div class="dash-section" style="margin-top:32px">
+        <div class="section-header" style="flex-wrap:wrap;gap:12px;align-items:flex-start">
+          <h3>自助服务 · 栏目外观</h3>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12px;margin-left:auto;max-width:100%">
+            <span style="color:#666;white-space:nowrap">背景图</span>
+            <input type="text" id="hcSkin_hotService_imageUrl" class="form-input" style="width:min(220px,42vw);padding:6px 8px;font-size:12px" placeholder="背景图 URL" />
+            <span style="color:#888">透明度</span>
+            <input type="number" id="hcSkin_hotService_desc" min="0" max="100" style="width:56px;padding:6px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px" placeholder="100" title="0–100" />
+            <input type="text" id="hcSkin_hotService_color" style="width:90px;padding:6px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px" placeholder="底色 #可选" />
+            <button type="button" class="btn" onclick="saveHomeSectionSkin('hotService')" style="font-size:12px;padding:6px 10px">保存外观</button>
+          </div>
+        </div>
+        <p style="font-size:13px;color:#666;margin-bottom:0">前台「自助服务」区块（三列卡片）的容器背景；条目请在上方首页配置中筛选「自助服务」编辑。</p>
+      </div>
+
       <!-- Vino产品（与底部栏同层，选品来自「商品配置 → 商品管理」） -->
       <div class="dash-section" style="margin-top:32px">
-        <div class="section-header">
+        <div class="section-header" style="flex-wrap:wrap;gap:12px;align-items:flex-start">
           <h3>Vino产品 配置</h3>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12px;margin-left:auto;max-width:100%">
+            <span style="color:#666;white-space:nowrap">栏目外观·宫格区</span>
+            <input type="text" id="hcSkin_vinoProduct_imageUrl" class="form-input" style="width:min(220px,42vw);padding:6px 8px;font-size:12px" placeholder="背景图 URL" />
+            <span style="color:#888">透明度</span>
+            <input type="number" id="hcSkin_vinoProduct_desc" min="0" max="100" style="width:56px;padding:6px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px" placeholder="100" title="0–100" />
+            <input type="text" id="hcSkin_vinoProduct_color" style="width:90px;padding:6px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px" placeholder="底色 #可选" />
+            <button type="button" class="btn" onclick="saveHomeSectionSkin('vinoProduct')" style="font-size:12px;padding:6px 10px">保存外观</button>
+          </div>
         </div>
         <p style="font-size:13px;color:#666;margin-bottom:16px">从商品配置中的<strong>商品管理</strong>挑选商品，前台首页将展示为小图标 + 名称宫格（每行 4 个）。点击跳转对应商品指南页。</p>
         <div style="margin-bottom:16px">
@@ -2655,7 +2711,71 @@ let hcAnimFilterSection = 'all';
 const HOME_CONFIG_SECTIONS = ['navLg', 'navSm', 'hotService', 'recommend', 'myProducts'];
 const HOME_ANIM_SECTIONS = ['splash', 'headerLogo', 'homeBg'];
 const PAGE_THEME_PATH_LABELS = { '/': '首页', '/services': '服务', '/products': '产品', '/orders': '订单', '/mine': '我的' };
-const SECTION_LABELS = { banner: '轮播横幅', nav: '快捷导航', navLg: '自助预约(大)', navSm: '自助预约(小)', hotService: '自助服务', recommend: '服务产品', splash: '开场动画', headerLogo: '首页Logo', homeBg: '首页背景', pageTheme: '页面背景', vinoProduct: 'Vino产品', navSectionTitle: '自助预约区块标题', hotServiceTitle: '自助服务区块标题', recommendTitle: '服务产品区块标题', myProducts: '我的商品', tabbar: '底部栏', currency: '币种' };
+const SECTION_LABELS = { banner: '轮播横幅', nav: '快捷导航', navLg: '自助预约(大)', navSm: '自助预约(小)', hotService: '自助服务', recommend: '服务产品', splash: '开场动画', headerLogo: '首页Logo', homeBg: '首页背景', pageTheme: '页面背景', vinoProduct: 'Vino产品', navSectionTitle: '自助预约区块标题', hotServiceTitle: '自助服务区块标题', recommendTitle: '服务产品区块标题', myProducts: '我的商品', tabbar: '底部栏', currency: '币种', homeSectionSkin: '栏目外观', homeSectionOffset: '板块整体偏移' };
+/** path → 后台保存用标题 */
+const SECTION_SKIN_PATH_LABELS = { homeScroll: '首页内容区', tabbar: '底部栏', vinoProduct: 'Vino产品', myProducts: '我的商品', hotService: '自助服务' };
+const SECTION_SKIN_PATHS = ['homeScroll', 'tabbar', 'vinoProduct', 'myProducts', 'hotService'];
+
+function adminResolvePublicUrl(u) {
+  if (u == null || u === '') return '';
+  const s = String(u).trim();
+  if (!s) return '';
+  if (/^https?:\/\//i.test(s)) return s;
+  if (s.startsWith('//')) return window.location.protocol + s;
+  return window.location.origin + (s.startsWith('/') ? s : '/' + s);
+}
+
+function fillHomeSectionSkinForms() {
+  SECTION_SKIN_PATHS.forEach(function (path) {
+    const row = (allHCItems || []).find(function (i) {
+      return i.section === 'homeSectionSkin' && String(i.path || '').trim() === path && i.status === 'active';
+    });
+    const img = document.getElementById('hcSkin_' + path + '_imageUrl');
+    const desc = document.getElementById('hcSkin_' + path + '_desc');
+    const color = document.getElementById('hcSkin_' + path + '_color');
+    if (!img || !desc || !color) return;
+    img.value = row ? (row.imageUrl || '') : '';
+    desc.value = row && row.desc !== undefined && row.desc !== null && String(row.desc).trim() !== '' ? String(row.desc).trim() : '100';
+    color.value = row ? (row.color || '') : '';
+  });
+}
+
+async function saveHomeSectionSkin(path) {
+  if (!SECTION_SKIN_PATH_LABELS[path]) { alert('无效栏目'); return; }
+  const imgEl = document.getElementById('hcSkin_' + path + '_imageUrl');
+  const descEl = document.getElementById('hcSkin_' + path + '_desc');
+  const colorEl = document.getElementById('hcSkin_' + path + '_color');
+  if (!imgEl || !descEl || !colorEl) return;
+  const imageUrl = imgEl.value.trim();
+  const descRaw = String(descEl.value || '').trim();
+  const desc = descRaw === '' ? '100' : descRaw;
+  const n = parseInt(desc, 10);
+  if (isNaN(n) || n < 0 || n > 100) { alert('透明度请输入 0–100'); return; }
+  const color = colorEl.value.trim();
+  const title = SECTION_SKIN_PATH_LABELS[path];
+  const existing = (allHCItems || []).find(function (i) {
+    return i.section === 'homeSectionSkin' && String(i.path || '').trim() === path;
+  });
+  const body = {
+    section: 'homeSectionSkin',
+    path: path,
+    title: title,
+    desc: String(n),
+    imageUrl: imageUrl,
+    color: color,
+    icon: '',
+    price: '',
+    sortOrder: 0,
+    status: 'active',
+  };
+  try {
+    const res = existing
+      ? await api('/home-config/' + existing.id, { method: 'PUT', body: Object.assign({}, existing, body) })
+      : await api('/home-config', { method: 'POST', body: body });
+    if (res.code === 0) { await loadHomeConfig(); alert('栏目外观已保存'); }
+    else alert(res.message || '保存失败');
+  } catch (e) { alert('保存失败'); }
+}
 
 async function loadHomeConfig() {
   try {
@@ -2669,6 +2789,7 @@ async function loadHomeConfig() {
     if (currentHCPage === 'homeAnimConfig') renderHCAnimTable();
     renderTabbarTable();
     renderPageThemeTable();
+    fillHomeSectionSkinForms();
     renderVinoHomeProductTable();
   } catch { document.getElementById('hcBody').innerHTML = ''; }
 }
@@ -2875,9 +2996,19 @@ function renderVinoHomeProductTable() {
   if (!items.length) { tbody.innerHTML = ''; if (empty) empty.style.display = 'block'; return; }
   if (empty) empty.style.display = 'none';
   tbody.innerHTML = items.map(h => {
-    const prev = h.imageUrlThumb || h.imageUrl
-      ? '<img src="'+(h.imageUrlThumb||h.imageUrl)+'" style="width:40px;height:40px;object-fit:contain;border-radius:8px;background:#f5f5f5" />'
-      : (h.icon ? '<span style="font-family:monospace;font-size:12px">'+escapeHtml(h.icon)+'</span>' : '-');
+    const rawImg = (h.imageUrlThumb || h.imageUrl || '').trim();
+    let prev;
+    if (rawImg) {
+      const src = escapeHtml(adminResolvePublicUrl(rawImg));
+      prev = '<img src="'+src+'" alt="" style="width:40px;height:40px;object-fit:contain;border-radius:8px;background:#2a2a2a" />';
+    } else {
+      const ic = (h.icon || '').trim();
+      if (ic && /^[a-z0-9-]+$/i.test(ic)) {
+        prev = '<span style="font-size:11px;color:#666">Vant 图标</span><br><span style="font-family:monospace;font-size:12px;background:#F3F4F6;padding:2px 6px;border-radius:4px">'+escapeHtml(ic)+'</span>';
+      } else {
+        prev = '-';
+      }
+    }
     return `<tr>
     <td>${h.id}</td>
     <td style="font-weight:500">${escapeHtml(h.title || '-')}</td>
@@ -2941,11 +3072,25 @@ async function saveVinoHomeProduct() {
   const id = document.getElementById('vinoHomeProductEditId').value;
   const sortOrder = parseInt(document.getElementById('vinoHomeSortOrder').value, 10) || 0;
   const status = document.getElementById('vinoHomeStatus').value || 'active';
+  if (id && (!allGuides || !allGuides.length)) {
+    try {
+      const res = await api('/guides/admin/list');
+      if (res.code === 0) allGuides = res.data || [];
+    } catch { allGuides = allGuides || []; }
+  }
   if (id) {
     const existing = (allHCItems || []).find(function (i) { return i.id === parseInt(id, 10); });
     if (!existing) { alert('记录不存在'); return; }
     try {
-      const body = Object.assign({}, existing, { sortOrder: sortOrder, status: status });
+      let body = Object.assign({}, existing, { sortOrder: sortOrder, status: status });
+      const slug = String(existing.path || '').trim();
+      const g = (allGuides || []).find(function (x) { return String(x.slug || '').trim() === slug; });
+      if (g) {
+        body.icon = g.icon || '';
+        body.imageUrl = g.iconUrl || '';
+        body.imageUrlThumb = g.iconUrlThumb || '';
+        body.title = (g.name && String(g.name).trim()) || body.title;
+      }
       const res = await api('/home-config/' + id, { method: 'PUT', body: body });
       if (res.code === 0) { closeVinoHomeProductEditor(); loadHomeConfig(); }
       else alert(res.message || '保存失败');

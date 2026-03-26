@@ -51,7 +51,9 @@
 
     <!-- 首页配置管理区域：仅此区域受「板块整体偏移」影响，不移动首页动画配置（背景/Logo/Hero） -->
     <div class="home-config-wrap" :style="homeSectionOffsetStyle">
+      <div v-if="skinLayerHomeScroll" class="section-skin-layer" :style="skinLayerHomeScroll" aria-hidden="true" />
     <!-- 自助预约（仅此区块上移，与下方我的商品/热门服务同层级） -->
+    <div class="home-config-inner">
     <div class="section card-section first-card" v-if="navLgItems.length || navSmItems.length">
       <div class="section-header">
         <h3>{{ navSectionTitle }}</h3>
@@ -79,8 +81,10 @@
       </div>
     </div>
 
-    <!-- Vino产品：来自后台商品管理选品 -->
+    <!-- Vino产品：来自后台「商品配置-商品管理」选品，深色宫格 4 列 -->
     <div v-if="vinoProductItems.length" class="vino-product-section">
+      <div v-if="skinLayerVinoProduct" class="section-skin-layer" :style="skinLayerVinoProduct" aria-hidden="true" />
+      <div class="vino-product-inner">
       <div class="vino-product-head">
         <h3>Vino产品</h3>
         <span class="vino-more" @click="$router.push('/products')">全部 ›</span>
@@ -93,16 +97,25 @@
           @click="openVinoProductGuide(item)"
         >
           <div class="vino-product-icon-wrap">
-            <img v-if="vinoProductIconSrc(item)" :src="vinoProductIconSrc(item)" class="vino-product-icon-img" alt="" />
-            <van-icon v-else :name="item.icon || 'photo-o'" size="28" color="rgba(255,255,255,0.85)" />
+            <img
+              v-if="vinoUseImg(item) && !vinoImgFailed[item.id]"
+              :src="vinoImgResolved(item)"
+              class="vino-product-icon-img"
+              alt=""
+              @error="onVinoImgError(item.id)"
+            />
+            <van-icon v-if="!vinoUseImg(item) || vinoImgFailed[item.id]" :name="vinoIconName(item)" size="28" color="rgba(255,255,255,0.85)" />
           </div>
           <span class="vino-product-name">{{ item.title }}</span>
         </div>
       </div>
+      </div>
     </div>
 
     <!-- 我的商品：为空时整栏隐藏，自助服务紧贴自助预约 -->
-    <div v-if="myProducts.length" class="section card-section">
+    <div v-if="myProducts.length" class="section card-section section-my-products">
+      <div v-if="skinLayerMyProducts" class="section-skin-layer" :style="skinLayerMyProducts" aria-hidden="true" />
+      <div class="section-skin-content">
       <div class="section-header">
         <h3>{{ myProductsTitle }}</h3>
         <span class="more" @click="$router.push('/mine/products')">查看全部 ›</span>
@@ -124,10 +137,13 @@
           <span class="my-product-name">{{ item.productName || item.productKey }}</span>
         </div>
       </div>
+      </div>
     </div>
 
     <!-- Hot Services -->
     <div class="section card-section section-hot-service">
+      <div v-if="skinLayerHotService" class="section-skin-layer" :style="skinLayerHotService" aria-hidden="true" />
+      <div class="section-skin-content">
       <div class="section-header">
         <h3>{{ hotServiceTitle }}</h3>
         <span class="more" @click="$router.push('/services')">查看全部 ›</span>
@@ -143,6 +159,7 @@
             <span class="price">{{ formatPriceDisplay(item.price) }}</span>
           </div>
         </div>
+      </div>
       </div>
     </div>
 
@@ -164,19 +181,22 @@
 
     <div class="footer-space"></div>
     </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, watch, nextTick, onMounted, computed } from 'vue';
+import { ref, reactive, watch, nextTick, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import QRCode from 'qrcode';
 import jsQR from 'jsqr';
 import { showToast } from 'vant';
 import { homeConfigApi, authApi } from '@/api';
-import PageThemeLayer from '@/components/PageThemeLayer.vue';
 import LodImg from '@/components/LodImg.vue';
+import PageThemeLayer from '@/components/PageThemeLayer.vue';
 import { formatPriceDisplay } from '@/utils/currency';
+import { resolvePublicUrl } from '@/utils/mediaUrl';
+import { buildSectionSkinLayerStyle } from '@/utils/sectionSkin';
 
 const router = useRouter();
 const showShare = ref(false);
@@ -186,13 +206,15 @@ const shareUrl = window.location.origin;
 const allItems = ref([]);
 const myProducts = ref([]);
 const addProductLoading = ref(false);
+const vinoImgFailed = reactive({});
 
 function productIconUrl(item) {
   const u = (item && (item.iconUrlThumb || item.iconUrl)) || '';
   if (!u) return '';
-  return u.startsWith('http') ? u : (window.location.origin + (u.startsWith('/') ? u : '/' + u));
+  return resolvePublicUrl(u);
 }
 
+/** 商品配置 slug（后台 guideSlug / 兼容 guide），用于跳转 /guide/{slug} */
 function productGuideSlug(item) {
   const s = item && (item.guideSlug != null && item.guideSlug !== '' ? item.guideSlug : item.guide);
   return s != null ? String(s).trim() : '';
@@ -206,7 +228,6 @@ function onMyProductItemClick(item) {
   }
   router.push('/guide/' + encodeURIComponent(slug));
 }
-
 async function loadMyProducts() {
   if (!localStorage.getItem('vino_token')) return;
   try {
@@ -360,6 +381,54 @@ const recommends = computed(() =>
     .map(i => ({ id: i.id, title: i.title, desc: i.desc, icon: i.icon, bg: i.color }))
 );
 
+const vinoProductItems = computed(() =>
+  allItems.value
+    .filter((i) => i.section === 'vinoProduct' && i.status === 'active')
+    .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+    .map((i) => ({
+      id: i.id,
+      title: i.title || '',
+      path: (i.path || '').trim(),
+      icon: i.icon || '',
+      imageUrl: i.imageUrl || '',
+      imageUrlThumb: i.imageUrlThumb || '',
+    }))
+);
+
+function vinoImgResolved(item) {
+  const u = item.imageUrlThumb || item.imageUrl;
+  return resolvePublicUrl(u);
+}
+
+function vinoUseImg(item) {
+  const u = (item.imageUrlThumb || item.imageUrl || '').trim();
+  return !!u;
+}
+
+function vinoIconName(item) {
+  const n = (item.icon || '').trim();
+  if (n && /^[a-z0-9-]+$/i.test(n)) return n;
+  return 'photo-o';
+}
+
+function onVinoImgError(id) {
+  vinoImgFailed[id] = true;
+}
+
+const skinLayerHomeScroll = computed(() => buildSectionSkinLayerStyle(allItems.value, 'homeScroll'));
+const skinLayerVinoProduct = computed(() => buildSectionSkinLayerStyle(allItems.value, 'vinoProduct'));
+const skinLayerMyProducts = computed(() => buildSectionSkinLayerStyle(allItems.value, 'myProducts'));
+const skinLayerHotService = computed(() => buildSectionSkinLayerStyle(allItems.value, 'hotService'));
+
+function openVinoProductGuide(item) {
+  const slug = item.path;
+  if (!slug) {
+    showToast('未配置商品链接');
+    return;
+  }
+  router.push('/guide/' + encodeURIComponent(slug));
+}
+
 watch(showShare, async (val) => {
   if (val) {
     await nextTick();
@@ -441,7 +510,7 @@ const copyUrl = async () => {
 .hero-logo-svg { width: 64px; height: 26px; }
 .hero-actions { display: flex; gap: 8px; }
 
-/* ===== Card Sections：半透明 + 两侧留白，层级低于底部 tabbar，避免遮挡首页/产品等按钮 ===== */
+/* ===== Card Sections：半透明 + 两侧留白，层级低于底部 tabbar（App 内 tabbar z-index 更高） ===== */
 .card-section {
   position: relative;
   z-index: 1;
@@ -475,6 +544,10 @@ const copyUrl = async () => {
   background: linear-gradient(180deg, #2c2c30 0%, #18181a 100%);
   padding: 16px 12px 20px;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.22);
+}
+.vino-product-inner {
+  position: relative;
+  z-index: 1;
 }
 .vino-product-head {
   display: flex;
@@ -663,7 +736,29 @@ const copyUrl = async () => {
 .recommend-card p { font-size: 13px; color: var(--vino-text-secondary); line-height: 1.5; }
 
 /* 首页配置管理区域包装器，仅此区域受后台「板块整体偏移」影响 */
-.home-config-wrap { position: relative; }
+.home-config-wrap {
+  position: relative;
+  z-index: 1;
+}
+.home-config-inner {
+  position: relative;
+  z-index: 1;
+}
+.section-skin-layer {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  overflow: hidden;
+}
+.section-my-products,
+.section-hot-service {
+  position: relative;
+}
+.section-skin-content {
+  position: relative;
+  z-index: 1;
+}
 
 /* 底部留白，避免内容被底部导航遮挡（tabbar 高度 + 安全区，与 .home padding-bottom 配合） */
 .footer-space {

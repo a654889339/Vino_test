@@ -1,9 +1,12 @@
 <template>
   <SplashScreen v-if="showSplash" />
   <router-view />
-  <van-tabbar v-if="showTabbar && tabbarItems.length" route active-color="var(--vino-primary)">
-    <van-tabbar-item v-for="(item, i) in tabbarItems" :key="item.path || i" :to="item.path" :icon="item.icon">{{ item.title }}</van-tabbar-item>
-  </van-tabbar>
+  <div v-if="showTabbar && tabbarItems.length" class="app-tabbar-shell">
+    <div v-if="tabbarSkinLayer" class="section-skin-layer app-tabbar-skin" :style="tabbarSkinLayer" aria-hidden="true" />
+    <van-tabbar route active-color="var(--vino-primary)" class="app-tabbar-bar">
+      <van-tabbar-item v-for="(item, i) in tabbarItems" :key="item.path || i" :to="item.path" :icon="item.icon">{{ item.title }}</van-tabbar-item>
+    </van-tabbar>
+  </div>
   <ChatWidget ref="chatWidgetRef" :hide-fab="hideChatFab" />
 </template>
 
@@ -14,6 +17,7 @@ import SplashScreen from '@/components/SplashScreen.vue';
 import ChatWidget from '@/components/ChatWidget.vue';
 import { homeConfigApi } from '@/api';
 import { initFromHomeConfigList } from '@/utils/currency';
+import { buildSectionSkinLayerStyle } from '@/utils/sectionSkin';
 
 const route = useRoute();
 
@@ -26,6 +30,9 @@ const DEFAULT_TABBAR = [
 ];
 
 const tabbarItems = ref([...DEFAULT_TABBAR]);
+/** 与底栏皮肤共用：栏目外观 tabbar */
+const homeConfigListForSkin = ref([]);
+const tabbarSkinLayer = computed(() => buildSectionSkinLayerStyle(homeConfigListForSkin.value, 'tabbar'));
 
 function mergeTabbarWithDefaults(serverList) {
   const active = (serverList || []).filter((i) => i.status === 'active');
@@ -49,11 +56,16 @@ function mergeTabbarWithDefaults(serverList) {
 
 async function loadTabbarConfig() {
   try {
-    const res = await homeConfigApi.tabbar();
-    const list = res.data || [];
+    const [tabRes, listRes] = await Promise.all([
+      homeConfigApi.tabbar(),
+      homeConfigApi.list().catch(() => ({ data: [] })),
+    ]);
+    const list = tabRes.data || [];
     tabbarItems.value = mergeTabbarWithDefaults(list);
+    homeConfigListForSkin.value = listRes.data || [];
   } catch {
     tabbarItems.value = [...DEFAULT_TABBAR];
+    homeConfigListForSkin.value = [];
   }
 }
 
@@ -99,11 +111,29 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* 提高 z-index，避免被页面内 fixed 或聊天 FAB 下方的触摸层遮挡，解决手机端「产品」等按钮无法点击 */
-:deep(.van-tabbar) {
+.app-tabbar-shell {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
   max-width: 750px;
   margin: 0 auto;
   z-index: 3000;
+  pointer-events: none;
+}
+.app-tabbar-shell .app-tabbar-bar {
+  pointer-events: auto;
+}
+/* 底栏改为相对定位以便与皮肤层同容器叠放；背景透明以露出栏目外观图 */
+:deep(.app-tabbar-bar) {
+  position: relative !important;
+  max-width: 750px;
+  margin: 0 auto;
+  background: transparent !important;
+  z-index: 1;
+}
+.app-tabbar-shell .section-skin-layer {
+  border-radius: 0;
 }
 :deep(.van-tabbar-item) {
   touch-action: manipulation;
