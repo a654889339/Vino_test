@@ -191,7 +191,7 @@ import { useRouter } from 'vue-router';
 import QRCode from 'qrcode';
 import jsQR from 'jsqr';
 import { showToast } from 'vant';
-import { homeConfigApi, authApi } from '@/api';
+import { homeConfigApi, authApi, guideApi } from '@/api';
 import LodImg from '@/components/LodImg.vue';
 import PageThemeLayer from '@/components/PageThemeLayer.vue';
 import { formatPriceDisplay } from '@/utils/currency';
@@ -204,6 +204,8 @@ const qrCanvas = ref(null);
 const qrFileInputRef = ref(null);
 const shareUrl = window.location.origin;
 const allItems = ref([]);
+/** 与首页 Vino 宫格合并用：商品管理(DeviceGuide) 当前图标，避免仅依赖 home_config 缓存 */
+const guidesList = ref([]);
 const myProducts = ref([]);
 const addProductLoading = ref(false);
 const vinoImgFailed = reactive({});
@@ -238,9 +240,19 @@ async function loadMyProducts() {
 
 onMounted(async () => {
   try {
-    const res = await homeConfigApi.list();
-    allItems.value = res.data || [];
-  } catch { /* use empty */ }
+    const [hcRes, gRes] = await Promise.all([
+      homeConfigApi.list(),
+      guideApi.list().catch(() => ({ data: [] })),
+    ]);
+    allItems.value = hcRes.data || [];
+    guidesList.value = gRes.data || [];
+  } catch {
+    try {
+      const res = await homeConfigApi.list();
+      allItems.value = res.data || [];
+    } catch { /* use empty */ }
+    guidesList.value = [];
+  }
   await loadMyProducts();
 });
 
@@ -381,32 +393,73 @@ const recommends = computed(() =>
     .map(i => ({ id: i.id, title: i.title, desc: i.desc, icon: i.icon, bg: i.color }))
 );
 
-const vinoProductItems = computed(() =>
-  allItems.value
+const guidesBySlug = computed(() => {
+  const m = Object.create(null);
+  for (const g of guidesList.value || []) {
+    const s = String(g.slug || '').trim();
+    if (s) m[s] = g;
+  }
+  return m;
+});
+
+const vinoProductItems = computed(() => {
+  const rows = allItems.value
     .filter((i) => i.section === 'vinoProduct' && i.status === 'active')
-    .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
-    .map((i) => ({
+    .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+  return rows.map((i) => {
+    const path = (i.path || '').trim();
+    const g = path ? guidesBySlug.value[path] : null;
+    if (!g) {
+      return {
+        id: i.id,
+        title: i.title || '',
+        path,
+        icon: i.icon || '',
+        imageUrl: i.imageUrl || '',
+        imageUrlThumb: i.imageUrlThumb || '',
+      };
+    }
+    const iconUrl = (g.iconUrl != null && String(g.iconUrl).trim()) ? String(g.iconUrl).trim() : '';
+    const iconUrlThumb = (g.iconUrlThumb != null && String(g.iconUrlThumb).trim()) ? String(g.iconUrlThumb).trim() : '';
+    return {
       id: i.id,
-      title: i.title || '',
-      path: (i.path || '').trim(),
-      icon: i.icon || '',
-      imageUrl: i.imageUrl || '',
-      imageUrlThumb: i.imageUrlThumb || '',
-    }))
-);
+      title: (g.name != null && String(g.name).trim()) ? String(g.name).trim() : (i.title || ''),
+      path,
+      icon: g.icon != null ? String(g.icon) : (i.icon || ''),
+      imageUrl: iconUrl || (i.imageUrl || ''),
+      imageUrlThumb: iconUrlThumb || (i.imageUrlThumb || ''),
+    };
+  });
+});
+
+/** 商品管理里偶发把图片地址写在「图标」文本框 */
+function vinoIconFieldLooksLikeUrl(s) {
+  const t = String(s || '').trim();
+  if (!t) return false;
+  if (/^https?:\/\//i.test(t) || t.startsWith('//')) return true;
+  if (t.startsWith('/') && (t.includes('/uploads/') || t.includes('/static/') || /\.(png|jpe?g|gif|webp|svg)(\?|#|$)/i.test(t)))
+    return true;
+  return false;
+}
 
 function vinoImgResolved(item) {
   const u = item.imageUrlThumb || item.imageUrl;
-  return resolvePublicUrl(u);
+  if (u) return resolvePublicUrl(u);
+  const ic = (item.icon || '').trim();
+  if (vinoIconFieldLooksLikeUrl(ic)) return resolvePublicUrl(ic);
+  return '';
 }
 
 function vinoUseImg(item) {
   const u = (item.imageUrlThumb || item.imageUrl || '').trim();
-  return !!u;
+  if (u) return true;
+  return vinoIconFieldLooksLikeUrl(item.icon);
 }
 
 function vinoIconName(item) {
-  const n = (item.icon || '').trim();
+  const ic = (item.icon || '').trim();
+  if (vinoIconFieldLooksLikeUrl(ic)) return 'photo-o';
+  const n = ic;
   if (n && /^[a-z0-9-]+$/i.test(n)) return n;
   return 'photo-o';
 }
