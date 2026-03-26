@@ -32,6 +32,11 @@
 /* Card sections with margins */
 .card-section { margin: 20rpx 24rpx; padding: 30rpx; background: rgba(255,255,255,0.95); border-radius: 24rpx; box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.06); position: relative; z-index: 2; }
 .card-section:first-of-type { margin-top: -80rpx; }
+/* Vino/甄选 不是 card-section，紧挨「我的商品」时补上间距 */
+.vino-section + .card-section,
+.fr-section + .card-section {
+  margin-top: 32rpx;
+}
 .section-recommend { z-index: 1; }
 .home-bg-swiper { position: absolute; top: 0; left: 0; right: 0; bottom: 0; height: 100%; }
 .home-bg-swiper swiper-item { height: 100%; }
@@ -89,15 +94,16 @@
 
 .tab-bar-placeholder { height: 120rpx; }
 
-/* Vino 产品（白底，与网页一致） */
+/* Vino 产品（白底由 style 与栏目外观控制；与下方区块拉开间距避免重叠） */
 .vino-section {
-  margin: 20rpx 24rpx;
+  margin: 20rpx 24rpx 36rpx;
   padding: 28rpx 24rpx 32rpx;
   background: #fff;
   border-radius: 24rpx;
   box-shadow: 0 4rpx 24rpx rgba(0, 0, 0, 0.08);
   position: relative;
-  z-index: 2;
+  z-index: 1;
+  overflow: visible;
 }
 .vino-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24rpx; padding: 0 8rpx; }
 .vino-title { font-size: 36rpx; font-weight: 700; color: #1a1a1a; }
@@ -114,30 +120,29 @@
 .vino-emoji { font-size: 48rpx; }
 .vino-name { font-size: 22rpx; color: rgba(0, 0, 0, 0.65); text-align: center; margin-top: 12rpx; padding: 0 4rpx; }
 
-/* 甄选推荐（居中横滑、图片宽高自适应） */
+/* 甄选推荐（横滑用 inline-block + scroll-x，避免 enable-flex 高度塌陷与下方重叠） */
 .fr-section {
-  margin: 20rpx 24rpx;
-  padding: 28rpx 0 32rpx;
+  margin: 0 24rpx 40rpx;
+  padding: 28rpx 0 24rpx;
   background: #fff;
   border-radius: 24rpx;
   box-shadow: 0 4rpx 24rpx rgba(0, 0, 0, 0.08);
   position: relative;
-  z-index: 2;
+  z-index: 1;
+  overflow: visible;
 }
 .fr-head { padding: 0 28rpx 20rpx; }
 .fr-title { font-size: 34rpx; font-weight: 700; color: #1a1a1a; }
 .fr-scroll {
+  width: 100%;
+  box-sizing: border-box;
   white-space: nowrap;
-  padding: 0 20rpx;
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  justify-content: center;
+  padding: 0 8rpx 12rpx;
+  min-height: 360rpx;
 }
 .fr-card {
   display: inline-block;
   vertical-align: top;
-  flex-shrink: 0;
   width: auto;
   max-width: 88vw;
   margin-right: 20rpx;
@@ -145,7 +150,7 @@
   overflow: hidden;
   position: relative;
 }
-.fr-card:last-child { margin-right: 0; }
+.fr-card:last-child { margin-right: 20rpx; }
 .fr-img-wrap {
   width: 85vw;
   max-width: 560rpx;

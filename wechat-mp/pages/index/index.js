@@ -9,7 +9,8 @@ function skinContainerStyle(items, path, variant) {
   if (!Number.isFinite(op)) op = 100;
   op = Math.min(100, Math.max(0, op)) / 100;
   const shadow = variant === 'vino' ? '0 4rpx 24rpx rgba(0,0,0,0.08)' : '0 4rpx 20rpx rgba(0,0,0,0.08)';
-  return `background:rgba(255,255,255,${op});box-shadow:${op > 0 ? shadow : 'none'};`;
+  const bg = op > 0 ? `rgba(255,255,255,${op})` : 'transparent';
+  return `background:${bg};box-shadow:${op > 0 ? shadow : 'none'};`;
 }
 
 Page({

@@ -82,7 +82,7 @@
     </div>
 
     <!-- Vino产品：来自后台「商品配置-商品管理」选品，深色宫格 4 列 -->
-    <div v-if="vinoProductItems.length" class="vino-product-section">
+    <div v-if="vinoProductItems.length" class="vino-product-section" :style="vinoProductSectionStyle">
       <div v-if="skinLayerVinoProduct" class="section-skin-layer" :style="skinLayerVinoProduct" aria-hidden="true" />
       <div class="vino-product-inner">
       <div class="vino-product-head">
@@ -801,6 +801,11 @@ const copyUrl = async () => {
 .card-section + .card-section {
   margin-top: 20px;
 }
+/* Vino/甄选 非 .card-section，与「我的商品」相邻时需单独顶距 */
+.featured-recommend-section + .section-my-products,
+.vino-product-section + .section-my-products {
+  margin-top: 20px;
+}
 /* 为你推荐与卡片区同级，层级低于 tabbar */
 .section-recommend {
   z-index: 1;
@@ -849,7 +854,8 @@ const copyUrl = async () => {
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
-  justify-content: center;
+  justify-content: flex-start;
+  align-items: flex-start;
   gap: 12px;
   overflow-x: auto;
   scrollbar-width: none;
@@ -857,6 +863,8 @@ const copyUrl = async () => {
   scroll-snap-type: x mandatory;
   scroll-padding-inline: 12px;
   -webkit-overflow-scrolling: touch;
+  width: 100%;
+  box-sizing: border-box;
 }
 .featured-recommend-scroll::-webkit-scrollbar {
   display: none;

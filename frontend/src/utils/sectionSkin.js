@@ -34,7 +34,7 @@ export function buildSectionSkinContainerStyle(items, skinKey, variant = 'fr') {
       ? '0 4px 24px rgba(0, 0, 0, 0.08)'
       : '0 4px 20px rgba(0, 0, 0, 0.08)';
   return {
-    background: `rgba(255, 255, 255, ${op})`,
+    background: op > 0 ? `rgba(255, 255, 255, ${op})` : 'transparent',
     boxShadow: op > 0 ? shadow : 'none',
   };
 }

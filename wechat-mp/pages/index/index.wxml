@@ -70,7 +70,7 @@
     <view class="fr-head">
       <text class="fr-title">甄选推荐</text>
     </view>
-    <scroll-view scroll-x class="fr-scroll" enable-flex="true" show-scrollbar="{{false}}">
+    <scroll-view scroll-x class="fr-scroll" show-scrollbar="{{false}}" enable-flex="{{false}}">
       <view class="fr-card" wx:for="{{featuredItems}}" wx:key="id" bindtap="goFeaturedGuide" data-slug="{{item.path}}">
         <view class="fr-img-wrap">
           <image wx:if="{{item.coverUrl}}" class="fr-img" src="{{item.coverUrl}}" mode="widthFix" />
