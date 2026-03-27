@@ -60,6 +60,7 @@
 import { ref, computed, onMounted, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import { guideApi } from '@/api';
+import { resolvePublicUrl } from '@/utils/mediaUrl';
 import { showToast } from 'vant';
 
 const route = useRoute();

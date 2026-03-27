@@ -27,11 +27,6 @@ const routes = [
     component: () => import('@/views/ServiceDetail.vue'),
   },
   {
-    path: '/guide/:id',
-    name: 'GuideDetail',
-    component: () => import('@/views/GuideDetail.vue'),
-  },
-  {
     path: '/guide/:id/manual',
     name: 'ManualPage',
     component: () => import('@/views/ManualPage.vue'),
@@ -40,6 +35,11 @@ const routes = [
     path: '/guide/:id/maintenance',
     name: 'MaintenancePage',
     component: () => import('@/views/MaintenancePage.vue'),
+  },
+  {
+    path: '/guide/:id',
+    name: 'GuideDetail',
+    component: () => import('@/views/GuideDetail.vue'),
   },
   {
     path: '/orders',
