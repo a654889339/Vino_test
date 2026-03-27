@@ -15,10 +15,10 @@
         <h2>{{ serviceData.title }}</h2>
         <p class="detail-desc">{{ serviceData.description }}</p>
 
-        <div class="price-row">
-          <span class="detail-price">¥{{ serviceData.price }}</span>
+        <div v-if="shouldShowPrice(serviceData.price) || showOriginPrice" class="price-row">
+          <span v-if="shouldShowPrice(serviceData.price)" class="detail-price">{{ formatPriceDisplay(serviceData.price) }}</span>
           <template v-if="showOriginPrice">
-            <span class="origin-price">¥{{ serviceData.originPrice }}</span>
+            <span class="origin-price">{{ formatPriceDisplay(serviceData.originPrice) }}</span>
             <van-tag type="primary" color="#B91C1C">限时优惠</van-tag>
           </template>
         </div>
@@ -63,6 +63,7 @@ import { ref, computed, onMounted, inject } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { serviceApi } from '@/api';
 import { showDialog } from 'vant';
+import { formatPriceDisplay, shouldShowPrice } from '@/utils/currency';
 
 const route = useRoute();
 const router = useRouter();
@@ -71,7 +72,10 @@ const loading = ref(true);
 
 const onConsult = () => {
   const s = serviceData.value;
-  const msg = `我想咨询一下【${s.title || '该服务'}】${s.price ? '（¥' + s.price + '）' : ''}${s.description ? '：' + s.description : ''}`;
+  const pricePart = Number(s.price) !== 0 && s.price != null && s.price !== ''
+    ? `（${formatPriceDisplay(s.price)}）`
+    : '';
+  const msg = `我想咨询一下【${s.title || '该服务'}】${pricePart}${s.description ? '：' + s.description : ''}`;
   if (chatWidgetRef.value) {
     chatWidgetRef.value.openWithAutoMessage(msg);
   }

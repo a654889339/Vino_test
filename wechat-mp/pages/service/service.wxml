@@ -21,7 +21,7 @@
       </view>
       <text class="grid-name">{{item.title}}</text>
       <text class="grid-desc">{{item.desc}}</text>
-      <text class="grid-price">¥{{item.price}}起</text>
+      <text wx:if="{{item.priceDisplay}}" class="grid-price">{{item.priceDisplay}}起</text>
     </view>
   </view>
 

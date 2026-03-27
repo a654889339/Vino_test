@@ -16,7 +16,7 @@
             </div>
             <h4>{{ item.title }}</h4>
             <p>{{ item.desc }}</p>
-            <span class="grid-price">{{ formatPriceDisplay(item.price) }}起</span>
+            <span v-if="shouldShowPrice(item.price)" class="grid-price">{{ formatPriceDisplay(item.price) }}起</span>
           </div>
         </div>
       </van-tab>
@@ -86,7 +86,7 @@
       </div>
     </van-popup>
 
-    <div style="height: 60px;"></div>
+    <div style="height: 96px;"></div>
   </div>
 </template>
 
@@ -95,7 +95,7 @@ import { ref, onMounted } from 'vue';
 import { serviceApi } from '@/api';
 import PageThemeLayer from '@/components/PageThemeLayer.vue';
 import LodImg from '@/components/LodImg.vue';
-import { formatPriceDisplay } from '@/utils/currency';
+import { formatPriceDisplay, shouldShowPrice } from '@/utils/currency';
 
 const activeTab = ref(0);
 const categories = ref([]);

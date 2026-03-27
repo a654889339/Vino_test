@@ -1,4 +1,21 @@
 const app = getApp();
+const { formatPriceDisplay } = require('../../utils/currency.js');
+
+function enrichServiceData(s) {
+  const sym = app.globalData.currencySymbol || '¥';
+  const op = s.originPrice;
+  const showOrigin = op != null && op !== '' && Number(op) > 0;
+  return {
+    id: s.id,
+    title: s.title || '服务',
+    description: s.description || '专业服务，品质保障',
+    price: s.price,
+    originPrice: s.originPrice,
+    priceDisplay: formatPriceDisplay(s.price, sym),
+    originPriceDisplay: showOrigin ? formatPriceDisplay(op, sym) : '',
+    showOriginPrice: showOrigin,
+  };
+}
 
 const countryList = ['中国大陆', '中国香港', '中国澳门', '中国台湾', '美国', '英国', '日本', '韩国', '新加坡', '澳大利亚', '加拿大', '德国', '法国', '马来西亚', '泰国', '其他'];
 
@@ -32,7 +49,7 @@ Page({
 
   loadService(id) {
     if (!id) {
-      this.setData({ loading: false, serviceData: this.getFallbackService(1) });
+      this.setData({ loading: false, serviceData: enrichServiceData(this.getFallbackService(1)) });
       return;
     }
     app.request({ url: `/services/${id}` })
@@ -40,17 +57,17 @@ Page({
         const s = res.data || {};
         this.setData({
           loading: false,
-          serviceData: {
+          serviceData: enrichServiceData({
             id: s.id,
             title: s.title || '服务',
             description: s.description || '专业服务，品质保障',
             price: s.price || 0,
-            originPrice: s.originPrice || '',
-          },
+            originPrice: s.originPrice,
+          }),
         });
       })
       .catch(() => {
-        this.setData({ loading: false, serviceData: this.getFallbackService(id) });
+        this.setData({ loading: false, serviceData: enrichServiceData(this.getFallbackService(id)) });
       });
   },
 
@@ -71,7 +88,11 @@ Page({
 
   onConsult() {
     const s = this.data.serviceData;
-    const msg = '我想咨询一下【' + (s.title || '该服务') + '】' + (s.price ? '（¥' + s.price + '）' : '') + (s.description ? '：' + s.description : '');
+    const sym = app.globalData.currencySymbol || '¥';
+    const pricePart = Number(s.price) !== 0 && s.price != null && s.price !== ''
+      ? '（' + formatPriceDisplay(s.price, sym) + '）'
+      : '';
+    const msg = '我想咨询一下【' + (s.title || '该服务') + '】' + pricePart + (s.description ? '：' + s.description : '');
     wx.navigateTo({ url: '/pages/chat/chat?autoMsg=' + encodeURIComponent(msg) });
   },
 

@@ -116,7 +116,7 @@
         <view class="service-info">
           <text class="service-name">{{item.title}}</text>
           <text class="service-desc">{{item.desc}}</text>
-          <text class="service-price">{{item.priceDisplay}}</text>
+          <text wx:if="{{item.priceDisplay}}" class="service-price">{{item.priceDisplay}}</text>
         </view>
       </view>
     </scroll-view>

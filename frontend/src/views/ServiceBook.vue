@@ -127,7 +127,7 @@
         <div class="order-submit-area">
           <div class="order-total">
             <span>合计：</span>
-            <span class="order-total-price">{{ formatPriceDisplay(serviceData.price) }}</span>
+            <span v-if="shouldShowPrice(serviceData.price)" class="order-total-price">{{ formatPriceDisplay(serviceData.price) }}</span>
           </div>
           <van-button type="primary" color="#B91C1C" block round :loading="submitting" @click="submitOrder">
             确认预约
@@ -143,7 +143,7 @@ import { ref, reactive, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { serviceApi, orderApi, addressApi, authApi } from '@/api';
 import { showToast, showDialog } from 'vant';
-import { formatPriceDisplay } from '@/utils/currency';
+import { formatPriceDisplay, shouldShowPrice } from '@/utils/currency';
 import { areaList } from '@vant/area-data';
 
 const route = useRoute();

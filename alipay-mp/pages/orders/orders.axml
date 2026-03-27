@@ -30,7 +30,7 @@
           <text class="order-time">{{item.timeText}}</text>
           <text class="order-contact" a:if="{{item.contactName}}">{{item.contactName}} {{item.contactPhone}}</text>
         </view>
-        <text class="order-price">¥{{item.price}}</text>
+        <text a:if="{{item.priceDisplay}}" class="order-price">{{item.priceDisplay}}</text>
       </view>
       <view class="order-actions" a:if="{{item.status === 'pending'}}">
         <button class="btn-cancel" size="mini" onTap="cancelOrder" data-id="{{item.id}}">取消订单</button>

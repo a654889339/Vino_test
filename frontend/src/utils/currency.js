@@ -24,7 +24,7 @@ function formatNumberPart(n) {
 }
 
 /**
- * 展示价格：非 0 时带币种符号；金额为 0 时不带符号（仅「0」）。
+ * 展示价格：非 0 时带币种符号；金额为 0 时不显示数字（返回空字符串）。
  */
 export function formatPriceDisplay(amount) {
   const sym = getCurrencySymbol();
@@ -33,6 +33,12 @@ export function formatPriceDisplay(amount) {
     if (amount == null || amount === '') return '';
     return String(amount);
   }
-  if (n === 0) return '0';
+  if (n === 0) return '';
   return sym + formatNumberPart(n);
+}
+
+/** 是否展示价格数字（金额为 0 时不展示） */
+export function shouldShowPrice(amount) {
+  const n = Number(amount);
+  return Number.isFinite(n) && n !== 0;
 }

@@ -18,14 +18,34 @@ function getJwtExpMs(token) {
   }
 }
 
+const currencyUtil = require('./utils/currency.js');
+
 App({
   globalData: {
     baseUrl: 'http://106.54.50.88:5202/api',
     userInfo: null,
     token: '',
+    currencySymbol: currencyUtil.DEFAULT_CURRENCY,
+  },
+
+  loadCurrencySymbol() {
+    const app = this;
+    wx.request({
+      url: app.globalData.baseUrl + '/home-config?section=currency',
+      method: 'GET',
+      header: { 'Content-Type': 'application/json' },
+      success(res) {
+        if (res.statusCode !== 200 || !res.data || res.data.code !== 0) return;
+        const list = res.data.data || [];
+        const row = list.find((i) => i.section === 'currency' && i.status === 'active');
+        const sym = row && row.title ? String(row.title).trim() : '';
+        app.globalData.currencySymbol = sym || currencyUtil.DEFAULT_CURRENCY;
+      },
+    });
   },
 
   onLaunch() {
+    this.loadCurrencySymbol();
     const token = wx.getStorageSync('vino_token');
     if (token) {
       const expMs = getJwtExpMs(token);

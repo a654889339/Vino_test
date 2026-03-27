@@ -29,6 +29,11 @@ export function formatPriceDisplay(amount) {
     if (amount == null || amount === '') return '';
     return String(amount);
   }
-  if (n === 0) return '0';
+  if (n === 0) return '';
   return sym + formatNumberPart(n);
+}
+
+export function shouldShowPrice(amount) {
+  const n = Number(amount);
+  return Number.isFinite(n) && n !== 0;
 }

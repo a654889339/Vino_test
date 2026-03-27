@@ -197,7 +197,7 @@
           <div class="service-info">
             <h4>{{ item.title }}</h4>
             <p>{{ item.desc }}</p>
-            <span class="price">{{ formatPriceDisplay(item.price) }}</span>
+            <span v-if="shouldShowPrice(item.price)" class="price">{{ formatPriceDisplay(item.price) }}</span>
           </div>
         </div>
       </div>
@@ -269,7 +269,7 @@ import { showToast } from 'vant';
 import { homeConfigApi, authApi, guideApi } from '@/api';
 import LodImg from '@/components/LodImg.vue';
 import PageThemeLayer from '@/components/PageThemeLayer.vue';
-import { formatPriceDisplay } from '@/utils/currency';
+import { formatPriceDisplay, shouldShowPrice } from '@/utils/currency';
 import { resolvePublicUrl } from '@/utils/mediaUrl';
 import { buildSectionSkinLayerStyle, buildSectionSkinContainerStyle } from '@/utils/sectionSkin';
 

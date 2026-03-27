@@ -18,14 +18,35 @@ function getJwtExpMs(token) {
   }
 }
 
+const currencyUtil = require('./utils/currency.js');
+
 App({
   globalData: {
     baseUrl: 'http://106.54.50.88:5202/api',
     userInfo: null,
     token: '',
+    currencySymbol: currencyUtil.DEFAULT_CURRENCY,
+  },
+
+  loadCurrencySymbol() {
+    const app = this;
+    my.request({
+      url: app.globalData.baseUrl + '/home-config?section=currency',
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      success(res) {
+        const body = res.data;
+        if (!body || body.code !== 0) return;
+        const list = body.data || [];
+        const row = list.find((i) => i.section === 'currency' && i.status === 'active');
+        const sym = row && row.title ? String(row.title).trim() : '';
+        app.globalData.currencySymbol = sym || currencyUtil.DEFAULT_CURRENCY;
+      },
+    });
   },
 
   onLaunch() {
+    this.loadCurrencySymbol();
     try {
       const res = my.getStorageSync({ key: 'vino_token' });
       const token = res && res.data ? res.data : '';

@@ -30,7 +30,7 @@
           <text class="order-time">{{item.timeText}}</text>
           <text class="order-contact" wx:if="{{item.contactName}}">{{item.contactName}} {{item.contactPhone}}</text>
         </view>
-        <text class="order-price">¥{{item.price}}</text>
+        <text wx:if="{{item.priceDisplay}}" class="order-price">{{item.priceDisplay}}</text>
       </view>
       <view class="order-actions" wx:if="{{item.status === 'pending'}}">
         <button class="btn-pay" size="mini" bindtap="payOrder" data-id="{{item.id}}">去支付</button>

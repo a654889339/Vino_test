@@ -45,7 +45,17 @@
       <van-button block plain type="default" class="logout-btn" @click="handleLogout">退出登录</van-button>
     </div>
 
-    <div style="height: 60px;"></div>
+    <div class="mine-tabbar-spacer"></div>
+
+    <van-dialog
+      v-model:show="contactDialogVisible"
+      title="联系我们"
+      :message="'客服电话：' + CONTACT_PHONE"
+      show-cancel-button
+      cancel-button-text="关闭"
+      confirm-button-text="复制"
+      @confirm="onContactCopy"
+    />
   </div>
 </template>
 
@@ -53,9 +63,10 @@
 import { ref, inject, onMounted, computed } from 'vue';
 import { useUserStore } from '@/stores/user';
 import { useRouter } from 'vue-router';
-import { showToast, showDialog } from 'vant';
+import { showToast } from 'vant';
 import { homeConfigApi } from '@/api';
 import PageThemeLayer from '@/components/PageThemeLayer.vue';
+import { copyTextToClipboardSync } from '@/utils/clipboard';
 
 const userStore = useUserStore();
 const router = useRouter();
@@ -102,17 +113,21 @@ const openAbout = () => {
 };
 
 const CONTACT_PHONE = '400-8030-683';
+const contactDialogVisible = ref(false);
 
 const openContact = () => {
-  showDialog({
-    title: '联系我们',
-    message: '客服电话：' + CONTACT_PHONE,
-    showCancelButton: true,
-    cancelButtonText: '关闭',
-    confirmButtonText: '复制',
-  }).then(() => {
-    navigator.clipboard.writeText(CONTACT_PHONE).then(() => showToast('已复制'));
-  }).catch(() => {});
+  contactDialogVisible.value = true;
+};
+
+/** 由 van-dialog「复制」直接触发，保持与 iOS 用户手势同步 */
+const onContactCopy = () => {
+  const ok = copyTextToClipboardSync(CONTACT_PHONE);
+  if (ok) {
+    showToast('已复制');
+    contactDialogVisible.value = false;
+  } else {
+    showToast('复制失败，请长按号码手动复制');
+  }
 };
 
 const stats = [
@@ -262,5 +277,10 @@ const handleLogout = () => {
   font-weight: 500 !important;
   color: var(--vino-text-secondary) !important;
   border-color: var(--vino-border) !important;
+}
+
+/* 与 App 底栏增高后的占位一致（约 50px→75px + 余量） */
+.mine-tabbar-spacer {
+  height: 96px;
 }
 </style>

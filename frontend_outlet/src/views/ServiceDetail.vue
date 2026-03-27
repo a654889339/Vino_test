@@ -15,8 +15,8 @@
         <h2>{{ serviceData.title }}</h2>
         <p class="detail-desc">{{ serviceData.description }}</p>
 
-        <div class="price-row">
-          <span class="detail-price">{{ formatPriceDisplay(serviceData.price) }}</span>
+        <div v-if="shouldShowPrice(serviceData.price) || showOriginPrice" class="price-row">
+          <span v-if="shouldShowPrice(serviceData.price)" class="detail-price">{{ formatPriceDisplay(serviceData.price) }}</span>
           <template v-if="showOriginPrice">
             <span class="origin-price">{{ formatPriceDisplay(serviceData.originPrice) }}</span>
             <van-tag type="primary" color="#B91C1C">限时优惠</van-tag>
@@ -155,7 +155,7 @@
           <div class="order-submit-area">
             <div class="order-total">
               <span>合计：</span>
-              <span class="order-total-price">{{ formatPriceDisplay(serviceData.price) }}</span>
+              <span v-if="shouldShowPrice(serviceData.price)" class="order-total-price">{{ formatPriceDisplay(serviceData.price) }}</span>
             </div>
             <van-button type="primary" color="#B91C1C" block round :loading="submitting" @click="submitOrder">
               确认预约
@@ -173,6 +173,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { serviceApi, orderApi, addressApi } from '@/api';
 import { showToast, showDialog } from 'vant';
 import { areaList } from '@vant/area-data';
+import { formatPriceDisplay, shouldShowPrice } from '@/utils/currency';
 
 const route = useRoute();
 const router = useRouter();

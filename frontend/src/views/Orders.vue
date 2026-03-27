@@ -28,7 +28,7 @@
                     <p>{{ formatTime(order.createdAt) }}</p>
                     <p v-if="order.contactName" class="order-contact">{{ order.contactName }} {{ order.contactPhone }}</p>
                   </div>
-                  <span class="order-price">{{ formatPriceDisplay(order.price) }}</span>
+                  <span v-if="shouldShowPrice(order.price)" class="order-price">{{ formatPriceDisplay(order.price) }}</span>
                 </div>
                 <div class="order-actions" v-if="order.status === 'pending'">
                   <van-button size="small" plain @click="cancelOrder(order)">取消订单</van-button>
@@ -49,7 +49,7 @@ import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { orderApi } from '@/api';
 import { showToast, showConfirmDialog } from 'vant';
-import { formatPriceDisplay } from '@/utils/currency';
+import { formatPriceDisplay, shouldShowPrice } from '@/utils/currency';
 import PageThemeLayer from '@/components/PageThemeLayer.vue';
 
 const router = useRouter();

@@ -9,9 +9,9 @@
     <view class="detail-body">
       <text class="detail-title">{{serviceData.title}}</text>
       <text class="detail-desc">{{serviceData.description}}</text>
-      <view class="price-row">
-        <text class="detail-price">¥{{serviceData.price}}</text>
-        <text class="origin-price" a:if="{{serviceData.originPrice}}">¥{{serviceData.originPrice}}</text>
+      <view class="price-row" a:if="{{serviceData.showOriginPrice || serviceData.priceDisplay}}">
+        <text class="detail-price" a:if="{{serviceData.priceDisplay}}">{{serviceData.priceDisplay}}</text>
+        <text class="origin-price" a:if="{{serviceData.showOriginPrice}}">{{serviceData.originPriceDisplay}}</text>
       </view>
 
       <view class="section">
@@ -53,7 +53,7 @@
         <view class="order-service-icon">🔧</view>
         <view>
           <text class="order-service-title">{{serviceData.title}}</text>
-          <text class="order-service-price">¥{{serviceData.price}}</text>
+          <text class="order-service-price" a:if="{{serviceData.priceDisplay}}">{{serviceData.priceDisplay}}</text>
         </view>
       </view>
 
@@ -101,7 +101,7 @@
       </view>
 
       <view class="form-submit">
-        <view class="order-total">合计：<text class="order-total-price">¥{{serviceData.price}}</text></view>
+        <view class="order-total">合计：<text a:if="{{serviceData.priceDisplay}}" class="order-total-price">{{serviceData.priceDisplay}}</text></view>
         <button class="btn-submit" loading="{{submitting}}" disabled="{{submitting}}" onTap="submitOrder">确认预约</button>
       </view>
     </view>

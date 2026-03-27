@@ -7,7 +7,15 @@
     </div>
 
     <!-- Chat Panel -->
-    <van-popup v-model:show="showChat" position="bottom" round :style="{ height: '75vh' }" @open="onOpen" @close="onClose">
+    <van-popup
+      v-model:show="showChat"
+      position="bottom"
+      round
+      :z-index="5000"
+      :style="{ height: '75vh' }"
+      @open="onOpen"
+      @close="onClose"
+    >
       <div class="chat-panel">
         <div class="chat-header">
           <span class="chat-title">在线客服</span>
@@ -289,6 +297,8 @@ onBeforeUnmount(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
+  padding-bottom: calc(75px + env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
 }
 
 .chat-header {

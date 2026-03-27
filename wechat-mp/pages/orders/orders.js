@@ -1,4 +1,5 @@
 const app = getApp();
+const { formatPriceDisplay } = require('../../utils/currency.js');
 
 const statusMap = {
   pending: { text: '待支付', type: 'warning' },
@@ -52,8 +53,10 @@ Page({
       .then(res => {
         const raw = res.data || {};
         const arr = raw.list || raw;
+        const sym = app.globalData.currencySymbol || '¥';
         const data = (Array.isArray(arr) ? arr : []).map(o => ({
           ...o,
+          priceDisplay: formatPriceDisplay(o.price, sym),
           statusText: (statusMap[o.status] || {}).text || o.status,
           statusType: (statusMap[o.status] || {}).type || 'default',
           timeText: this.formatTime(o.createdAt),

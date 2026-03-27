@@ -139,4 +139,23 @@ onMounted(() => {
   touch-action: manipulation;
   cursor: pointer;
 }
+
+.app-tabbar-shell :deep(.van-tabbar) {
+  --van-tabbar-height: 75px;
+  height: 75px !important;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  box-sizing: content-box;
+}
+.app-tabbar-shell :deep(.van-tabbar-item__icon) {
+  font-size: 33px !important;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.app-tabbar-shell :deep(.van-tabbar-item__icon .van-icon) {
+  font-size: inherit !important;
+}
+.app-tabbar-shell :deep(.van-tabbar-item__text) {
+  font-size: 15px !important;
+  line-height: 1.2;
+}
 </style>
