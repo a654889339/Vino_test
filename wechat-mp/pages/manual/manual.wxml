@@ -25,7 +25,7 @@
     </view>
 
     <view wx:if="{{manualPdfUrl}}" class="pdf-bar">
-      <button class="pdf-btn" bindtap="onOpenManualWeb">打开说明书网页</button>
+      <button class="pdf-btn" bindtap="onOpenManual">查看说明书</button>
     </view>
   </block>
 </view>

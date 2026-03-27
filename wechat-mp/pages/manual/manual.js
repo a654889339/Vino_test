@@ -1,4 +1,5 @@
 const app = getApp();
+const { openManual } = require('../../utils/openManual.js');
 
 Page({
   data: {
@@ -28,15 +29,8 @@ Page({
       .catch(() => this.setData({ loading: false }));
   },
 
-  onOpenManualWeb() {
-    let url = (this.data.manualPdfUrl && String(this.data.manualPdfUrl).trim()) || '';
-    if (!url) return;
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      const base = (app.globalData.baseUrl || '').replace(/\/api\/?$/, '') || '';
-      url = base + (url.startsWith('/') ? url : '/' + url);
-    }
-    wx.navigateTo({
-      url: '/pages/webview/webview?url=' + encodeURIComponent(url),
-    });
+  /** PDF：downloadFile + openDocument（小程序内预览）；网页：webview */
+  onOpenManual() {
+    openManual(this.data.manualPdfUrl, app);
   },
 });
