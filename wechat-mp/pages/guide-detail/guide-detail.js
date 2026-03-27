@@ -1,4 +1,5 @@
 const app = getApp();
+const { openManualFromGuide } = require('../../utils/openManual.js');
 
 Page({
   data: {
@@ -88,8 +89,17 @@ Page({
   },
 
   goManual() {
-    const id = this.data.guide.id;
-    wx.navigateTo({ url: `/pages/manual/manual?id=${id}` });
+    const g = this.data.guide;
+    if (!g || !g.id) return;
+    if (openManualFromGuide(g, this.data.helpItems, app)) return;
+    const hasContent =
+      (this.data.helpItems && this.data.helpItems.length) ||
+      (g.manualPdfUrl && String(g.manualPdfUrl).trim());
+    if (!hasContent) {
+      wx.showToast({ title: '暂无说明书', icon: 'none' });
+      return;
+    }
+    wx.navigateTo({ url: `/pages/manual/manual?id=${g.id}` });
   },
 
   goMaintenance() {

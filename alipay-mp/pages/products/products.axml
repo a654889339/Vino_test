@@ -69,9 +69,9 @@
       </view>
     </view>
 
-    <view a:if="{{helpItems.length || sections.length}}" class="card">
+    <view a:if="{{helpItems.length || sections.length || guide.manualPdfUrl}}" class="card">
       <text class="title">使用帮助</text>
-      <view a:if="{{helpItems.length}}" class="help-row" onTap="goManual">
+      <view a:if="{{helpItems.length || guide.manualPdfUrl}}" class="help-row" onTap="goManual">
         <text class="help-title">电子说明书</text>
         <text class="help-arrow">›</text>
       </view>
