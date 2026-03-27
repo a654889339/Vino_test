@@ -1,4 +1,4 @@
-.page { background: #f8f8f8; min-height: 100vh; padding-bottom: 40px; }
+.page { background: #f7f7f7; min-height: 100vh; padding-bottom: 40px; }
 .loading { text-align: center; padding: 60px 0; color: #999; }
 
 .header { padding: 24px 20px 16px; background: #fff; }

@@ -106,7 +106,7 @@ onMounted(async () => {
 
 <style scoped>
 .manual-page {
-  background: #fff;
+  background: #f7f7f7;
   min-height: 100vh;
 }
 

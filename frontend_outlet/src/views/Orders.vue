@@ -40,7 +40,7 @@
       </van-tab>
     </van-tabs>
 
-    <div style="height: 60px;"></div>
+    <div style="height: 96px;"></div>
   </div>
 </template>
 
@@ -230,6 +230,6 @@ onMounted(loadInitial);
   justify-content: flex-end;
   margin-top: 10px;
   padding-top: 10px;
-  border-top: 1px solid var(--vino-bg, #f5f5f5);
+  border-top: 1px solid var(--vino-bg, #f7f7f7);
 }
 </style>

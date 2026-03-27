@@ -1,4 +1,5 @@
 const path = require('path');
+const { Op } = require('sequelize');
 const { DeviceGuide, ProductCategory } = require('../models');
 const cosUpload = require('../utils/cosUpload');
 
@@ -31,7 +32,13 @@ exports.list = async (req, res) => {
   try {
     const { categoryId } = req.query;
     const where = { status: 'active' };
-    if (categoryId != null && categoryId !== '') where.categoryId = categoryId;
+    /** 按种类筛选时同时包含「未选择种类」的商品（categoryId 为空），避免后台未绑定种类的商品在前端/小程序全部消失 */
+    if (categoryId != null && categoryId !== '') {
+      const cid = parseInt(categoryId, 10);
+      if (!Number.isNaN(cid)) {
+        where[Op.or] = [{ categoryId: cid }, { categoryId: null }];
+      }
+    }
     const guides = await DeviceGuide.findAll({
       where,
       order: [['sortOrder', 'ASC'], ['id', 'ASC']],

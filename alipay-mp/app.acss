@@ -1,5 +1,5 @@
 page {
-  background: linear-gradient(to bottom, #E8E8ED 0%, #F2F2F7 30%, #ffffff 100%);
+  background: #f7f7f7;
   min-height: 100vh;
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
   color: #333;

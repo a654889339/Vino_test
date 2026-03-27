@@ -187,7 +187,7 @@ onMounted(async () => {
 
 <style scoped>
 .address-edit-page {
-  background: var(--vino-bg, #f5f5f5);
+  background: var(--vino-bg, #f7f7f7);
   min-height: 100vh;
 }
 .page-loading { padding-top: 100px; text-align: center; }

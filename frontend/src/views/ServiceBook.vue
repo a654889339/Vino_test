@@ -13,7 +13,7 @@
           </div>
           <div>
             <h4>{{ serviceData.title }}</h4>
-            <span class="order-service-price">¥{{ serviceData.price }}</span>
+            <span class="order-service-price">{{ formatPriceDisplay(serviceData.price) }}</span>
           </div>
         </div>
 
@@ -127,7 +127,7 @@
         <div class="order-submit-area">
           <div class="order-total">
             <span>合计：</span>
-            <span class="order-total-price">¥{{ serviceData.price }}</span>
+            <span class="order-total-price">{{ formatPriceDisplay(serviceData.price) }}</span>
           </div>
           <van-button type="primary" color="#B91C1C" block round :loading="submitting" @click="submitOrder">
             确认预约
@@ -143,6 +143,7 @@ import { ref, reactive, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { serviceApi, orderApi, addressApi, authApi } from '@/api';
 import { showToast, showDialog } from 'vant';
+import { formatPriceDisplay } from '@/utils/currency';
 import { areaList } from '@vant/area-data';
 
 const route = useRoute();
@@ -390,7 +391,7 @@ const submitOrder = async () => {
   gap: 12px;
   padding: 12px 16px;
   margin: 0 16px 16px;
-  background: var(--vino-bg, #f5f5f5);
+  background: var(--vino-bg, #f7f7f7);
   border-radius: 10px;
   flex-shrink: 0;
 }

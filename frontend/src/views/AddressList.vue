@@ -117,7 +117,7 @@ onMounted(loadAddresses);
 
 <style scoped>
 .address-page {
-  background: var(--vino-bg, #f5f5f5);
+  background: var(--vino-bg, #f7f7f7);
   min-height: 100vh;
   padding-bottom: 80px;
 }

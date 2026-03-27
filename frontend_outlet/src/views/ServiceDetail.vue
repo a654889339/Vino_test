@@ -16,9 +16,9 @@
         <p class="detail-desc">{{ serviceData.description }}</p>
 
         <div class="price-row">
-          <span class="detail-price">¥{{ serviceData.price }}</span>
+          <span class="detail-price">{{ formatPriceDisplay(serviceData.price) }}</span>
           <template v-if="showOriginPrice">
-            <span class="origin-price">¥{{ serviceData.originPrice }}</span>
+            <span class="origin-price">{{ formatPriceDisplay(serviceData.originPrice) }}</span>
             <van-tag type="primary" color="#B91C1C">限时优惠</van-tag>
           </template>
         </div>
@@ -66,7 +66,7 @@
             </div>
             <div>
               <h4>{{ serviceData.title }}</h4>
-              <span class="order-service-price">¥{{ serviceData.price }}</span>
+              <span class="order-service-price">{{ formatPriceDisplay(serviceData.price) }}</span>
             </div>
           </div>
 
@@ -155,7 +155,7 @@
           <div class="order-submit-area">
             <div class="order-total">
               <span>合计：</span>
-              <span class="order-total-price">¥{{ serviceData.price }}</span>
+              <span class="order-total-price">{{ formatPriceDisplay(serviceData.price) }}</span>
             </div>
             <van-button type="primary" color="#B91C1C" block round :loading="submitting" @click="submitOrder">
               确认预约
@@ -295,7 +295,10 @@ const loadSavedAddresses = async () => {
 
 const onConsult = () => {
   const s = serviceData.value;
-  const msg = `我想咨询一下【${s.title || '该服务'}】${s.price ? '（¥' + s.price + '）' : ''}${s.description ? '：' + s.description : ''}`;
+  const pricePart = Number(s.price) !== 0 && s.price != null && s.price !== ''
+    ? `（${formatPriceDisplay(s.price)}）`
+    : '';
+  const msg = `我想咨询一下【${s.title || '该服务'}】${pricePart}${s.description ? '：' + s.description : ''}`;
   if (chatWidgetRef.value) {
     chatWidgetRef.value.openWithAutoMessage(msg);
   }
@@ -547,7 +550,7 @@ const submitOrder = async () => {
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  background: var(--vino-bg, #f5f5f5);
+  background: var(--vino-bg, #f7f7f7);
   border-radius: 10px;
   margin-bottom: 16px;
   flex-shrink: 0;
