@@ -54,7 +54,7 @@
       <div v-if="skinLayerHomeScroll" class="section-skin-layer" :style="skinLayerHomeScroll" aria-hidden="true" />
     <!-- 自助预约（仅此区块上移，与下方我的商品/热门服务同层级） -->
     <div class="home-config-inner">
-    <div class="section card-section first-card" v-if="navLgItems.length || navSmItems.length">
+    <div class="section card-section first-card" v-if="navLgItems.length || navSmItems.length" :style="firstCardSectionStyle">
       <div class="section-header">
         <h3>{{ navSectionTitle }}</h3>
         <span class="more" @click="$router.push('/services')">进度查询 ›</span>
@@ -147,7 +147,7 @@
     </div>
 
     <!-- 我的商品：为空时整栏隐藏，自助服务紧贴自助预约 -->
-    <div v-if="myProductsDisplay.length" class="section card-section section-my-products">
+    <div v-if="myProductsDisplay.length" class="section card-section section-my-products" :style="myProductsSectionStyle">
       <div v-if="skinLayerMyProducts" class="section-skin-layer" :style="skinLayerMyProducts" aria-hidden="true" />
       <div class="section-skin-content">
       <div class="section-header">
@@ -182,7 +182,7 @@
     </div>
 
     <!-- Hot Services -->
-    <div class="section card-section section-hot-service">
+    <div class="section card-section section-hot-service" :style="hotServiceSectionStyle">
       <div v-if="skinLayerHotService" class="section-skin-layer" :style="skinLayerHotService" aria-hidden="true" />
       <div class="section-skin-content">
       <div class="section-header">
@@ -650,6 +650,9 @@ const vinoProductSectionStyle = computed(() => buildSectionSkinContainerStyle(al
 const featuredRecommendSectionStyle = computed(() => buildSectionSkinContainerStyle(allItems.value, 'featuredRecommend', 'fr'));
 const skinLayerMyProducts = computed(() => buildSectionSkinLayerStyle(allItems.value, 'myProducts'));
 const skinLayerHotService = computed(() => buildSectionSkinLayerStyle(allItems.value, 'hotService'));
+const firstCardSectionStyle = computed(() => buildSectionSkinContainerStyle(allItems.value, 'homeScroll', 'card'));
+const myProductsSectionStyle = computed(() => buildSectionSkinContainerStyle(allItems.value, 'myProducts', 'card'));
+const hotServiceSectionStyle = computed(() => buildSectionSkinContainerStyle(allItems.value, 'hotService', 'card'));
 
 function openVinoProductGuide(item) {
   const slug = item.path;

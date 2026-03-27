@@ -21,7 +21,7 @@
   </view>
 
   <!-- 自助预约 -->
-  <view class="card-section" wx:if="{{navLgItems.length || navSmItems.length}}">
+  <view class="card-section" wx:if="{{navLgItems.length || navSmItems.length}}" style="{{homeScrollStyle}}">
     <view class="section-header">
       <text class="section-title">{{navSectionTitle}}</text>
       <text class="section-more" bindtap="goService">进度查询 ›</text>
@@ -103,7 +103,7 @@
   </view>
 
   <!-- Hot Services -->
-  <view class="card-section">
+  <view class="card-section" style="{{hotServiceSectionStyle}}">
     <view class="section-header">
       <text class="section-title">{{hotServiceTitle}}</text>
       <text class="section-more" bindtap="goServiceList">查看全部 ›</text>

@@ -21,7 +21,7 @@
   </view>
 
   <!-- 自助预约 -->
-  <view class="card-section" a:if="{{navLgItems.length || navSmItems.length}}">
+  <view class="card-section" a:if="{{navLgItems.length || navSmItems.length}}" style="{{homeScrollStyle}}">
     <view class="section-header">
       <text class="section-title">{{navSectionTitle}}</text>
       <text class="section-more" onTap="goService">进度查询 ›</text>
@@ -46,7 +46,45 @@
     </view>
   </view>
 
-  <!-- 我的商品：为空时整栏隐藏，自助服务紧贴自助预约 -->
+  <!-- Vino 产品（与网页一致） -->
+  <view a:if="{{vinoItems.length}}" class="vino-section" style="{{vinoSectionStyle}}">
+    <view class="vino-inner">
+      <view class="vino-head">
+        <text class="vino-title">Vino产品</text>
+        <text class="vino-more" onTap="goProducts">全部 ›</text>
+      </view>
+      <view class="vino-grid">
+        <view class="vino-cell" a:for="{{vinoItems}}" a:key="id" onTap="goVinoGuide" data-slug="{{item.path}}">
+          <view class="vino-icon-wrap">
+            <image a:if="{{item.iconUrlThumb || item.iconUrl}}" src="{{item.iconUrlThumb || item.iconUrl}}" class="vino-icon-img" mode="aspectFit" />
+            <text a:else class="vino-emoji">📦</text>
+          </view>
+          <text class="vino-name">{{item.title}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 甄选推荐 -->
+  <view a:if="{{featuredItems.length}}" class="fr-section" style="{{frSectionStyle}}">
+    <view class="fr-head">
+      <text class="fr-title">甄选推荐</text>
+    </view>
+    <scroll-view scroll-x class="fr-scroll" show-scrollbar="{{false}}" enable-flex="{{false}}">
+      <view class="fr-card" a:for="{{featuredItems}}" a:key="id" onTap="goFeaturedGuide" data-slug="{{item.path}}">
+        <view class="fr-img-wrap">
+          <image a:if="{{item.coverUrl}}" class="fr-img" src="{{item.coverUrl}}" mode="widthFix" />
+          <view a:else class="fr-ph" />
+        </view>
+        <view class="fr-overlay">
+          <text class="fr-t1">{{item.title}}</text>
+          <text a:if="{{item.subtitle}}" class="fr-t2">{{item.subtitle}}</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 我的商品：为空时整栏隐藏 -->
   <view a:if="{{myProducts.length}}" class="card-section">
     <view class="section-header">
       <text class="section-title">{{myProductsTitle}}</text>
@@ -65,7 +103,7 @@
   </view>
 
   <!-- Hot Services -->
-  <view class="card-section">
+  <view class="card-section" style="{{hotServiceSectionStyle}}">
     <view class="section-header">
       <text class="section-title">{{hotServiceTitle}}</text>
       <text class="section-more" onTap="goServiceList">查看全部 ›</text>
@@ -78,13 +116,13 @@
         <view class="service-info">
           <text class="service-name">{{item.title}}</text>
           <text class="service-desc">{{item.desc}}</text>
-          <text class="service-price">¥{{item.price}}</text>
+          <text class="service-price">{{item.priceDisplay}}</text>
         </view>
       </view>
     </scroll-view>
   </view>
 
-  <!-- Recommend：层级低于底栏 -->
+  <!-- Recommend -->
   <view class="card-section section-recommend">
     <text class="section-title" style="display:block;margin-bottom:20rpx">{{recommendTitle}}</text>
     <view class="recommend-grid">
@@ -94,6 +132,29 @@
         </view>
         <text class="recommend-name">{{item.title}}</text>
         <text class="recommend-desc">{{item.desc}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 探索 VINO（首页最下方） -->
+  <view a:if="{{exploreVino}}" class="explore-section">
+    <view class="explore-head">
+      <text class="explore-bar-title">{{exploreVino.barTitle}}</text>
+    </view>
+    <view class="explore-card" onTap="goExploreVino">
+      <block a:if="{{exploreVino.displayBg}}">
+        <image class="explore-bg" src="{{exploreVino.displayBg}}" mode="aspectFill" />
+        <view class="explore-dim" />
+        <view class="explore-center">
+          <text class="explore-main">{{exploreVino.mainTitle}}</text>
+          <text a:if="{{exploreVino.subTitle}}" class="explore-sub">{{exploreVino.subTitle}}</text>
+          <view class="explore-circle"><text class="explore-arrow">›</text></view>
+        </view>
+      </block>
+      <view a:else class="explore-center explore-plain">
+        <text class="explore-main-plain">{{exploreVino.mainTitle}}</text>
+        <text a:if="{{exploreVino.subTitle}}" class="explore-sub-plain">{{exploreVino.subTitle}}</text>
+        <view class="explore-circle explore-circle-plain"><text class="explore-arrow-plain">›</text></view>
       </view>
     </view>
   </view>

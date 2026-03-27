@@ -1,17 +1,6 @@
 const app = getApp();
 const { formatPriceDisplay } = require('../../utils/currency.js');
-
-/** 与网页栏目外观一致：透明度同时作用于白底板 */
-function skinContainerStyle(items, path, variant) {
-  const row = items.find(i => i.section === 'homeSectionSkin' && String(i.path || '').trim() === path && i.status === 'active');
-  if (!row) return '';
-  let op = parseFloat(row.desc);
-  if (!Number.isFinite(op)) op = 100;
-  op = Math.min(100, Math.max(0, op)) / 100;
-  const shadow = variant === 'vino' ? '0 4rpx 24rpx rgba(0,0,0,0.08)' : '0 4rpx 20rpx rgba(0,0,0,0.08)';
-  const bg = op > 0 ? `rgba(255,255,255,${op})` : 'transparent';
-  return `background:${bg};box-shadow:${op > 0 ? shadow : 'none'};`;
-}
+const { buildSectionSkinContainerStyle } = require('../../utils/sectionSkin.js');
 
 Page({
   data: {
@@ -30,6 +19,9 @@ Page({
     featuredItems: [],
     vinoSectionStyle: '',
     frSectionStyle: '',
+    homeScrollStyle: '',
+    myProductsSectionStyle: '',
+    hotServiceSectionStyle: '',
     exploreVino: null,
     recommends: [
       { id: 1, title: '会员权益', desc: '专属折扣', emoji: '🏅', bg: 'linear-gradient(135deg, #F59E0B, #D97706)' },
@@ -268,8 +260,11 @@ Page({
           navSmItems: navSm,
           vinoItems,
           featuredItems,
-          vinoSectionStyle: skinContainerStyle(items, 'vinoProduct', 'vino'),
-          frSectionStyle: skinContainerStyle(items, 'featuredRecommend', 'fr'),
+          vinoSectionStyle: buildSectionSkinContainerStyle(items, 'vinoProduct', 'vino'),
+          frSectionStyle: buildSectionSkinContainerStyle(items, 'featuredRecommend', 'fr'),
+          homeScrollStyle: buildSectionSkinContainerStyle(items, 'homeScroll', 'card'),
+          myProductsSectionStyle: buildSectionSkinContainerStyle(items, 'myProducts', 'card'),
+          hotServiceSectionStyle: buildSectionSkinContainerStyle(items, 'hotService', 'card'),
           exploreVino,
           recommends,
         });
