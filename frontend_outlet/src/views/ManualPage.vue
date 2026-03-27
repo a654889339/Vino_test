@@ -44,6 +44,10 @@
         <div class="chapter-content" v-html="ch.content"></div>
       </div>
 
+      <div v-if="manualPdfUrl" class="manual-pdf-bar">
+        <van-button type="primary" block round icon="arrow-down" @click="openManualPdf">下载说明书（PDF）</van-button>
+      </div>
+
       <div class="manual-footer">
         <p>以上内容仅供参考，请以实际产品为准</p>
         <p>{{ guide.name }} · 电子说明书</p>
@@ -56,10 +60,16 @@
 import { ref, computed, onMounted, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import { guideApi } from '@/api';
+import { showToast } from 'vant';
 
 const route = useRoute();
 const loading = ref(true);
 const guide = ref({});
+
+const manualPdfUrl = computed(() => {
+  const u = guide.value.manualPdfUrl;
+  return u && String(u).trim() ? String(u).trim() : '';
+});
 
 const title = computed(() => guide.value.name ? `${guide.value.name}说明书` : '电子说明书');
 
@@ -74,6 +84,16 @@ const scrollTo = (id) => {
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 };
+
+function openManualPdf() {
+  const url = manualPdfUrl.value;
+  if (!url) return;
+  try {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  } catch {
+    showToast('无法打开链接');
+  }
+}
 
 onMounted(async () => {
   try {
@@ -296,6 +316,11 @@ onMounted(async () => {
 }
 
 /* Footer */
+.manual-pdf-bar {
+  padding: 0 20px 8px;
+  margin-top: 8px;
+}
+
 .manual-footer {
   padding: 32px 20px;
   text-align: center;

@@ -105,6 +105,11 @@ const DeviceGuide = sequelize.define('DeviceGuide', {
       this.setDataValue('helpItems', JSON.stringify(val || []));
     },
   },
+  manualPdfUrl: {
+    type: DataTypes.STRING(500),
+    defaultValue: '',
+    comment: 'PDF版说明书 COS 地址，可选',
+  },
   categoryId: {
     type: DataTypes.INTEGER,
     allowNull: true,

@@ -878,6 +878,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <div id="helpItemsList"></div>
           <button type="button" class="refresh-btn" style="background:#059669;margin-top:8px" onclick="addHelpItem()">+ 添加章节</button>
 
+          <div class="form-group" style="margin-top:14px">
+            <label>PDF 版说明书 <span style="font-weight:normal;color:#999;font-size:12px">（可选；上传后前台/小程序显示「下载说明书」）</span></label>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <input class="form-input" id="gManualPdfUrl" placeholder="上传 PDF 后自动填充链接，也可手动粘贴" style="flex:1;min-width:200px" />
+              <label style="padding:8px 16px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">
+                上传PDF版本说明书<input type="file" accept=".pdf,application/pdf" style="display:none" onchange="uploadGuideFile(this,'gManualPdfUrl')" />
+              </label>
+            </div>
+          </div>
+
           <h4 style="margin:20px 0 12px;color:var(--primary)">维护说明段落</h4>
           <textarea class="form-input" id="gSections" rows="4" style="resize:vertical;font-family:monospace;font-size:12px" placeholder='[{"title":"常见故障","icon":"warning-o","tips":["不制冷","漏水"]}]'></textarea>
 
@@ -2243,12 +2253,32 @@ function insertHtmlSnippet(idx, type) {
 function addHelpItem() { guideHelpItems.push({title:'',content:''}); renderHelpItems(); }
 function removeHelpItem(i) { guideHelpItems.splice(i,1); renderHelpItems(); }
 
-function showUploadLoading(filename) {
+/** @param {string} [filename] 文件名，用于「正在上传 xxx」
+ *  @param {{ message?: string }} [options] 若传 message 则整句显示（如导入/批量操作） */
+function showUploadLoading(filename, options) {
   const o = document.getElementById('uploadOverlay');
-  document.getElementById('uploadOverlayText').textContent = '正在上传 ' + (filename||'文件') + '，请稍候...';
+  const textEl = document.getElementById('uploadOverlayText');
+  if (options && options.message) {
+    textEl.textContent = options.message;
+  } else {
+    textEl.textContent = '正在上传 ' + (filename || '文件') + '，请稍候...';
+  }
   o.style.display = 'flex';
 }
 function hideUploadLoading() { document.getElementById('uploadOverlay').style.display = 'none'; }
+
+/** 全屏转圈等待：执行异步上传/处理，结束或异常时自动关闭遮罩（与上传图片、视频等共用）
+ *  @param {string} label 文件名等，用于默认文案
+ *  @param {() => Promise<any>} fn
+ *  @param {{ message?: string }} [options] 传入则与 showUploadLoading 一致（如导入提示） */
+async function runWithUploadOverlay(label, fn, options) {
+  showUploadLoading(label, options);
+  try {
+    return await fn();
+  } finally {
+    hideUploadLoading();
+  }
+}
 
 async function doUpload(file) {
   const fd = new FormData(); fd.append('file', file);
@@ -2260,46 +2290,53 @@ async function uploadGuideFile(input, targetId) {
   if (!input.files[0]) return;
   const file = input.files[0];
   if (file.size > 100*1024*1024) { alert('文件不能超过100MB'); return; }
-  showUploadLoading(file.name);
+  if (targetId === 'gManualPdfUrl') {
+    const ok = (file.type && file.type.indexOf('pdf') !== -1) || /\.pdf$/i.test(file.name || '');
+    if (!ok) { alert('请选择 PDF 文件'); input.value = ''; return; }
+  }
   const el = document.getElementById(targetId);
-  try {
-    const res = await doUpload(file);
-    if (res.code === 0) {
-      el.value = res.data.url;
-      if (targetId === 'gCoverImage') { const p = document.getElementById('gCoverPreview'); if(p){p.src=res.data.url;p.style.display='block';} if(res.data.thumbUrl){ const t=document.getElementById('gCoverImageThumb'); if(t)t.value=res.data.thumbUrl; } }
-      if (targetId === 'gIconUrl') { const p = document.getElementById('gIconPreview'); if(p){p.src=res.data.url;p.style.display='block';} if(res.data.thumbUrl){ const t=document.getElementById('gIconUrlThumb'); if(t)t.value=res.data.thumbUrl; } }
-    } else { el.value = ''; alert(res.message||'上传失败'); }
-  } catch { el.value = ''; alert('上传失败'); }
-  hideUploadLoading();
+  await runWithUploadOverlay(file.name, async () => {
+    try {
+      const res = await doUpload(file);
+      if (res.code === 0) {
+        el.value = res.data.url;
+        if (targetId === 'gCoverImage') { const p = document.getElementById('gCoverPreview'); if(p){p.src=res.data.url;p.style.display='block';} if(res.data.thumbUrl){ const t=document.getElementById('gCoverImageThumb'); if(t)t.value=res.data.thumbUrl; } }
+        if (targetId === 'gIconUrl') { const p = document.getElementById('gIconPreview'); if(p){p.src=res.data.url;p.style.display='block';} if(res.data.thumbUrl){ const t=document.getElementById('gIconUrlThumb'); if(t)t.value=res.data.thumbUrl; } }
+      } else { el.value = ''; alert(res.message||'上传失败'); }
+    } catch { el.value = ''; alert('上传失败'); }
+  });
+  input.value = '';
 }
 
 async function uploadServiceIconUrl(input) {
   if (!input.files || !input.files[0]) return;
   var file = input.files[0];
   if (file.size > 10*1024*1024) { alert('文件不能超过10MB'); return; }
-  showUploadLoading(file.name);
   var el = document.getElementById('serviceItemIconUrl');
   var preview = document.getElementById('serviceItemIconPreview');
-  try {
-    var res = await doUpload(file);
-    if (res.code === 0 && res.data && res.data.url) {
-      el.value = res.data.url;
-      if (preview) { preview.src = res.data.url; preview.style.display = 'block'; }
-    } else { el.value = ''; if (preview) preview.style.display = 'none'; alert(res.message || '上传失败'); }
-  } catch { el.value = ''; if (preview) preview.style.display = 'none'; alert('上传失败'); }
-  hideUploadLoading();
+  await runWithUploadOverlay(file.name, async () => {
+    try {
+      var res = await doUpload(file);
+      if (res.code === 0 && res.data && res.data.url) {
+        el.value = res.data.url;
+        if (preview) { preview.src = res.data.url; preview.style.display = 'block'; }
+      } else { el.value = ''; if (preview) preview.style.display = 'none'; alert(res.message || '上传失败'); }
+    } catch { el.value = ''; if (preview) preview.style.display = 'none'; alert('上传失败'); }
+  });
   input.value = '';
 }
 
 async function uploadMediaThumb(input, idx) {
   if (!input.files[0]) return;
-  showUploadLoading(input.files[0].name);
-  try {
-    const res = await doUpload(input.files[0]);
-    if (res.code === 0) { guideMediaItems[idx].thumb = res.data.url; renderMediaItems(); }
-    else alert(res.message||'上传失败');
-  } catch { alert('上传失败'); }
-  hideUploadLoading();
+  const file = input.files[0];
+  await runWithUploadOverlay(file.name, async () => {
+    try {
+      const res = await doUpload(file);
+      if (res.code === 0) { guideMediaItems[idx].thumb = res.data.url; renderMediaItems(); }
+      else alert(res.message||'上传失败');
+    } catch { alert('上传失败'); }
+  });
+  input.value = '';
 }
 
 function detectMediaType(filename) {
@@ -2312,17 +2349,18 @@ async function uploadMediaUrl(input, idx) {
   if (!input.files[0]) return;
   const file = input.files[0];
   if (file.size > 100*1024*1024) { alert('文件不能超过100MB'); return; }
-  showUploadLoading(file.name);
-  try {
-    const res = await doUpload(file);
-    if (res.code === 0) {
-      guideMediaItems[idx].url = res.data.url;
-      guideMediaItems[idx].type = detectMediaType(file.name);
-      renderMediaItems();
-    }
-    else alert(res.message||'上传失败');
-  } catch { alert('上传失败'); }
-  hideUploadLoading();
+  await runWithUploadOverlay(file.name, async () => {
+    try {
+      const res = await doUpload(file);
+      if (res.code === 0) {
+        guideMediaItems[idx].url = res.data.url;
+        guideMediaItems[idx].type = detectMediaType(file.name);
+        renderMediaItems();
+      }
+      else alert(res.message||'上传失败');
+    } catch { alert('上传失败'); }
+  });
+  input.value = '';
 }
 
 function parseJSON(val) { try { return Array.isArray(val) ? val : JSON.parse(val||'[]'); } catch { return []; } }
@@ -2355,6 +2393,7 @@ function openGuideEditor(guide) {
   guideMediaItems = parseJSON(guide&&guide.mediaItems).map(m=>({...m}));
   guideHelpItems = parseJSON(guide&&guide.helpItems).map(h=>({...h}));
   renderMediaItems(); renderHelpItems();
+  document.getElementById('gManualPdfUrl').value = guide ? (guide.manualPdfUrl || '') : '';
   document.getElementById('guideModal').style.display = 'flex';
 }
 
@@ -2399,6 +2438,7 @@ async function saveGuide() {
     showcaseVideo: document.getElementById('gShowcaseVideo').value,
     mediaItems: guideMediaItems,
     helpItems: guideHelpItems,
+    manualPdfUrl: (document.getElementById('gManualPdfUrl') && document.getElementById('gManualPdfUrl').value) ? document.getElementById('gManualPdfUrl').value.trim() : '',
   };
   try {
     const res = id
@@ -2637,28 +2677,24 @@ async function submitInvExcelImport(fileInput) {
   fileInput.value = '';
   const fd = new FormData();
   fd.append('file', file);
-  const overlay = document.getElementById('uploadOverlay');
-  const overlayText = document.getElementById('uploadOverlayText');
-  overlayText.textContent = '正在导入，请稍候...';
-  overlay.style.display = 'flex';
-  try {
-    const res = await fetch(API + '/inventory/import-excel', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + token },
-      body: fd,
-    });
-    const data = await res.json().catch(() => ({}));
-    overlay.style.display = 'none';
-    if (data.code === 0) {
-      alert(data.data.message || '导入完成');
-      loadInventoryProducts();
-    } else {
-      alert(data.message || '导入失败');
+  await runWithUploadOverlay('', async () => {
+    try {
+      const res = await fetch(API + '/inventory/import-excel', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token },
+        body: fd,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (data.code === 0) {
+        alert(data.data.message || '导入完成');
+        loadInventoryProducts();
+      } else {
+        alert(data.message || '导入失败');
+      }
+    } catch (e) {
+      alert('导入失败：' + (e.message || '网络错误'));
     }
-  } catch (e) {
-    overlay.style.display = 'none';
-    alert('导入失败：' + (e.message || '网络错误'));
-  }
+  }, { message: '正在导入，请稍候...' });
 }
 
 function showInvProductDeleteHelp() {
@@ -2683,28 +2719,24 @@ async function submitInvExcelDelete(fileInput) {
   fileInput.value = '';
   const fd = new FormData();
   fd.append('file', file);
-  const overlay = document.getElementById('uploadOverlay');
-  const overlayText = document.getElementById('uploadOverlayText');
-  overlayText.textContent = '正在批量删除，请稍候...';
-  overlay.style.display = 'flex';
-  try {
-    const res = await fetch(API + '/inventory/delete-excel', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + token },
-      body: fd,
-    });
-    const data = await res.json().catch(() => ({}));
-    overlay.style.display = 'none';
-    if (data.code === 0) {
-      alert(data.data.message || '操作完成');
-      loadInventoryProducts();
-    } else {
-      alert(data.message || '批量删除失败');
+  await runWithUploadOverlay('', async () => {
+    try {
+      const res = await fetch(API + '/inventory/delete-excel', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token },
+        body: fd,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (data.code === 0) {
+        alert(data.data.message || '操作完成');
+        loadInventoryProducts();
+      } else {
+        alert(data.message || '批量删除失败');
+      }
+    } catch (e) {
+      alert('批量删除失败：' + (e.message || '网络错误'));
     }
-  } catch (e) {
-    overlay.style.display = 'none';
-    alert('批量删除失败：' + (e.message || '网络错误'));
-  }
+  }, { message: '正在批量删除，请稍候...' });
 }
 
 async function toggleInvProductStatus(id, currentStatus) {
@@ -2895,25 +2927,25 @@ async function uploadExploreVinoBg(input) {
   if (!file.type.startsWith('image/')) { alert('只能上传图片'); input.value = ''; return; }
   const token = localStorage.getItem('vino_admin_token');
   if (!token) { alert('请先登录'); input.value = ''; return; }
-  showUploadLoading(file.name);
-  try {
-    const formData = new FormData();
-    formData.append('file', file);
-    const res = await fetch(API + '/home-config/upload', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + token },
-      body: formData
-    }).then(function (r) { return r.json(); });
-    if (res.code === 0 && res.data && res.data.url) {
-      var iu = document.getElementById('exploreVino_imageUrl');
-      var iut = document.getElementById('exploreVino_imageUrlThumb');
-      if (iu) iu.value = res.data.url;
-      if (res.data.thumbUrl && iut) iut.value = res.data.thumbUrl;
-      var prev = document.getElementById('exploreVino_preview');
-      if (prev) { prev.src = res.data.url; prev.style.display = 'block'; }
-    } else alert(res.message || '上传失败');
-  } catch (e) { alert('上传失败'); }
-  hideUploadLoading();
+  await runWithUploadOverlay(file.name, async () => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch(API + '/home-config/upload', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token },
+        body: formData
+      }).then(function (r) { return r.json(); });
+      if (res.code === 0 && res.data && res.data.url) {
+        var iu = document.getElementById('exploreVino_imageUrl');
+        var iut = document.getElementById('exploreVino_imageUrlThumb');
+        if (iu) iu.value = res.data.url;
+        if (res.data.thumbUrl && iut) iut.value = res.data.thumbUrl;
+        var prev = document.getElementById('exploreVino_preview');
+        if (prev) { prev.src = res.data.url; prev.style.display = 'block'; }
+      } else alert(res.message || '上传失败');
+    } catch (e) { alert('上传失败'); }
+  });
   input.value = '';
 }
 
@@ -3463,58 +3495,47 @@ async function saveHC() {
 // 上传首页配置图片
 async function uploadHCImage(input) {
   const file = input.files[0];
-  if (!file) {
-    console.log('未选择文件');
-    return;
-  }
-
-  console.log('开始上传文件:', file.name, file.size, file.type);
-
-  // 检查文件大小（10MB限制）
+  if (!file) return;
   if (file.size > 10 * 1024 * 1024) {
     alert('图片文件不能超过 10MB');
+    input.value = '';
     return;
   }
-
-  // 检查文件类型
   if (!file.type.startsWith('image/')) {
     alert('只能上传图片文件');
+    input.value = '';
     return;
   }
-
   const token = localStorage.getItem('vino_admin_token');
   if (!token) {
     alert('未登录或登录已过期，请重新登录');
+    input.value = '';
     return;
   }
-
-  const formData = new FormData();
-  formData.append('file', file);
-
-  try {
-    console.log('上传URL:', API + '/home-config/upload');
-    const res = await fetch(API + '/home-config/upload', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + token },
-      body: formData
-    }).then(r => r.json());
-
-    console.log('上传响应:', res);
-
-    if (res.code === 0 && res.data?.url) {
-      document.getElementById('hcImageUrl').value = res.data.url;
-      if (res.data.thumbUrl) { const tb = document.getElementById('hcImageUrlThumb'); if (tb) tb.value = res.data.thumbUrl; }
-      const preview = document.getElementById('hcImagePreview');
-      preview.src = res.data.url;
-      preview.style.display = 'block';
-      alert('上传成功！');
-    } else {
-      alert(res.message || '上传失败');
+  await runWithUploadOverlay(file.name, async () => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch(API + '/home-config/upload', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token },
+        body: formData
+      }).then(r => r.json());
+      if (res.code === 0 && res.data?.url) {
+        document.getElementById('hcImageUrl').value = res.data.url;
+        if (res.data.thumbUrl) { const tb = document.getElementById('hcImageUrlThumb'); if (tb) tb.value = res.data.thumbUrl; }
+        const preview = document.getElementById('hcImagePreview');
+        preview.src = res.data.url;
+        preview.style.display = 'block';
+        alert('上传成功！');
+      } else {
+        alert(res.message || '上传失败');
+      }
+    } catch (e) {
+      console.error('上传错误:', e);
+      alert('上传失败: ' + (e.message || '网络错误'));
     }
-  } catch (e) {
-    console.error('上传错误:', e);
-    alert('上传失败: ' + e.message);
-  }
+  });
   input.value = '';
 }
 
@@ -3526,15 +3547,15 @@ async function uploadHCImageThumb(input) {
   if (!file.type.startsWith('image/')) { alert('只能上传图片'); input.value = ''; return; }
   const token = localStorage.getItem('vino_admin_token');
   if (!token) { alert('请先登录'); input.value = ''; return; }
-  showUploadLoading(file.name);
-  try {
-    const formData = new FormData(); formData.append('file', file);
-    const res = await fetch(API + '/home-config/upload', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: formData }).then(r => r.json());
-    if (res.code === 0 && res.data?.url) {
-      const tb = document.getElementById('hcImageUrlThumb'); if (tb) tb.value = res.data.url;
-    } else alert(res.message || '上传失败');
-  } catch (e) { alert('上传失败: ' + (e.message || '')); }
-  hideUploadLoading();
+  await runWithUploadOverlay(file.name, async () => {
+    try {
+      const formData = new FormData(); formData.append('file', file);
+      const res = await fetch(API + '/home-config/upload', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: formData }).then(r => r.json());
+      if (res.code === 0 && res.data?.url) {
+        const tb = document.getElementById('hcImageUrlThumb'); if (tb) tb.value = res.data.url;
+      } else alert(res.message || '上传失败');
+    } catch (e) { alert('上传失败: ' + (e.message || '')); }
+  });
   input.value = '';
 }
 
@@ -3688,15 +3709,15 @@ async function sendAdminImage(input) {
   input.value = '';
   const fd = new FormData();
   fd.append('image', file);
-  try {
-    showUploadLoading();
-    const uploadRes = await fetch('/api/messages/upload-image', { method: 'POST', headers: { 'Authorization': 'Bearer ' + localStorage.getItem('vino_admin_token') }, body: fd }).then(r => r.json());
-    hideUploadLoading();
-    if (uploadRes.code === 0 && uploadRes.data && uploadRes.data.url) {
-      const res = await api('/messages/admin/' + currentChatUserId + '/reply', { method: 'POST', body: { content: uploadRes.data.url, type: 'image' } });
-      if (res.code === 0) { openChat(currentChatUserId); loadConversations(); }
-    } else { alert('图片上传失败'); }
-  } catch { hideUploadLoading(); alert('图片上传失败'); }
+  await runWithUploadOverlay(file.name, async () => {
+    try {
+      const uploadRes = await fetch('/api/messages/upload-image', { method: 'POST', headers: { 'Authorization': 'Bearer ' + localStorage.getItem('vino_admin_token') }, body: fd }).then(r => r.json());
+      if (uploadRes.code === 0 && uploadRes.data && uploadRes.data.url) {
+        const res = await api('/messages/admin/' + currentChatUserId + '/reply', { method: 'POST', body: { content: uploadRes.data.url, type: 'image' } });
+        if (res.code === 0) { openChat(currentChatUserId); loadConversations(); }
+      } else { alert('图片上传失败'); }
+    } catch { alert('图片上传失败'); }
+  });
 }
 
 async function sendAdminReply() {
@@ -4120,23 +4141,22 @@ function closeOutletServiceItemModal() {
 async function uploadOutletServiceIcon(input) {
   const file = input.files[0];
   if (!file) return;
-  try {
-    showUploadLoading(file.name);
-    const fd = new FormData();
-    fd.append('file', file);
-    const res = await fetch(API + '/outlet/home-config/upload', { method: 'POST', headers: { Authorization: 'Bearer ' + token }, body: fd }).then(r => r.json());
-    if (res.code === 0 && res.data && res.data.url) {
-      document.getElementById('osIconUrl').value = res.data.url;
-    } else {
-      alert(res.message || '上传失败');
+  await runWithUploadOverlay(file.name, async () => {
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch(API + '/outlet/home-config/upload', { method: 'POST', headers: { Authorization: 'Bearer ' + token }, body: fd }).then(r => r.json());
+      if (res.code === 0 && res.data && res.data.url) {
+        document.getElementById('osIconUrl').value = res.data.url;
+      } else {
+        alert(res.message || '上传失败');
+      }
+    } catch (e) {
+      console.error('uploadOutletServiceIcon', e);
+      alert('上传失败');
     }
-  } catch (e) {
-    console.error('uploadOutletServiceIcon', e);
-    alert('上传失败');
-  } finally {
-    hideUploadLoading();
-    input.value = '';
-  }
+  });
+  input.value = '';
 }
 
 async function saveOutletService(id) {
@@ -4254,14 +4274,11 @@ async function saveOutletHC(id, type) {
   const file = document.getElementById('ohcFile').files[0];
   if (file) {
     const fd = new FormData(); fd.append('file', file);
-    try {
-      showUploadLoading(file.name);
+    await runWithUploadOverlay(file.name, async () => {
       const ur = await fetch(API + '/outlet/home-config/upload', { method: 'POST', headers: { Authorization: 'Bearer ' + token }, body: fd }).then(r => r.json());
       if (ur.code === 0) { body.imageUrl = ur.data.url; if (ur.data.thumbUrl) body.imageUrlThumb = ur.data.thumbUrl; }
       else alert(ur.message || '上传图片失败');
-    } finally {
-      hideUploadLoading();
-    }
+    });
   }
   try {
     if (id) await outletApi('/home-config/' + id, { method: 'PUT', body });

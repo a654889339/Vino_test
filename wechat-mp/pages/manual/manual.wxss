@@ -17,3 +17,16 @@
 .chapter-num { width: 28px; height: 28px; border-radius: 14px; background: #B91C1C; color: #fff; font-size: 14px; font-weight: 600; text-align: center; line-height: 28px; margin-right: 10px; flex-shrink: 0; }
 .chapter-title { font-size: 17px; font-weight: 600; color: #1a1a1a; }
 .chapter-content { font-size: 14px; color: #444; line-height: 1.8; }
+
+.pdf-bar { padding: 8px 16px 24px; }
+.pdf-btn {
+  width: 100%;
+  line-height: 46px;
+  background: #B91C1C;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 24px;
+  border: none;
+}
+.pdf-btn::after { border: none; }

@@ -5,6 +5,7 @@ Page({
     loading: true,
     guideName: '',
     helpItems: [],
+    manualPdfUrl: '',
   },
 
   onLoad(options) {
@@ -24,5 +25,30 @@ Page({
         });
       })
       .catch(() => this.setData({ loading: false }));
+  },
+
+  onDownloadPdf() {
+    const url = this.data.manualPdfUrl;
+    if (!url) return;
+    my.showLoading({ content: '下载中...' });
+    my.downloadFile({
+      url,
+      success: (res) => {
+        my.hideLoading();
+        const p = res.apFilePath || res.tempFilePath;
+        if (p) {
+          my.openDocument({
+            filePath: p,
+            fileType: 'pdf',
+          });
+        } else {
+          my.showToast({ content: '下载失败', type: 'none' });
+        }
+      },
+      fail: () => {
+        my.hideLoading();
+        my.showToast({ content: '下载失败', type: 'none' });
+      },
+    });
   },
 });

@@ -74,6 +74,7 @@ const GUIDE_FIELDS = [
   'name','slug','subtitle','icon','iconUrl','iconUrlThumb','emoji','gradient','badge',
   'categoryId','tags','sections','sortOrder','status',
   'coverImage','coverImageThumb','showcaseVideo','description','mediaItems','helpItems',
+  'manualPdfUrl',
 ];
 
 exports.create = async (req, res) => {

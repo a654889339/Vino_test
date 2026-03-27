@@ -23,5 +23,9 @@
       </view>
       <rich-text class="chapter-content" nodes="{{item.content}}" />
     </view>
+
+    <view a:if="{{manualPdfUrl}}" class="pdf-bar">
+      <button class="pdf-btn" onTap="onDownloadPdf">下载说明书（PDF）</button>
+    </view>
   </block>
 </view>
