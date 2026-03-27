@@ -21,34 +21,22 @@ Page({
         this.setData({
           guideName: g.name || '',
           helpItems: parse(g.helpItems),
+          manualPdfUrl: (g.manualPdfUrl && String(g.manualPdfUrl).trim()) || '',
           loading: false,
         });
       })
       .catch(() => this.setData({ loading: false }));
   },
 
-  onDownloadPdf() {
-    const url = this.data.manualPdfUrl;
+  onOpenManualWeb() {
+    let url = (this.data.manualPdfUrl && String(this.data.manualPdfUrl).trim()) || '';
     if (!url) return;
-    my.showLoading({ content: '下载中...' });
-    my.downloadFile({
-      url,
-      success: (res) => {
-        my.hideLoading();
-        const p = res.apFilePath || res.tempFilePath;
-        if (p) {
-          my.openDocument({
-            filePath: p,
-            fileType: 'pdf',
-          });
-        } else {
-          my.showToast({ content: '下载失败', type: 'none' });
-        }
-      },
-      fail: () => {
-        my.hideLoading();
-        my.showToast({ content: '下载失败', type: 'none' });
-      },
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      const base = (app.globalData.baseUrl || '').replace(/\/api\/?$/, '') || '';
+      url = base + (url.startsWith('/') ? url : '/' + url);
+    }
+    my.navigateTo({
+      url: '/pages/webview/webview?url=' + encodeURIComponent(url),
     });
   },
 });

@@ -44,8 +44,8 @@
         <div class="chapter-content" v-html="ch.content"></div>
       </div>
 
-      <div v-if="manualPdfUrl" class="manual-pdf-bar">
-        <van-button type="primary" block round icon="arrow-down" @click="openManualPdf">下载说明书（PDF）</van-button>
+      <div v-if="manualWebUrl" class="manual-pdf-bar">
+        <van-button type="primary" block round icon="share-o" @click="openManualWeb">打开说明书网页</van-button>
       </div>
 
       <div class="manual-footer">
@@ -66,9 +66,10 @@ const route = useRoute();
 const loading = ref(true);
 const guide = ref({});
 
-const manualPdfUrl = computed(() => {
+const manualWebUrl = computed(() => {
   const u = guide.value.manualPdfUrl;
-  return u && String(u).trim() ? String(u).trim() : '';
+  const s = u && String(u).trim() ? String(u).trim() : '';
+  return s ? resolvePublicUrl(s) : '';
 });
 
 const title = computed(() => guide.value.name ? `${guide.value.name}说明书` : '电子说明书');
@@ -85,8 +86,8 @@ const scrollTo = (id) => {
   });
 };
 
-function openManualPdf() {
-  const url = manualPdfUrl.value;
+function openManualWeb() {
+  const url = manualWebUrl.value;
   if (!url) return;
   try {
     window.open(url, '_blank', 'noopener,noreferrer');
