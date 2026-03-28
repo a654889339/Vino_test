@@ -1,46 +1,38 @@
 <view class="page">
-  <!-- 第一行：商品种类（与网页前台一致） -->
-  <view class="product-nav">
-    <scroll-view scroll-x class="product-nav-scroll">
+  <view class="products-layout">
+    <view class="product-sidebar" wx:if="{{categories.length}}">
       <view
-        class="nav-item {{selectedCategoryId === item.id ? 'active' : ''}}"
+        class="sidebar-item {{selectedCategoryId === item.id ? 'active' : ''}}"
         wx:for="{{categories}}"
         wx:key="id"
         data-id="{{item.id}}"
         bindtap="selectCategory"
       >{{item.name}}</view>
-    </scroll-view>
-  </view>
-
-  <!-- 第二行：选择商品（与网页前台一致） -->
-  <picker
-    wx:if="{{categories.length && deviceGuides.length}}"
-    mode="selector"
-    range="{{deviceGuides}}"
-    range-key="name"
-    value="{{productPickerIndex}}"
-    bindchange="onProductPick"
-  >
-    <view class="product-select-row">
-      <view class="select-product-field">
-        <text class="select-label">选择商品</text>
-        <text class="select-value">{{selectedProductLabel}}</text>
-        <text class="select-arrow">›</text>
+    </view>
+    <view class="product-main">
+      <view wx:if="{{listLoading}}" class="main-loading">加载中...</view>
+      <view wx:elif="{{deviceGuides.length}}" class="product-grid">
+        <view
+          class="grid-card {{activeId === item.id ? 'active' : ''}}"
+          wx:for="{{deviceGuides}}"
+          wx:key="id"
+          data-id="{{item.id}}"
+          data-slug="{{item.slug}}"
+          bindtap="selectProduct"
+        >
+          <view class="grid-card-icon">
+            <image wx:if="{{item.iconUrl}}" src="{{item.iconUrlThumb || item.iconUrl}}" class="grid-card-img" mode="aspectFit" />
+            <text wx:else class="grid-card-placeholder">📦</text>
+          </view>
+          <text class="grid-card-name">{{item.name}}</text>
+        </view>
       </view>
-    </view>
-  </picker>
-  <view wx:elif="{{categories.length}}" class="product-select-row">
-    <view class="select-product-field">
-      <text class="select-label">选择商品</text>
-      <text class="select-value">{{selectedCategoryId && !deviceGuides.length ? '该种类下暂无商品' : '请选择商品'}}</text>
-      <text class="select-arrow">›</text>
+      <view wx:elif="{{selectedCategoryId}}" class="main-empty">该种类下暂无商品</view>
     </view>
   </view>
 
-  <!-- Loading -->
-  <view wx:if="{{loading}}" class="loading">加载中...</view>
+  <view wx:if="{{detailLoading}}" class="detail-loading">加载中...</view>
 
-  <!-- Guide Detail -->
   <block wx:elif="{{guide.id}}">
     <view class="hero-block">
       <view class="hero" style="background:{{guide.gradient || '#333'}}">
@@ -104,10 +96,7 @@
     </view>
   </block>
 
-  <view wx:elif="{{!loading && categories.length}}" class="empty-hint">
-    <text>请在上方选择种类与商品</text>
-  </view>
-  <view wx:elif="{{!loading}}" class="empty-hint">
+  <view wx:elif="{{!listLoading && !categories.length}}" class="empty-hint">
     <text>暂无商品配置</text>
   </view>
 

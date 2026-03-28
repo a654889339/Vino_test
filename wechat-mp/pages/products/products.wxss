@@ -1,55 +1,122 @@
 .page { background: transparent; min-height: 100vh; }
-.loading { text-align: center; padding: 60px 0; color: #999; }
 
-/* 第二行：选择商品（与网页一致） */
-.product-select-row {
+/* 左侧栏 + 右侧两列宫格 */
+.products-layout {
+  display: flex;
+  flex-direction: row;
+  min-height: 200rpx;
   background: rgba(255,255,255,0.95);
-  padding: 24rpx 32rpx;
   border-bottom: 1rpx solid rgba(0,0,0,0.06);
 }
-.select-product-field {
-  display: flex;
-  align-items: center;
-}
-.select-label { font-size: 28rpx; color: #333; margin-right: 16rpx; flex-shrink: 0; }
-.select-value { flex: 1; font-size: 28rpx; color: #666; }
-.select-arrow { font-size: 32rpx; color: #999; }
 
-/* Product Nav */
-.product-nav {
-  background: rgba(232, 232, 237, 0.6);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  white-space: nowrap;
-  border-bottom: 1rpx solid rgba(0,0,0,0.04);
-  position: sticky;
-  top: 0;
-  z-index: 10;
+.product-sidebar {
+  flex-shrink: 0;
+  width: 176rpx;
+  max-height: 70vh;
+  padding: 24rpx 0;
+  background: #f3f4f6;
+  border-right: 1rpx solid rgba(0,0,0,0.06);
+  box-sizing: border-box;
 }
 
-.nav-item {
-  display: inline-block;
-  padding: 28rpx 32rpx;
-  font-size: 28rpx;
+.sidebar-item {
+  margin: 0 16rpx 16rpx;
+  padding: 20rpx 12rpx;
+  border-radius: 999rpx;
+  font-size: 26rpx;
   color: #666;
-  position: relative;
+  text-align: center;
+  line-height: 1.35;
 }
 
-.nav-item.active {
+.sidebar-item.active {
+  background: rgba(255, 183, 77, 0.35);
   color: #1a1a1a;
   font-weight: 600;
 }
 
-.nav-item.active::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 48rpx;
-  height: 4rpx;
-  background: #1a1a1a;
-  border-radius: 2rpx;
+.product-main {
+  flex: 1;
+  min-width: 0;
+  padding: 20rpx;
+}
+
+.main-loading {
+  text-align: center;
+  padding: 40rpx 0;
+  color: #999;
+  font-size: 28rpx;
+}
+
+.main-empty {
+  text-align: center;
+  padding: 48rpx 24rpx;
+  font-size: 28rpx;
+  color: #999;
+}
+
+.product-grid {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.grid-card {
+  width: calc(50% - 8rpx);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20rpx 12rpx;
+  background: #fff;
+  border-radius: 16rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.06);
+}
+
+.grid-card.active {
+  box-shadow: 0 0 0 3rpx #B91C1C;
+}
+
+.grid-card-icon {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 20rpx;
+  background: #f9fafb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  margin-bottom: 12rpx;
+}
+
+.grid-card-img {
+  width: 100%;
+  height: 100%;
+}
+
+.grid-card-placeholder {
+  font-size: 40rpx;
+}
+
+.grid-card-name {
+  font-size: 22rpx;
+  color: #1a1a1a;
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.detail-loading {
+  text-align: center;
+  padding: 40rpx 0;
+  color: #999;
+  font-size: 28rpx;
 }
 
 /* Hero */
@@ -62,7 +129,6 @@
 .hero-name { font-size: 22px; color: #fff; font-weight: 600; margin-top: 8px; }
 .play-btn { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 50px; height: 50px; background: rgba(0,0,0,0.5); border-radius: 50%; color: #fff; font-size: 22px; display: flex; align-items: center; justify-content: center; line-height: 50px; text-align: center; }
 
-/* Media（红框区域居中，与前台一致） */
 .hero-media { padding: 16px; text-align: center; }
 .hero-media-title { display: block; font-size: 16px; font-weight: 600; color: #1a1a1a; margin-bottom: 12px; }
 .media-scroll { white-space: nowrap; display: flex; flex-direction: row; justify-content: center; }
@@ -74,7 +140,6 @@
 .media-label-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px 8px 8px; background: linear-gradient(transparent, rgba(0,0,0,0.7)); }
 .media-label-overlay text { font-size: 13px; font-weight: 600; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
 
-/* Cards */
 .card { background: #fff; margin: 10px 12px; border-radius: 12px; padding: 16px; }
 .title { display: block; font-size: 16px; font-weight: 600; color: #1a1a1a; margin-bottom: 12px; }
 

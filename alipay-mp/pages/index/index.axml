@@ -109,12 +109,14 @@
     </view>
     <view class="explore-card" onTap="goExploreVino">
       <block a:if="{{exploreVino.displayBg}}">
-        <image class="explore-bg" src="{{exploreVino.displayBg}}" mode="aspectFill" />
-        <view class="explore-dim" />
-        <view class="explore-center">
-          <text class="explore-main">{{exploreVino.mainTitle}}</text>
-          <text a:if="{{exploreVino.subTitle}}" class="explore-sub">{{exploreVino.subTitle}}</text>
-          <view class="explore-circle"><text class="explore-arrow">›</text></view>
+        <view class="explore-media">
+          <image class="explore-bg" src="{{exploreVino.displayBg}}" mode="widthFix" />
+          <view class="explore-dim" />
+          <view class="explore-center explore-center-overlay">
+            <text class="explore-main">{{exploreVino.mainTitle}}</text>
+            <text a:if="{{exploreVino.subTitle}}" class="explore-sub">{{exploreVino.subTitle}}</text>
+            <view class="explore-circle"><text class="explore-arrow">›</text></view>
+          </view>
         </view>
       </block>
       <view a:else class="explore-center explore-plain">

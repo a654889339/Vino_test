@@ -189,18 +189,20 @@
         </div>
         <div class="explore-vino-card" role="button" tabindex="0" @click="openExploreVinoLink">
           <template v-if="exploreVinoImgSrc">
-            <img
-              :src="exploreVinoImgSrc"
-              class="explore-vino-bg-img"
-              alt=""
-              referrerpolicy="no-referrer"
-            />
-            <div class="explore-vino-dim" aria-hidden="true" />
-            <div class="explore-vino-center">
-              <div class="explore-vino-main">{{ exploreVinoMainTitle }}</div>
-              <div v-if="exploreVinoSubTitle" class="explore-vino-sub">{{ exploreVinoSubTitle }}</div>
-              <div class="explore-vino-circle">
-                <van-icon name="arrow" size="16" color="#fff" />
+            <div class="explore-vino-media">
+              <img
+                :src="exploreVinoImgSrc"
+                class="explore-vino-bg-img"
+                alt=""
+                referrerpolicy="no-referrer"
+              />
+              <div class="explore-vino-dim" aria-hidden="true" />
+              <div class="explore-vino-center explore-vino-center--overlay">
+                <div class="explore-vino-main">{{ exploreVinoMainTitle }}</div>
+                <div v-if="exploreVinoSubTitle" class="explore-vino-sub">{{ exploreVinoSubTitle }}</div>
+                <div class="explore-vino-circle">
+                  <van-icon name="arrow" size="16" color="#fff" />
+                </div>
               </div>
             </div>
           </template>
@@ -961,7 +963,6 @@ const copyUrl = async () => {
   position: relative;
   border-radius: 16px;
   overflow: hidden;
-  min-height: 200px;
   background: #fff;
   cursor: pointer;
   transition: opacity 0.2s;
@@ -969,13 +970,17 @@ const copyUrl = async () => {
 .explore-vino-card:active {
   opacity: 0.94;
 }
-.explore-vino-bg-img {
-  position: absolute;
-  inset: 0;
+.explore-vino-media {
+  position: relative;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  border-radius: 16px;
+  overflow: hidden;
+}
+.explore-vino-bg-img {
+  width: 100%;
+  height: auto;
   display: block;
+  vertical-align: top;
 }
 .explore-vino-dim {
   position: absolute;
@@ -986,7 +991,6 @@ const copyUrl = async () => {
 .explore-vino-center {
   position: relative;
   z-index: 1;
-  min-height: 220px;
   padding: 36px 24px 32px;
   display: flex;
   flex-direction: column;
@@ -994,6 +998,11 @@ const copyUrl = async () => {
   justify-content: center;
   text-align: center;
   box-sizing: border-box;
+}
+.explore-vino-center--overlay {
+  position: absolute;
+  inset: 0;
+  min-height: 0;
 }
 .explore-vino-main {
   font-size: 28px;

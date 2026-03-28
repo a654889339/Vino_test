@@ -1,5 +1,6 @@
 const app = getApp();
 const { openManualFromGuide } = require('../../utils/openManual.js');
+const { sortGuidesByDisplayOrder, sortCategoriesForSidebar } = require('../../utils/productGuideOrder.js');
 
 Page({
   data: {
@@ -7,14 +8,13 @@ Page({
     selectedCategoryId: null,
     deviceGuides: [],
     activeId: null,
-    selectedProductLabel: '',
-    productPickerIndex: 0,
     guide: {},
     sections: [],
     mediaItems: [],
     helpItems: [],
     firstMediaTitle: '',
-    loading: false,
+    listLoading: false,
+    detailLoading: false,
   },
 
   onShow() {
@@ -27,7 +27,7 @@ Page({
   loadCategories() {
     app.request({ url: '/guides/categories' })
       .then(res => {
-        const categories = res.data || [];
+        const categories = sortCategoriesForSidebar(res.data || []);
         this.setData({ categories });
         if (categories.length) {
           this.selectCategoryByCat(categories[0]);
@@ -44,33 +44,49 @@ Page({
   },
 
   selectCategoryByCat(cat) {
-    this.setData({ selectedCategoryId: cat.id, deviceGuides: [], activeId: null, guide: {}, loading: true });
+    this.setData({
+      selectedCategoryId: cat.id,
+      deviceGuides: [],
+      activeId: null,
+      guide: {},
+      listLoading: true,
+    });
     app.request({ url: '/guides', data: { categoryId: cat.id } })
       .then(res => {
-        const list = (res.data || []).map(g => ({
+        const base = app.globalData.baseUrl.replace('/api', '');
+        const raw = res.data || [];
+        const sorted = sortGuidesByDisplayOrder(raw, cat.name);
+        const list = sorted.map(g => ({
           id: g.id,
           name: g.name,
           slug: g.slug || '',
+          icon: g.icon || '',
+          iconUrl: g.iconUrl
+            ? (g.iconUrl.startsWith('http') ? g.iconUrl : base + g.iconUrl)
+            : '',
+          iconUrlThumb: g.iconUrlThumb
+            ? (g.iconUrlThumb.startsWith('http') ? g.iconUrlThumb : base + g.iconUrlThumb)
+            : '',
         }));
-        this.setData({ deviceGuides: list, loading: false });
+        this.setData({ deviceGuides: list, listLoading: false });
         if (list.length) {
-          this.loadDetail(list[0].slug || list[0].id, list[0].id, 0);
+          this.loadDetail(list[0].slug || list[0].id, list[0].id);
+        } else {
+          this.setData({ detailLoading: false });
         }
       })
-      .catch(() => this.setData({ loading: false }));
+      .catch(() => this.setData({ listLoading: false }));
   },
 
-  onProductPick(e) {
-    const index = parseInt(e.detail.value, 10);
-    const list = this.data.deviceGuides;
-    const item = list[index];
-    if (!item) return;
-    this.loadDetail(item.slug || item.id, item.id, index);
+  selectProduct(e) {
+    const id = e.currentTarget.dataset.id;
+    const slug = e.currentTarget.dataset.slug || '';
+    if (id === this.data.activeId) return;
+    this.loadDetail(slug || id, id);
   },
 
-  loadDetail(param, id, pickerIndex) {
-    this.setData({ activeId: id, productPickerIndex: pickerIndex !== undefined ? pickerIndex : this.data.productPickerIndex, loading: true });
-    const guideName = (this.data.deviceGuides.find(g => g.id === id) || {}).name || '';
+  loadDetail(param, id) {
+    this.setData({ activeId: id, detailLoading: true });
     app.request({ url: `/guides/${param}` })
       .then(res => {
         const g = res.data || {};
@@ -90,12 +106,11 @@ Page({
           sections,
           mediaItems,
           helpItems,
-          selectedProductLabel: guideName || g.name,
           firstMediaTitle: mediaItems.length ? (mediaItems[0].title || g.name) : g.name,
-          loading: false,
+          detailLoading: false,
         });
       })
-      .catch(() => this.setData({ loading: false }));
+      .catch(() => this.setData({ detailLoading: false }));
   },
 
   previewCover() {

@@ -1,116 +1,126 @@
 <template>
   <div class="products-page">
     <PageThemeLayer path="/products" />
-    <!-- 第一栏：只显示商品种类 -->
-    <div class="product-nav">
-      <div class="product-nav-scroll">
-        <a
-          v-for="cat in categories"
-          :key="cat.id"
-          class="product-nav-item"
-          :class="{ active: selectedCategoryId === cat.id }"
-          @click="selectCategory(cat)"
-        >{{ cat.name }}</a>
+    <van-nav-bar title="分类查询" fixed placeholder safe-area-inset-top />
+
+    <div class="products-body">
+      <div class="products-layout">
+        <aside class="product-sidebar" v-if="sortedCategories.length">
+          <button
+            v-for="cat in sortedCategories"
+            :key="cat.id"
+            type="button"
+            class="sidebar-item"
+            :class="{ active: selectedCategoryId === cat.id }"
+            @click="selectCategory(cat)"
+          >
+            {{ cat.name }}
+          </button>
+        </aside>
+        <div class="product-main">
+          <van-loading v-if="listLoading" size="28" class="main-loading" />
+          <div v-else-if="sortedDeviceGuides.length" class="product-grid">
+            <button
+              v-for="d in sortedDeviceGuides"
+              :key="d.id"
+              type="button"
+              class="grid-card"
+              :class="{ active: activeId === d.id }"
+              @click="selectProduct(d)"
+            >
+              <div class="grid-card-icon">
+                <LodImg
+                  v-if="d.iconUrl"
+                  :src="fullUrl(d.iconUrl)"
+                  :thumb="d.iconUrlThumb ? fullUrl(d.iconUrlThumb) : ''"
+                  class="grid-card-icon-img"
+                />
+                <van-icon v-else :name="d.icon || 'photo-o'" size="28" color="rgba(0,0,0,0.45)" />
+              </div>
+              <span class="grid-card-name">{{ d.name }}</span>
+            </button>
+          </div>
+          <div v-else-if="selectedCategoryId && !listLoading" class="main-empty">该种类下暂无商品</div>
+        </div>
       </div>
-    </div>
 
-    <!-- 第二行：下拉框显示此类下的所有商品 -->
-    <div class="product-select-row" v-if="categories.length">
-      <van-field
-        readonly
-        clickable
-        :model-value="selectedProductLabel"
-        label="选择商品"
-        :placeholder="selectedCategoryId && !deviceGuides.length ? '该种类下暂无商品' : '请选择商品'"
-        @click="deviceGuides.length ? (showProductPicker = true) : null"
-      />
-      <van-popup v-model:show="showProductPicker" position="bottom" round>
-        <van-picker
-          :columns="productPickerColumns"
-          @confirm="onProductPick"
-          @cancel="showProductPicker = false"
-        />
-      </van-popup>
-    </div>
+      <van-loading v-if="detailLoading" size="36" style="text-align:center;padding:40px 0" />
 
-    <!-- Product detail content -->
-    <van-loading v-if="loading" size="36" style="text-align:center;padding:80px 0" />
-
-    <template v-else-if="guide.id">
-      <div class="hero-block">
-        <div class="hero-section">
-          <div v-if="guide.showcaseVideo" class="hero-video-wrap" @click="playVideo(fullUrl(guide.showcaseVideo))">
-            <LodImg v-if="guide.coverImage" :src="fullUrl(guide.coverImage)" :thumb="guide.coverImageThumb ? fullUrl(guide.coverImageThumb) : ''" class="hero-img" />
-            <div v-else class="hero-placeholder" :style="{ background: guide.gradient }">
+      <template v-else-if="guide.id">
+        <div class="hero-block">
+          <div class="hero-section">
+            <div v-if="guide.showcaseVideo" class="hero-video-wrap" @click="playVideo(fullUrl(guide.showcaseVideo))">
+              <LodImg v-if="guide.coverImage" :src="fullUrl(guide.coverImage)" :thumb="guide.coverImageThumb ? fullUrl(guide.coverImageThumb) : ''" class="hero-img" />
+              <div v-else class="hero-placeholder" :style="{ background: guide.gradient }">
+                <LodImg v-if="guide.iconUrl" :src="guide.iconUrl" :thumb="guide.iconUrlThumb" style="width:64px;height:64px;object-fit:contain" />
+                <van-icon v-else :name="guide.icon" size="64" color="#fff" />
+              </div>
+              <div class="hero-play-btn"><van-icon name="play-circle" size="48" color="#fff" /></div>
+            </div>
+            <div v-else-if="guide.coverImage" class="hero-img-wrap" @click="previewImage(fullUrl(guide.coverImage))">
+              <LodImg :src="fullUrl(guide.coverImage)" :thumb="guide.coverImageThumb ? fullUrl(guide.coverImageThumb) : ''" class="hero-img" />
+            </div>
+            <div v-else class="hero-gradient" :style="{ background: guide.gradient }">
               <LodImg v-if="guide.iconUrl" :src="guide.iconUrl" :thumb="guide.iconUrlThumb" style="width:64px;height:64px;object-fit:contain" />
               <van-icon v-else :name="guide.icon" size="64" color="#fff" />
+              <h2>{{ guide.name }}</h2>
             </div>
-            <div class="hero-play-btn"><van-icon name="play-circle" size="48" color="#fff" /></div>
           </div>
-          <div v-else-if="guide.coverImage" class="hero-img-wrap" @click="previewImage(fullUrl(guide.coverImage))">
-            <LodImg :src="fullUrl(guide.coverImage)" :thumb="guide.coverImageThumb ? fullUrl(guide.coverImageThumb) : ''" class="hero-img" />
-          </div>
-          <div v-else class="hero-gradient" :style="{ background: guide.gradient }">
-            <LodImg v-if="guide.iconUrl" :src="guide.iconUrl" :thumb="guide.iconUrlThumb" style="width:64px;height:64px;object-fit:contain" />
-            <van-icon v-else :name="guide.icon" size="64" color="#fff" />
-            <h2>{{ guide.name }}</h2>
-          </div>
-        </div>
-        <div v-if="mediaItems.length" class="hero-media">
-          <h3 class="hero-media-title">{{ mediaItems[0]?.title || guide.name }}</h3>
-          <div class="media-scroll">
-            <div v-for="(m, i) in mediaItems" :key="i" class="media-card" @click="openMedia(m)">
-              <div class="media-thumb">
-                <LodImg v-if="getMediaUrl(m) && !isVideo(m)" :src="getMediaUrl(m)" :thumb="getThumbUrl(m) !== getMediaUrl(m) ? getThumbUrl(m) : ''" class="media-thumb-img" />
-                <img v-else-if="getThumbUrl(m)" :src="getThumbUrl(m)" />
-                <div v-else class="media-thumb-placeholder"><van-icon :name="isVideo(m) ? 'video-o' : 'photo-o'" size="28" color="#999" /></div>
-                <div v-if="isVideo(m)" class="media-play"><van-icon name="play-circle-o" size="24" color="#fff" /></div>
-                <div class="media-label-overlay">{{ m.title }}</div>
+          <div v-if="mediaItems.length" class="hero-media">
+            <h3 class="hero-media-title">{{ mediaItems[0]?.title || guide.name }}</h3>
+            <div class="media-scroll">
+              <div v-for="(m, i) in mediaItems" :key="i" class="media-card" @click="openMedia(m)">
+                <div class="media-thumb">
+                  <LodImg v-if="getMediaUrl(m) && !isVideo(m)" :src="getMediaUrl(m)" :thumb="getThumbUrl(m) !== getMediaUrl(m) ? getThumbUrl(m) : ''" class="media-thumb-img" />
+                  <img v-else-if="getThumbUrl(m)" :src="getThumbUrl(m)" />
+                  <div v-else class="media-thumb-placeholder"><van-icon :name="isVideo(m) ? 'video-o' : 'photo-o'" size="28" color="#999" /></div>
+                  <div v-if="isVideo(m)" class="media-play"><van-icon name="play-circle-o" size="24" color="#fff" /></div>
+                  <div class="media-label-overlay">{{ m.title }}</div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div v-if="helpItems.length || sections.length" class="section-card">
-        <h3 class="section-title">使用帮助</h3>
-        <van-cell-group inset :border="false">
-          <van-cell v-if="helpItems.length" title="电子说明书" icon="description" is-link @click="$router.push(`/guide/${guide.id}/manual`)" />
-          <van-cell v-if="sections.length" title="常见问题与保养建议" icon="info-o" is-link @click="$router.push(`/guide/${guide.id}/maintenance`)" />
-        </van-cell-group>
-      </div>
+        <div v-if="helpItems.length || sections.length" class="section-card">
+          <h3 class="section-title">使用帮助</h3>
+          <van-cell-group inset :border="false">
+            <van-cell v-if="helpItems.length" title="电子说明书" icon="description" is-link @click="$router.push(`/guide/${guide.id}/manual`)" />
+            <van-cell v-if="sections.length" title="常见问题与保养建议" icon="info-o" is-link @click="$router.push(`/guide/${guide.id}/maintenance`)" />
+          </van-cell-group>
+        </div>
 
-      <div class="section-card">
-        <h3 class="section-title">服务入口</h3>
-        <div class="service-entry-grid">
-          <div class="entry-item" @click="$router.push('/services')">
-            <div class="entry-icon" style="background:#EDE9FE"><van-icon name="service-o" size="22" color="#7C3AED" /></div>
-            <span>自助服务</span>
-          </div>
-          <div class="entry-item" @click="$router.push('/services')">
-            <div class="entry-icon" style="background:#DBEAFE"><van-icon name="location-o" size="22" color="#2563EB" /></div>
-            <span>服务网点</span>
-          </div>
-          <div class="entry-item" @click="$router.push('/services')">
-            <div class="entry-icon" style="background:#D1FAE5"><van-icon name="shield-o" size="22" color="#059669" /></div>
-            <span>售后政策</span>
-          </div>
-          <div class="entry-item" @click="$router.push('/services')">
-            <div class="entry-icon" style="background:#FEF3C7"><van-icon name="balance-list-o" size="22" color="#D97706" /></div>
-            <span>维修报价</span>
+        <div class="section-card">
+          <h3 class="section-title">服务入口</h3>
+          <div class="service-entry-grid">
+            <div class="entry-item" @click="$router.push('/services')">
+              <div class="entry-icon" style="background:#EDE9FE"><van-icon name="service-o" size="22" color="#7C3AED" /></div>
+              <span>自助服务</span>
+            </div>
+            <div class="entry-item" @click="$router.push('/services')">
+              <div class="entry-icon" style="background:#DBEAFE"><van-icon name="location-o" size="22" color="#2563EB" /></div>
+              <span>服务网点</span>
+            </div>
+            <div class="entry-item" @click="$router.push('/services')">
+              <div class="entry-icon" style="background:#D1FAE5"><van-icon name="shield-o" size="22" color="#059669" /></div>
+              <span>售后政策</span>
+            </div>
+            <div class="entry-item" @click="$router.push('/services')">
+              <div class="entry-icon" style="background:#FEF3C7"><van-icon name="balance-list-o" size="22" color="#D97706" /></div>
+              <span>维修报价</span>
+            </div>
           </div>
         </div>
+
+        <div style="height:70px"></div>
+      </template>
+
+      <div v-else-if="!detailLoading && !listLoading && !sortedCategories.length" class="empty-hint">
+        <van-icon name="info-o" size="48" color="#ccc" />
+        <p>暂无商品配置</p>
       </div>
-
-      <div style="height:70px"></div>
-    </template>
-
-    <div v-else-if="!loading" class="empty-hint">
-      <van-icon name="info-o" size="48" color="#ccc" />
-      <p>{{ categories.length ? '请在上方选择种类与商品' : '暂无商品配置' }}</p>
     </div>
 
-    <!-- Video Player -->
     <div v-if="playShowcase" class="video-backdrop" @click.self="closeVideo()">
       <div class="video-overlay">
         <video v-if="currentVideoUrl" :src="currentVideoUrl" controls autoplay playsinline class="overlay-video" />
@@ -126,24 +136,30 @@ import { showImagePreview } from 'vant';
 import { guideApi } from '@/api';
 import LodImg from '@/components/LodImg.vue';
 import PageThemeLayer from '@/components/PageThemeLayer.vue';
+import {
+  sortGuidesByDisplayOrder,
+  sortCategoriesForSidebar,
+} from '@/utils/productGuideOrder';
 
 const categories = ref([]);
 const selectedCategoryId = ref(null);
 const deviceGuides = ref([]);
 const activeId = ref(null);
 const guide = ref({});
-const loading = ref(false);
+const listLoading = ref(false);
+const detailLoading = ref(false);
 const playShowcase = ref(false);
 const currentVideoUrl = ref('');
-const showProductPicker = ref(false);
 
-const selectedProductLabel = computed(() => {
-  const g = deviceGuides.value.find(d => d.id === activeId.value);
-  return g ? g.name : '';
+const sortedCategories = computed(() => sortCategoriesForSidebar(categories.value));
+
+const currentCategoryName = computed(() => {
+  const c = categories.value.find((x) => x.id === selectedCategoryId.value);
+  return c ? c.name : '';
 });
 
-const productPickerColumns = computed(() =>
-  deviceGuides.value.map(d => ({ text: d.name, value: d.id }))
+const sortedDeviceGuides = computed(() =>
+  sortGuidesByDisplayOrder(deviceGuides.value, currentCategoryName.value)
 );
 
 const sections = computed(() => {
@@ -205,57 +221,74 @@ const openMedia = (m) => {
 };
 
 const loadGuideDetail = async (id) => {
-  loading.value = true;
+  detailLoading.value = true;
   try {
     const res = await guideApi.detail(id);
     guide.value = res.data || {};
   } catch { guide.value = {}; }
-  loading.value = false;
+  detailLoading.value = false;
+};
+
+const selectProduct = async (device) => {
+  if (activeId.value === device.id) return;
+  activeId.value = device.id;
+  await loadGuideDetail(device.slug || device.id);
 };
 
 const selectCategory = async (cat) => {
   if (selectedCategoryId.value === cat.id) return;
   selectedCategoryId.value = cat.id;
+  listLoading.value = true;
+  guide.value = {};
+  activeId.value = null;
   try {
     const res = await guideApi.list({ categoryId: cat.id });
     deviceGuides.value = res.data || [];
-    activeId.value = null;
-    guide.value = {};
-    if (deviceGuides.value.length) {
-      const first = deviceGuides.value[0];
+    const sorted = sortGuidesByDisplayOrder(deviceGuides.value, cat.name);
+    if (sorted.length) {
+      const first = sorted[0];
       activeId.value = first.id;
-      loadGuideDetail(first.slug || first.id);
+      await loadGuideDetail(first.slug || first.id);
+    } else {
+      detailLoading.value = false;
     }
-  } catch { deviceGuides.value = []; }
-};
-
-const onProductPick = ({ selectedOptions }) => {
-  showProductPicker.value = false;
-  const opt = selectedOptions[0];
-  if (!opt) return;
-  const device = deviceGuides.value.find(d => d.id === opt.value);
-  if (device) {
-    activeId.value = device.id;
-    loadGuideDetail(device.slug || device.id);
+  } catch {
+    deviceGuides.value = [];
+    detailLoading.value = false;
   }
+  listLoading.value = false;
 };
 
 onMounted(async () => {
   try {
     const res = await guideApi.categories();
     categories.value = res.data || [];
-    if (categories.value.length) {
-      selectedCategoryId.value = categories.value[0].id;
-      const listRes = await guideApi.list({ categoryId: categories.value[0].id });
-      deviceGuides.value = listRes.data || [];
-      if (deviceGuides.value.length) {
-        const first = deviceGuides.value[0];
-        activeId.value = first.id;
-        loadGuideDetail(first.slug || first.id);
-      }
+    const sorted = sortCategoriesForSidebar(categories.value);
+    if (sorted.length) {
+      const first = sorted[0];
+      selectedCategoryId.value = first.id;
+      listLoading.value = true;
+      try {
+        const listRes = await guideApi.list({ categoryId: first.id });
+        deviceGuides.value = listRes.data || [];
+        const ordered = sortGuidesByDisplayOrder(deviceGuides.value, first.name);
+        if (ordered.length) {
+          const item = ordered[0];
+          activeId.value = item.id;
+          await loadGuideDetail(item.slug || item.id);
+        }
+      } catch { /* empty */ }
+      listLoading.value = false;
     }
   } catch { /* empty */ }
 });
+
+watch(
+  () => guide.value.name,
+  (t) => {
+    if (t) document.title = `${t} · 分类查询`;
+  }
+);
 </script>
 
 <style scoped>
@@ -263,66 +296,133 @@ onMounted(async () => {
   position: relative;
   background: var(--vino-bg);
   min-height: 100vh;
+  padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
-/* ===== Product Nav ===== */
-.product-nav {
-  background: var(--vino-card);
-  border-bottom: 0.5px solid rgba(0, 0, 0, 0.08);
-  position: sticky;
-  top: 0;
-  z-index: 10;
+.products-body {
+  padding-top: 0;
 }
 
-.product-select-row {
-  background: var(--vino-card);
-  padding: 0 16px 12px;
-  border-bottom: 0.5px solid rgba(0, 0, 0, 0.08);
-}
-
-.product-nav-scroll {
+/* 左侧栏 + 右侧两列宫格 */
+.products-layout {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  padding: 0 12px;
+  min-height: 200px;
+  background: var(--vino-card);
+  border-bottom: 0.5px solid rgba(0, 0, 0, 0.08);
 }
 
-.product-nav-scroll::-webkit-scrollbar { display: none; }
-
-.product-nav-item {
+.product-sidebar {
   flex-shrink: 0;
-  padding: 14px 16px;
+  width: 92px;
+  padding: 12px 0;
+  background: #f3f4f6;
+  border-right: 0.5px solid rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.sidebar-item {
+  margin: 0 8px;
+  padding: 12px 8px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
   font-size: 14px;
-  font-weight: 400;
+  font-weight: 500;
   color: var(--vino-text-secondary);
   cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.25s var(--vino-transition);
-  position: relative;
+  transition: background 0.2s, color 0.2s;
+  line-height: 1.3;
+  text-align: center;
 }
 
-.product-nav-item.active {
+.sidebar-item.active {
+  background: rgba(255, 183, 77, 0.35);
   color: var(--vino-dark);
   font-weight: 600;
 }
 
-.product-nav-item.active::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 24px;
-  height: 2px;
-  background: var(--vino-dark);
-  border-radius: 1px;
+.sidebar-item:active {
+  opacity: 0.85;
 }
 
-.product-nav-item:active {
-  opacity: 0.6;
+.product-main {
+  flex: 1;
+  min-width: 0;
+  padding: 12px;
+}
+
+.main-loading {
+  display: flex;
+  justify-content: center;
+  padding: 40px 0;
+}
+
+.main-empty {
+  text-align: center;
+  padding: 32px 12px;
+  font-size: 14px;
+  color: var(--vino-text-secondary);
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.grid-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 8px;
+  border: none;
+  border-radius: var(--vino-radius-sm);
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  min-height: 100px;
+}
+
+.grid-card.active {
+  box-shadow: 0 0 0 2px var(--vino-primary);
+}
+
+.grid-card:active {
+  transform: scale(0.98);
+}
+
+.grid-card-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: #f9fafb;
+  overflow: hidden;
+}
+
+.grid-card-icon-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.grid-card-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--vino-dark);
+  text-align: center;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 /* ===== Hero ===== */
@@ -334,7 +434,6 @@ onMounted(async () => {
 
 .hero-section { position: relative; }
 .hero-video-wrap, .hero-img-wrap { position: relative; cursor: pointer; }
-/* 主图随图片自然高度完整展示，不裁切 */
 .hero-img { width: 100%; height: auto; display: block; }
 
 .hero-play-btn {
@@ -354,7 +453,6 @@ onMounted(async () => {
   width: 100%; min-height: 220px; height: 220px; display: flex; align-items: center; justify-content: center;
 }
 
-/* ===== Media（红框区域元素居中） ===== */
 .hero-media { padding: 20px; text-align: center; }
 .hero-media-title { font-size: 20px; font-weight: 700; color: var(--vino-dark); margin-bottom: 14px; letter-spacing: -0.02em; }
 
@@ -368,7 +466,6 @@ onMounted(async () => {
 .media-play { position: absolute; top: 40%; left: 50%; transform: translate(-50%,-50%); width: 40px; height: 40px; background: rgba(0,0,0,0.45); backdrop-filter: blur(4px); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 .media-label-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 24px 10px 10px; background: linear-gradient(transparent, rgba(0,0,0,0.65)); font-size: 13px; font-weight: 600; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-/* ===== Section Card ===== */
 .section-card {
   background: #fff; margin: 8px 12px; border-radius: var(--vino-radius); padding: 20px;
   animation: fadeInUp 0.35s var(--vino-transition) both; animation-delay: 0.05s;
@@ -382,18 +479,15 @@ onMounted(async () => {
 .section-card :deep(.van-cell:active) { background: var(--vino-bg); }
 .section-card :deep(.van-cell__title) { font-weight: 500; font-size: 15px; }
 
-/* ===== Service Entry ===== */
 .service-entry-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
 .entry-item { display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; transition: transform 0.25s var(--vino-transition); }
 .entry-item:active { transform: scale(0.92); }
 .entry-icon { width: 50px; height: 50px; border-radius: 16px; display: flex; align-items: center; justify-content: center; }
 .entry-item span { font-size: 12px; color: var(--vino-text-secondary); font-weight: 500; }
 
-/* ===== Empty ===== */
-.empty-hint { text-align: center; padding: 80px 0; color: var(--vino-text-secondary); }
+.empty-hint { text-align: center; padding: 48px 16px; color: var(--vino-text-secondary); }
 .empty-hint p { margin-top: 12px; font-size: 15px; }
 
-/* ===== Video ===== */
 .video-backdrop { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.88); z-index: 200; display: flex; align-items: center; justify-content: center; }
 .video-overlay { position: relative; width: 92vw; max-width: 480px; }
 .overlay-video { width: 100%; border-radius: var(--vino-radius-sm); background: #000; max-height: 70vh; display: block; }
