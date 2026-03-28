@@ -20,11 +20,13 @@
           data-slug="{{item.slug}}"
           bindtap="selectProduct"
         >
-          <view class="grid-card-icon">
-            <image wx:if="{{item.iconUrl}}" src="{{item.iconUrlThumb || item.iconUrl}}" class="grid-card-img" mode="aspectFit" />
-            <text wx:else class="grid-card-placeholder">📦</text>
+          <view class="grid-card-inner">
+            <view class="grid-card-icon">
+              <image wx:if="{{item.iconUrl}}" src="{{item.iconUrlThumb || item.iconUrl}}" class="grid-card-img" mode="aspectFit" />
+              <text wx:else class="grid-card-placeholder">📦</text>
+            </view>
+            <text class="grid-card-name">{{item.name}}</text>
           </view>
-          <text class="grid-card-name">{{item.name}}</text>
         </view>
       </view>
       <view wx:elif="{{selectedCategoryId}}" class="main-empty">该种类下暂无商品</view>

@@ -60,16 +60,27 @@
   color: #6b7280;
 }
 
+/* 两列宫格：每行 2 个，从左到右、自上而下；不用 calc/gap，避免部分基础库单列塌成一行 */
 .product-grid {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 16rpx;
+  align-content: flex-start;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .grid-card {
-  width: calc(50% - 8rpx);
+  width: 50%;
+  box-sizing: border-box;
+  padding: 0 8rpx 16rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.grid-card-inner {
+  width: 100%;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
