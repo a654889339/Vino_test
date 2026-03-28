@@ -146,7 +146,7 @@
       </div>
     </div>
 
-    <!-- 我的商品：为空时整栏隐藏，自助服务紧贴自助预约 -->
+    <!-- 我的商品：为空时整栏隐藏 -->
     <div v-if="myProductsDisplay.length" class="section card-section section-my-products" :style="myProductsSectionStyle">
       <div v-if="skinLayerMyProducts" class="section-skin-layer" :style="skinLayerMyProducts" aria-hidden="true" />
       <div class="section-skin-content">
@@ -178,45 +178,6 @@
           <span class="my-product-name">{{ item.productName || item.productKey }}</span>
         </div>
       </div>
-      </div>
-    </div>
-
-    <!-- Hot Services -->
-    <div class="section card-section section-hot-service" :style="hotServiceSectionStyle">
-      <div v-if="skinLayerHotService" class="section-skin-layer" :style="skinLayerHotService" aria-hidden="true" />
-      <div class="section-skin-content">
-      <div class="section-header">
-        <h3>{{ hotServiceTitle }}</h3>
-        <span class="more" @click="$router.push('/services')">查看全部 ›</span>
-      </div>
-      <div class="service-list">
-        <div v-for="item in hotServices" :key="item.id" class="service-card" @click="$router.push(item.path)">
-          <div class="service-cover" :style="{ background: item.coverBg }">
-            <van-icon :name="item.icon" size="36" color="#fff" />
-          </div>
-          <div class="service-info">
-            <h4>{{ item.title }}</h4>
-            <p>{{ item.desc }}</p>
-            <span v-if="shouldShowPrice(item.price)" class="price">{{ formatPriceDisplay(item.price) }}</span>
-          </div>
-        </div>
-      </div>
-      </div>
-    </div>
-
-    <!-- Recommend：层级低于底栏，避免遮挡首页/产品/我的底部导航 -->
-    <div class="section card-section section-recommend">
-      <div class="section-header">
-        <h3>{{ recommendTitle }}</h3>
-      </div>
-      <div class="recommend-grid">
-        <div v-for="item in recommends" :key="item.id" class="recommend-card">
-          <div class="recommend-icon" :style="{ background: item.bg }">
-            <van-icon :name="item.icon" size="28" color="#fff" />
-          </div>
-          <h4>{{ item.title }}</h4>
-          <p>{{ item.desc }}</p>
-        </div>
       </div>
     </div>
 
@@ -269,7 +230,6 @@ import { showToast } from 'vant';
 import { homeConfigApi, authApi, guideApi } from '@/api';
 import LodImg from '@/components/LodImg.vue';
 import PageThemeLayer from '@/components/PageThemeLayer.vue';
-import { formatPriceDisplay, shouldShowPrice } from '@/utils/currency';
 import { resolvePublicUrl } from '@/utils/mediaUrl';
 import { buildSectionSkinLayerStyle, buildSectionSkinContainerStyle } from '@/utils/sectionSkin';
 
@@ -448,14 +408,6 @@ const navSectionTitle = computed(() => {
   const item = allItems.value.find(i => i.section === 'navSectionTitle' && i.status === 'active');
   return (item?.title || '').trim() || '自助预约';
 });
-const hotServiceTitle = computed(() => {
-  const item = allItems.value.find(i => i.section === 'hotServiceTitle' && i.status === 'active');
-  return (item?.title || '').trim() || '自助服务';
-});
-const recommendTitle = computed(() => {
-  const item = allItems.value.find(i => i.section === 'recommendTitle' && i.status === 'active');
-  return (item?.title || '').trim() || '服务产品';
-});
 const myProductsTitle = computed(() => {
   const item = allItems.value.find(i => i.section === 'myProducts' && i.status === 'active');
   return (item?.title || '').trim() || '我的商品';
@@ -481,15 +433,6 @@ const navSmItems = computed(() =>
     .sort((a, b) => a.sortOrder - b.sortOrder)
     .map(i => ({ id: i.id, title: i.title, icon: i.icon, imageUrl: i.imageUrl, imageUrlThumb: i.imageUrlThumb, path: i.path || '/services', color: i.color }))
 );
-const hotServices = computed(() =>
-  allItems.value.filter(i => i.section === 'hotService' && i.status === 'active')
-    .map(i => ({ id: i.id, title: i.title, desc: i.desc, price: i.price, icon: i.icon, coverBg: i.color, path: i.path || '/services' }))
-);
-const recommends = computed(() =>
-  allItems.value.filter(i => i.section === 'recommend' && i.status === 'active')
-    .map(i => ({ id: i.id, title: i.title, desc: i.desc, icon: i.icon, bg: i.color }))
-);
-
 const guidesBySlug = computed(() => {
   const m = Object.create(null);
   for (const g of guidesList.value || []) {
@@ -649,10 +592,8 @@ const skinLayerFeaturedRecommend = computed(() => buildSectionSkinLayerStyle(all
 const vinoProductSectionStyle = computed(() => buildSectionSkinContainerStyle(allItems.value, 'vinoProduct', 'vino'));
 const featuredRecommendSectionStyle = computed(() => buildSectionSkinContainerStyle(allItems.value, 'featuredRecommend', 'fr'));
 const skinLayerMyProducts = computed(() => buildSectionSkinLayerStyle(allItems.value, 'myProducts'));
-const skinLayerHotService = computed(() => buildSectionSkinLayerStyle(allItems.value, 'hotService'));
 const firstCardSectionStyle = computed(() => buildSectionSkinContainerStyle(allItems.value, 'homeScroll', 'card'));
 const myProductsSectionStyle = computed(() => buildSectionSkinContainerStyle(allItems.value, 'myProducts', 'card'));
-const hotServiceSectionStyle = computed(() => buildSectionSkinContainerStyle(allItems.value, 'hotService', 'card'));
 
 function openVinoProductGuide(item) {
   const slug = item.path;
@@ -800,7 +741,7 @@ const copyUrl = async () => {
   margin-top: -32vh;
   min-height: 0;
 }
-/* 任意连续卡片之间统一留白，避免「我的商品」与自助服务/热门服务重叠 */
+/* 任意连续卡片之间统一留白 */
 .card-section + .card-section {
   margin-top: 20px;
 }
@@ -809,11 +750,6 @@ const copyUrl = async () => {
 .vino-product-section + .section-my-products {
   margin-top: 20px;
 }
-/* 为你推荐与卡片区同级，层级低于 tabbar */
-.section-recommend {
-  z-index: 1;
-}
-
 /* ===== Vino产品（浅色底 + 栏目外观铺底图；未加载前为白底） ===== */
 .vino-product-section {
   position: relative;
@@ -1201,34 +1137,6 @@ const copyUrl = async () => {
 .my-product-name { flex: 1; font-size: 15px; font-weight: 600; color: var(--vino-dark); min-width: 0; }
 .my-product-key { font-size: 12px; color: #999; font-family: monospace; flex-shrink: 0; }
 
-/* ===== Hot Services ===== */
-.service-list { display: flex; gap: 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-bottom: 2px; }
-.service-list::-webkit-scrollbar { display: none; }
-.service-card {
-  min-width: 150px;
-  flex-shrink: 0;
-  border-radius: 12px;
-  overflow: hidden;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  cursor: pointer;
-  transition: transform 0.3s;
-}
-.service-card:active { transform: scale(0.96); }
-.service-cover { height: 100px; display: flex; align-items: center; justify-content: center; }
-.service-info { padding: 12px 14px 14px; text-align: center; }
-.service-info h4 { font-size: 15px; font-weight: 600; margin-bottom: 4px; color: var(--vino-dark); }
-.service-info p { font-size: 12px; color: var(--vino-text-secondary); margin-bottom: 8px; }
-.price { font-size: 17px; font-weight: 700; color: var(--vino-primary); letter-spacing: -0.02em; }
-
-/* ===== Recommend ===== */
-.recommend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.recommend-card { background: #f5f5f5; border-radius: 12px; padding: 20px 16px; transition: transform 0.25s; cursor: pointer; text-align: center; }
-.recommend-card:active { transform: scale(0.97); }
-.recommend-icon { width: 50px; height: 50px; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; }
-.recommend-card h4 { font-size: 15px; font-weight: 600; margin-bottom: 4px; color: var(--vino-dark); }
-.recommend-card p { font-size: 13px; color: var(--vino-text-secondary); line-height: 1.5; }
-
 /* 首页配置管理区域包装器，仅此区域受后台「板块整体偏移」影响 */
 .home-config-wrap {
   position: relative;
@@ -1245,8 +1153,7 @@ const copyUrl = async () => {
   pointer-events: none;
   overflow: hidden;
 }
-.section-my-products,
-.section-hot-service {
+.section-my-products {
   position: relative;
 }
 .section-skin-content {

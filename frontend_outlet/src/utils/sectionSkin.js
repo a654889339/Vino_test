@@ -3,7 +3,7 @@ import { resolvePublicUrl } from '@/utils/mediaUrl';
 /**
  * 首页各栏目外观：section=homeSectionSkin，path 为栏目键，imageUrl 背景图，color 可选底色，desc 透明度 0–100（100 为不透明）
  */
-const SKIN_KEYS = ['homeScroll', 'tabbar', 'vinoProduct', 'featuredRecommend', 'myProducts', 'hotService'];
+const SKIN_KEYS = ['homeScroll', 'tabbar', 'vinoProduct', 'featuredRecommend', 'myProducts'];
 
 export function findSectionSkin(items, skinKey) {
   return (

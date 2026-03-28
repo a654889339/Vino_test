@@ -1,5 +1,4 @@
 const app = getApp();
-const { formatPriceDisplay } = require('../../utils/currency.js');
 const { buildSectionSkinContainerStyle } = require('../../utils/sectionSkin.js');
 
 function getToken() {
@@ -13,31 +12,20 @@ Page({
     heroBgList: [],
     navSectionTitle: '自助预约',
     myProductsTitle: '我的商品',
-    hotServiceTitle: '热门服务',
-    recommendTitle: '为你推荐',
     navLgItems: [],
     navSmItems: [],
     myProducts: [],
-    hotServices: [],
     vinoItems: [],
     featuredItems: [],
     vinoSectionStyle: '',
     frSectionStyle: '',
     homeScrollStyle: '',
     myProductsSectionStyle: '',
-    hotServiceSectionStyle: '',
     exploreVino: null,
-    recommends: [
-      { id: 1, title: '会员权益', desc: '专属折扣', emoji: '🏅', bg: 'linear-gradient(135deg, #F59E0B, #D97706)' },
-      { id: 2, title: '服务保障', desc: '无忧售后', emoji: '🛡️', bg: 'linear-gradient(135deg, #10B981, #059669)' },
-      { id: 3, title: '积分商城', desc: '好礼兑换', emoji: '🎁', bg: 'linear-gradient(135deg, #EC4899, #DB2777)' },
-      { id: 4, title: '邀请有礼', desc: '分享得佣金', emoji: '👥', bg: 'linear-gradient(135deg, #6366F1, #4F46E5)' },
-    ],
   },
 
   onShow() {
     this.loadHomeConfig();
-    this.loadHotServices();
     this.loadMyProducts();
   },
 
@@ -165,8 +153,6 @@ Page({
           .filter(i => i.url);
         const singleBg = homeBgList[0] ? homeBgList[0].displayUrl : '';
         const navSectionTitleItem = items.find(i => i.section === 'navSectionTitle' && i.status === 'active');
-        const hotServiceTitleItem = items.find(i => i.section === 'hotServiceTitle' && i.status === 'active');
-        const recommendTitleItem = items.find(i => i.section === 'recommendTitle' && i.status === 'active');
         const myProductsTitleItem = items.find(i => i.section === 'myProducts' && i.status === 'active');
         const navLg = items.filter(i => i.section === 'navLg' && i.status === 'active')
           .sort((a, b) => a.sortOrder - b.sortOrder)
@@ -238,24 +224,11 @@ Page({
           }
         }
 
-        const recRows = items.filter(i => i.section === 'recommend' && i.status === 'active');
-        const recommends = recRows.length
-          ? recRows.map((i, idx) => ({
-            id: i.id,
-            title: i.title || '',
-            desc: i.desc || '',
-            emoji: ['🏅', '🛡️', '🎁', '👥', '⭐', '📌'][idx % 6],
-            bg: i.color && String(i.color).trim() ? i.color : 'linear-gradient(135deg, #6366F1, #4F46E5)',
-          }))
-          : this.data.recommends;
-
         this.setData({
           headerLogoUrl: headerLogo ? toFull(headerLogo.imageUrl) : '',
           heroBgUrl: singleBg,
           heroBgList: homeBgList,
           navSectionTitle: (navSectionTitleItem && navSectionTitleItem.title) ? navSectionTitleItem.title.trim() : '自助预约',
-          hotServiceTitle: (hotServiceTitleItem && hotServiceTitleItem.title) ? hotServiceTitleItem.title.trim() : '热门服务',
-          recommendTitle: (recommendTitleItem && recommendTitleItem.title) ? recommendTitleItem.title.trim() : '为你推荐',
           myProductsTitle: (myProductsTitleItem && myProductsTitleItem.title) ? myProductsTitleItem.title.trim() : '我的商品',
           navLgItems: navLg,
           navSmItems: navSm,
@@ -265,9 +238,7 @@ Page({
           frSectionStyle: buildSectionSkinContainerStyle(items, 'featuredRecommend', 'fr'),
           homeScrollStyle: buildSectionSkinContainerStyle(items, 'homeScroll', 'card'),
           myProductsSectionStyle: buildSectionSkinContainerStyle(items, 'myProducts', 'card'),
-          hotServiceSectionStyle: buildSectionSkinContainerStyle(items, 'hotService', 'card'),
           exploreVino,
-          recommends,
         });
       })
       .catch(() => {});
@@ -282,30 +253,6 @@ Page({
     this.setData({ heroBgList: list });
   },
 
-  loadHotServices() {
-    const sym = app.globalData.currencySymbol || '¥';
-    app.request({ url: '/services' })
-      .then(res => {
-        const data = (res.data || []).slice(0, 8);
-        const hotServices = data.map(s => ({
-          id: s.id, title: s.title || '服务', desc: s.description || '专业服务',
-          price: s.price || 0, priceDisplay: formatPriceDisplay(s.price, sym), emoji: '🔧', bg: 'linear-gradient(135deg, #B91C1C, #991B1B)',
-        }));
-        this.setData({ hotServices: hotServices.length ? hotServices : this.getFallbackHotServices() });
-      })
-      .catch(() => this.setData({ hotServices: this.getFallbackHotServices() }));
-  },
-
-  getFallbackHotServices() {
-    const sym = app.globalData.currencySymbol || '¥';
-    return [
-      { id: 1, title: '设备维修', desc: '专业工程师', price: '99', priceDisplay: formatPriceDisplay('99', sym), emoji: '🔧', bg: 'linear-gradient(135deg, #B91C1C, #991B1B)' },
-      { id: 2, title: '深度清洁', desc: '全方位保养', price: '149', priceDisplay: formatPriceDisplay('149', sym), emoji: '✨', bg: 'linear-gradient(135deg, #2563EB, #1D4ED8)' },
-      { id: 3, title: '系统检测', desc: '全面评估', price: '49', priceDisplay: formatPriceDisplay('49', sym), emoji: '🔍', bg: 'linear-gradient(135deg, #059669, #047857)' },
-      { id: 4, title: '数据恢复', desc: '专业找回', price: '199', priceDisplay: formatPriceDisplay('199', sym), emoji: '💾', bg: 'linear-gradient(135deg, #7C3AED, #6D28D9)' },
-    ];
-  },
-
   goPath(e) {
     const path = e.currentTarget.dataset.path || '';
     if (path) {
@@ -314,9 +261,4 @@ Page({
   },
 
   goService() { my.switchTab({ url: '/pages/service/service' }); },
-  goServiceList() { my.switchTab({ url: '/pages/service/service' }); },
-
-  goServiceDetail(e) {
-    my.navigateTo({ url: '/pages/service-detail/service-detail?id=' + e.currentTarget.dataset.id });
-  },
 });

@@ -102,40 +102,6 @@
     </view>
   </view>
 
-  <!-- Hot Services -->
-  <view class="card-section" style="{{hotServiceSectionStyle}}">
-    <view class="section-header">
-      <text class="section-title">{{hotServiceTitle}}</text>
-      <text class="section-more" onTap="goServiceList">查看全部 ›</text>
-    </view>
-    <scroll-view scroll-x class="service-scroll">
-      <view class="service-card" a:for="{{hotServices}}" a:key="id" onTap="goServiceDetail" data-id="{{item.id}}">
-        <view class="service-cover" style="background: {{item.bg}}">
-          <text class="service-icon-text">{{item.emoji}}</text>
-        </view>
-        <view class="service-info">
-          <text class="service-name">{{item.title}}</text>
-          <text class="service-desc">{{item.desc}}</text>
-          <text a:if="{{item.priceDisplay}}" class="service-price">{{item.priceDisplay}}</text>
-        </view>
-      </view>
-    </scroll-view>
-  </view>
-
-  <!-- Recommend -->
-  <view class="card-section section-recommend">
-    <text class="section-title" style="display:block;margin-bottom:20rpx">{{recommendTitle}}</text>
-    <view class="recommend-grid">
-      <view class="recommend-item" a:for="{{recommends}}" a:key="id">
-        <view class="recommend-icon" style="background: {{item.bg}}">
-          <text class="recommend-emoji">{{item.emoji}}</text>
-        </view>
-        <text class="recommend-name">{{item.title}}</text>
-        <text class="recommend-desc">{{item.desc}}</text>
-      </view>
-    </view>
-  </view>
-
   <!-- 探索 VINO（首页最下方） -->
   <view a:if="{{exploreVino}}" class="explore-section">
     <view class="explore-head">
