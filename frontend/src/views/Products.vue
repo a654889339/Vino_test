@@ -1,7 +1,6 @@
 <template>
   <div class="products-page">
     <PageThemeLayer path="/products" />
-    <van-nav-bar title="分类查询" fixed placeholder safe-area-inset-top />
 
     <div class="products-body">
       <div class="products-layout">
@@ -108,7 +107,7 @@ const selectCategory = async (cat) => {
 };
 
 onMounted(async () => {
-  document.title = '分类查询';
+  document.title = 'Vino服务';
   try {
     const res = await guideApi.categories();
     categories.value = res.data || [];
@@ -137,6 +136,7 @@ onMounted(async () => {
   position: relative;
   background: #e8e8ed;
   min-height: 100vh;
+  padding-top: env(safe-area-inset-top, 0);
   padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
