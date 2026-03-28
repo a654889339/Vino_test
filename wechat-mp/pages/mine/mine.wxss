@@ -82,9 +82,11 @@
   border-bottom: none;
 }
 
-.menu-emoji {
-  font-size: 36rpx;
+.menu-icon {
+  width: 40rpx;
+  height: 40rpx;
   margin-right: 20rpx;
+  flex-shrink: 0;
 }
 
 .menu-title {

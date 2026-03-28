@@ -32,7 +32,6 @@
       <van-cell title="我的订单" icon="orders-o" is-link to="/orders" />
       <van-cell title="我的商品" icon="bag-o" is-link to="/mine/products" />
       <van-cell title="地址管理" icon="location-o" is-link to="/address" />
-      <van-cell title="优惠券" icon="coupon-o" is-link />
     </van-cell-group>
 
     <van-cell-group inset class="menu-group">

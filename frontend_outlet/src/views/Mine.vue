@@ -27,7 +27,6 @@
     <van-cell-group inset class="menu-group">
       <van-cell title="我的订单" icon="orders-o" is-link to="/orders" />
       <van-cell title="服务商地址" icon="location-o" is-link to="/address" />
-      <van-cell title="优惠券" icon="coupon-o" is-link />
     </van-cell-group>
 
     <van-cell-group inset class="menu-group">
