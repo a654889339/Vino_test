@@ -3,6 +3,20 @@
     <PageThemeLayer path="/products" />
 
     <div class="products-body">
+      <div class="products-search-wrap">
+        <div class="products-search-inner">
+          <van-icon name="search" class="products-search-icon" />
+          <input
+            v-model.trim="searchKeyword"
+            type="search"
+            class="products-search-input"
+            placeholder="请输入设备型号或系列"
+            enterkeyhint="search"
+            autocomplete="off"
+          />
+        </div>
+      </div>
+
       <div class="products-layout">
         <aside class="product-sidebar" v-if="sortedCategories.length">
           <button
@@ -17,10 +31,19 @@
           </button>
         </aside>
         <div class="product-main">
+          <div v-if="currentCategoryBannerSrc" class="category-banner">
+            <LodImg
+              :src="currentCategoryBannerSrc"
+              :thumb="currentCategoryBannerThumb"
+              class="category-banner-img"
+              alt=""
+            />
+          </div>
+
           <van-loading v-if="listLoading" size="28" class="main-loading" />
-          <div v-else-if="sortedDeviceGuides.length" class="product-grid">
+          <div v-else-if="filteredDeviceGuides.length" class="product-grid">
             <button
-              v-for="d in sortedDeviceGuides"
+              v-for="d in filteredDeviceGuides"
               :key="d.id"
               type="button"
               class="grid-card"
@@ -38,7 +61,10 @@
               <span class="grid-card-name">{{ d.name }}</span>
             </button>
           </div>
-          <div v-else-if="selectedCategoryId && !listLoading" class="main-empty">该种类下暂无商品</div>
+          <div v-else-if="selectedCategoryId && !listLoading && sortedDeviceGuides.length && !filteredDeviceGuides.length" class="main-empty">
+            未找到匹配的商品
+          </div>
+          <div v-else-if="selectedCategoryId && !listLoading && !sortedDeviceGuides.length" class="main-empty">该种类下暂无商品</div>
         </div>
       </div>
 
@@ -69,6 +95,14 @@ const categories = ref([]);
 const selectedCategoryId = ref(null);
 const deviceGuides = ref([]);
 const listLoading = ref(false);
+const searchKeyword = ref('');
+
+const BASE = import.meta.env.VITE_API_BASE || '';
+function fullUrl(url) {
+  if (!url) return '';
+  if (url.startsWith('http')) return url;
+  return BASE.replace('/api', '') + url;
+}
 
 const sortedCategories = computed(() => sortCategoriesForSidebar(categories.value));
 
@@ -81,12 +115,24 @@ const sortedDeviceGuides = computed(() =>
   sortGuidesByDisplayOrder(deviceGuides.value, currentCategoryName.value)
 );
 
-const BASE = import.meta.env.VITE_API_BASE || '';
-const fullUrl = (url) => {
-  if (!url) return '';
-  if (url.startsWith('http')) return url;
-  return BASE.replace('/api', '') + url;
-};
+const filteredDeviceGuides = computed(() => {
+  const list = sortedDeviceGuides.value;
+  const kw = searchKeyword.value.trim().toLowerCase();
+  if (!kw) return list;
+  return list.filter((d) => (d.name || '').toLowerCase().includes(kw));
+});
+
+const currentCategory = computed(() =>
+  categories.value.find((x) => x.id === selectedCategoryId.value) || null
+);
+
+const currentCategoryBannerSrc = computed(() => {
+  const u = currentCategory.value?.thumbnailUrl;
+  if (!u || !String(u).trim()) return '';
+  return fullUrl(String(u).trim());
+});
+
+const currentCategoryBannerThumb = computed(() => currentCategoryBannerSrc.value);
 
 function openGuide(d) {
   const idOrSlug = d.slug || d.id;
@@ -96,6 +142,7 @@ function openGuide(d) {
 const selectCategory = async (cat) => {
   if (selectedCategoryId.value === cat.id) return;
   selectedCategoryId.value = cat.id;
+  searchKeyword.value = '';
   listLoading.value = true;
   try {
     const res = await guideApi.list({ categoryId: cat.id });
@@ -131,7 +178,6 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* 主内容叠在 PageThemeLayer(z-index:0) 之上，避免被整页浅色底「盖住」导致宫格像消失 */
 .products-page {
   position: relative;
   background: #e8e8ed;
@@ -146,15 +192,49 @@ onMounted(async () => {
   padding-top: 0;
 }
 
+.products-search-wrap {
+  padding: 10px 12px 12px;
+  box-sizing: border-box;
+}
+
+.products-search-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #2d2d33;
+  border-radius: 10px;
+  padding: 10px 14px;
+  box-sizing: border-box;
+}
+
+.products-search-icon {
+  flex-shrink: 0;
+  color: #9ca3af;
+  font-size: 18px;
+}
+
+.products-search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: #f3f4f6;
+  font-size: 15px;
+  outline: none;
+}
+
+.products-search-input::placeholder {
+  color: #9ca3af;
+}
+
 .products-bottom-space {
   height: 56px;
 }
 
-/* 左侧栏 + 右侧两列宫格 */
 .products-layout {
   display: flex;
   align-items: stretch;
-  min-height: 240px;
+  min-height: 200px;
   background: #ffffff;
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
@@ -202,6 +282,22 @@ onMounted(async () => {
   min-width: 0;
   padding: 12px;
   background: #fafafa;
+}
+
+.category-banner {
+  width: 100%;
+  margin-bottom: 12px;
+  border-radius: 12px;
+  overflow: hidden;
+  line-height: 0;
+  background: #e5e7eb;
+}
+
+.category-banner-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  vertical-align: top;
 }
 
 .main-loading {

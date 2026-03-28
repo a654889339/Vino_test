@@ -19,7 +19,7 @@ exports.categories = async (req, res) => {
     const list = await ProductCategory.findAll({
       where: { status: 'active' },
       order: [['sortOrder', 'ASC'], ['id', 'ASC']],
-      attributes: ['id', 'name', 'sortOrder'],
+      attributes: ['id', 'name', 'sortOrder', 'thumbnailUrl'],
     });
     res.json({ code: 0, data: list });
   } catch (err) {

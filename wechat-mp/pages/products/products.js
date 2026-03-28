@@ -1,11 +1,21 @@
 const app = getApp();
 const { sortGuidesByDisplayOrder, sortCategoriesForSidebar } = require('../../utils/productGuideOrder.js');
 
+function resolveMediaUrl(u) {
+  if (!u || !String(u).trim()) return '';
+  const s = String(u).trim();
+  if (s.startsWith('http')) return s;
+  return app.globalData.baseUrl.replace('/api', '') + s;
+}
+
 Page({
   data: {
     categories: [],
     selectedCategoryId: null,
     deviceGuides: [],
+    filteredDeviceGuides: [],
+    searchKeyword: '',
+    categoryBannerUrl: '',
     listLoading: false,
   },
 
@@ -35,12 +45,42 @@ Page({
     if (cat) this.selectCategoryByCat(cat);
   },
 
+  updateCategoryBanner() {
+    const id = this.data.selectedCategoryId;
+    const cats = this.data.categories || [];
+    const cat = cats.find(c => c.id === id);
+    let url = '';
+    if (cat && cat.thumbnailUrl) {
+      url = resolveMediaUrl(cat.thumbnailUrl);
+    }
+    this.setData({ categoryBannerUrl: url });
+  },
+
+  applyFilter() {
+    const list = this.data.deviceGuides || [];
+    const kw = (this.data.searchKeyword || '').trim().toLowerCase();
+    if (!kw) {
+      this.setData({ filteredDeviceGuides: list });
+      return;
+    }
+    const filtered = list.filter(g => (g.name || '').toLowerCase().indexOf(kw) !== -1);
+    this.setData({ filteredDeviceGuides: filtered });
+  },
+
+  onSearchInput(e) {
+    this.setData({ searchKeyword: e.detail.value });
+    this.applyFilter();
+  },
+
   selectCategoryByCat(cat) {
     this.setData({
       selectedCategoryId: cat.id,
       deviceGuides: [],
+      filteredDeviceGuides: [],
+      searchKeyword: '',
       listLoading: true,
     });
+    this.updateCategoryBanner();
     app.request({ url: '/guides', data: { categoryId: cat.id } })
       .then(res => {
         const base = app.globalData.baseUrl.replace('/api', '');
@@ -58,7 +98,9 @@ Page({
             ? (g.iconUrlThumb.startsWith('http') ? g.iconUrlThumb : base + g.iconUrlThumb)
             : '',
         }));
-        this.setData({ deviceGuides: list, listLoading: false });
+        this.setData({ deviceGuides: list, listLoading: false }, () => {
+          this.applyFilter();
+        });
       })
       .catch(() => this.setData({ listLoading: false }));
   },

@@ -1,4 +1,19 @@
 <view class="page">
+  <view class="products-search-wrap">
+    <view class="products-search-inner">
+      <text class="products-search-icon" aria-hidden="true">🔍</text>
+      <input
+        class="products-search-input"
+        type="text"
+        placeholder="请输入设备型号或系列"
+        placeholder-class="products-search-placeholder"
+        value="{{searchKeyword}}"
+        bindinput="onSearchInput"
+        confirm-type="search"
+      />
+    </view>
+  </view>
+
   <view class="products-layout">
     <view class="product-sidebar" wx:if="{{categories.length}}">
       <view
@@ -10,11 +25,15 @@
       >{{item.name}}</view>
     </view>
     <view class="product-main">
+      <view wx:if="{{categoryBannerUrl}}" class="category-banner">
+        <image class="category-banner-img" src="{{categoryBannerUrl}}" mode="widthFix" />
+      </view>
+
       <view wx:if="{{listLoading}}" class="main-loading">加载中...</view>
-      <view wx:elif="{{deviceGuides.length}}" class="product-grid">
+      <view wx:elif="{{filteredDeviceGuides.length}}" class="product-grid">
         <view
           class="grid-card"
-          wx:for="{{deviceGuides}}"
+          wx:for="{{filteredDeviceGuides}}"
           wx:key="id"
           data-id="{{item.id}}"
           data-slug="{{item.slug}}"
@@ -29,7 +48,8 @@
           </view>
         </view>
       </view>
-      <view wx:elif="{{selectedCategoryId}}" class="main-empty">该种类下暂无商品</view>
+      <view wx:elif="{{selectedCategoryId && !listLoading && deviceGuides.length && !filteredDeviceGuides.length}}" class="main-empty">未找到匹配的商品</view>
+      <view wx:elif="{{selectedCategoryId && !listLoading && !deviceGuides.length}}" class="main-empty">该种类下暂无商品</view>
     </view>
   </view>
 
