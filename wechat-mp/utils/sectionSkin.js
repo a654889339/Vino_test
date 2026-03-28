@@ -26,7 +26,7 @@ function hexToRgb(hex) {
 }
 
 /**
- * 与网页 Home.vue buildSectionSkinContainerStyle 一致，返回内联样式字符串
+ * 与网页 Home.vue buildSectionSkinContainerStyle 一致，返回内联样式字符串（含镜面模糊）
  */
 function buildSectionSkinContainerStyle(items, skinKey, variant) {
   const row = findSectionSkin(items, skinKey);
@@ -52,11 +52,14 @@ function buildSectionSkinContainerStyle(items, skinKey, variant) {
     bg = op > 0 ? `rgba(255,255,255,${op})` : 'transparent';
   }
 
-  const parts = [`background:${bg}`, `box-shadow:${op > 0 ? shadow : 'none'}`];
-  if (variant === 'card' && op > 0) {
-    parts.push('backdrop-filter:none');
-    parts.push('-webkit-backdrop-filter:none');
-  }
+  const glassBlur = 'saturate(180%) blur(20px)';
+  const parts = [
+    `background:${bg}`,
+    `box-shadow:${op > 0 ? shadow : 'none'}`,
+    `border:${op > 0 ? '1rpx solid rgba(255,255,255,0.42)' : 'none'}`,
+    `backdrop-filter:${op > 0 ? glassBlur : 'none'}`,
+    `-webkit-backdrop-filter:${op > 0 ? glassBlur : 'none'}`,
+  ];
   return parts.join(';') + ';';
 }
 

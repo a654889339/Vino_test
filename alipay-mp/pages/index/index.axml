@@ -85,7 +85,7 @@
   </view>
 
   <!-- 我的商品：为空时整栏隐藏 -->
-  <view a:if="{{myProducts.length}}" class="card-section">
+  <view a:if="{{myProducts.length}}" class="card-section" style="{{myProductsSectionStyle}}">
     <view class="section-header">
       <text class="section-title">{{myProductsTitle}}</text>
       <text class="section-more" onTap="goMyProducts">查看全部 ›</text>

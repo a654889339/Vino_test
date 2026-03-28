@@ -727,16 +727,22 @@ const copyUrl = async () => {
 .hero-logo-svg { width: 64px; height: 26px; }
 .hero-actions { display: flex; gap: 8px; }
 
-/* ===== Card Sections：半透明 + 两侧留白，层级低于底部 tabbar（App 内 tabbar z-index 更高） ===== */
+/* ===== Card Sections：镜面模糊（毛玻璃）+ 两侧留白 ===== */
 .card-section {
   position: relative;
   z-index: 1;
   margin: 12px;
   border-radius: 16px;
-  background: linear-gradient(to bottom, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.72) 50%, rgba(255,255,255,0.5) 100%);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: linear-gradient(
+    155deg,
+    rgba(255, 255, 255, 0.72) 0%,
+    rgba(255, 255, 255, 0.52) 45%,
+    rgba(255, 255, 255, 0.38) 100%
+  );
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 /* 仅「自助预约」区块上移；我的商品、热门服务等同层级，不设负 margin */
 .card-section.first-card {
@@ -752,30 +758,46 @@ const copyUrl = async () => {
 .vino-product-section + .section-my-products {
   margin-top: 20px;
 }
-/* ===== Vino产品（浅色底 + 栏目外观铺底图；未加载前为白底） ===== */
+/* ===== Vino产品：镜面模糊底板 ===== */
 .vino-product-section {
   position: relative;
   z-index: 1;
   margin: 12px;
   border-radius: 16px;
-  background: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: linear-gradient(
+    155deg,
+    rgba(255, 255, 255, 0.7) 0%,
+    rgba(255, 255, 255, 0.48) 50%,
+    rgba(255, 255, 255, 0.36) 100%
+  );
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
   padding: 16px 12px 20px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 .vino-product-inner {
   position: relative;
   z-index: 1;
 }
 
-/* ===== 甄选推荐：大图横滑（浅色底，未加载外观图前为白底） ===== */
+/* ===== 甄选推荐：镜面模糊底板 ===== */
 .featured-recommend-section {
   position: relative;
   z-index: 1;
   margin: 12px;
   border-radius: 16px;
-  background: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: linear-gradient(
+    155deg,
+    rgba(255, 255, 255, 0.7) 0%,
+    rgba(255, 255, 255, 0.48) 50%,
+    rgba(255, 255, 255, 0.36) 100%
+  );
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
   padding: 14px 0 18px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 .featured-recommend-inner {
   position: relative;
@@ -934,15 +956,23 @@ const copyUrl = async () => {
   overflow: hidden;
 }
 
-/* ===== 探索 VINO ===== */
+/* ===== 探索 VINO：外层镜面模糊底板 ===== */
 .explore-vino-section {
   position: relative;
   z-index: 1;
   margin: 12px;
   border-radius: 16px;
-  background: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: linear-gradient(
+    155deg,
+    rgba(255, 255, 255, 0.7) 0%,
+    rgba(255, 255, 255, 0.48) 50%,
+    rgba(255, 255, 255, 0.36) 100%
+  );
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
   padding: 14px 12px 18px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 .explore-vino-inner {
   position: relative;

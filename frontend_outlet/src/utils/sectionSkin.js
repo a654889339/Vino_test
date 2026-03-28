@@ -71,14 +71,14 @@ export function buildSectionSkinContainerStyle(items, skinKey, variant = 'fr') {
     background = op > 0 ? `rgba(255, 255, 255, ${op})` : 'transparent';
   }
 
+  const glassBlur = 'saturate(180%) blur(20px)';
   const out = {
     background,
     boxShadow: op > 0 ? shadow : 'none',
+    border: op > 0 ? '1px solid rgba(255, 255, 255, 0.42)' : 'none',
+    backdropFilter: op > 0 ? glassBlur : 'none',
+    WebkitBackdropFilter: op > 0 ? glassBlur : 'none',
   };
-  if (variant === 'card' && op > 0) {
-    out.backdropFilter = 'none';
-    out.WebkitBackdropFilter = 'none';
-  }
   return out;
 }
 
