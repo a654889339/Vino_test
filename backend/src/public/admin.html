@@ -1909,6 +1909,15 @@ function openCategoryEditor(id) {
   document.getElementById('categoryName').value = c ? c.name : '';
   document.getElementById('categorySort').value = c ? c.sortOrder : 0;
   document.getElementById('categoryStatus').value = c ? c.status : 'active';
+  const rawThumb = c && (c.thumbnailUrl != null ? c.thumbnailUrl : c.thumbnail_url);
+  const thumbStr = rawThumb != null && String(rawThumb).trim() ? String(rawThumb).trim() : '';
+  document.getElementById('categoryThumbnailUrl').value = thumbStr;
+  const prev = document.getElementById('categoryThumbPreview');
+  if (prev) {
+    prev.innerHTML = thumbStr
+      ? '<img src="' + thumbStr.replace(/"/g, '&quot;') + '" style="max-width:200px;max-height:120px;border-radius:8px;border:1px solid #eee;object-fit:contain" alt="预览" />'
+      : '';
+  }
   document.getElementById('categoryModal').style.display = 'flex';
 }
 
@@ -1948,14 +1957,21 @@ async function uploadCategoryThumbnail(input) {
   const file = input.files[0];
   if (!file.type.startsWith('image/')) { alert('请选择图片文件'); input.value = ''; return; }
   await runWithUploadOverlay(file.name, async () => {
-    const res = await doUpload(file);
-    if (res.code === 0) {
-      document.getElementById('categoryThumbnailUrl').value = res.data.url;
-      const prev = document.getElementById('categoryThumbPreview');
-      if (prev) {
-        prev.innerHTML = '<img src="' + String(res.data.url).replace(/"/g, '&quot;') + '" style="max-width:200px;max-height:120px;border-radius:8px;border:1px solid #eee;object-fit:contain" alt="预览" />';
+    try {
+      const res = await doUpload(file);
+      const url = res && res.data && (res.data.url || res.data.thumbUrl);
+      if (res.code === 0 && url) {
+        document.getElementById('categoryThumbnailUrl').value = String(url);
+        const prev = document.getElementById('categoryThumbPreview');
+        if (prev) {
+          prev.innerHTML = '<img src="' + String(url).replace(/"/g, '&quot;') + '" style="max-width:200px;max-height:120px;border-radius:8px;border:1px solid #eee;object-fit:contain" alt="预览" />';
+        }
+      } else {
+        alert((res && res.message) || '上传失败');
       }
-    } else alert(res.message || '上传失败');
+    } catch (e) {
+      alert('上传失败');
+    }
   });
   input.value = '';
 }

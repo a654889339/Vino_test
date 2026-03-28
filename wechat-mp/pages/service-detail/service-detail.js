@@ -324,7 +324,7 @@ Page({
           content: '您的服务已预约成功，我们会尽快安排工程师。',
           showCancel: false,
           success: () => {
-            wx.switchTab({ url: '/pages/orders/orders' });
+            wx.navigateTo({ url: '/pages/orders/orders' });
           },
         });
       })
