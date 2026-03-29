@@ -13,8 +13,12 @@ const outletRoutes = require('./outlet');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 const adminController = require('../controllers/adminController');
 const seedController = require('../controllers/seedController');
+const analyticsController = require('../controllers/analyticsController');
 
 const router = Router();
+
+router.post('/analytics/page-view', analyticsController.recordPageView);
+router.get('/admin/page-visit-stats', authMiddleware, adminMiddleware, analyticsController.getPageVisitStats);
 
 router.use('/auth', authRoutes);
 router.use('/services', serviceRoutes);

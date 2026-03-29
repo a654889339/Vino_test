@@ -205,6 +205,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <div class="stat-card"><h3>待处理</h3><div class="val" id="statPending" style="color:#D97706">-</div><div class="sub">等待支付/处理</div></div>
         <div class="stat-card"><h3>已完成</h3><div class="val" id="statCompleted" style="color:#059669">-</div><div class="sub">完成的订单</div></div>
       </div>
+      <div class="dash-section" id="pageVisitSection">
+        <h3>网站访问统计</h3>
+        <p style="font-size:13px;color:#666;margin-bottom:12px">按页面汇总：总访问量、最近 7 日、30 日、近 90 日（季度）。含 To C 主站、门店站、小程序。</p>
+        <div id="pageVisitStatsWrap" style="overflow-x:auto">加载中...</div>
+      </div>
       <div class="dash-section">
         <h3>个人信息</h3>
         <div class="info-row"><span class="label">用户名</span><span class="value" id="infoUsername">-</span></div>
@@ -1093,6 +1098,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <div class="stat-card"><h3>待处理</h3><div class="val" id="outletStatPending" style="color:#D97706">-</div><div class="sub">等待支付/处理</div></div>
         <div class="stat-card"><h3>已完成</h3><div class="val" id="outletStatCompleted" style="color:#059669">-</div><div class="sub">完成的订单</div></div>
       </div>
+      <div class="dash-section" id="outletPageVisitSection">
+        <h3>网站访问统计</h3>
+        <p style="font-size:13px;color:#666;margin-bottom:12px">按页面汇总：总访问量、最近 7 日、30 日、近 90 日（季度）。含 To C 主站、门店站、小程序。</p>
+        <div id="outletPageVisitStatsWrap" style="overflow-x:auto">加载中...</div>
+      </div>
       <div class="dash-section">
         <h3>服务商/分销商管理</h3>
         <p style="color:var(--text-secondary);font-size:14px">管理服务商/分销商的首页配置、动画、用户、订单和留言。数据完全独立于 To C 前端。</p>
@@ -1397,7 +1407,8 @@ function switchPage(page) {
   if (page === 'homeAnimConfig') { currentHCPage = 'homeAnimConfig'; loadHomeConfig(); }
   if (page === 'pageThemeConfig') { currentHCPage = 'pageTheme'; loadHomeConfig(); }
   if (page === 'messages') { loadConversations(); startMsgPolling(); }
-  if (page === 'outletOverview') loadOutletStats();
+  if (page === 'overview') { loadOrderStats(); loadPageVisitStats(); }
+  if (page === 'outletOverview') { loadOutletStats(); loadPageVisitStats(); }
   if (page === 'outletOrders') { outletOrderPage = 1; loadOutletOrders(); }
   if (page === 'outletUsers') { outletUserPage = 1; loadOutletUsers(); }
   if (page === 'outletServiceConfig') { loadOutletServiceCategories(); loadOutletServices(); }
@@ -1467,6 +1478,7 @@ function showDashboard(user) {
   if (outletSidebar) outletSidebar.style.display = user.role !== 'admin' ? 'none' : '';
   renderTopNav(tocNavItems, 'overview');
   loadOrderStats();
+  loadPageVisitStats();
   loadServiceCurrency();
 }
 
@@ -1505,6 +1517,40 @@ async function loadOrderStats() {
     document.getElementById('statTotal').textContent = '0';
     document.getElementById('statPending').textContent = '0';
     document.getElementById('statCompleted').textContent = '0';
+  }
+}
+
+function renderPageVisitTable(rows) {
+  if (!rows || !rows.length) return '<div class="order-empty" style="display:block">暂无访问数据</div>';
+  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
+  return '<table class="order-table"><thead><tr><th>页面</th><th>总访问量</th><th>近7日</th><th>近30日</th><th>近90日(季)</th></tr></thead><tbody>' +
+    rows.map(function(r) { return '<tr><td style="font-size:12px;max-width:280px;word-break:break-all">' + esc(r.pageKey) + '</td><td>' + r.total + '</td><td>' + r.last7Days + '</td><td>' + r.last30Days + '</td><td>' + r.lastQuarter + '</td></tr>'; }).join('') +
+    '</tbody></table>';
+}
+
+async function loadPageVisitStats() {
+  var isAdmin = currentUser && currentUser.role === 'admin';
+  var w1 = document.getElementById('pageVisitStatsWrap');
+  var w2 = document.getElementById('outletPageVisitStatsWrap');
+  var empty = '<p style="color:#666;font-size:13px">需要管理员权限查看访问统计</p>';
+  if (!isAdmin) {
+    if (w1) w1.innerHTML = empty;
+    if (w2) w2.innerHTML = empty;
+    return;
+  }
+  if (w1) w1.textContent = '加载中...';
+  if (w2) w2.textContent = '加载中...';
+  try {
+    var res = await api('/admin/page-visit-stats');
+    if (res.code !== 0) throw new Error(res.message || '加载失败');
+    var rows = (res.data && res.data.rows) || [];
+    var html = renderPageVisitTable(rows);
+    if (w1) w1.innerHTML = html;
+    if (w2) w2.innerHTML = html;
+  } catch (e) {
+    var err = '<p style="color:#b91c1c;font-size:13px">加载失败</p>';
+    if (w1) w1.innerHTML = err;
+    if (w2) w2.innerHTML = err;
   }
 }
 

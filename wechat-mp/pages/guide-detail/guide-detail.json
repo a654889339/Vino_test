@@ -1,4 +1,5 @@
 {
   "navigationBarTitleText": "设备指南",
-  "usingComponents": {}
+  "usingComponents": {},
+  "behaviors": ["../../behaviors/pageTrack"]
 }

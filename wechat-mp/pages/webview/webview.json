@@ -1,3 +1,4 @@
 {
-  "navigationBarTitleText": "关于Vino"
+  "navigationBarTitleText": "关于Vino",
+  "behaviors": ["../../behaviors/pageTrack"]
 }

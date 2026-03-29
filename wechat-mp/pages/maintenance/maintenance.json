@@ -1,3 +1,4 @@
 {
-  "navigationBarTitleText": "常见问题与保养建议"
+  "navigationBarTitleText": "常见问题与保养建议",
+  "behaviors": ["../../behaviors/pageTrack"]
 }

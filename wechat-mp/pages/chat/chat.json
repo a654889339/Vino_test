@@ -1,3 +1,4 @@
 {
-  "navigationBarTitleText": "在线客服"
+  "navigationBarTitleText": "在线客服",
+  "behaviors": ["../../behaviors/pageTrack"]
 }

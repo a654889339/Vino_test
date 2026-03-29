@@ -3,8 +3,17 @@ const HomeConfig = require('../models/HomeConfig');
 const { DeviceGuide } = require('../models');
 const cosUpload = require('../utils/cosUpload');
 
-/** 从 URL 下载图片 buffer */
+/** 从 URL 下载图片 buffer（本桶 COS 走 SDK getObject，其它走 HTTP） */
 async function fetchImageBuffer(url) {
+  const key = cosUpload.urlToKey ? cosUpload.urlToKey(url) : null;
+  if (key) {
+    try {
+      return await cosUpload.getObjectBuffer(key);
+    } catch (e) {
+      console.warn('[Admin] fetchImageBuffer COS getObject:', e.message);
+      return null;
+    }
+  }
   const res = await fetch(url, { headers: { 'User-Agent': 'Vino-Backend/1.0' } });
   if (!res.ok) return null;
   const arr = await res.arrayBuffer();

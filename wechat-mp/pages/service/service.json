@@ -1,3 +1,4 @@
 {
-  "navigationBarTitleText": ""
+  "navigationBarTitleText": "",
+  "behaviors": ["../../behaviors/pageTrack"]
 }

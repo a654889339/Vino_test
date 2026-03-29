@@ -20,6 +20,7 @@ const OutletHomeConfig = require('./OutletHomeConfig');
 const OutletMessage = require('./OutletMessage');
 const OutletServiceCategory = require('./OutletServiceCategory');
 const OutletService = require('./OutletService');
+const PageVisitDaily = require('./PageVisitDaily');
 
 ProductCategory.hasMany(DeviceGuide, { foreignKey: 'categoryId', as: 'guides' });
 DeviceGuide.belongsTo(ProductCategory, { foreignKey: 'categoryId', as: 'category' });
@@ -55,7 +56,7 @@ OutletAddress.belongsTo(OutletUser, { foreignKey: 'userId', as: 'user' });
 OutletUser.hasMany(OutletMessage, { foreignKey: 'userId', as: 'messages' });
 OutletMessage.belongsTo(OutletUser, { foreignKey: 'userId', as: 'user' });
 
-const models = { User, Service, ServiceCategory, Order, OrderLog, Address, DeviceGuide, ProductCategory, HomeConfig, Message, InventoryCategory, InventoryProduct, UserProduct, OutletUser, OutletOrder, OutletOrderLog, OutletAddress, OutletHomeConfig, OutletMessage, OutletServiceCategory, OutletService };
+const models = { User, Service, ServiceCategory, Order, OrderLog, Address, DeviceGuide, ProductCategory, HomeConfig, Message, InventoryCategory, InventoryProduct, UserProduct, OutletUser, OutletOrder, OutletOrderLog, OutletAddress, OutletHomeConfig, OutletMessage, OutletServiceCategory, OutletService, PageVisitDaily };
 
 const ADMIN_PASSWORD = 'Vino@2024admin';
 
