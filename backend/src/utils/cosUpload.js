@@ -187,7 +187,7 @@ async function proxyCosUrlsDeepAsync(req, val, seen = new WeakSet()) {
   return val;
 }
 
-/** 将 COS 对象流式输出给 HTTP 响应（私有桶读） */
+/** 将 COS 对象输出给 HTTP 响应（私有桶读） */
 function streamObjectToResponse(key, res) {
   const client = getClient();
   if (!client) {
@@ -203,21 +203,35 @@ function streamObjectToResponse(key, res) {
     const ct = data.headers['content-type'] || 'application/octet-stream';
     res.setHeader('Content-Type', ct);
     res.setHeader('Cache-Control', 'public, max-age=300');
-    data.Body.pipe(res);
+    const body = data.Body;
+    if (Buffer.isBuffer(body)) {
+      res.setHeader('Content-Length', body.length);
+      res.end(body);
+    } else if (body && typeof body.pipe === 'function') {
+      body.pipe(res);
+    } else {
+      res.end(body);
+    }
   });
 }
 
-/** 服务端下载 COS 对象（私有桶），用于生成缩略图等 */
+/** 服务端下载 COS 对象（私有桶） */
 function getObjectBuffer(key) {
   return new Promise((resolve, reject) => {
     const client = getClient();
     if (!client) return reject(new Error('COS not configured'));
     client.getObject({ Bucket, Region, Key: key }, (err, data) => {
       if (err) return reject(err);
-      const chunks = [];
-      data.Body.on('data', (c) => chunks.push(c));
-      data.Body.on('end', () => resolve(Buffer.concat(chunks)));
-      data.Body.on('error', reject);
+      const body = data.Body;
+      if (Buffer.isBuffer(body)) return resolve(body);
+      if (body && typeof body.on === 'function') {
+        const chunks = [];
+        body.on('data', (c) => chunks.push(c));
+        body.on('end', () => resolve(Buffer.concat(chunks)));
+        body.on('error', reject);
+        return;
+      }
+      resolve(Buffer.from(body));
     });
   });
 }
