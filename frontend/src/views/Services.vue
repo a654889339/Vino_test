@@ -96,6 +96,8 @@ onMounted(async () => {
 
 .svc-body {
   padding: 16px 16px 0;
+  position: relative;
+  z-index: 1;
 }
 
 .svc-section {
