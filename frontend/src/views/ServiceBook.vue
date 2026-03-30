@@ -63,11 +63,16 @@
                 :class="{ active: orderForm.productSerial === p.productKey }"
                 @click="orderForm.productSerial = p.productKey"
               >
-                <div class="saved-addr-name">
-                  {{ p.productName }}
-                  <van-tag v-if="p.categoryName" type="primary" color="#B91C1C" size="mini" plain>{{ p.categoryName }}</van-tag>
+                <div class="my-product-row">
+                  <div class="my-product-info">
+                    <div class="saved-addr-name">
+                      {{ p.productName }}
+                      <van-tag v-if="p.categoryName" type="primary" color="#B91C1C" size="mini" plain>{{ p.categoryName }}</van-tag>
+                    </div>
+                    <div class="saved-addr-detail" style="font-family:monospace;font-size:12px">{{ p.productKey }}</div>
+                  </div>
+                  <img v-if="p.iconUrl || p.iconUrlThumb" :src="p.iconUrlThumb || p.iconUrl" class="my-product-icon" alt="" />
                 </div>
-                <div class="saved-addr-detail" style="font-family:monospace;font-size:12px">{{ p.productKey }}</div>
               </div>
             </div>
           </div>
@@ -548,6 +553,24 @@ const submitOrder = async () => {
   font-size: 12px;
   color: #666;
   line-height: 1.4;
+}
+
+.my-product-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.my-product-info {
+  flex: 1;
+  min-width: 0;
+}
+.my-product-icon {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  border-radius: 8px;
+  flex-shrink: 0;
+  background: #f0f0f0;
 }
 
 .order-submit-area {

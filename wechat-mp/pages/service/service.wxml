@@ -1,29 +1,28 @@
 <view class="page">
-  <view class="tabs">
-    <view
-      class="tab-item {{activeTab === index ? 'active' : ''}}"
-      wx:for="{{tabs}}"
-      wx:key="key"
-      data-index="{{index}}"
-      bindtap="switchTab"
-    >
-      <text>{{item.name}}</text>
-    </view>
-  </view>
-
   <view class="loading-wrap" wx:if="{{loading}}">
     <text>加载中...</text>
   </view>
-  <view class="service-grid" wx:else>
-    <view class="grid-item" wx:for="{{services}}" wx:key="id" bindtap="goServiceDetail" data-id="{{item.id}}">
-      <view class="grid-icon" style="background: {{item.bg}}">
-        <text class="grid-emoji">{{item.emoji}}</text>
+  <view class="svc-body" wx:else>
+    <view class="svc-section" wx:for="{{categories}}" wx:for-item="cat" wx:key="key">
+      <text class="svc-section-title">{{cat.name}}</text>
+      <view class="svc-card">
+        <view class="svc-grid">
+          <view
+            class="svc-grid-item"
+            wx:for="{{cat.items}}"
+            wx:key="id"
+            data-id="{{item.id}}"
+            bindtap="goServiceDetail"
+          >
+            <view class="svc-icon-wrap">
+              <image wx:if="{{item.iconUrl}}" class="svc-icon-img" src="{{item.iconUrl}}" mode="aspectFit" />
+              <text wx:else class="svc-icon-emoji">{{item.emoji}}</text>
+            </view>
+            <text class="svc-item-name">{{item.title}}</text>
+          </view>
+        </view>
       </view>
-      <text class="grid-name">{{item.title}}</text>
-      <text class="grid-desc">{{item.desc}}</text>
-      <text wx:if="{{item.priceDisplay}}" class="grid-price">{{item.priceDisplay}}起</text>
     </view>
   </view>
-
   <view class="tab-bar-placeholder"></view>
 </view>

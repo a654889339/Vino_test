@@ -1,16 +1,8 @@
 const app = getApp();
-const { formatPriceDisplay } = require('../../utils/currency.js');
 
 Page({
   data: {
-    activeTab: 0,
-    tabs: [
-      { key: 'repair', name: '维修' },
-      { key: 'clean', name: '清洁' },
-      { key: 'inspect', name: '检测' },
-      { key: 'data', name: '数据' },
-    ],
-    services: [],
+    categories: [],
     loading: true,
   },
 
@@ -22,65 +14,64 @@ Page({
   },
 
   loadServices() {
-    const tabs = this.data.tabs;
-    const tab = tabs[this.data.activeTab] || tabs[0];
-    const key = tab.key;
-    const categoryNames = { repair: '维修', clean: '清洁', inspect: '检测', data: '数据' };
-    const category = categoryNames[key] || '维修';
     this.setData({ loading: true });
-    const sym = app.globalData.currencySymbol || '¥';
-    app.request({ url: `/services?category=${encodeURIComponent(category)}` })
+    app.request({ url: '/services' })
       .then(res => {
-        const data = (res.data || []).map(s => ({
-          id: s.id,
-          title: s.title || '服务',
-          desc: s.description || '专业服务',
-          price: s.price || 0,
-          priceDisplay: formatPriceDisplay(s.price, sym),
-          emoji: '🔧',
-          bg: '#B91C1C',
-        }));
-        this.setData({ services: data.length ? data : this.getFallbackServices(key), loading: false });
+        const services = (res.data && res.data.list) || res.data || [];
+        if (services.length) {
+          const catMap = {};
+          const catOrder = [];
+          services.forEach(s => {
+            const cat = s.serviceCategory || s.category || {};
+            const catKey = cat.key || cat.id || 'other';
+            const catName = cat.name || (typeof s.category === 'string' ? s.category : '其他');
+            if (!catMap[catKey]) {
+              catMap[catKey] = { key: String(catKey), name: catName, items: [] };
+              catOrder.push(catKey);
+            }
+            catMap[catKey].items.push({
+              id: s.id,
+              title: s.title || '服务',
+              icon: s.icon || 'setting-o',
+              iconUrl: s.iconUrl || '',
+              emoji: '🔧',
+            });
+          });
+          const cats = catOrder.map(k => catMap[k]);
+          this.setData({ categories: cats, loading: false });
+        } else {
+          this.setData({ categories: this.getFallbackCategories(), loading: false });
+        }
       })
       .catch(() => {
-        this.setData({ services: this.getFallbackServices(key), loading: false });
+        this.setData({ categories: this.getFallbackCategories(), loading: false });
       });
   },
 
-  getFallbackServices(key) {
-    const sym = app.globalData.currencySymbol || '¥';
-    const withDisplay = (rows) => rows.map((r) => ({ ...r, priceDisplay: formatPriceDisplay(r.price, sym) }));
-    const all = {
-      repair: withDisplay([
-        { id: 1, title: '设备维修', desc: '专业工程师', emoji: '🔧', price: '99', bg: '#B91C1C' },
-        { id: 2, title: '上门维修', desc: '快速响应', emoji: '🏠', price: '149', bg: '#DC2626' },
-        { id: 3, title: '远程支持', desc: '在线指导', emoji: '📞', price: '29', bg: '#EF4444' },
-      ]),
-      clean: withDisplay([
-        { id: 4, title: '深度清洁', desc: '全方位保养', emoji: '✨', price: '149', bg: '#2563EB' },
-        { id: 5, title: '日常清洁', desc: '基础维护', emoji: '🧹', price: '69', bg: '#3B82F6' },
-      ]),
-      inspect: withDisplay([
-        { id: 6, title: '全面检测', desc: '系统评估', emoji: '🔍', price: '49', bg: '#059669' },
-        { id: 7, title: '性能优化', desc: '提速升级', emoji: '🚀', price: '79', bg: '#10B981' },
-      ]),
-      data: withDisplay([
-        { id: 8, title: '数据恢复', desc: '专业找回', emoji: '💾', price: '199', bg: '#7C3AED' },
-        { id: 9, title: '数据备份', desc: '安全迁移', emoji: '📁', price: '59', bg: '#8B5CF6' },
-      ]),
-    };
-    return all[key] || all.repair;
-  },
-
-  switchTab(e) {
-    const index = parseInt(e.currentTarget.dataset.index, 10);
-    this.setData({ activeTab: index });
-    this.loadServices();
+  getFallbackCategories() {
+    return [
+      { key: 'repair', name: '售后维修', items: [
+        { id: 1, title: '设备维修', emoji: '🔧', icon: '', iconUrl: '' },
+        { id: 2, title: '上门维修', emoji: '🏠', icon: '', iconUrl: '' },
+        { id: 3, title: '远程支持', emoji: '📞', icon: '', iconUrl: '' },
+      ]},
+      { key: 'clean', name: '清洁维养', items: [
+        { id: 4, title: '深度清洁', emoji: '✨', icon: '', iconUrl: '' },
+        { id: 5, title: '日常清洁', emoji: '🧹', icon: '', iconUrl: '' },
+      ]},
+      { key: 'inspect', name: '检测', items: [
+        { id: 6, title: '全面检测', emoji: '🔍', icon: '', iconUrl: '' },
+        { id: 7, title: '性能优化', emoji: '🚀', icon: '', iconUrl: '' },
+      ]},
+      { key: 'data', name: '数据', items: [
+        { id: 8, title: '数据恢复', emoji: '💾', icon: '', iconUrl: '' },
+        { id: 9, title: '数据备份', emoji: '📁', icon: '', iconUrl: '' },
+      ]},
+    ];
   },
 
   goServiceDetail(e) {
     const id = e.currentTarget.dataset.id;
-    wx.navigateTo({ url: `/pages/service-detail/service-detail?id=${id}` });
+    wx.navigateTo({ url: '/pages/service-detail/service-detail?id=' + id });
   },
-
 });
