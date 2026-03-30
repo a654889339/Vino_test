@@ -155,13 +155,6 @@ function isCosProxyApiUrl(url) {
   return /\/api\/media\/cos\?key=/.test(url);
 }
 
-function buildRequestBaseUrl(req) {
-  const raw = (req.headers['x-forwarded-proto'] || req.protocol || 'http').toString();
-  const proto = raw.split(',')[0].trim() || 'http';
-  const host = (req.get && req.get('host')) || req.headers.host || 'localhost';
-  return `${proto}://${host}`;
-}
-
 /** 将本桶 COS 直链改为走服务端代理（小程序等对签名直链易 403，代理用密钥拉流） */
 function toProxyUrlIfCos(req, url) {
   if (!url || typeof url !== 'string') return url;
@@ -169,8 +162,8 @@ function toProxyUrlIfCos(req, url) {
   const key = urlToKey(url);
   if (!key || !isKeyAllowedForProxy(key)) return url;
   if (!getClient()) return url;
-  const base = buildRequestBaseUrl(req);
-  return `${base}/api/media/cos?key=${encodeURIComponent(key)}`;
+  // 必须用相对路径：经 Nginx 反代时 Host 常为「无端口」域名，拼成绝对 URL 会变成 :80，导致 404/拒连
+  return `/api/media/cos?key=${encodeURIComponent(key)}`;
 }
 
 async function proxyCosUrlsDeepAsync(req, val, seen = new WeakSet()) {
