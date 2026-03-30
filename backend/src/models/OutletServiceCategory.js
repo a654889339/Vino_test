@@ -11,6 +11,16 @@ const OutletServiceCategory = sequelize.define('OutletServiceCategory', {
     type: DataTypes.STRING(100),
     allowNull: false,
   },
+  bg: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+    comment: '种类背景色（前台展示/分组卡片可用）',
+  },
+  bgOpacity: {
+    type: DataTypes.DECIMAL(5, 2),
+    allowNull: true,
+    comment: '种类背景透明度 0-100（可选）',
+  },
   key: {
     type: DataTypes.STRING(50),
     allowNull: true,

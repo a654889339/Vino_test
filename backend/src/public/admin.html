@@ -287,7 +287,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         </div>
         <p style="font-size:13px;color:#666;margin-bottom:12px">先配置种类，再在下方具体服务中为每个服务选择种类。</p>
         <table class="order-table">
-          <thead><tr><th>ID</th><th>种类名称</th><th>key</th><th>排序</th><th>状态</th><th>操作</th></tr></thead>
+          <thead><tr><th>ID</th><th>种类名称</th><th>key</th><th>背景色</th><th>透明度</th><th>排序</th><th>状态</th><th>操作</th></tr></thead>
           <tbody id="serviceCategoryTableBody"></tbody>
         </table>
       </div>
@@ -1001,6 +1001,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <input type="hidden" id="serviceCategoryEditId" />
           <div class="form-group"><label>种类名称 *</label><input class="form-input" id="serviceCategoryName" placeholder="如：维修" /></div>
           <div class="form-group"><label>key <span style="font-weight:normal;color:#999;font-size:12px">（可选，如 repair，用于前台分组）</span></label><input class="form-input" id="serviceCategoryKey" placeholder="如：repair" /></div>
+          <div class="form-group"><label>背景色 <span style="font-weight:normal;color:#999;font-size:12px">（可选，如 #2a2a2e）</span></label><input class="form-input" id="serviceCategoryBg" placeholder="#2a2a2e" /></div>
+          <div class="form-group"><label>透明度 <span style="font-weight:normal;color:#999;font-size:12px">（0-100，可选）</span></label><input type="number" class="form-input" id="serviceCategoryBgOpacity" placeholder="100" min="0" max="100" step="1" /></div>
           <div class="form-group"><label>排序</label><input type="number" class="form-input" id="serviceCategorySort" value="0" /></div>
           <div class="form-group"><label>状态</label><select class="form-input" id="serviceCategoryStatus"><option value="active">启用</option><option value="inactive">禁用</option></select></div>
           <button class="submit-btn" onclick="saveServiceCategory()">保存</button>
@@ -1162,7 +1164,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         </div>
         <p style="font-size:13px;color:#666;margin-bottom:12px">先配置服务种类，再在下方具体服务中为每个服务选择种类。</p>
         <table class="order-table">
-          <thead><tr><th>ID</th><th>种类名称</th><th>key</th><th>排序</th><th>状态</th><th>操作</th></tr></thead>
+          <thead><tr><th>ID</th><th>种类名称</th><th>key</th><th>背景色</th><th>透明度</th><th>排序</th><th>状态</th><th>操作</th></tr></thead>
           <tbody id="outletServiceCategoryTableBody"></tbody>
         </table>
       </div>
@@ -2105,6 +2107,8 @@ async function loadServiceCategories() {
         <td>${c.id}</td>
         <td><strong>${c.name}</strong></td>
         <td style="font-size:12px;color:#666;font-family:monospace">${c.key || '-'}</td>
+        <td><span style="display:inline-block;width:20px;height:20px;border-radius:4px;border:1px solid #eee;background:${c.bg||'transparent'}"></span> <span style="font-size:12px;color:#666">${c.bg||'-'}</span></td>
+        <td style="font-size:12px;color:#666">${c.bgOpacity != null ? c.bgOpacity : '-'}</td>
         <td>${c.sortOrder}</td>
         <td><span style="padding:2px 8px;border-radius:4px;font-size:12px;${c.status==='active'?'background:#D1FAE5;color:#059669':'background:#F3F4F6;color:#999'}">${c.status==='active'?'启用':'禁用'}</span></td>
         <td>
@@ -2112,7 +2116,7 @@ async function loadServiceCategories() {
           <button class="history-btn" style="color:#B91C1C;border-color:#FCA5A5" onclick="deleteServiceCategory(${c.id})">删除</button>
         </td>
       </tr>`).join('');
-      if (!allServiceCategories.length) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#999">暂无种类，请先新增种类</td></tr>';
+      if (!allServiceCategories.length) tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:#999">暂无种类，请先新增种类</td></tr>';
     }
   } catch { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#B91C1C">加载失败</td></tr>'; }
 }
@@ -2167,6 +2171,8 @@ function openServiceCategoryEditor(id) {
   document.getElementById('serviceCategoryModalTitle').textContent = c ? '编辑种类' : '新增种类';
   document.getElementById('serviceCategoryName').value = c ? c.name : '';
   document.getElementById('serviceCategoryKey').value = c ? (c.key || '') : '';
+  document.getElementById('serviceCategoryBg').value = c ? (c.bg || '') : '';
+  document.getElementById('serviceCategoryBgOpacity').value = c && c.bgOpacity != null ? c.bgOpacity : '';
   document.getElementById('serviceCategorySort').value = c ? c.sortOrder : 0;
   document.getElementById('serviceCategoryStatus').value = c ? c.status : 'active';
   document.getElementById('serviceCategoryModal').style.display = 'flex';
@@ -2178,9 +2184,13 @@ async function saveServiceCategory() {
   const id = document.getElementById('serviceCategoryEditId').value;
   const name = document.getElementById('serviceCategoryName').value.trim();
   if (!name) { alert('请填写种类名称'); return; }
+  const bg = document.getElementById('serviceCategoryBg').value.trim();
+  const bgOpacity = document.getElementById('serviceCategoryBgOpacity').value;
   const body = {
     name,
     key: document.getElementById('serviceCategoryKey').value.trim() || undefined,
+    bg: bg || undefined,
+    bgOpacity: (bgOpacity != null && String(bgOpacity).trim() !== '') ? bgOpacity : null,
     sortOrder: parseInt(document.getElementById('serviceCategorySort').value, 10) || 0,
     status: document.getElementById('serviceCategoryStatus').value,
   };
@@ -4095,6 +4105,8 @@ async function loadOutletServiceCategories() {
     const tbody = document.getElementById('outletServiceCategoryTableBody');
     tbody.innerHTML = outletServiceCategories.map(c => `<tr>
       <td>${c.id}</td><td>${c.name}</td><td>${c.key || '-'}</td>
+      <td><span style="display:inline-block;width:18px;height:18px;border-radius:4px;border:1px solid #444;background:${c.bg||'transparent'}"></span> <span style="font-size:12px;color:#666">${c.bg||'-'}</span></td>
+      <td style="font-size:12px;color:#666">${c.bgOpacity != null ? c.bgOpacity : '-'}</td>
       <td>${c.sortOrder}</td>
       <td><span class="status-badge status-${c.status==='active'?'completed':'cancelled'}">${c.status==='active'?'启用':'禁用'}</span></td>
       <td><button class="refresh-btn" style="padding:4px 12px;font-size:12px" onclick="openOutletServiceCategoryEditor(${c.id})">编辑</button>
@@ -4150,9 +4162,18 @@ function openOutletServiceCategoryEditor(id) {
   const name = prompt('种类名称', cat ? cat.name : '');
   if (name == null || !name.trim()) return;
   const key = prompt('key（可选，如 repair、clean 等）', cat ? (cat.key || '') : '');
+  const bg = prompt('背景色（可选，如 #2a2a2e）', cat ? (cat.bg || '') : '');
+  const bgOpacity = prompt('透明度（0-100，可选）', cat && cat.bgOpacity != null ? String(cat.bgOpacity) : '');
   const sort = prompt('排序（数字，越小越靠前）', cat ? String(cat.sortOrder || 0) : '0');
   const status = prompt('状态（active/inactive）', cat ? cat.status : 'active') || 'active';
-  const body = { name, key, sortOrder: parseInt(sort, 10) || 0, status };
+  const body = {
+    name,
+    key,
+    bg: (bg != null && String(bg).trim()) ? String(bg).trim() : undefined,
+    bgOpacity: (bgOpacity != null && String(bgOpacity).trim() !== '') ? bgOpacity : null,
+    sortOrder: parseInt(sort, 10) || 0,
+    status,
+  };
   if (cat) {
     outletApi('/service-categories/' + cat.id, { method: 'PUT', body }).then(() => loadOutletServiceCategories());
   } else {

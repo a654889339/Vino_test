@@ -14,13 +14,17 @@ exports.list = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    const { name, key, sortOrder, status } = req.body;
+    const { name, key, sortOrder, status, bg, bgOpacity } = req.body;
     if (!name || !name.trim()) return res.status(400).json({ code: 400, message: '种类名称不能为空' });
     const cat = await OutletServiceCategory.create({
       name: name.trim(),
       key: (key && key.trim()) || null,
       sortOrder: parseInt(sortOrder, 10) || 0,
       status: status || 'active',
+      bg: (bg && String(bg).trim()) ? String(bg).trim() : null,
+      bgOpacity: bgOpacity !== undefined && bgOpacity !== null && String(bgOpacity).trim() !== ''
+        ? Math.min(100, Math.max(0, parseFloat(bgOpacity) || 0))
+        : null,
     });
     res.json({ code: 0, data: cat });
   } catch (err) {
@@ -33,11 +37,17 @@ exports.update = async (req, res) => {
   try {
     const cat = await OutletServiceCategory.findByPk(req.params.id);
     if (!cat) return res.status(404).json({ code: 404, message: '种类不存在' });
-    const { name, key, sortOrder, status } = req.body;
+    const { name, key, sortOrder, status, bg, bgOpacity } = req.body;
     if (name !== undefined) cat.name = name.trim();
     if (key !== undefined) cat.key = (key && key.trim()) || null;
     if (sortOrder !== undefined) cat.sortOrder = parseInt(sortOrder, 10) || 0;
     if (status !== undefined) cat.status = status;
+    if (bg !== undefined) cat.bg = (bg && String(bg).trim()) ? String(bg).trim() : null;
+    if (bgOpacity !== undefined) {
+      cat.bgOpacity = bgOpacity !== null && String(bgOpacity).trim() !== ''
+        ? Math.min(100, Math.max(0, parseFloat(bgOpacity) || 0))
+        : null;
+    }
     await cat.save();
     res.json({ code: 0, data: cat });
   } catch (err) {
