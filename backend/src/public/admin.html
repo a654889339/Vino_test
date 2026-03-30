@@ -259,7 +259,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <button type="button" class="refresh-btn" style="background:#64748b" onclick="document.getElementById('userSearchKeyword').value='';document.getElementById('userSearchType').value='';userPage=1;loadUsers()">重置</button>
         </div>
         <table class="order-table" id="userTable">
-          <thead><tr><th>ID</th><th>用户名</th><th>手机号</th><th>邮箱</th><th>昵称</th><th>角色</th><th>订单数</th><th>地址数</th><th>已绑定商品</th><th>注册时间</th><th>操作</th></tr></thead>
+          <thead><tr><th>ID</th><th>用户名</th><th>手机号</th><th>邮箱</th><th>昵称</th><th>角色</th><th>订单数</th><th>地址数</th><th>已绑定商品</th><th>注册时间</th><th>操作</th><th>删除</th></tr></thead>
           <tbody id="userTableBody"></tbody>
         </table>
         <div class="order-empty" id="userEmpty" style="display:none">暂无用户</div>
@@ -1737,7 +1737,7 @@ const userPageSize = 50;
 async function loadUsers() {
   const tbody = document.getElementById('userTableBody');
   const empty = document.getElementById('userEmpty');
-  tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:30px;color:#999">加载中...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:30px;color:#999">加载中...</td></tr>';
   try {
     const params = new URLSearchParams({ page: userPage, pageSize: userPageSize });
     const st = document.getElementById('userSearchType') && document.getElementById('userSearchType').value;
@@ -1778,7 +1778,7 @@ async function loadUsers() {
         <button class="page-btn" onclick="userPage++;loadUsers()" ${page >= totalPages ? 'disabled' : ''}>下一页</button>` : `<span class="page-info">共 ${total} 条</span>`;
     }
   } catch {
-    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:30px;color:#B91C1C">加载失败</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:30px;color:#B91C1C">加载失败</td></tr>';
   }
 }
 
@@ -1792,6 +1792,9 @@ function renderUserTable() {
     const roleTag = u.role === 'admin' ? '<span class="role-tag admin">管理员</span>' : '<span class="role-tag user">用户</span>';
     const regTime = u.createdAt ? new Date(u.createdAt).toLocaleString('zh-CN', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }) : '-';
     const isExpanded = expandedUsers.has(u.id);
+    const delBtn = u.role === 'admin'
+      ? '<button class="history-btn" style="padding:6px 10px;font-size:12px;background:#e5e7eb;color:#6b7280;cursor:not-allowed" disabled>不可删</button>'
+      : `<button class="history-btn" style="padding:6px 10px;font-size:12px;background:#dc2626" onclick="deleteUser(${u.id})">删除</button>`;
     html += `<tr>
       <td>${u.id}</td>
       <td><strong>${u.username}</strong></td>
@@ -1804,10 +1807,11 @@ function renderUserTable() {
       <td style="font-size:12px;max-width:180px;word-break:break-all" title="${boundStr}">${boundKeys.length ? boundKeys.length + ' 个' : '-'}</td>
       <td style="font-size:12px">${regTime}</td>
       <td><button class="detail-btn" onclick="toggleUserDetail(${u.id})">${isExpanded ? '收起' : '详情'}</button></td>
+      <td>${delBtn}</td>
     </tr>`;
     if (isExpanded) {
       const isEmptyNormal = (u.orderCount || 0) === 0 && boundKeys.length === 0 && addrCount === 0 && u.status === 'active';
-      html += `<tr class="user-detail-row"><td colspan="11"><div class="user-detail-inner">`;
+      html += `<tr class="user-detail-row"><td colspan="12"><div class="user-detail-inner">`;
       if (isEmptyNormal) {
         html += '<div style="font-size:13px;color:#999">该用户暂无订单、绑定商品与收货地址，状态正常。</div>';
       } else {
@@ -1865,6 +1869,26 @@ function renderUserTable() {
     }
   });
   tbody.innerHTML = html;
+}
+
+async function deleteUser(userId) {
+  if (!userId) return;
+  const user = (allUsers || []).find(u => u.id === userId);
+  const name = user ? (user.nickname || user.username || ('#' + userId)) : ('#' + userId);
+  const ok = confirm('确定删除用户 ' + name + '（ID ' + userId + '）吗？将同时删除其订单、地址、留言与绑定商品，且不可恢复。');
+  if (!ok) return;
+  try {
+    const res = await api('/auth/admin/users/' + userId, { method: 'DELETE' });
+    if (res.code === 0) {
+      expandedUsers.delete(userId);
+      loadUsers();
+      alert('已删除');
+    } else {
+      alert(res.message || '删除失败');
+    }
+  } catch (e) {
+    alert((e && e.message) || '删除失败');
+  }
 }
 
 function toggleUserDetail(userId) {

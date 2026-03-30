@@ -290,6 +290,49 @@ exports.adminUnbindProduct = async (req, res) => {
   }
 };
 
+/** 管理端：删除用户（同时清理关联数据） */
+exports.adminDeleteUser = async (req, res) => {
+  try {
+    const userId = parseInt(req.params.userId, 10);
+    if (!userId) return res.status(400).json({ code: 400, message: '参数无效' });
+    if (req.user && req.user.id === userId) {
+      return res.status(400).json({ code: 400, message: '不能删除当前登录用户' });
+    }
+
+    const { sequelize, User, Address, Order, OrderLog, Message, UserProduct } = require('../models');
+
+    const target = await User.findByPk(userId);
+    if (!target) return res.status(404).json({ code: 404, message: '用户不存在' });
+
+    if (target.role === 'admin') {
+      const adminCount = await User.count({ where: { role: 'admin' } });
+      if (adminCount <= 1) {
+        return res.status(400).json({ code: 400, message: '不能删除最后一个管理员' });
+      }
+    }
+
+    const result = await sequelize.transaction(async (t) => {
+      const orders = await Order.findAll({ where: { userId }, attributes: ['id'], raw: true, transaction: t });
+      const orderIds = orders.map((o) => o.id);
+      const nOrderLogs = orderIds.length
+        ? await OrderLog.destroy({ where: { orderId: orderIds }, transaction: t })
+        : 0;
+      const nOrders = await Order.destroy({ where: { userId }, transaction: t });
+      const nAddresses = await Address.destroy({ where: { userId }, transaction: t });
+      const nMessages = await Message.destroy({ where: { userId }, transaction: t });
+      const nUserProducts = await UserProduct.destroy({ where: { userId }, transaction: t });
+      const nUsers = await User.destroy({ where: { id: userId }, transaction: t });
+      return { nUsers, nOrders, nOrderLogs, nAddresses, nMessages, nUserProducts };
+    });
+
+    if (!result.nUsers) return res.status(500).json({ code: 500, message: '删除失败' });
+    res.json({ code: 0, message: '已删除用户', data: result });
+  } catch (err) {
+    console.error('[Auth] adminDeleteUser error:', err.message);
+    res.status(500).json({ code: 500, message: err.message || '删除失败' });
+  }
+};
+
 exports.wxLogin = async (req, res) => {
   try {
     const { code } = req.body;
