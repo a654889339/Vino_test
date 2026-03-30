@@ -5,7 +5,6 @@ const morgan = require('morgan');
 const config = require('./config');
 const routes = require('./routes');
 const { syncDatabase } = require('./models');
-const { cosUrlProxyMiddleware } = require('./middleware/cosUrlSigning');
 
 const app = express();
 
@@ -41,7 +40,7 @@ app.get('/', (req, res) => {
 });
 app.use('/uploads', express.static(uploadsDir));
 
-app.use('/api', cosUrlProxyMiddleware, routes);
+app.use('/api', routes);
 
 app.use((req, res) => {
   res.status(404).json({ code: 404, message: '接口不存在' });

@@ -248,7 +248,7 @@ function upload(buffer, filename, contentType) {
         Key: key,
         Body: buffer,
         ContentType: contentType,
-        ACL: 'private',
+        ACL: 'public-read',
       },
       (err) => {
         if (err) return reject(err);
@@ -271,7 +271,7 @@ function uploadThumb(buffer, filename, contentType) {
         Key: key,
         Body: buffer,
         ContentType: contentType,
-        ACL: 'private',
+        ACL: 'public-read',
       },
       (err) => {
         if (err) return reject(err);
