@@ -85,24 +85,60 @@
         </view>
 
         <view class="form-group">
+          <text class="form-label">商品种类</text>
+          <picker
+            wx:if="{{!productFieldsLocked}}"
+            mode="selector"
+            range="{{categoryPickerLabels}}"
+            value="{{categoryPickerIndex}}"
+            bindchange="onCategoryPickerChange"
+          >
+            <view class="picker-value">{{selectedCategoryId ? categoryPickerLabels[categoryPickerIndex] : '请选择商品种类 ▾'}}</view>
+          </picker>
+          <view wx:else class="picker-value picker-locked">{{categoryPickerLabels[categoryPickerIndex] || '-'}} 🔒</view>
+        </view>
+
+        <view class="form-group" wx:if="{{selectedCategoryId && filteredGuideLabels.length}}">
+          <text class="form-label">具体商品</text>
+          <picker
+            wx:if="{{!productFieldsLocked}}"
+            mode="selector"
+            range="{{filteredGuideLabels}}"
+            value="{{guidePickerIndex}}"
+            bindchange="onGuidePickerChange"
+          >
+            <view class="picker-value">{{selectedGuideId ? filteredGuideLabels[guidePickerIndex] : '请选择具体商品 ▾'}}</view>
+          </picker>
+          <view wx:else class="picker-value picker-locked">{{filteredGuideLabels[guidePickerIndex] || '-'}} 🔒</view>
+        </view>
+
+        <view class="form-group">
           <text class="form-label">商品序列号（选填）</text>
           <input
             class="form-input"
-            placeholder="可手动输入，或下方下拉选择「我的商品」"
+            placeholder="可手动输入，或下方选择「我的商品」"
             value="{{productSerial}}"
             maxlength="128"
             adjust-position="{{true}}"
             cursor-spacing="24"
             bindinput="inputProductSerial"
+            disabled="{{productFieldsLocked}}"
           />
+        </view>
+
+        <view class="form-group" wx:if="{{myProducts.length}}">
+          <view class="my-product-header">
+            <text class="form-label">从「我的商品」选择</text>
+            <text wx:if="{{productFieldsLocked}}" class="unlock-btn" catchtap="unlockProductFields">清除选择</text>
+          </view>
           <picker
-            wx:if="{{myProducts.length}}"
             mode="selector"
             range="{{productSerialPickerLabels}}"
             value="{{productSerialPickerIndex}}"
             bindchange="onMyProductSerialPick"
+            disabled="{{productFieldsLocked}}"
           >
-            <view class="picker-value picker-value-serial">从「我的商品」选择序列号 ▾</view>
+            <view class="picker-value picker-value-serial">{{productFieldsLocked ? productSerialPickerLabels[productSerialPickerIndex] + ' 🔒' : '选择我的商品 ▾'}}</view>
           </picker>
         </view>
 

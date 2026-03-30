@@ -65,6 +65,12 @@ const Order = sequelize.define('Order', {
     allowNull: true,
     defaultValue: '',
   },
+  /** 用户选择的具体商品（DeviceGuide）ID */
+  guideId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    defaultValue: null,
+  },
 }, {
   tableName: 'orders',
   timestamps: true,

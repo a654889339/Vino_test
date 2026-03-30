@@ -1,4 +1,4 @@
-const { Order, User, OrderLog } = require('../models');
+const { Order, User, OrderLog, DeviceGuide } = require('../models');
 const wechatPay = require('../utils/wechatPayJsapi');
 
 function generateOrderNo() {
@@ -23,12 +23,13 @@ const STATUS_MAP = {
 
 exports.create = async (req, res) => {
   try {
-    const { serviceId, serviceTitle, serviceIcon, price, contactName, contactPhone, address, appointmentTime, remark, productSerial } = req.body;
+    const { serviceId, serviceTitle, serviceIcon, price, contactName, contactPhone, address, appointmentTime, remark, productSerial, guideId } = req.body;
     if (!serviceTitle || !price) {
       return res.status(400).json({ code: 400, message: '服务信息不完整' });
     }
     let serial = productSerial != null ? String(productSerial).trim() : '';
     if (serial.length > 128) serial = serial.slice(0, 128);
+    const parsedGuideId = guideId != null ? parseInt(guideId, 10) : null;
     const order = await Order.create({
       orderNo: generateOrderNo(),
       userId: req.user.id,
@@ -42,6 +43,7 @@ exports.create = async (req, res) => {
       appointmentTime: appointmentTime || null,
       remark: remark || '',
       productSerial: serial || '',
+      guideId: (!Number.isNaN(parsedGuideId) && parsedGuideId > 0) ? parsedGuideId : null,
       status: 'pending',
     });
     res.json({ code: 0, data: order });
@@ -129,7 +131,10 @@ exports.adminList = async (req, res) => {
     const ps = Math.max(1, Math.min(200, parseInt(pageSize, 10) || 50));
     const { count, rows } = await Order.findAndCountAll({
       where,
-      include: [{ model: User, as: 'user', attributes: ['id', 'username', 'email', 'nickname', 'phone'] }],
+      include: [
+        { model: User, as: 'user', attributes: ['id', 'username', 'email', 'nickname', 'phone'] },
+        { model: DeviceGuide, as: 'guide', attributes: ['id', 'name'], required: false },
+      ],
       order: [['createdAt', 'DESC']],
       limit: ps,
       offset: (pg - 1) * ps,

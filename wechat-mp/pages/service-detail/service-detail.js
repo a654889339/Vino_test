@@ -39,6 +39,15 @@ Page({
     myProducts: [],
     productSerialPickerLabels: [],
     productSerialPickerIndex: 0,
+    productCategories: [],
+    categoryPickerLabels: [],
+    categoryPickerIndex: 0,
+    allGuides: [],
+    filteredGuideLabels: [],
+    guidePickerIndex: 0,
+    selectedCategoryId: null,
+    selectedGuideId: null,
+    productFieldsLocked: false,
   },
 
   onLoad(options) {
@@ -129,6 +138,12 @@ Page({
       countryIndex: 0,
       productSerial: '',
       productSerialPickerIndex: 0,
+      categoryPickerIndex: 0,
+      guidePickerIndex: 0,
+      selectedCategoryId: null,
+      selectedGuideId: null,
+      productFieldsLocked: false,
+      filteredGuideLabels: [],
     };
 
     const trimStr = (v) => (v != null ? String(v).trim() : '');
@@ -172,20 +187,30 @@ Page({
       app.request({ url: '/addresses' }).catch(() => ({ data: [] })),
       app.request({ url: '/auth/profile' }).catch(() => ({ data: {} })),
       app.request({ url: '/auth/my-products' }).catch(() => ({ data: [] })),
+      app.request({ url: '/guides/categories' }).catch(() => ({ data: [] })),
+      app.request({ url: '/guides' }).catch(() => ({ data: [] })),
     ])
-      .then(([addrRes, profRes, mpRes]) => {
+      .then(([addrRes, profRes, mpRes, catRes, guideRes]) => {
         const mpPayload = this.buildMyProductsPickerPayload(mpRes);
+        const cats = catRes.data || [];
+        const guides = (guideRes.data || []).map(g => ({ id: g.id, name: g.name, categoryId: g.categoryId }));
+        const catPayload = {
+          productCategories: cats,
+          categoryPickerLabels: cats.map(c => c.name),
+          allGuides: guides,
+        };
         const list = addrRes.data || [];
         const u = profRes.data || {};
         if (list.length) {
           const def = list.find((a) => a.isDefault) || list[0];
-          applyAddrWithProfile(def, u, mpPayload);
+          applyAddrWithProfile(def, u, { ...mpPayload, ...catPayload });
         } else {
           this.setData({
             ...emptyForm,
             contactName: trimStr(u.nickname),
             contactPhone: trimStr(u.phone),
             ...mpPayload,
+            ...catPayload,
           });
         }
       })
@@ -244,11 +269,80 @@ Page({
     const i = parseInt(e.detail.value, 10);
     const p = this.data.myProducts[i];
     if (p && p.productKey) {
-      this.setData({
-        productSerialPickerIndex: i,
-        productSerial: String(p.productKey).slice(0, 128),
-      });
+      this.applyMyProduct(p, i);
     }
+  },
+
+  applyMyProduct(p, pickerIdx) {
+    const cats = this.data.productCategories;
+    const guides = this.data.allGuides;
+    let catIdx = 0;
+    let guideIdx = 0;
+    let filteredGuideLabels = [];
+    const catId = p.categoryId || null;
+    const guideId = p.guideId || null;
+
+    if (catId) {
+      const ci = cats.findIndex(c => c.id === catId);
+      if (ci >= 0) catIdx = ci;
+      const filtered = guides.filter(g => g.categoryId === catId);
+      filteredGuideLabels = filtered.map(g => g.name);
+      if (guideId) {
+        const gi = filtered.findIndex(g => g.id === guideId);
+        if (gi >= 0) guideIdx = gi;
+      }
+    }
+
+    this.setData({
+      productSerialPickerIndex: pickerIdx != null ? pickerIdx : this.data.productSerialPickerIndex,
+      productSerial: String(p.productKey || '').slice(0, 128),
+      selectedCategoryId: catId,
+      selectedGuideId: guideId,
+      categoryPickerIndex: catIdx,
+      guidePickerIndex: guideIdx,
+      filteredGuideLabels,
+      productFieldsLocked: true,
+    });
+  },
+
+  unlockProductFields() {
+    this.setData({
+      selectedCategoryId: null,
+      selectedGuideId: null,
+      categoryPickerIndex: 0,
+      guidePickerIndex: 0,
+      filteredGuideLabels: [],
+      productSerial: '',
+      productFieldsLocked: false,
+    });
+  },
+
+  onCategoryPickerChange(e) {
+    const i = parseInt(e.detail.value, 10);
+    const cats = this.data.productCategories;
+    const cat = cats[i];
+    if (!cat) return;
+    const filtered = this.data.allGuides.filter(g => g.categoryId === cat.id);
+    this.setData({
+      categoryPickerIndex: i,
+      selectedCategoryId: cat.id,
+      selectedGuideId: null,
+      guidePickerIndex: 0,
+      filteredGuideLabels: filtered.map(g => g.name),
+    });
+  },
+
+  onGuidePickerChange(e) {
+    const i = parseInt(e.detail.value, 10);
+    const cats = this.data.productCategories;
+    const catId = this.data.selectedCategoryId;
+    const filtered = this.data.allGuides.filter(g => g.categoryId === catId);
+    const g = filtered[i];
+    if (!g) return;
+    this.setData({
+      guidePickerIndex: i,
+      selectedGuideId: g.id,
+    });
   },
 
   closeOrderForm() {
@@ -271,7 +365,15 @@ Page({
   },
 
   submitOrder() {
-    const { contactName, contactPhone, country, customCountry, region, detailAddress, serviceData, productSerial } = this.data;
+    const { contactName, contactPhone, country, customCountry, region, detailAddress, serviceData, productSerial, selectedCategoryId, selectedGuideId } = this.data;
+    if (!selectedCategoryId) {
+      wx.showToast({ title: '请选择商品种类', icon: 'none' });
+      return;
+    }
+    if (!selectedGuideId) {
+      wx.showToast({ title: '请选择具体商品', icon: 'none' });
+      return;
+    }
     if (!contactName || !contactName.trim()) {
       wx.showToast({ title: '请输入联系人', icon: 'none' });
       return;
@@ -310,6 +412,7 @@ Page({
       address: fullAddress,
       remark: (this.data.remark || '').trim(),
       productSerial: (productSerial || '').trim().slice(0, 128),
+      guideId: selectedGuideId,
     };
 
     app.request({

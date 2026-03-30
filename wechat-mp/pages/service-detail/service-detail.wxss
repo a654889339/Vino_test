@@ -298,3 +298,20 @@
   border: none;
 }
 
+.picker-locked {
+  color: #999;
+  opacity: 0.7;
+}
+
+.my-product-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.unlock-btn {
+  font-size: 24rpx;
+  color: #B91C1C;
+  padding: 4rpx 12rpx;
+}
+

@@ -46,22 +46,73 @@
           </van-cell-group>
 
           <van-cell-group inset class="mt12">
+            <div class="picker-trigger" @click="productFieldsLocked || (showCategoryPicker = !showCategoryPicker)">
+              <span class="picker-label">商品种类</span>
+              <span :class="['picker-value', { placeholder: !orderForm.categoryId, disabled: productFieldsLocked }]">
+                {{ selectedCategoryName || '请选择商品种类' }}
+              </span>
+              <van-icon v-if="!productFieldsLocked" :name="showCategoryPicker ? 'arrow-up' : 'arrow-down'" class="picker-arrow" />
+              <van-icon v-else name="lock" class="picker-arrow" size="14" color="#999" />
+            </div>
+            <div v-if="showCategoryPicker" class="select-list">
+              <div
+                v-for="cat in productCategories"
+                :key="cat.id"
+                class="select-item"
+                :class="{ active: orderForm.categoryId === cat.id }"
+                @click="selectCategory(cat)"
+              >
+                <span>{{ cat.name }}</span>
+                <van-icon v-if="orderForm.categoryId === cat.id" name="success" color="#B91C1C" size="16" />
+              </div>
+            </div>
+          </van-cell-group>
+
+          <van-cell-group inset class="mt12" v-if="orderForm.categoryId">
+            <div class="picker-trigger" @click="productFieldsLocked || (showGuidePicker = !showGuidePicker)">
+              <span class="picker-label">具体商品</span>
+              <span :class="['picker-value', { placeholder: !orderForm.guideId, disabled: productFieldsLocked }]">
+                {{ selectedGuideName || '请选择具体商品' }}
+              </span>
+              <van-icon v-if="!productFieldsLocked" :name="showGuidePicker ? 'arrow-up' : 'arrow-down'" class="picker-arrow" />
+              <van-icon v-else name="lock" class="picker-arrow" size="14" color="#999" />
+            </div>
+            <div v-if="showGuidePicker" class="select-list">
+              <div
+                v-for="g in filteredGuides"
+                :key="g.id"
+                class="select-item"
+                :class="{ active: orderForm.guideId === g.id }"
+                @click="selectGuide(g)"
+              >
+                <span>{{ g.name }}</span>
+                <van-icon v-if="orderForm.guideId === g.id" name="success" color="#B91C1C" size="16" />
+              </div>
+            </div>
+          </van-cell-group>
+
+          <van-cell-group inset class="mt12">
             <van-field
               v-model="orderForm.productSerial"
               label="商品序列号"
               placeholder="选填，可手动输入或点击下方我的商品"
               maxlength="128"
+              :disabled="productFieldsLocked"
             />
           </van-cell-group>
+
           <div v-if="myProducts.length" class="saved-addr-section">
-            <div class="saved-addr-title">从「我的商品」选择序列号</div>
+            <div class="saved-addr-title">
+              <span>从「我的商品」选择</span>
+              <span v-if="productFieldsLocked" class="saved-addr-clear" @click="unlockProductFields">清除选择</span>
+            </div>
             <div class="saved-addr-list">
               <div
                 v-for="p in myProducts"
                 :key="p.productKey"
                 class="saved-addr-item"
-                :class="{ active: orderForm.productSerial === p.productKey }"
-                @click="orderForm.productSerial = p.productKey"
+                :class="{ active: orderForm.productSerial === p.productKey && productFieldsLocked }"
+                @click="applyMyProduct(p)"
               >
                 <div class="my-product-row">
                   <div class="my-product-info">
@@ -146,7 +197,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { serviceApi, orderApi, addressApi, authApi } from '@/api';
+import { serviceApi, orderApi, addressApi, authApi, guideApi } from '@/api';
 import { showToast, showDialog } from 'vant';
 import { formatPriceDisplay, shouldShowPrice } from '@/utils/currency';
 import { areaList } from '@vant/area-data';
@@ -160,6 +211,11 @@ const showInlineArea = ref(false);
 const savedAddresses = ref([]);
 const selectedAddrId = ref(null);
 const myProducts = ref([]);
+const productCategories = ref([]);
+const allGuides = ref([]);
+const showCategoryPicker = ref(false);
+const showGuidePicker = ref(false);
+const productFieldsLocked = ref(false);
 
 const countryColumns = [
   '中国大陆', '中国香港', '中国澳门', '中国台湾',
@@ -179,7 +235,54 @@ const orderForm = reactive({
   detailAddress: '',
   remark: '',
   productSerial: '',
+  categoryId: null,
+  guideId: null,
 });
+
+const selectedCategoryName = computed(() => {
+  if (!orderForm.categoryId) return '';
+  const cat = productCategories.value.find(c => c.id === orderForm.categoryId);
+  return cat ? cat.name : '';
+});
+
+const selectedGuideName = computed(() => {
+  if (!orderForm.guideId) return '';
+  const g = allGuides.value.find(x => x.id === orderForm.guideId);
+  return g ? g.name : '';
+});
+
+const filteredGuides = computed(() => {
+  if (!orderForm.categoryId) return [];
+  return allGuides.value.filter(g => g.categoryId === orderForm.categoryId);
+});
+
+const selectCategory = (cat) => {
+  orderForm.categoryId = cat.id;
+  orderForm.guideId = null;
+  showCategoryPicker.value = false;
+  showGuidePicker.value = false;
+};
+
+const selectGuide = (g) => {
+  orderForm.guideId = g.id;
+  showGuidePicker.value = false;
+};
+
+const applyMyProduct = (p) => {
+  if (p.categoryId) orderForm.categoryId = p.categoryId;
+  if (p.guideId) orderForm.guideId = p.guideId;
+  orderForm.productSerial = p.productKey || '';
+  productFieldsLocked.value = true;
+  showCategoryPicker.value = false;
+  showGuidePicker.value = false;
+};
+
+const unlockProductFields = () => {
+  productFieldsLocked.value = false;
+  orderForm.categoryId = null;
+  orderForm.guideId = null;
+  orderForm.productSerial = '';
+};
 
 const countryDisplay = computed(() => {
   if (orderForm.country === '其他' && orderForm.customCountry) return `其他 - ${orderForm.customCountry}`;
@@ -279,6 +382,17 @@ const loadMyProducts = async () => {
   }
 };
 
+const loadProductCategoriesAndGuides = async () => {
+  try {
+    const [catRes, guideRes] = await Promise.all([guideApi.categories(), guideApi.list()]);
+    productCategories.value = catRes.data || [];
+    allGuides.value = (guideRes.data || []).map(g => ({ id: g.id, name: g.name, categoryId: g.categoryId }));
+  } catch {
+    productCategories.value = [];
+    allGuides.value = [];
+  }
+};
+
 const fallbackServices = {
   1: { title: '设备维修', description: '专业工程师提供全方位维修服务，品质保障，售后无忧。', price: '99', originPrice: '159', icon: 'setting-o', bg: 'linear-gradient(135deg, #B91C1C, #991B1B)' },
   2: { title: '上门维修', description: '快速响应，工程师2小时内上门服务。', price: '149', originPrice: '199', icon: 'location-o', bg: 'linear-gradient(135deg, #DC2626, #B91C1C)' },
@@ -318,7 +432,10 @@ onMounted(async () => {
   showInlineCountry.value = false;
   showInlineArea.value = false;
   orderForm.productSerial = '';
-  await Promise.all([loadSavedAddresses(), loadMyProducts()]);
+  orderForm.categoryId = null;
+  orderForm.guideId = null;
+  productFieldsLocked.value = false;
+  await Promise.all([loadSavedAddresses(), loadMyProducts(), loadProductCategoriesAndGuides()]);
 
   try {
     const res = await serviceApi.detail(id);
@@ -339,6 +456,8 @@ onMounted(async () => {
 });
 
 const submitOrder = async () => {
+  if (!orderForm.categoryId) { showToast('请选择商品种类'); return; }
+  if (!orderForm.guideId) { showToast('请选择具体商品'); return; }
   if (!orderForm.contactName.trim()) { showToast('请输入联系人'); return; }
   if (!orderForm.contactPhone.trim()) { showToast('请输入联系电话'); return; }
   if (!orderForm.country) { showToast('请选择国家/地区'); return; }
@@ -359,6 +478,7 @@ const submitOrder = async () => {
       address: fullAddress,
       remark: orderForm.remark.trim(),
       productSerial: orderForm.productSerial.trim(),
+      guideId: orderForm.guideId,
     });
     showDialog({ title: '预约成功', message: '您的服务已预约成功，我们会尽快安排工程师。' }).then(() => {
       router.push('/orders');
@@ -465,6 +585,11 @@ const submitOrder = async () => {
 
 .picker-value.placeholder {
   color: #c8c9cc;
+}
+
+.picker-value.disabled {
+  color: #999;
+  opacity: 0.7;
 }
 
 .picker-arrow {

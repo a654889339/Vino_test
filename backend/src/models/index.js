@@ -39,6 +39,7 @@ UserProduct.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 User.hasMany(Order, { foreignKey: 'userId', as: 'orders' });
 Order.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+Order.belongsTo(DeviceGuide, { foreignKey: 'guideId', as: 'guide' });
 Order.hasMany(OrderLog, { foreignKey: 'orderId', as: 'logs' });
 OrderLog.belongsTo(Order, { foreignKey: 'orderId', as: 'order' });
 User.hasMany(Address, { foreignKey: 'userId', as: 'addresses' });
