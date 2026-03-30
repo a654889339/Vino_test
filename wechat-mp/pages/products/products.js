@@ -86,23 +86,39 @@ Page({
         const base = app.globalData.baseUrl.replace('/api', '');
         const raw = res.data || [];
         const sorted = sortGuidesByDisplayOrder(raw, cat.name);
-        const list = sorted.map(g => ({
-          id: g.id,
-          name: g.name,
-          slug: g.slug || '',
-          icon: g.icon || '',
-          iconUrl: g.iconUrl
+        const list = sorted.map(g => {
+          const iconUrl = g.iconUrl
             ? (g.iconUrl.startsWith('http') ? g.iconUrl : base + g.iconUrl)
-            : '',
-          iconUrlThumb: g.iconUrlThumb
+            : '';
+          const iconUrlThumb = g.iconUrlThumb
             ? (g.iconUrlThumb.startsWith('http') ? g.iconUrlThumb : base + g.iconUrlThumb)
-            : '',
-        }));
+            : '';
+          return {
+            id: g.id,
+            name: g.name,
+            slug: g.slug || '',
+            icon: g.icon || '',
+            iconUrl,
+            iconUrlThumb,
+            displayIconUrl: (iconUrlThumb || iconUrl || '').trim(),
+          };
+        });
         this.setData({ deviceGuides: list, listLoading: false }, () => {
           this.applyFilter();
         });
       })
       .catch(() => this.setData({ listLoading: false }));
+  },
+
+  /** 缩略图加载失败（如 COS 无 thumb 对象）时回退原图 */
+  onGridIconError(e) {
+    const id = e.currentTarget.dataset.id;
+    const deviceGuides = (this.data.deviceGuides || []).map((g) => {
+      if (g.id !== id || !g.iconUrl) return g;
+      if (g.displayIconUrl === g.iconUrl) return g;
+      return { ...g, displayIconUrl: g.iconUrl };
+    });
+    this.setData({ deviceGuides }, () => this.applyFilter());
   },
 
   selectProduct(e) {

@@ -41,7 +41,7 @@
         >
           <view class="grid-card-inner">
             <view class="grid-card-icon">
-              <image wx:if="{{item.iconUrl}}" src="{{item.iconUrlThumb || item.iconUrl}}" class="grid-card-img" mode="aspectFit" />
+              <image wx:if="{{item.iconUrl}}" src="{{item.displayIconUrl}}" class="grid-card-img" mode="aspectFit" data-id="{{item.id}}" binderror="onGridIconError" />
               <text wx:else class="grid-card-placeholder">📦</text>
             </view>
             <text class="grid-card-name">{{item.name}}</text>

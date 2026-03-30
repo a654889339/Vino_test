@@ -29,7 +29,7 @@
     <scroll-view scroll-x class="nav-lg-row" wx:if="{{navLgItems.length}}">
       <view class="nav-lg-item" wx:for="{{navLgItems}}" wx:key="id" bindtap="goPath" data-path="{{item.path}}">
         <view class="nav-lg-icon">
-          <image wx:if="{{item.imageUrl}}" src="{{item.imageUrlThumb || item.imageUrl}}" class="nav-lg-img" mode="aspectFill" />
+          <image wx:if="{{item.imageUrl}}" src="{{item.displayImageUrl}}" class="nav-lg-img" mode="aspectFill" data-id="{{item.id}}" data-kind="lg" binderror="onNavImageError" />
           <text wx:else class="nav-lg-emoji">🔧</text>
         </view>
         <text class="nav-lg-label" style="color:{{item.color || '#B91C1C'}}">{{item.title}}</text>
@@ -38,7 +38,7 @@
     <view class="nav-sm-row" wx:if="{{navSmItems.length}}">
       <view class="nav-sm-item" wx:for="{{navSmItems}}" wx:key="id" bindtap="goPath" data-path="{{item.path}}">
         <view class="nav-sm-icon">
-          <image wx:if="{{item.imageUrl}}" src="{{item.imageUrlThumb || item.imageUrl}}" class="nav-sm-img" mode="aspectFit" />
+          <image wx:if="{{item.imageUrl}}" src="{{item.displayImageUrl}}" class="nav-sm-img" mode="aspectFit" data-id="{{item.id}}" data-kind="sm" binderror="onNavImageError" />
           <text wx:else class="nav-sm-emoji">📋</text>
         </view>
         <text class="nav-sm-label">{{item.title}}</text>
@@ -56,7 +56,7 @@
       <view class="vino-grid">
         <view class="vino-cell" wx:for="{{vinoItems}}" wx:key="id" bindtap="goVinoGuide" data-slug="{{item.path}}">
           <view class="vino-icon-wrap">
-            <image wx:if="{{item.iconUrlThumb || item.iconUrl}}" src="{{item.iconUrlThumb || item.iconUrl}}" class="vino-icon-img" mode="aspectFit" />
+            <image wx:if="{{item.iconUrlThumb || item.iconUrl}}" src="{{item.displayIconUrl}}" class="vino-icon-img" mode="aspectFit" data-idx="{{index}}" binderror="onVinoIconError" />
             <text wx:else class="vino-emoji">📦</text>
           </view>
           <text class="vino-name">{{item.title}}</text>
@@ -94,7 +94,7 @@
       <view class="my-product-item {{item.guideSlug || item.guide ? 'my-product-item--clickable' : ''}}" wx:for="{{myProducts}}" wx:key="productKey" bindtap="goMyProductGuide" data-slug="{{item.guideSlug || item.guide}}">
         <text class="my-product-category">{{item.categoryName || '-'}}</text>
         <view class="my-product-icon-wrap">
-          <image wx:if="{{item.iconUrlThumb || item.iconUrl}}" src="{{item.iconUrlThumb || item.iconUrl}}" class="my-product-icon" mode="aspectFit" />
+          <image wx:if="{{item.iconUrlThumb || item.iconUrl}}" src="{{item.displayIconUrl}}" class="my-product-icon" mode="aspectFit" data-idx="{{index}}" binderror="onMyProductIconError" />
           <text wx:else class="my-product-icon-placeholder">📦</text>
         </view>
         <text class="my-product-name">{{item.productName || item.productKey}}</text>

@@ -50,11 +50,16 @@ Page({
           if (t.startsWith('http')) return t;
           return base + (t.startsWith('/') ? t : '/' + t);
         };
-        const myProducts = list.map(item => ({
-          ...item,
-          iconUrl: item.iconUrl ? toFull(item.iconUrl) : '',
-          iconUrlThumb: item.iconUrlThumb ? toFull(item.iconUrlThumb) : '',
-        }));
+        const myProducts = list.map(item => {
+          const full = item.iconUrl ? toFull(item.iconUrl) : '';
+          const thumb = item.iconUrlThumb ? toFull(item.iconUrlThumb) : '';
+          return {
+            ...item,
+            iconUrl: full,
+            iconUrlThumb: thumb,
+            displayIconUrl: (thumb || full || '').trim(),
+          };
+        });
         this.setData({ myProducts });
       })
       .catch(() => this.setData({ myProducts: [] }));
@@ -162,10 +167,36 @@ Page({
         const myProductsTitleItem = items.find(i => i.section === 'myProducts' && i.status === 'active');
         const navLg = items.filter(i => i.section === 'navLg' && i.status === 'active')
           .sort((a, b) => a.sortOrder - b.sortOrder)
-          .map(i => ({ id: i.id, title: i.title, imageUrl: i.imageUrl, imageUrlThumb: i.imageUrlThumb || '', icon: i.icon, path: i.path || '/pages/service/service', color: i.color }));
+          .map(i => {
+            const imageUrl = i.imageUrl ? toFull(i.imageUrl) : '';
+            const imageUrlThumb = i.imageUrlThumb ? toFull(i.imageUrlThumb) : '';
+            return {
+              id: i.id,
+              title: i.title,
+              imageUrl,
+              imageUrlThumb,
+              displayImageUrl: (imageUrlThumb || imageUrl || '').trim(),
+              icon: i.icon,
+              path: i.path || '/pages/service/service',
+              color: i.color,
+            };
+          });
         const navSm = items.filter(i => i.section === 'navSm' && i.status === 'active')
           .sort((a, b) => a.sortOrder - b.sortOrder)
-          .map(i => ({ id: i.id, title: i.title, imageUrl: i.imageUrl, imageUrlThumb: i.imageUrlThumb || '', icon: i.icon, path: i.path || '/pages/service/service', color: i.color }));
+          .map(i => {
+            const imageUrl = i.imageUrl ? toFull(i.imageUrl) : '';
+            const imageUrlThumb = i.imageUrlThumb ? toFull(i.imageUrlThumb) : '';
+            return {
+              id: i.id,
+              title: i.title,
+              imageUrl,
+              imageUrlThumb,
+              displayImageUrl: (imageUrlThumb || imageUrl || '').trim(),
+              icon: i.icon,
+              path: i.path || '/pages/service/service',
+              color: i.color,
+            };
+          });
 
         const vinoRows = items.filter(i => i.section === 'vinoProduct' && i.status === 'active')
           .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
@@ -182,12 +213,15 @@ Page({
           }
           if (!iconUrl && row.imageUrl) iconUrl = row.imageUrl;
           if (!iconUrlThumb && row.imageUrlThumb) iconUrlThumb = row.imageUrlThumb;
+          const fullIcon = iconUrl ? toFull(iconUrl) : '';
+          const thumbIcon = iconUrlThumb ? toFull(iconUrlThumb) : '';
           return {
             id: row.id,
             title,
             path,
-            iconUrl: iconUrl ? toFull(iconUrl) : '',
-            iconUrlThumb: iconUrlThumb ? toFull(iconUrlThumb) : '',
+            iconUrl: fullIcon,
+            iconUrlThumb: thumbIcon,
+            displayIconUrl: (thumbIcon || fullIcon || '').trim(),
           };
         });
 
@@ -259,6 +293,41 @@ Page({
         });
       })
       .catch(() => {});
+  },
+
+  /** 导航图：缩略图 404 时改用原图 */
+  onNavImageError(e) {
+    const id = e.currentTarget.dataset.id;
+    const kind = e.currentTarget.dataset.kind;
+    const key = kind === 'sm' ? 'navSmItems' : 'navLgItems';
+    const list = (this.data[key] || []).map((item) => {
+      if (item.id !== id || !item.imageUrl) return item;
+      if (item.displayImageUrl === item.imageUrl) return item;
+      return { ...item, displayImageUrl: item.imageUrl };
+    });
+    this.setData({ [key]: list });
+  },
+
+  /** Vino 产品区：缩略图失败回退原图 */
+  onVinoIconError(e) {
+    const idx = e.currentTarget.dataset.idx;
+    const list = [...(this.data.vinoItems || [])];
+    const it = list[idx];
+    if (!it || !it.iconUrl) return;
+    if (it.displayIconUrl === it.iconUrl) return;
+    list[idx] = { ...it, displayIconUrl: it.iconUrl };
+    this.setData({ vinoItems: list });
+  },
+
+  /** 我的商品：缩略图失败回退原图 */
+  onMyProductIconError(e) {
+    const idx = e.currentTarget.dataset.idx;
+    const list = [...(this.data.myProducts || [])];
+    const it = list[idx];
+    if (!it || !it.iconUrl) return;
+    if (it.displayIconUrl === it.iconUrl) return;
+    list[idx] = { ...it, displayIconUrl: it.iconUrl };
+    this.setData({ myProducts: list });
   },
 
   /** 缩略图/轮播图加载失败时回退原图（避免 404 导致空白） */
