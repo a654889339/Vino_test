@@ -97,14 +97,17 @@
           @click="openVinoProductGuide(item)"
         >
           <div class="vino-product-icon-wrap">
-            <img
-              v-if="vinoUseImg(item) && !vinoImgFailed[item.id]"
-              :src="vinoImgResolved(item)"
-              class="vino-product-icon-img"
-              alt=""
-              @error="onVinoImgError(item.id)"
-            />
-            <van-icon v-if="!vinoUseImg(item) || vinoImgFailed[item.id]" :name="vinoIconName(item)" size="28" color="rgba(0,0,0,0.45)" />
+            <template v-if="vinoUseImg(item)">
+              <img
+                v-if="!vinoImgFailed[item.id]"
+                :src="vinoImgResolved(item)"
+                class="vino-product-icon-img"
+                alt=""
+                @error="onVinoImgError(item.id)"
+              />
+              <van-icon v-else :name="vinoIconName(item)" size="28" color="rgba(0,0,0,0.45)" />
+            </template>
+            <van-icon v-else :name="vinoIconName(item)" size="28" color="rgba(0,0,0,0.45)" />
           </div>
           <span class="vino-product-name">{{ item.title }}</span>
         </div>

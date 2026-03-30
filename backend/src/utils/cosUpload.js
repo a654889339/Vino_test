@@ -143,6 +143,77 @@ async function signCosUrlsDeepAsync(val, seen = new WeakSet()) {
   return val;
 }
 
+function isKeyAllowedForProxy(key) {
+  if (!key || typeof key !== 'string') return false;
+  if (key.includes('..') || key.includes('\\')) return false;
+  return key.startsWith('vino/uploads/');
+}
+
+/** 已是本服务 COS 代理地址（避免重复替换） */
+function isCosProxyApiUrl(url) {
+  if (!url || typeof url !== 'string') return false;
+  return /\/api\/media\/cos\?key=/.test(url);
+}
+
+function buildRequestBaseUrl(req) {
+  const raw = (req.headers['x-forwarded-proto'] || req.protocol || 'http').toString();
+  const proto = raw.split(',')[0].trim() || 'http';
+  const host = (req.get && req.get('host')) || req.headers.host || 'localhost';
+  return `${proto}://${host}`;
+}
+
+/** 将本桶 COS 直链改为走服务端代理（小程序等对签名直链易 403，代理用密钥拉流） */
+function toProxyUrlIfCos(req, url) {
+  if (!url || typeof url !== 'string') return url;
+  if (isCosProxyApiUrl(url)) return url;
+  const key = urlToKey(url);
+  if (!key || !isKeyAllowedForProxy(key)) return url;
+  if (!getClient()) return url;
+  const base = buildRequestBaseUrl(req);
+  return `${base}/api/media/cos?key=${encodeURIComponent(key)}`;
+}
+
+async function proxyCosUrlsDeepAsync(req, val, seen = new WeakSet()) {
+  if (val === null || val === undefined) return val;
+  if (typeof val === 'string') return toProxyUrlIfCos(req, val);
+  if (typeof val !== 'object') return val;
+  if (seen.has(val)) return val;
+  if (Array.isArray(val)) {
+    seen.add(val);
+    const out = await Promise.all(val.map((v) => proxyCosUrlsDeepAsync(req, v, seen)));
+    for (let i = 0; i < val.length; i++) val[i] = out[i];
+    return val;
+  }
+  seen.add(val);
+  const keys = Object.keys(val);
+  await Promise.all(
+    keys.map(async (k) => {
+      val[k] = await proxyCosUrlsDeepAsync(req, val[k], seen);
+    })
+  );
+  return val;
+}
+
+/** 将 COS 对象流式输出给 HTTP 响应（私有桶读） */
+function streamObjectToResponse(key, res) {
+  const client = getClient();
+  if (!client) {
+    res.status(503).json({ code: 503, message: 'COS 未配置' });
+    return;
+  }
+  client.getObject({ Bucket, Region, Key: key }, (err, data) => {
+    if (err) {
+      const code = err.statusCode === 403 || err.statusCode === 404 ? 404 : err.statusCode || 500;
+      if (!res.headersSent) res.status(code).end();
+      return;
+    }
+    const ct = data.headers['content-type'] || 'application/octet-stream';
+    res.setHeader('Content-Type', ct);
+    res.setHeader('Cache-Control', 'public, max-age=300');
+    data.Body.pipe(res);
+  });
+}
+
 /** 服务端下载 COS 对象（私有桶），用于生成缩略图等 */
 function getObjectBuffer(key) {
   return new Promise((resolve, reject) => {
@@ -229,5 +300,8 @@ module.exports = {
   urlToKey,
   getObjectBuffer,
   signCosUrlsDeepAsync,
+  proxyCosUrlsDeepAsync,
+  streamObjectToResponse,
+  isKeyAllowedForProxy,
   isSigningEnabled,
 };

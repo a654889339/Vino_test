@@ -5,9 +5,11 @@ const morgan = require('morgan');
 const config = require('./config');
 const routes = require('./routes');
 const { syncDatabase } = require('./models');
-const { cosUrlSigningMiddleware } = require('./middleware/cosUrlSigning');
+const { cosUrlProxyMiddleware } = require('./middleware/cosUrlSigning');
 
 const app = express();
+
+app.set('trust proxy', 1);
 
 app.use(cors());
 app.use(morgan(config.nodeEnv === 'production' ? 'combined' : 'dev'));
@@ -39,7 +41,7 @@ app.get('/', (req, res) => {
 });
 app.use('/uploads', express.static(uploadsDir));
 
-app.use('/api', cosUrlSigningMiddleware, routes);
+app.use('/api', cosUrlProxyMiddleware, routes);
 
 app.use((req, res) => {
   res.status(404).json({ code: 404, message: '接口不存在' });

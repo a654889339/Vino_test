@@ -14,8 +14,11 @@ const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 const adminController = require('../controllers/adminController');
 const seedController = require('../controllers/seedController');
 const analyticsController = require('../controllers/analyticsController');
+const mediaController = require('../controllers/mediaController');
 
 const router = Router();
+
+router.get('/media/cos', mediaController.streamCosObject);
 
 router.post('/analytics/page-view', analyticsController.recordPageView);
 router.get('/admin/page-visit-stats', authMiddleware, adminMiddleware, analyticsController.getPageVisitStats);
