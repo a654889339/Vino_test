@@ -27,7 +27,7 @@
             :class="{ active: selectedCategoryId === cat.id }"
             @click="selectCategory(cat)"
           >
-            {{ cat.name }}
+            {{ pick(cat, 'name') }}
           </button>
         </aside>
         <div class="product-main">
@@ -58,7 +58,7 @@
                 />
                 <van-icon v-else :name="d.icon || 'photo-o'" size="28" color="#6b7280" />
               </div>
-              <span class="grid-card-name">{{ d.name }}</span>
+              <span class="grid-card-name">{{ pick(d, 'name') }}</span>
             </button>
           </div>
           <div v-else-if="selectedCategoryId && !listLoading && sortedDeviceGuides.length && !filteredDeviceGuides.length" class="main-empty">
@@ -84,6 +84,7 @@ import { useRouter } from 'vue-router';
 import { guideApi } from '@/api';
 import LodImg from '@/components/LodImg.vue';
 import PageThemeLayer from '@/components/PageThemeLayer.vue';
+import { pick } from '@/utils/i18n';
 import {
   sortGuidesByDisplayOrder,
   sortCategoriesForSidebar,

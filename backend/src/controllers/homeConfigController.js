@@ -4,6 +4,18 @@ const path = require('path');
 
 const FIELDS = ['section','title','desc','icon','color','path','price','sortOrder','status','imageUrl','imageUrlThumb'];
 
+/** 将旧的 /api/media/cos?key=... 代理 URL 还原为直链 COS URL */
+function fixProxyUrl(url) {
+  if (!url || typeof url !== 'string') return url;
+  const u = url.trim();
+  const prefix = '/api/media/cos?key=';
+  if (u.startsWith(prefix)) {
+    const key = decodeURIComponent(u.slice(prefix.length));
+    return `${cosUpload.CosBaseUrl}/${key}`;
+  }
+  return u;
+}
+
 exports.list = async (req, res) => {
   try {
     const where = {};
@@ -12,9 +24,8 @@ exports.list = async (req, res) => {
     const items = await HomeConfig.findAll({ where, order: [['section','ASC'],['sortOrder','ASC'],['id','ASC']] });
     const data = items.map(it => {
       const o = it.get ? it.get({ plain: true }) : it;
-      // 仅返回数据库中的缩略图；不再用 getThumbUrl 推导（COS 上可能未生成 thumb 文件会导致 404）
       const thumb = (o.imageUrlThumb && o.imageUrlThumb.trim()) ? o.imageUrlThumb.trim() : null;
-      return { ...o, imageUrlThumb: thumb };
+      return { ...o, imageUrl: fixProxyUrl(o.imageUrl), imageUrlThumb: fixProxyUrl(thumb) };
     });
     res.json({ code: 0, data });
   } catch (e) {

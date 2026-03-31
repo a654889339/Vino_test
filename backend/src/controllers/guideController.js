@@ -19,7 +19,7 @@ exports.categories = async (req, res) => {
     const list = await ProductCategory.findAll({
       where: { status: 'active' },
       order: [['sortOrder', 'ASC'], ['id', 'ASC']],
-      attributes: ['id', 'name', 'sortOrder', 'thumbnailUrl'],
+      attributes: ['id', 'name', 'nameEn', 'sortOrder', 'thumbnailUrl'],
     });
     res.json({ code: 0, data: list });
   } catch (err) {
@@ -82,6 +82,7 @@ const GUIDE_FIELDS = [
   'categoryId','tags','sections','sortOrder','status',
   'coverImage','coverImageThumb','showcaseVideo','description','mediaItems','helpItems',
   'manualPdfUrl',
+  'nameEn','subtitleEn','badgeEn','descriptionEn',
 ];
 
 exports.create = async (req, res) => {

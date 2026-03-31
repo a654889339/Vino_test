@@ -14,10 +14,11 @@ exports.list = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    const { name, sortOrder, status, thumbnailUrl } = req.body;
+    const { name, nameEn, sortOrder, status, thumbnailUrl } = req.body;
     if (!name || !name.trim()) return res.status(400).json({ code: 400, message: '种类名称不能为空' });
     const cat = await ProductCategory.create({
       name: name.trim(),
+      nameEn: (nameEn || '').trim(),
       thumbnailUrl: thumbnailUrl != null && String(thumbnailUrl).trim() ? String(thumbnailUrl).trim() : null,
       sortOrder: parseInt(sortOrder, 10) || 0,
       status: status || 'active',
@@ -33,8 +34,9 @@ exports.update = async (req, res) => {
   try {
     const cat = await ProductCategory.findByPk(req.params.id);
     if (!cat) return res.status(404).json({ code: 404, message: '种类不存在' });
-    const { name, sortOrder, status, thumbnailUrl } = req.body;
+    const { name, nameEn, sortOrder, status, thumbnailUrl } = req.body;
     if (name !== undefined) cat.name = name.trim();
+    if (nameEn !== undefined) cat.nameEn = (nameEn || '').trim();
     if (thumbnailUrl !== undefined) {
       cat.thumbnailUrl = thumbnailUrl != null && String(thumbnailUrl).trim() ? String(thumbnailUrl).trim() : null;
     }

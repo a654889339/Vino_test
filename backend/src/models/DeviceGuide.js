@@ -123,6 +123,26 @@ const DeviceGuide = sequelize.define('DeviceGuide', {
     type: DataTypes.STRING(500),
     defaultValue: '',
   },
+  nameEn: {
+    type: DataTypes.STRING(100),
+    defaultValue: '',
+    comment: '商品名称（英文）',
+  },
+  subtitleEn: {
+    type: DataTypes.STRING(200),
+    defaultValue: '',
+    comment: '副标题（英文）',
+  },
+  badgeEn: {
+    type: DataTypes.STRING(20),
+    defaultValue: '',
+    comment: '标签（英文）',
+  },
+  descriptionEn: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    comment: '描述（英文）',
+  },
   status: {
     type: DataTypes.ENUM('active', 'inactive'),
     defaultValue: 'active',

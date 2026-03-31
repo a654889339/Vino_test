@@ -1,8 +1,10 @@
 const app = getApp();
 const { buildSectionSkinContainerStyle } = require('../../utils/sectionSkin.js');
+const i18n = require('../../utils/i18n.js');
 
 Page({
   data: {
+    currentLang: i18n.getLang(),
     headerLogoUrl: '',
     heroBgUrl: '',
     heroBgList: [],
@@ -31,8 +33,23 @@ Page({
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({ selected: 0 });
     }
+    this.setData({ currentLang: i18n.getLang() });
+    i18n.detectLangByIp((lang) => { this.setData({ currentLang: lang }); });
     this.loadHomeConfig();
     this.loadMyProducts();
+  },
+
+  onLangTap() {
+    const items = ['中文', 'English'];
+    wx.showActionSheet({
+      itemList: items,
+      success: (res) => {
+        const lang = res.tapIndex === 1 ? 'en' : 'zh';
+        i18n.setLang(lang);
+        this.setData({ currentLang: lang });
+        this.loadHomeConfig();
+      },
+    });
   },
 
   loadMyProducts() {

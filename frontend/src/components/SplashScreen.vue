@@ -2,8 +2,8 @@
   <Transition name="splash-fade">
     <div v-if="visible" class="splash-screen" :style="{ background: backgroundColor }" @click="dismiss">
       <div class="splash-content">
-        <!-- 红框处：后台配置的开场动画描述 -->
-        <div class="splash-desc" v-if="displayText">{{ displayText }}</div>
+        <img v-if="splashImageUrl" :src="splashImageUrl" class="splash-logo-img" alt="" />
+        <div class="splash-desc" v-if="displayText" :style="{ color: textColor }">{{ displayText }}</div>
         <div class="splash-progress">
           <div class="splash-progress-bar"></div>
         </div>
@@ -19,20 +19,37 @@ import { homeConfigApi } from '@/api';
 const visible = ref(true);
 const splashConfig = ref(null);
 
-// 获取背景色：优先使用配置的 color，否则使用默认黑色
 const backgroundColor = computed(() => {
   return splashConfig.value?.color || '#000';
 });
 
-// 获取显示文本：优先使用配置的描述，否则使用默认文本
+const splashImageUrl = computed(() => {
+  return splashConfig.value?.imageUrl || '';
+});
+
+const isLightBg = computed(() => {
+  const c = (splashConfig.value?.color || '').trim().toLowerCase();
+  if (!c || c === '#000' || c === '#000000' || c === 'black') return false;
+  if (c === '#fff' || c === '#ffffff' || c === 'white') return true;
+  if (c.startsWith('#') && c.length >= 4) {
+    const hex = c.length <= 5
+      ? c.slice(1).split('').map(h => parseInt(h + h, 16))
+      : [c.slice(1, 3), c.slice(3, 5), c.slice(5, 7)].map(h => parseInt(h, 16));
+    if (hex.length >= 3 && hex.every(v => !isNaN(v))) {
+      return (hex[0] * 0.299 + hex[1] * 0.587 + hex[2] * 0.114) > 186;
+    }
+  }
+  return false;
+});
+
+const textColor = computed(() => {
+  return isLightBg.value ? 'rgba(0,0,0,0.75)' : 'rgba(255,255,255,0.85)';
+});
+
 const displayText = computed(() => {
-  if (splashConfig.value?.desc) {
-    return splashConfig.value.desc;
-  }
-  if (splashConfig.value?.title) {
-    return `即将打开${splashConfig.value.title}...`;
-  }
-  return '即将打开VINO服务站...';
+  if (splashConfig.value?.desc) return splashConfig.value.desc;
+  if (splashConfig.value?.title) return splashConfig.value.title;
+  return '';
 });
 
 
@@ -89,10 +106,16 @@ onMounted(async () => {
   padding: 0 24px;
 }
 
-/* 红框处：后台配置的开场动画描述 */
+.splash-logo-img {
+  max-width: 180px;
+  max-height: 120px;
+  object-fit: contain;
+  opacity: 0;
+  animation: charIn 0.6s 0.3s ease forwards;
+}
+
 .splash-desc {
   font-size: 15px;
-  color: rgba(255, 255, 255, 0.85);
   text-align: center;
   letter-spacing: 1px;
   line-height: 1.5;

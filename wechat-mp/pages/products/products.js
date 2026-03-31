@@ -1,5 +1,6 @@
 const app = getApp();
 const { sortGuidesByDisplayOrder, sortCategoriesForSidebar } = require('../../utils/productGuideOrder.js');
+const { pick } = require('../../utils/i18n.js');
 
 function resolveMediaUrl(u) {
   if (!u || !String(u).trim()) return '';
@@ -29,7 +30,7 @@ Page({
   loadCategories() {
     app.request({ url: '/guides/categories' })
       .then(res => {
-        const categories = sortCategoriesForSidebar(res.data || []);
+        const categories = sortCategoriesForSidebar(res.data || []).map(c => ({ ...c, name: pick(c, 'name') }));
         this.setData({ categories });
         if (categories.length) {
           this.selectCategoryByCat(categories[0]);
@@ -95,7 +96,7 @@ Page({
             : '';
           return {
             id: g.id,
-            name: g.name,
+            name: pick(g, 'name'),
             slug: g.slug || '',
             icon: g.icon || '',
             iconUrl,

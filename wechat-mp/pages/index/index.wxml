@@ -16,6 +16,12 @@
       <view class="hero-header">
         <image wx:if="{{headerLogoUrl}}" src="{{headerLogoUrl}}" class="hero-logo" mode="aspectFit" />
         <text wx:else class="hero-logo-text">VINO</text>
+        <view class="hero-actions">
+          <view class="lang-switcher" bindtap="onLangTap">
+            <text class="lang-label">{{currentLang === 'en' ? 'EN' : '中'}}</text>
+            <text class="lang-arrow">▾</text>
+          </view>
+        </view>
       </view>
     </view>
   </view>

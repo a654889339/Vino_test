@@ -22,6 +22,7 @@
             <path d="M405 72 C410 58, 435 55, 440 72 C445 89, 420 98, 415 112 C410 126, 430 138, 445 125 C435 145, 405 138, 400 120 C395 102, 418 95, 425 80 C430 70, 412 65, 408 75Z" fill="#fff"/>
           </svg>
           <div class="hero-actions">
+            <LangSwitcher />
             <div class="share-btn" @click="showShare = true">
               <van-icon name="share-o" size="18" color="#fff" />
             </div>
@@ -235,6 +236,8 @@ import { showToast } from 'vant';
 import { homeConfigApi, authApi, guideApi } from '@/api';
 import LodImg from '@/components/LodImg.vue';
 import PageThemeLayer from '@/components/PageThemeLayer.vue';
+import LangSwitcher from '@/components/LangSwitcher.vue';
+import { detectLangByIp } from '@/utils/i18n';
 import { resolvePublicUrl } from '@/utils/mediaUrl';
 import { buildSectionSkinLayerStyle, buildSectionSkinContainerStyle } from '@/utils/sectionSkin';
 
@@ -301,6 +304,7 @@ async function loadMyProducts() {
 }
 
 onMounted(async () => {
+  detectLangByIp();
   try {
     const [hcRes, gRes] = await Promise.all([
       homeConfigApi.list(),

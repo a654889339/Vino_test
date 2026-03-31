@@ -835,6 +835,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
             <div class="form-group"><label>排序</label><input class="form-input" id="gSort" type="number" value="0" /></div>
           </div>
           <div class="form-group"><label>渐变色</label><input class="form-input" id="gGradient" placeholder="linear-gradient(135deg, #3B82F6, #1D4ED8)" /></div>
+          <h4 style="margin:20px 0 12px;color:var(--primary)">英文配置 <span style="font-weight:normal;color:#999;font-size:12px">（选填，用于英文语言环境展示）</span></h4>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="form-group"><label>名称（英文）</label><input class="form-input" id="gNameEn" placeholder="e.g. Air Conditioner" /></div>
+            <div class="form-group"><label>副标题（英文）</label><input class="form-input" id="gSubtitleEn" placeholder="e.g. Residential/Commercial" /></div>
+            <div class="form-group"><label>角标（英文）</label><input class="form-input" id="gBadgeEn" placeholder="e.g. Hot, New" /></div>
+            <div class="form-group"><label>描述（英文）</label><input class="form-input" id="gDescriptionEn" placeholder="English description" /></div>
+          </div>
           <h4 style="margin:20px 0 12px;color:var(--primary)">展示媒体</h4>
           <div class="form-group">
             <label>展示大图 <span style="font-weight:normal;color:#999;font-size:12px">（前端页面顶部横幅图片，建议 750×400 以上）</span></label>
@@ -897,6 +904,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <div class="modal-body">
           <input type="hidden" id="categoryEditId" />
           <div class="form-group"><label>种类名称 *</label><input class="form-input" id="categoryName" placeholder="如：空调" /></div>
+          <div class="form-group"><label>英文名称</label><input class="form-input" id="categoryNameEn" placeholder="e.g. Air Conditioner" /></div>
           <div class="form-group">
             <label>分类页缩略图 <span style="font-weight:normal;color:#999;font-size:12px">（前台/小程序产品页，搜索框下方横幅）</span></label>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -1983,6 +1991,7 @@ function openCategoryEditor(id) {
   document.getElementById('categoryEditId').value = c ? c.id : '';
   document.getElementById('categoryModalTitle').textContent = c ? '编辑种类' : '新增种类';
   document.getElementById('categoryName').value = c ? c.name : '';
+  document.getElementById('categoryNameEn').value = c ? (c.nameEn || '') : '';
   document.getElementById('categorySort').value = c ? c.sortOrder : 0;
   document.getElementById('categoryStatus').value = c ? c.status : 'active';
   const rawThumb = c && (c.thumbnailUrl != null ? c.thumbnailUrl : c.thumbnail_url);
@@ -2006,6 +2015,7 @@ async function saveCategory() {
   const thumb = document.getElementById('categoryThumbnailUrl').value.trim();
   const body = {
     name,
+    nameEn: (document.getElementById('categoryNameEn').value || '').trim(),
     thumbnailUrl: thumb || null,
     sortOrder: parseInt(document.getElementById('categorySort').value, 10) || 0,
     status: document.getElementById('categoryStatus').value,
@@ -2504,6 +2514,10 @@ function openGuideEditor(guide) {
   guideHelpItems = parseJSON(guide&&guide.helpItems).map(h=>({...h}));
   renderMediaItems(); renderHelpItems();
   document.getElementById('gManualPdfUrl').value = guide ? (guide.manualPdfUrl || '') : '';
+  document.getElementById('gNameEn').value = guide ? (guide.nameEn || '') : '';
+  document.getElementById('gSubtitleEn').value = guide ? (guide.subtitleEn || '') : '';
+  document.getElementById('gBadgeEn').value = guide ? (guide.badgeEn || '') : '';
+  document.getElementById('gDescriptionEn').value = guide ? (guide.descriptionEn || '') : '';
   document.getElementById('guideModal').style.display = 'flex';
 }
 
@@ -2549,6 +2563,10 @@ async function saveGuide() {
     mediaItems: guideMediaItems,
     helpItems: guideHelpItems,
     manualPdfUrl: (document.getElementById('gManualPdfUrl') && document.getElementById('gManualPdfUrl').value) ? document.getElementById('gManualPdfUrl').value.trim() : '',
+    nameEn: (document.getElementById('gNameEn').value || '').trim(),
+    subtitleEn: (document.getElementById('gSubtitleEn').value || '').trim(),
+    badgeEn: (document.getElementById('gBadgeEn').value || '').trim(),
+    descriptionEn: (document.getElementById('gDescriptionEn').value || '').trim(),
   };
   try {
     const res = id
