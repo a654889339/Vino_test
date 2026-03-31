@@ -19,7 +19,7 @@ exports.list = async (req, res) => {
 
     const rows = await Service.findAll({
       where,
-      include: [{ model: ServiceCategory, as: 'serviceCategory', attributes: ['id', 'name', 'key'], where: { status: 'active' }, required: true }],
+      include: [{ model: ServiceCategory, as: 'serviceCategory', attributes: ['id', 'name', 'nameEn', 'key'], where: { status: 'active' }, required: true }],
       order: [
         [{ model: ServiceCategory, as: 'serviceCategory' }, 'sortOrder', 'ASC'],
         ['sortOrder', 'ASC'],
@@ -39,7 +39,7 @@ exports.detail = async (req, res) => {
     const id = parseInt(req.params.id, 10);
     if (isNaN(id)) return res.status(400).json({ code: 400, message: '无效的服务ID' });
     const service = await Service.findByPk(id, {
-      include: [{ model: ServiceCategory, as: 'serviceCategory', attributes: ['id', 'name', 'key'] }],
+      include: [{ model: ServiceCategory, as: 'serviceCategory', attributes: ['id', 'name', 'nameEn', 'key'] }],
     });
     if (!service) return res.status(404).json({ code: 404, message: '服务不存在' });
     res.json({ code: 0, data: service });
@@ -53,7 +53,7 @@ exports.detail = async (req, res) => {
 exports.adminList = async (req, res) => {
   try {
     const rows = await Service.findAll({
-      include: [{ model: ServiceCategory, as: 'serviceCategory', attributes: ['id', 'name', 'key'] }],
+      include: [{ model: ServiceCategory, as: 'serviceCategory', attributes: ['id', 'name', 'nameEn', 'key'] }],
       order: [
         [{ model: ServiceCategory, as: 'serviceCategory' }, 'sortOrder', 'ASC'],
         ['sortOrder', 'ASC'],
