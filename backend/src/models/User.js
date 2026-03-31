@@ -40,6 +40,16 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING(20),
     defaultValue: '',
   },
+  lastLoginIp: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+    comment: 'Last login IP address',
+  },
+  lastLoginAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: 'Last login timestamp',
+  },
   role: {
     type: DataTypes.ENUM('user', 'admin'),
     defaultValue: 'user',

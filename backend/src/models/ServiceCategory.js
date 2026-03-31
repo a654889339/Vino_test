@@ -26,6 +26,11 @@ const ServiceCategory = sequelize.define('ServiceCategory', {
     allowNull: true,
     comment: '前端分组用，如 repair, clean, inspect, data',
   },
+  nameEn: {
+    type: DataTypes.STRING(100),
+    defaultValue: '',
+    comment: 'Category name (English)',
+  },
   sortOrder: {
     type: DataTypes.INTEGER,
     defaultValue: 0,

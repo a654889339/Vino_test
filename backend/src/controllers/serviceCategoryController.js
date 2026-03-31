@@ -14,10 +14,11 @@ exports.list = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    const { name, key, sortOrder, status, bg, bgOpacity } = req.body;
+    const { name, key, sortOrder, status, bg, bgOpacity, nameEn } = req.body;
     if (!name || !name.trim()) return res.status(400).json({ code: 400, message: '种类名称不能为空' });
     const cat = await ServiceCategory.create({
       name: name.trim(),
+      nameEn: nameEn !== undefined ? ((nameEn && String(nameEn).trim()) || null) : null,
       key: (key && key.trim()) || null,
       sortOrder: parseInt(sortOrder, 10) || 0,
       status: status || 'active',
@@ -37,8 +38,9 @@ exports.update = async (req, res) => {
   try {
     const cat = await ServiceCategory.findByPk(req.params.id);
     if (!cat) return res.status(404).json({ code: 404, message: '种类不存在' });
-    const { name, key, sortOrder, status, bg, bgOpacity } = req.body;
+    const { name, key, sortOrder, status, bg, bgOpacity, nameEn } = req.body;
     if (name !== undefined) cat.name = name.trim();
+    if (nameEn !== undefined) cat.nameEn = (nameEn && String(nameEn).trim()) || null;
     if (key !== undefined) cat.key = (key && key.trim()) || null;
     if (sortOrder !== undefined) cat.sortOrder = parseInt(sortOrder, 10) || 0;
     if (status !== undefined) cat.status = status;

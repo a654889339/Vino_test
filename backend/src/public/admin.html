@@ -833,8 +833,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         </div>
         <div class="modal-body">
           <div class="form-group">
-            <label>名称</label>
-            <input class="form-input" id="tbTitle" placeholder="如 首页、产品、服务" />
+            <label>语种</label>
+            <select class="form-input" id="tbLang" onchange="onTbLangChange()"><option value="zh">中文</option><option value="en">English</option></select>
+          </div>
+          <div id="tbLangZh">
+            <div class="form-group"><label>名称</label><input class="form-input" id="tbTitle" placeholder="如 首页、产品、服务" /></div>
+          </div>
+          <div id="tbLangEn" style="display:none">
+            <div class="form-group"><label>Name (EN)</label><input class="form-input" id="tbTitleEn" placeholder="e.g. Home, Products, Services" /></div>
           </div>
           <div class="form-group">
             <label>Vant 图标名</label>
@@ -906,32 +912,56 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         </div>
         <div class="modal-body" style="max-height:75vh;overflow-y:auto">
           <input type="hidden" id="guideEditId" />
-          <h4 style="margin:0 0 12px;color:var(--primary)">基本信息</h4>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-            <div class="form-group"><label>所属种类 *</label><select class="form-input" id="gCategoryId"><option value="">请选择种类</option></select></div>
-            <div class="form-group"><label>名称 *</label><input class="form-input" id="gName" placeholder="如：空调" /></div>
-            <div class="form-group"><label>英文描述 * <span style="font-weight:normal;color:#999;font-size:12px">（唯一标识，用于链接路径，如 aircondition）</span></label><input class="form-input" id="gSlug" placeholder="如：aircondition" oninput="this.value=this.value.replace(/[^a-zA-Z0-9_-]/g,'')" /></div>
-            <div class="form-group"><label>副标题</label><input class="form-input" id="gSubtitle" placeholder="如：家用/商用中央空调" /></div>
-            <div class="form-group"><label>自定义图标 <span style="font-weight:normal;color:#999;font-size:12px">（上传后替代默认图标）</span></label>
-              <div style="display:flex;gap:8px;align-items:center">
-                <img id="gIconPreview" style="width:44px;height:44px;object-fit:contain;border-radius:10px;border:1px solid #eee;display:none;background:#f5f5f5" />
-                <input class="form-input" id="gIconUrl" placeholder="上传自定义图标图片" style="flex:1" onchange="var p=document.getElementById('gIconPreview');if(this.value){p.src=this.value;p.style.display='block'}else{p.style.display='none'}" />
-                <label style="padding:8px 14px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">上传图标<input type="file" accept="image/*" style="display:none" onchange="uploadGuideFile(this,'gIconUrl')" /></label>
-              </div>
-              <div class="form-group" style="margin-top:6px"><label>图标缩略图 URL <span style="font-weight:normal;color:#999;font-size:12px">（可选，优先加载）</span></label><div style="display:flex;gap:8px;align-items:center"><input class="form-input" id="gIconUrlThumb" placeholder="留空则直接使用原图" style="flex:1" /><label style="padding:8px 14px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">上传图片<input type="file" accept="image/*" style="display:none" onchange="uploadGuideFile(this,'gIconUrlThumb')" /></label></div></div>
-            </div>
-            <div class="form-group"><label>备用Vant图标 <span style="font-weight:normal;color:#999;font-size:12px">（无自定义图标时使用）</span></label><input class="form-input" id="gIcon" placeholder="cluster-o" /></div>
-            <div class="form-group"><label>Emoji</label><input class="form-input" id="gEmoji" placeholder="❄️" /></div>
-            <div class="form-group"><label>角标</label><input class="form-input" id="gBadge" placeholder="热门、新" /></div>
-            <div class="form-group"><label>排序</label><input class="form-input" id="gSort" type="number" value="0" /></div>
+          <div class="form-group" style="margin-bottom:14px">
+            <label>语种</label>
+            <select class="form-input" id="gLang" onchange="onGuideLangChange()" style="width:160px"><option value="zh">中文</option><option value="en">English</option></select>
           </div>
-          <div class="form-group"><label>渐变色</label><input class="form-input" id="gGradient" placeholder="linear-gradient(135deg, #3B82F6, #1D4ED8)" /></div>
-          <h4 style="margin:20px 0 12px;color:var(--primary)">英文配置 <span style="font-weight:normal;color:#999;font-size:12px">（选填，用于英文语言环境展示）</span></h4>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-            <div class="form-group"><label>名称（英文）</label><input class="form-input" id="gNameEn" placeholder="e.g. Air Conditioner" /></div>
-            <div class="form-group"><label>副标题（英文）</label><input class="form-input" id="gSubtitleEn" placeholder="e.g. Residential/Commercial" /></div>
-            <div class="form-group"><label>角标（英文）</label><input class="form-input" id="gBadgeEn" placeholder="e.g. Hot, New" /></div>
-            <div class="form-group"><label>描述（英文）</label><input class="form-input" id="gDescriptionEn" placeholder="English description" /></div>
+          <div id="guideLangZh">
+            <h4 style="margin:0 0 12px;color:var(--primary)">基本信息</h4>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div class="form-group"><label>所属种类 *</label><select class="form-input" id="gCategoryId"><option value="">请选择种类</option></select></div>
+              <div class="form-group"><label>名称 *</label><input class="form-input" id="gName" placeholder="如：空调" /></div>
+              <div class="form-group"><label>英文描述 * <span style="font-weight:normal;color:#999;font-size:12px">（唯一标识，用于链接路径，如 aircondition）</span></label><input class="form-input" id="gSlug" placeholder="如：aircondition" oninput="this.value=this.value.replace(/[^a-zA-Z0-9_-]/g,'')" /></div>
+              <div class="form-group"><label>副标题</label><input class="form-input" id="gSubtitle" placeholder="如：家用/商用中央空调" /></div>
+              <div class="form-group"><label>自定义图标 <span style="font-weight:normal;color:#999;font-size:12px">（上传后替代默认图标）</span></label>
+                <div style="display:flex;gap:8px;align-items:center">
+                  <img id="gIconPreview" style="width:44px;height:44px;object-fit:contain;border-radius:10px;border:1px solid #eee;display:none;background:#f5f5f5" />
+                  <input class="form-input" id="gIconUrl" placeholder="上传自定义图标图片" style="flex:1" onchange="var p=document.getElementById('gIconPreview');if(this.value){p.src=this.value;p.style.display='block'}else{p.style.display='none'}" />
+                  <label style="padding:8px 14px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">上传图标<input type="file" accept="image/*" style="display:none" onchange="uploadGuideFile(this,'gIconUrl')" /></label>
+                </div>
+                <div class="form-group" style="margin-top:6px"><label>图标缩略图 URL <span style="font-weight:normal;color:#999;font-size:12px">（可选，优先加载）</span></label><div style="display:flex;gap:8px;align-items:center"><input class="form-input" id="gIconUrlThumb" placeholder="留空则直接使用原图" style="flex:1" /><label style="padding:8px 14px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">上传图片<input type="file" accept="image/*" style="display:none" onchange="uploadGuideFile(this,'gIconUrlThumb')" /></label></div></div>
+              </div>
+              <div class="form-group"><label>备用Vant图标 <span style="font-weight:normal;color:#999;font-size:12px">（无自定义图标时使用）</span></label><input class="form-input" id="gIcon" placeholder="cluster-o" /></div>
+              <div class="form-group"><label>Emoji</label><input class="form-input" id="gEmoji" placeholder="❄️" /></div>
+              <div class="form-group"><label>角标</label><input class="form-input" id="gBadge" placeholder="热门、新" /></div>
+              <div class="form-group"><label>排序</label><input class="form-input" id="gSort" type="number" value="0" /></div>
+            </div>
+            <div class="form-group"><label>渐变色</label><input class="form-input" id="gGradient" placeholder="linear-gradient(135deg, #3B82F6, #1D4ED8)" /></div>
+          </div>
+          <div id="guideLangEn" style="display:none">
+            <h4 style="margin:0 0 12px;color:var(--primary)">English Config</h4>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div class="form-group"><label>Name (EN)</label><input class="form-input" id="gNameEn" placeholder="e.g. Air Conditioner" /></div>
+              <div class="form-group"><label>Subtitle (EN)</label><input class="form-input" id="gSubtitleEn" placeholder="e.g. Residential/Commercial" /></div>
+              <div class="form-group"><label>Badge (EN)</label><input class="form-input" id="gBadgeEn" placeholder="e.g. Hot, New" /></div>
+              <div class="form-group"><label>Description (EN)</label><input class="form-input" id="gDescriptionEn" placeholder="English description" /></div>
+              <div class="form-group"><label>Emoji (EN)</label><input class="form-input" id="gEmojiEn" placeholder="❄️" /></div>
+              <div class="form-group"><label>Gradient (EN)</label><input class="form-input" id="gGradientEn" placeholder="linear-gradient(...)" /></div>
+            </div>
+            <div class="form-group"><label>Icon (EN)</label>
+              <div style="display:flex;gap:8px;align-items:center">
+                <input class="form-input" id="gIconUrlEn" placeholder="English icon image URL" style="flex:1" />
+                <label style="padding:8px 14px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">Upload<input type="file" accept="image/*" style="display:none" onchange="uploadGuideFile(this,'gIconUrlEn')" /></label>
+              </div>
+              <div class="form-group" style="margin-top:6px"><label>Icon Thumb (EN)</label><div style="display:flex;gap:8px;align-items:center"><input class="form-input" id="gIconUrlThumbEn" placeholder="Optional" style="flex:1" /><label style="padding:8px 14px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">Upload<input type="file" accept="image/*" style="display:none" onchange="uploadGuideFile(this,'gIconUrlThumbEn')" /></label></div></div>
+            </div>
+            <div class="form-group"><label>Cover Image (EN)</label>
+              <div style="display:flex;gap:8px;align-items:center">
+                <input class="form-input" id="gCoverImageEn" placeholder="English cover image" style="flex:1" />
+                <label style="padding:8px 14px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">Upload<input type="file" accept="image/*" style="display:none" onchange="uploadGuideFile(this,'gCoverImageEn')" /></label>
+              </div>
+              <div class="form-group" style="margin-top:6px"><label>Cover Thumb (EN)</label><div style="display:flex;gap:8px;align-items:center"><input class="form-input" id="gCoverImageThumbEn" placeholder="Optional" style="flex:1" /><label style="padding:8px 14px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">Upload<input type="file" accept="image/*" style="display:none" onchange="uploadGuideFile(this,'gCoverImageThumbEn')" /></label></div></div>
+            </div>
           </div>
           <h4 style="margin:20px 0 12px;color:var(--primary)">展示媒体</h4>
           <div class="form-group">
@@ -1114,7 +1144,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         </div>
         <div class="modal-body">
           <input type="hidden" id="serviceCategoryEditId" />
-          <div class="form-group"><label>种类名称 *</label><input class="form-input" id="serviceCategoryName" placeholder="如：维修" /></div>
+          <div class="form-group"><label>语种</label><select class="form-input" id="scLang" onchange="onScLangChange()"><option value="zh">中文</option><option value="en">English</option></select></div>
+          <div id="scLangZh"><div class="form-group"><label>种类名称 *</label><input class="form-input" id="serviceCategoryName" placeholder="如：维修" /></div></div>
+          <div id="scLangEn" style="display:none"><div class="form-group"><label>Category Name (EN)</label><input class="form-input" id="serviceCategoryNameEn" placeholder="e.g. Repair" /></div></div>
           <div class="form-group"><label>key <span style="font-weight:normal;color:#999;font-size:12px">（可选，如 repair，用于前台分组）</span></label><input class="form-input" id="serviceCategoryKey" placeholder="如：repair" /></div>
           <div class="form-group"><label>背景色 <span style="font-weight:normal;color:#999;font-size:12px">（可选，如 #2a2a2e）</span></label><input class="form-input" id="serviceCategoryBg" placeholder="#2a2a2e" /></div>
           <div class="form-group"><label>透明度 <span style="font-weight:normal;color:#999;font-size:12px">（0-100，可选）</span></label><input type="number" class="form-input" id="serviceCategoryBgOpacity" placeholder="100" min="0" max="100" step="1" /></div>
@@ -1134,19 +1166,29 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         </div>
         <div class="modal-body">
           <input type="hidden" id="serviceItemEditId" />
-          <div class="form-group"><label>种类 *</label><select class="form-input" id="serviceItemCategoryId"><option value="">请选择种类</option></select></div>
-          <div class="form-group"><label>名称 *</label><input class="form-input" id="serviceItemTitle" placeholder="如：设备维修" /></div>
-          <div class="form-group"><label>描述</label><input class="form-input" id="serviceItemDesc" placeholder="简短描述或详情页描述" /></div>
-          <div class="form-group"><label>图标图片 <span style="font-weight:normal;color:#999;font-size:12px">（上传则前台显示图片，否则显示下方 Vant 图标名）</span></label>
-            <div style="display:flex;gap:8px;align-items:center">
-              <input class="form-input" id="serviceItemIconUrl" placeholder="上传或填写图标图片 URL" style="flex:1" />
-              <label style="padding:8px 14px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">上传图片<input type="file" accept="image/*" style="display:none" onchange="uploadServiceIconUrl(this)" /></label>
+          <div class="form-group"><label>语种</label><select class="form-input" id="siLang" onchange="onSiLangChange()"><option value="zh">中文</option><option value="en">English</option></select></div>
+          <div id="siLangZh">
+            <div class="form-group"><label>种类 *</label><select class="form-input" id="serviceItemCategoryId"><option value="">请选择种类</option></select></div>
+            <div class="form-group"><label>名称 *</label><input class="form-input" id="serviceItemTitle" placeholder="如：设备维修" /></div>
+            <div class="form-group"><label>描述</label><input class="form-input" id="serviceItemDesc" placeholder="简短描述或详情页描述" /></div>
+            <div class="form-group"><label>图标图片 <span style="font-weight:normal;color:#999;font-size:12px">（上传则前台显示图片，否则显示下方 Vant 图标名）</span></label>
+              <div style="display:flex;gap:8px;align-items:center">
+                <input class="form-input" id="serviceItemIconUrl" placeholder="上传或填写图标图片 URL" style="flex:1" />
+                <label style="padding:8px 14px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">上传图片<input type="file" accept="image/*" style="display:none" onchange="uploadServiceIconUrl(this)" /></label>
+              </div>
+              <img id="serviceItemIconPreview" style="width:44px;height:44px;object-fit:contain;border-radius:8px;border:1px solid #eee;margin-top:6px;display:none;background:#f5f5f5" />
             </div>
-            <img id="serviceItemIconPreview" style="width:44px;height:44px;object-fit:contain;border-radius:8px;border:1px solid #eee;margin-top:6px;display:none;background:#f5f5f5" />
+            <div class="form-group"><label>Vant 图标名 <span style="font-weight:normal;color:#999;font-size:12px">（无图标图片时使用）</span></label><input class="form-input" id="serviceItemIcon" placeholder="如 setting-o、location-o" /></div>
+            <div class="form-group"><label>价格</label><input class="form-input" type="number" id="serviceItemPrice" placeholder="99" step="0.01" /></div>
+            <div class="form-group"><label>原价（详情页展示）</label><input class="form-input" type="number" id="serviceItemOriginPrice" placeholder="159" step="0.01" /></div>
           </div>
-          <div class="form-group"><label>Vant 图标名 <span style="font-weight:normal;color:#999;font-size:12px">（无图标图片时使用）</span></label><input class="form-input" id="serviceItemIcon" placeholder="如 setting-o、location-o" /></div>
-          <div class="form-group"><label>价格</label><input class="form-input" type="number" id="serviceItemPrice" placeholder="99" step="0.01" /></div>
-          <div class="form-group"><label>原价（详情页展示）</label><input class="form-input" type="number" id="serviceItemOriginPrice" placeholder="159" step="0.01" /></div>
+          <div id="siLangEn" style="display:none">
+            <div class="form-group"><label>Title (EN)</label><input class="form-input" id="serviceItemTitleEn" placeholder="e.g. Device Repair" /></div>
+            <div class="form-group"><label>Description (EN)</label><input class="form-input" id="serviceItemDescEn" placeholder="English description" /></div>
+            <div class="form-group"><label>Price (EN)</label><input class="form-input" type="number" id="serviceItemPriceEn" placeholder="99" step="0.01" /></div>
+            <div class="form-group"><label>Original Price (EN)</label><input class="form-input" type="number" id="serviceItemOriginPriceEn" placeholder="159" step="0.01" /></div>
+            <div class="form-group"><label>Currency (EN)</label><input class="form-input" id="serviceItemCurrencyEn" placeholder="$ or €" /></div>
+          </div>
           <div class="form-group"><label>背景色</label><input class="form-input" id="serviceItemBg" placeholder="#B91C1C" /></div>
           <div class="form-group"><label>透明度 <span style="font-weight:normal;color:#999;font-size:12px">（0-100，100 为不透明，用于前台服务详情头部背景）</span></label><input class="form-input" type="number" id="serviceItemBgOpacity" placeholder="100" min="0" max="100" step="1" /></div>
           <div class="form-group"><label>排序</label><input type="number" class="form-input" id="serviceItemSort" value="0" /></div>
@@ -1934,9 +1976,18 @@ function renderUserTable() {
       if (isEmptyNormal) {
         html += '<div style="font-size:13px;color:#999">该用户暂无订单、绑定商品与收货地址，状态正常。</div>';
       } else {
+        const lastIp = u.lastLoginIp || '';
+        const lastAt = u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString('zh-CN') : '-';
         html += `<div style="margin-bottom:10px"><strong>用户信息</strong>
         <span style="margin-left:16px;font-size:13px;color:#666">状态: ${u.status === 'active' ? '✅ 正常' : '❌ 禁用'}</span>
-      </div>`;
+      </div>
+      <div style="font-size:13px;color:#666;margin-bottom:10px">最后登录: ${lastAt} &nbsp; IP: ${lastIp || '-'} &nbsp; <span id="userRegion_${u.id}" style="color:#2563EB">${lastIp ? '(查询中...)' : ''}</span></div>`;
+        if (lastIp) {
+          fetch('https://ipapi.co/' + lastIp.replace(/^::ffff:/, '') + '/json/').then(r => r.json()).then(d => {
+            var el = document.getElementById('userRegion_' + u.id);
+            if (el) el.textContent = d.country_name ? (d.country_name + (d.region ? ' / ' + d.region : '') + (d.city ? ' / ' + d.city : '')) : '(未知)';
+          }).catch(() => { var el = document.getElementById('userRegion_' + u.id); if (el) el.textContent = '(查询失败)'; });
+        }
         const orderIds = u.orderIds || [];
         html += `<div style="font-size:14px;font-weight:600;margin-bottom:4px">该用户的订单 (${orderIds.length})</div>`;
         if (orderIds.length) {
@@ -2327,12 +2378,20 @@ function openServiceCategoryEditor(id) {
   document.getElementById('serviceCategoryEditId').value = c ? c.id : '';
   document.getElementById('serviceCategoryModalTitle').textContent = c ? '编辑种类' : '新增种类';
   document.getElementById('serviceCategoryName').value = c ? c.name : '';
+  document.getElementById('serviceCategoryNameEn').value = c ? (c.nameEn || '') : '';
   document.getElementById('serviceCategoryKey').value = c ? (c.key || '') : '';
   document.getElementById('serviceCategoryBg').value = c ? (c.bg || '') : '';
   document.getElementById('serviceCategoryBgOpacity').value = c && c.bgOpacity != null ? c.bgOpacity : '';
   document.getElementById('serviceCategorySort').value = c ? c.sortOrder : 0;
   document.getElementById('serviceCategoryStatus').value = c ? c.status : 'active';
+  document.getElementById('scLang').value = 'zh';
+  onScLangChange();
   document.getElementById('serviceCategoryModal').style.display = 'flex';
+}
+function onScLangChange() {
+  var lang = document.getElementById('scLang').value;
+  document.getElementById('scLangZh').style.display = lang === 'zh' ? '' : 'none';
+  document.getElementById('scLangEn').style.display = lang === 'en' ? '' : 'none';
 }
 
 function closeServiceCategoryEditor() { document.getElementById('serviceCategoryModal').style.display = 'none'; }
@@ -2345,6 +2404,7 @@ async function saveServiceCategory() {
   const bgOpacity = document.getElementById('serviceCategoryBgOpacity').value;
   const body = {
     name,
+    nameEn: (document.getElementById('serviceCategoryNameEn').value || '').trim() || undefined,
     key: document.getElementById('serviceCategoryKey').value.trim() || undefined,
     bg: bg || undefined,
     bgOpacity: (bgOpacity != null && String(bgOpacity).trim() !== '') ? bgOpacity : null,
@@ -2384,11 +2444,23 @@ function openServiceItemEditor(id) {
   document.getElementById('serviceItemIcon').value = s ? (s.icon || '') : '';
   document.getElementById('serviceItemPrice').value = s != null && s.price != null ? s.price : '';
   document.getElementById('serviceItemOriginPrice').value = s != null && s.originPrice != null ? s.originPrice : '';
+  document.getElementById('serviceItemTitleEn').value = s ? (s.titleEn || '') : '';
+  document.getElementById('serviceItemDescEn').value = s ? (s.descriptionEn || '') : '';
+  document.getElementById('serviceItemPriceEn').value = s != null && s.priceEn != null ? s.priceEn : '';
+  document.getElementById('serviceItemOriginPriceEn').value = s != null && s.originPriceEn != null ? s.originPriceEn : '';
+  document.getElementById('serviceItemCurrencyEn').value = s ? (s.currencyEn || '') : '';
   document.getElementById('serviceItemBg').value = s ? (s.bg || '#B91C1C') : '#B91C1C';
   document.getElementById('serviceItemBgOpacity').value = s != null && s.bgOpacity != null ? s.bgOpacity : '';
   document.getElementById('serviceItemSort').value = s ? s.sortOrder : 0;
   document.getElementById('serviceItemStatus').value = s ? s.status : 'active';
+  document.getElementById('siLang').value = 'zh';
+  onSiLangChange();
   document.getElementById('serviceItemModal').style.display = 'flex';
+}
+function onSiLangChange() {
+  var lang = document.getElementById('siLang').value;
+  document.getElementById('siLangZh').style.display = lang === 'zh' ? '' : 'none';
+  document.getElementById('siLangEn').style.display = lang === 'en' ? '' : 'none';
 }
 
 function editServiceItem(id) { openServiceItemEditor(id); }
@@ -2409,6 +2481,11 @@ async function saveServiceItem() {
     icon: document.getElementById('serviceItemIcon').value.trim() || undefined,
     price: parseFloat(document.getElementById('serviceItemPrice').value) || 0,
     originPrice: document.getElementById('serviceItemOriginPrice').value ? parseFloat(document.getElementById('serviceItemOriginPrice').value) : undefined,
+    titleEn: (document.getElementById('serviceItemTitleEn').value || '').trim(),
+    descriptionEn: (document.getElementById('serviceItemDescEn').value || '').trim(),
+    priceEn: document.getElementById('serviceItemPriceEn').value ? parseFloat(document.getElementById('serviceItemPriceEn').value) : undefined,
+    originPriceEn: document.getElementById('serviceItemOriginPriceEn').value ? parseFloat(document.getElementById('serviceItemOriginPriceEn').value) : undefined,
+    currencyEn: (document.getElementById('serviceItemCurrencyEn').value || '').trim(),
     bg: document.getElementById('serviceItemBg').value.trim() || '#B91C1C',
     bgOpacity: document.getElementById('serviceItemBgOpacity').value !== '' ? parseFloat(document.getElementById('serviceItemBgOpacity').value) : undefined,
     sortOrder: parseInt(document.getElementById('serviceItemSort').value, 10) || 0,
@@ -2661,7 +2738,20 @@ function openGuideEditor(guide) {
   document.getElementById('gSubtitleEn').value = guide ? (guide.subtitleEn || '') : '';
   document.getElementById('gBadgeEn').value = guide ? (guide.badgeEn || '') : '';
   document.getElementById('gDescriptionEn').value = guide ? (guide.descriptionEn || '') : '';
+  document.getElementById('gIconUrlEn').value = guide ? (guide.iconUrlEn || '') : '';
+  document.getElementById('gIconUrlThumbEn').value = guide ? (guide.iconUrlThumbEn || '') : '';
+  document.getElementById('gCoverImageEn').value = guide ? (guide.coverImageEn || '') : '';
+  document.getElementById('gCoverImageThumbEn').value = guide ? (guide.coverImageThumbEn || '') : '';
+  document.getElementById('gEmojiEn').value = guide ? (guide.emojiEn || '') : '';
+  document.getElementById('gGradientEn').value = guide ? (guide.gradientEn || '') : '';
+  document.getElementById('gLang').value = 'zh';
+  onGuideLangChange();
   document.getElementById('guideModal').style.display = 'flex';
+}
+function onGuideLangChange() {
+  var lang = document.getElementById('gLang').value;
+  document.getElementById('guideLangZh').style.display = lang === 'zh' ? '' : 'none';
+  document.getElementById('guideLangEn').style.display = lang === 'en' ? '' : 'none';
 }
 
 function closeGuideEditor() { document.getElementById('guideModal').style.display = 'none'; }
@@ -2710,6 +2800,12 @@ async function saveGuide() {
     subtitleEn: (document.getElementById('gSubtitleEn').value || '').trim(),
     badgeEn: (document.getElementById('gBadgeEn').value || '').trim(),
     descriptionEn: (document.getElementById('gDescriptionEn').value || '').trim(),
+    iconUrlEn: (document.getElementById('gIconUrlEn').value || '').trim(),
+    iconUrlThumbEn: (document.getElementById('gIconUrlThumbEn').value || '').trim(),
+    coverImageEn: (document.getElementById('gCoverImageEn').value || '').trim(),
+    coverImageThumbEn: (document.getElementById('gCoverImageThumbEn').value || '').trim(),
+    emojiEn: (document.getElementById('gEmojiEn').value || '').trim(),
+    gradientEn: (document.getElementById('gGradientEn').value || '').trim(),
   };
   try {
     const res = id
@@ -3286,11 +3382,19 @@ function openTabbarEditor(id) {
   const item = id ? (allHCItems || []).find(i => i.id === id) : null;
   document.getElementById('tbModalTitle').textContent = item ? '编辑底部栏项' : '新增底部栏项';
   document.getElementById('tbTitle').value = item ? (item.title || '') : '';
+  document.getElementById('tbTitleEn').value = item ? (item.titleEn || '') : '';
   document.getElementById('tbIcon').value = item ? (item.icon || '') : '';
   document.getElementById('tbPath').value = item ? (item.path || '/') : '/';
   document.getElementById('tbSortOrder').value = item ? (item.sortOrder ?? 0) : 0;
   document.getElementById('tbStatus').value = item ? (item.status || 'active') : 'active';
+  document.getElementById('tbLang').value = 'zh';
+  onTbLangChange();
   document.getElementById('tbModal').style.display = 'flex';
+}
+function onTbLangChange() {
+  var lang = document.getElementById('tbLang').value;
+  document.getElementById('tbLangZh').style.display = lang === 'zh' ? '' : 'none';
+  document.getElementById('tbLangEn').style.display = lang === 'en' ? '' : 'none';
 }
 
 function closeTabbarEditor() { document.getElementById('tbModal').style.display = 'none'; }
@@ -3301,6 +3405,7 @@ async function saveTabbarItem() {
   const body = {
     section: 'tabbar',
     title,
+    titleEn: document.getElementById('tbTitleEn').value.trim(),
     icon: document.getElementById('tbIcon').value.trim() || 'wap-home-o',
     path: document.getElementById('tbPath').value.trim() || '/',
     sortOrder: parseInt(document.getElementById('tbSortOrder').value) || 0,

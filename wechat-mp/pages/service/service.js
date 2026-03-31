@@ -1,4 +1,6 @@
 const app = getApp();
+const i18n = require('../../utils/i18n.js');
+const { formatPriceDisplay } = require('../../utils/currency.js');
 
 Page({
   data: {
@@ -24,17 +26,27 @@ Page({
           services.forEach(s => {
             const cat = s.serviceCategory || s.category || {};
             const catKey = cat.key || cat.id || 'other';
-            const catName = cat.name || (typeof s.category === 'string' ? s.category : '其他');
+            const catName = i18n.pick(cat, 'name') || (typeof s.category === 'string' ? s.category : '其他');
             if (!catMap[catKey]) {
               catMap[catKey] = { key: String(catKey), name: catName, items: [] };
               catOrder.push(catKey);
             }
+            const isEn = i18n.isEn();
+            const priceRaw = isEn && s.priceEn != null && s.priceEn !== ''
+              ? s.priceEn
+              : s.price;
+            const currencySym = isEn
+              ? (String(s.currencyEn || '').trim() || app.globalData.currencySymbol || '¥')
+              : (app.globalData.currencySymbol || '¥');
+            const priceNum = Number(priceRaw);
             catMap[catKey].items.push({
               id: s.id,
-              title: s.title || '服务',
+              title: i18n.pick(s, 'title') || '服务',
+              description: i18n.pick(s, 'description'),
               icon: s.icon || 'setting-o',
               iconUrl: s.iconUrl || '',
               emoji: '🔧',
+              priceDisplay: formatPriceDisplay(Number.isFinite(priceNum) ? priceNum : priceRaw, currencySym),
             });
           });
           const cats = catOrder.map(k => catMap[k]);

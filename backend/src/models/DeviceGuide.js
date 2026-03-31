@@ -143,6 +143,36 @@ const DeviceGuide = sequelize.define('DeviceGuide', {
     allowNull: true,
     comment: '描述（英文）',
   },
+  iconUrlEn: {
+    type: DataTypes.STRING(500),
+    defaultValue: '',
+    comment: 'Icon URL (English)',
+  },
+  iconUrlThumbEn: {
+    type: DataTypes.STRING(500),
+    defaultValue: '',
+    comment: 'Icon thumbnail URL (English)',
+  },
+  coverImageEn: {
+    type: DataTypes.STRING(500),
+    defaultValue: '',
+    comment: 'Cover image (English)',
+  },
+  coverImageThumbEn: {
+    type: DataTypes.STRING(500),
+    defaultValue: '',
+    comment: 'Cover image thumbnail (English)',
+  },
+  emojiEn: {
+    type: DataTypes.STRING(20),
+    defaultValue: '',
+    comment: 'Emoji (English)',
+  },
+  gradientEn: {
+    type: DataTypes.STRING(300),
+    defaultValue: '',
+    comment: 'Gradient (English)',
+  },
   status: {
     type: DataTypes.ENUM('active', 'inactive'),
     defaultValue: 'active',

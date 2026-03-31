@@ -12,13 +12,13 @@
       </div>
 
       <div class="detail-body">
-        <h2>{{ serviceData.title }}</h2>
-        <p class="detail-desc">{{ serviceData.description }}</p>
+        <h2>{{ pick(serviceData, 'title') }}</h2>
+        <p class="detail-desc">{{ pick(serviceData, 'description') }}</p>
 
-        <div v-if="shouldShowPrice(serviceData.price) || showOriginPrice" class="price-row">
-          <span v-if="shouldShowPrice(serviceData.price)" class="detail-price">{{ formatPriceDisplay(serviceData.price) }}</span>
+        <div v-if="shouldShowPrice(pick(serviceData, 'price')) || showOriginPrice" class="price-row">
+          <span v-if="shouldShowPrice(pick(serviceData, 'price'))" class="detail-price">{{ formatPriceDisplay(pick(serviceData, 'price'), servicePriceCurrencyOverride) }}</span>
           <template v-if="showOriginPrice">
-            <span class="origin-price">{{ formatPriceDisplay(serviceData.originPrice) }}</span>
+            <span class="origin-price">{{ formatPriceDisplay(pick(serviceData, 'originPrice'), servicePriceCurrencyOverride) }}</span>
             <van-tag type="primary" color="#B91C1C">限时优惠</van-tag>
           </template>
         </div>
@@ -64,6 +64,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { serviceApi } from '@/api';
 import { showDialog } from 'vant';
 import { formatPriceDisplay, shouldShowPrice } from '@/utils/currency';
+import { pick } from '@/utils/i18n';
 
 const route = useRoute();
 const router = useRouter();
@@ -72,10 +73,15 @@ const loading = ref(true);
 
 const onConsult = () => {
   const s = serviceData.value;
-  const pricePart = Number(s.price) !== 0 && s.price != null && s.price !== ''
-    ? `（${formatPriceDisplay(s.price)}）`
+  const displayPrice = pick(s, 'price');
+  const sym = pick(s, 'currency');
+  const currencyOv = sym && String(sym).trim() ? String(sym).trim() : null;
+  const pricePart = Number(displayPrice) !== 0 && displayPrice != null && displayPrice !== ''
+    ? `（${formatPriceDisplay(displayPrice, currencyOv)}）`
     : '';
-  const msg = `我想咨询一下【${s.title || '该服务'}】${pricePart}${s.description ? '：' + s.description : ''}`;
+  const title = pick(s, 'title') || '该服务';
+  const desc = pick(s, 'description');
+  const msg = `我想咨询一下【${title}】${pricePart}${desc ? '：' + desc : ''}`;
   if (chatWidgetRef.value) {
     chatWidgetRef.value.openWithAutoMessage(msg);
   }
@@ -111,9 +117,14 @@ const serviceIconUrl = ref('');
 const coverBg = ref('linear-gradient(135deg, #B91C1C, #7F1D1D)');
 const coverOpacity = ref(1);
 
+const servicePriceCurrencyOverride = computed(() => {
+  const c = pick(serviceData.value, 'currency');
+  return c && String(c).trim() ? String(c).trim() : null;
+});
+
 const showOriginPrice = computed(() => {
-  const op = serviceData.value.originPrice;
-  return op != null && Number(op) > 0;
+  const op = pick(serviceData.value, 'originPrice');
+  return op != null && op !== '' && Number(op) > 0;
 });
 
 const features = [
@@ -128,7 +139,7 @@ onMounted(async () => {
   try {
     const res = await serviceApi.detail(id);
     const d = res.data;
-    serviceData.value = { title: d.title, description: d.description, price: d.price, originPrice: d.originPrice };
+    serviceData.value = { ...d };
     serviceIcon.value = d.icon || 'setting-o';
     serviceIconUrl.value = d.iconUrl || '';
     coverBg.value = d.bg || 'linear-gradient(135deg, #B91C1C, #7F1D1D)';

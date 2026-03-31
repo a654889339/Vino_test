@@ -1,6 +1,6 @@
 const { Service, ServiceCategory } = require('../models');
 
-const ALLOWED_FIELDS = ['title', 'description', 'icon', 'iconUrl', 'cover', 'category', 'categoryId', 'price', 'originPrice', 'bg', 'bgOpacity', 'status', 'sortOrder'];
+const ALLOWED_FIELDS = ['title', 'description', 'icon', 'iconUrl', 'cover', 'category', 'categoryId', 'price', 'originPrice', 'bg', 'bgOpacity', 'status', 'sortOrder', 'titleEn', 'descriptionEn', 'priceEn', 'originPriceEn', 'currencyEn'];
 
 const pickFields = (body) => {
   const result = {};
@@ -74,6 +74,8 @@ exports.create = async (req, res) => {
     if (data.categoryId == null && !data.category) return res.status(400).json({ code: 400, message: '请选择服务种类' });
     if (data.price !== undefined) data.price = parseFloat(data.price) || 0;
     if (data.originPrice !== undefined) data.originPrice = parseFloat(data.originPrice) || null;
+    if (data.priceEn !== undefined) data.priceEn = parseFloat(data.priceEn) || null;
+    if (data.originPriceEn !== undefined) data.originPriceEn = parseFloat(data.originPriceEn) || null;
     if (data.sortOrder !== undefined) data.sortOrder = parseInt(data.sortOrder, 10) || 0;
     if (data.categoryId !== undefined) data.categoryId = parseInt(data.categoryId, 10) || null;
     if (data.bgOpacity !== undefined) {
@@ -98,6 +100,8 @@ exports.update = async (req, res) => {
     const data = pickFields(req.body);
     if (data.price !== undefined) data.price = parseFloat(data.price) || 0;
     if (data.originPrice !== undefined) data.originPrice = parseFloat(data.originPrice) || null;
+    if (data.priceEn !== undefined) data.priceEn = parseFloat(data.priceEn) || null;
+    if (data.originPriceEn !== undefined) data.originPriceEn = parseFloat(data.originPriceEn) || null;
     if (data.sortOrder !== undefined) data.sortOrder = parseInt(data.sortOrder, 10) || 0;
     if (data.categoryId !== undefined) data.categoryId = parseInt(data.categoryId, 10) || null;
     if (data.bgOpacity !== undefined) {

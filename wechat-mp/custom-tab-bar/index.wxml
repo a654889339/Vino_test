@@ -7,6 +7,6 @@
     bindtap="switchTab"
   >
     <image class="tab-icon-img" src="{{selected === index ? item.active : item.normal}}" mode="aspectFit" />
-    <text class="tab-text">{{item.text}}</text>
+    <text class="tab-text">{{item.label || item.text}}</text>
   </view>
 </view>

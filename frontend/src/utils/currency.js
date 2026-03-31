@@ -25,9 +25,15 @@ function formatNumberPart(n) {
 
 /**
  * 展示价格：非 0 时带币种符号；金额为 0 时不显示数字（返回空字符串）。
+ * @param {string|number|null|undefined} amount
+ * @param {string|null|undefined} currencySymbolOverride 有值时优先于全局币种（如服务页的 currencyEn）
  */
-export function formatPriceDisplay(amount) {
-  const sym = getCurrencySymbol();
+export function formatPriceDisplay(amount, currencySymbolOverride) {
+  const override =
+    currencySymbolOverride != null && String(currencySymbolOverride).trim() !== ''
+      ? String(currencySymbolOverride).trim()
+      : null;
+  const sym = override ?? getCurrencySymbol();
   const n = Number(amount);
   if (!Number.isFinite(n)) {
     if (amount == null || amount === '') return '';

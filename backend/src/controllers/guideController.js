@@ -83,6 +83,7 @@ const GUIDE_FIELDS = [
   'coverImage','coverImageThumb','showcaseVideo','description','mediaItems','helpItems',
   'manualPdfUrl',
   'nameEn','subtitleEn','badgeEn','descriptionEn',
+  'iconUrlEn','iconUrlThumbEn','coverImageEn','coverImageThumbEn','emojiEn','gradientEn',
 ];
 
 exports.create = async (req, res) => {

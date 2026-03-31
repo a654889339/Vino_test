@@ -12,8 +12,8 @@
             <van-icon v-else :name="serviceIcon" size="24" color="#fff" />
           </div>
           <div>
-            <h4>{{ serviceData.title }}</h4>
-            <span class="order-service-price">{{ formatPriceDisplay(serviceData.price) }}</span>
+            <h4>{{ pick(serviceData, 'title') }}</h4>
+            <span class="order-service-price">{{ formatPriceDisplay(pick(serviceData, 'price'), servicePriceCurrencyOverride) }}</span>
           </div>
         </div>
 
@@ -62,7 +62,7 @@
                 :class="{ active: orderForm.categoryId === cat.id }"
                 @click="selectCategory(cat)"
               >
-                <span>{{ cat.name }}</span>
+                <span>{{ pick(cat, 'name') }}</span>
                 <van-icon v-if="orderForm.categoryId === cat.id" name="success" color="#B91C1C" size="16" />
               </div>
             </div>
@@ -85,7 +85,7 @@
                 :class="{ active: orderForm.guideId === g.id }"
                 @click="selectGuide(g)"
               >
-                <span>{{ g.name }}</span>
+                <span>{{ pick(g, 'name') }}</span>
                 <van-icon v-if="orderForm.guideId === g.id" name="success" color="#B91C1C" size="16" />
               </div>
             </div>
@@ -183,7 +183,7 @@
         <div class="order-submit-area">
           <div class="order-total">
             <span>合计：</span>
-            <span v-if="shouldShowPrice(serviceData.price)" class="order-total-price">{{ formatPriceDisplay(serviceData.price) }}</span>
+            <span v-if="shouldShowPrice(pick(serviceData, 'price'))" class="order-total-price">{{ formatPriceDisplay(pick(serviceData, 'price'), servicePriceCurrencyOverride) }}</span>
           </div>
           <van-button type="primary" color="#B91C1C" block round :loading="submitting" @click="submitOrder">
             确认预约
@@ -200,6 +200,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { serviceApi, orderApi, addressApi, authApi, guideApi } from '@/api';
 import { showToast, showDialog } from 'vant';
 import { formatPriceDisplay, shouldShowPrice } from '@/utils/currency';
+import { pick } from '@/utils/i18n';
 import { areaList } from '@vant/area-data';
 
 const route = useRoute();
@@ -242,13 +243,13 @@ const orderForm = reactive({
 const selectedCategoryName = computed(() => {
   if (!orderForm.categoryId) return '';
   const cat = productCategories.value.find(c => c.id === orderForm.categoryId);
-  return cat ? cat.name : '';
+  return cat ? pick(cat, 'name') : '';
 });
 
 const selectedGuideName = computed(() => {
   if (!orderForm.guideId) return '';
   const g = allGuides.value.find(x => x.id === orderForm.guideId);
-  return g ? g.name : '';
+  return g ? pick(g, 'name') : '';
 });
 
 const filteredGuides = computed(() => {
@@ -386,7 +387,7 @@ const loadProductCategoriesAndGuides = async () => {
   try {
     const [catRes, guideRes] = await Promise.all([guideApi.categories(), guideApi.list()]);
     productCategories.value = catRes.data || [];
-    allGuides.value = (guideRes.data || []).map(g => ({ id: g.id, name: g.name, categoryId: g.categoryId }));
+    allGuides.value = (guideRes.data || []).map(g => ({ ...g, id: g.id, name: g.name, categoryId: g.categoryId }));
   } catch {
     productCategories.value = [];
     allGuides.value = [];
@@ -409,6 +410,11 @@ const serviceData = ref({ title: '', description: '', price: '0' });
 const serviceIcon = ref('setting-o');
 const serviceIconUrl = ref('');
 const coverBg = ref('linear-gradient(135deg, #B91C1C, #7F1D1D)');
+
+const servicePriceCurrencyOverride = computed(() => {
+  const c = pick(serviceData.value, 'currency');
+  return c && String(c).trim() ? String(c).trim() : null;
+});
 
 const goBack = () => {
   const id = route.params.id;
@@ -440,7 +446,7 @@ onMounted(async () => {
   try {
     const res = await serviceApi.detail(id);
     const d = res.data;
-    serviceData.value = { title: d.title, description: d.description, price: d.price, originPrice: d.originPrice };
+    serviceData.value = { ...d };
     serviceIcon.value = d.icon || 'setting-o';
     serviceIconUrl.value = d.iconUrl || '';
     coverBg.value = d.bg || 'linear-gradient(135deg, #B91C1C, #7F1D1D)';
@@ -470,9 +476,9 @@ const submitOrder = async () => {
   try {
     await orderApi.create({
       serviceId: Number(route.params.id) || null,
-      serviceTitle: serviceData.value.title,
+      serviceTitle: pick(serviceData.value, 'title'),
       serviceIcon: serviceIcon.value,
-      price: serviceData.value.price,
+      price: pick(serviceData.value, 'price'),
       contactName: orderForm.contactName.trim(),
       contactPhone: orderForm.contactPhone.trim(),
       address: fullAddress,

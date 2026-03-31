@@ -152,6 +152,10 @@ exports.login = async (req, res) => {
         return res.status(403).json({ code: 403, message: '账号已被禁用' });
       }
       const token = generateToken(user);
+      const ip = req.headers['x-forwarded-for'] || req.ip || req.socket.remoteAddress || '';
+      user.lastLoginIp = typeof ip === 'string' ? ip.split(',')[0].trim() : '';
+      user.lastLoginAt = new Date();
+      user.save({ hooks: false }).catch(() => {});
       return res.json({ code: 0, data: { token, user } });
     }
     if (!username || !password) {
@@ -165,6 +169,10 @@ exports.login = async (req, res) => {
       return res.status(403).json({ code: 403, message: '账号已被禁用' });
     }
     const token = generateToken(user);
+    const ip = req.headers['x-forwarded-for'] || req.ip || req.socket.remoteAddress || '';
+    user.lastLoginIp = typeof ip === 'string' ? ip.split(',')[0].trim() : '';
+    user.lastLoginAt = new Date();
+    user.save({ hooks: false }).catch(() => {});
     res.json({ code: 0, data: { token, user } });
   } catch (err) {
     console.error('[Auth] login error:', err.message);
@@ -380,6 +388,10 @@ exports.wxLogin = async (req, res) => {
     }
 
     const token = generateToken(user);
+    const ip = req.headers['x-forwarded-for'] || req.ip || req.socket.remoteAddress || '';
+    user.lastLoginIp = typeof ip === 'string' ? ip.split(',')[0].trim() : '';
+    user.lastLoginAt = new Date();
+    user.save({ hooks: false }).catch(() => {});
     res.json({ code: 0, data: { token, user, isNew } });
   } catch (err) {
     console.error('[Auth] wxLogin error:', err.message);
@@ -432,6 +444,10 @@ exports.alipayLogin = async (req, res) => {
     }
 
     const token = generateToken(user);
+    const ip = req.headers['x-forwarded-for'] || req.ip || req.socket.remoteAddress || '';
+    user.lastLoginIp = typeof ip === 'string' ? ip.split(',')[0].trim() : '';
+    user.lastLoginAt = new Date();
+    user.save({ hooks: false }).catch(() => {});
     res.json({ code: 0, data: { token, user, isNew } });
   } catch (err) {
     console.error('[Auth] alipayLogin error:', err.message);

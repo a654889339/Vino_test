@@ -4,7 +4,7 @@
 
     <div class="svc-body">
       <div v-for="cat in categories" :key="cat.key" class="svc-section">
-        <h3 class="svc-section-title">{{ cat.name }}</h3>
+        <h3 class="svc-section-title">{{ pick(cat, 'name') }}</h3>
         <div class="svc-card">
           <div class="svc-grid">
             <div
@@ -17,7 +17,7 @@
                 <img v-if="item.iconUrl" :src="item.iconUrl" class="svc-icon-img" alt="" />
                 <van-icon v-else :name="item.icon" size="28" color="rgba(255,255,255,0.85)" />
               </div>
-              <span class="svc-item-name">{{ item.title }}</span>
+              <span class="svc-item-name">{{ pick(item, 'title') }}</span>
             </div>
           </div>
         </div>
@@ -32,6 +32,7 @@
 import { ref, onMounted } from 'vue';
 import { serviceApi } from '@/api';
 import PageThemeLayer from '@/components/PageThemeLayer.vue';
+import { pick } from '@/utils/i18n';
 
 const categories = ref([]);
 
@@ -67,8 +68,16 @@ onMounted(async () => {
         const cat = s.serviceCategory || s.category;
         const catKey = cat?.key ?? cat?.id ?? (typeof cat === 'string' ? cat : 'repair');
         const catName = cat?.name ?? (typeof cat === 'string' ? cat : '维修');
-        if (!catMap[catKey]) catMap[catKey] = { key: String(catKey), name: catName, items: [] };
+        if (!catMap[catKey]) {
+          catMap[catKey] = {
+            key: String(catKey),
+            name: catName,
+            nameEn: cat?.nameEn,
+            items: [],
+          };
+        }
         catMap[catKey].items.push({
+          ...s,
           id: s.id,
           title: s.title,
           desc: s.description || '',

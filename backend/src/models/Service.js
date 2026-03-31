@@ -57,6 +57,31 @@ const Service = sequelize.define('Service', {
     allowNull: true,
     comment: '背景色透明度 0-100，100 为不透明，用于前台服务详情头部',
   },
+  titleEn: {
+    type: DataTypes.STRING(200),
+    defaultValue: '',
+    comment: 'Service title (English)',
+  },
+  descriptionEn: {
+    type: DataTypes.TEXT,
+    defaultValue: '',
+    comment: 'Service description (English)',
+  },
+  priceEn: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true,
+    comment: 'Price (English market)',
+  },
+  originPriceEn: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true,
+    comment: 'Original price (English market)',
+  },
+  currencyEn: {
+    type: DataTypes.STRING(10),
+    defaultValue: '',
+    comment: 'Currency symbol for English (e.g. $, €)',
+  },
   status: {
     type: DataTypes.ENUM('active', 'inactive'),
     defaultValue: 'active',

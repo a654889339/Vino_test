@@ -4,7 +4,7 @@
   <div v-if="showTabbar && tabbarItems.length" class="app-tabbar-shell">
     <div v-if="tabbarSkinLayer" class="section-skin-layer app-tabbar-skin" :style="tabbarSkinLayer" aria-hidden="true" />
     <van-tabbar route active-color="var(--vino-primary)" class="app-tabbar-bar">
-      <van-tabbar-item v-for="(item, i) in tabbarItems" :key="item.path || i" :to="item.path" :icon="item.icon">{{ item.i18nKey ? t(item.i18nKey) : item.title }}</van-tabbar-item>
+      <van-tabbar-item v-for="(item, i) in tabbarItems" :key="item.path || i" :to="item.path" :icon="item.icon">{{ pick(item, 'title') }}</van-tabbar-item>
     </van-tabbar>
   </div>
   <ChatWidget ref="chatWidgetRef" :hide-fab="hideChatFab" />
@@ -18,7 +18,7 @@ import ChatWidget from '@/components/ChatWidget.vue';
 import { homeConfigApi } from '@/api';
 import { initFromHomeConfigList } from '@/utils/currency';
 import { buildSectionSkinLayerStyle } from '@/utils/sectionSkin';
-import { loadI18nTexts, t } from '@/utils/i18n';
+import { loadI18nTexts, t, pick } from '@/utils/i18n';
 
 const route = useRoute();
 
@@ -46,6 +46,7 @@ function mergeTabbarWithDefaults(serverList) {
     if (s) {
       return {
         title: (s.title && String(s.title).trim()) || def.title,
+        titleEn: (s.titleEn && String(s.titleEn).trim()) || '',
         icon: (s.icon && String(s.icon).trim()) || def.icon,
         path: def.path,
       };
