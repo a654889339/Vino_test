@@ -5,17 +5,38 @@ Page({
   data: {
     addresses: [],
     loading: false,
-    emptyText: i18n.t('addressList.empty'),
-    defaultTag: i18n.t('addressList.default'),
-    setDefaultText: i18n.t('addressList.setDefault'),
-    deleteText: i18n.t('addressList.delete'),
-    addText: i18n.t('addressList.add'),
-    confirmDeleteTitle: i18n.t('addressList.confirmDeleteTitle'),
-    confirmDeleteContent: i18n.t('addressList.confirmDeleteContent'),
+    emptyText: '',
+    defaultTag: '',
+    setDefaultText: '',
+    deleteText: '',
+    addText: '',
+    confirmDeleteTitle: '',
+    confirmDeleteContent: '',
   },
 
   onShow() {
-    this.loadAddresses();
+    const self = this;
+    const doRefresh = () => {
+      self.refreshI18n();
+      self.loadAddresses();
+    };
+    if (i18n.isLoaded()) {
+      doRefresh();
+    } else {
+      i18n.loadI18nTexts(doRefresh);
+    }
+  },
+
+  refreshI18n() {
+    this.setData({
+      emptyText: i18n.t('addressList.empty'),
+      defaultTag: i18n.t('addressList.default'),
+      setDefaultText: i18n.t('addressList.setDefault'),
+      deleteText: i18n.t('addressList.delete'),
+      addText: i18n.t('addressList.add'),
+      confirmDeleteTitle: i18n.t('addressList.confirmDeleteTitle'),
+      confirmDeleteContent: i18n.t('addressList.confirmDeleteContent'),
+    });
   },
 
   loadAddresses() {

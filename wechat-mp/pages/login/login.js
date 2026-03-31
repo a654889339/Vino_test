@@ -10,27 +10,52 @@ Page({
     tempAvatarUrl: '',
     tempNickname: '',
     headerLogoDesc: '',
-    welcomeText: 'Vino ' + i18n.t('login.welcome'),
-    sloganText: i18n.t('login.slogan'),
-    wxLoginText: i18n.t('login.wxLogin'),
-    loggingText: i18n.t('login.logging'),
-    agreementText: i18n.t('login.agreement'),
-    setupTitle: i18n.t('login.setupTitle'),
-    avatarPlaceholder: i18n.t('login.avatarPlaceholder'),
-    nicknameLabel: i18n.t('login.nicknameLabel'),
-    nicknamePlaceholder: i18n.t('login.nicknamePlaceholder'),
-    saveAndEnter: i18n.t('login.saveAndEnter'),
-    skipText: i18n.t('login.skip'),
+    welcomeText: '',
+    sloganText: '',
+    wxLoginText: '',
+    loggingText: '',
+    agreementText: '',
+    setupTitle: '',
+    avatarPlaceholder: '',
+    nicknameLabel: '',
+    nicknamePlaceholder: '',
+    saveAndEnter: '',
+    skipText: '',
   },
 
   onLoad() {
-    app.request({ url: '/home-config' }).then(res => {
-      const list = res.data || [];
-      const headerLogo = list.find(i => i.section === 'headerLogo' && i.status === 'active');
-      if (headerLogo && headerLogo.desc) {
-        this.setData({ headerLogoDesc: headerLogo.desc });
-      }
-    }).catch(() => {});
+    const self = this;
+    const doRefresh = () => {
+      self.refreshI18n();
+      app.request({ url: '/home-config' }).then(res => {
+        const list = res.data || [];
+        const headerLogo = list.find(i => i.section === 'headerLogo' && i.status === 'active');
+        if (headerLogo && headerLogo.desc) {
+          self.setData({ headerLogoDesc: headerLogo.desc });
+        }
+      }).catch(() => {});
+    };
+    if (i18n.isLoaded()) {
+      doRefresh();
+    } else {
+      i18n.loadI18nTexts(doRefresh);
+    }
+  },
+
+  refreshI18n() {
+    this.setData({
+      welcomeText: 'Vino ' + i18n.t('login.welcome'),
+      sloganText: i18n.t('login.slogan'),
+      wxLoginText: i18n.t('login.wxLogin'),
+      loggingText: i18n.t('login.logging'),
+      agreementText: i18n.t('login.agreement'),
+      setupTitle: i18n.t('login.setupTitle'),
+      avatarPlaceholder: i18n.t('login.avatarPlaceholder'),
+      nicknameLabel: i18n.t('login.nicknameLabel'),
+      nicknamePlaceholder: i18n.t('login.nicknamePlaceholder'),
+      saveAndEnter: i18n.t('login.saveAndEnter'),
+      skipText: i18n.t('login.skip'),
+    });
   },
 
   wxLogin() {

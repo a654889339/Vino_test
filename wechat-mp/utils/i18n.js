@@ -1,17 +1,28 @@
 const STORAGE_KEY = 'vino_lang';
+const DEFAULT_BASE_URL = 'http://106.54.50.88:5202/api';
 
 let _lang = '';
-try { _lang = wx.getStorageSync(STORAGE_KEY) || ''; } catch {}
+try { _lang = wx.getStorageSync(STORAGE_KEY) || ''; } catch (e) {}
 
 const _texts = {};
 let _loaded = false;
+let _loading = false;
+const _pendingCallbacks = [];
 
 function getLang() { return _lang || 'zh'; }
 function isEn() { return _lang === 'en'; }
 
 function setLang(lang) {
   _lang = lang;
-  try { wx.setStorageSync(STORAGE_KEY, lang); } catch {}
+  try { wx.setStorageSync(STORAGE_KEY, lang); } catch (e) {}
+}
+
+function _getBaseUrl() {
+  try {
+    const app = getApp();
+    if (app && app.globalData && app.globalData.baseUrl) return app.globalData.baseUrl;
+  } catch (e) {}
+  return DEFAULT_BASE_URL;
 }
 
 function detectLangByIp(cb) {
@@ -34,25 +45,28 @@ function detectLangByIp(cb) {
 
 function loadI18nTexts(cb) {
   if (_loaded) { if (cb) cb(); return; }
+  if (cb) _pendingCallbacks.push(cb);
+  if (_loading) return;
+  _loading = true;
   wx.request({
-    url: (getApp().globalData.baseUrl || 'http://106.54.50.88:5202/api') + '/i18n',
+    url: _getBaseUrl() + '/i18n',
     success(res) {
       const data = (res.data && res.data.data) || [];
       for (const item of data) {
         _texts[item.key] = { zh: item.zh, en: item.en };
       }
       _loaded = true;
-      if (cb) cb();
     },
-    fail() { if (cb) cb(); },
+    complete() {
+      _loading = false;
+      const cbs = _pendingCallbacks.splice(0);
+      cbs.forEach(function(fn) { fn(); });
+    },
   });
 }
 
-/**
- * Translate by key or inline fallback.
- * t('home.myProducts') -> looks up key
- * t('中文', 'English') -> inline fallback
- */
+function isLoaded() { return _loaded; }
+
 function t(keyOrZh, enFallback) {
   if (_texts[keyOrZh]) {
     const entry = _texts[keyOrZh];
@@ -70,4 +84,4 @@ function pick(obj, field) {
   return obj[field] || '';
 }
 
-module.exports = { getLang, isEn, setLang, detectLangByIp, loadI18nTexts, t, pick };
+module.exports = { getLang, isEn, setLang, detectLangByIp, loadI18nTexts, isLoaded, t, pick };

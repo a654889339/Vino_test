@@ -10,20 +10,43 @@ Page({
     mediaItems: [],
     helpItems: [],
     firstMediaTitle: '',
-    loadingText: i18n.t('common.loading'),
-    helpTitle: i18n.t('guideDetail.helpTitle'),
-    manualLabel: i18n.t('guideDetail.manual'),
-    faqLabel: i18n.t('guideDetail.faq'),
-    serviceEntryTitle: i18n.t('guideDetail.serviceEntry'),
-    selfServiceLabel: i18n.t('guideDetail.selfService'),
-    servicePointLabel: i18n.t('guideDetail.servicePoint'),
-    afterSalesLabel: i18n.t('guideDetail.afterSales'),
-    repairQuoteLabel: i18n.t('guideDetail.repairQuote'),
+    loadingText: '',
+    helpTitle: '',
+    manualLabel: '',
+    faqLabel: '',
+    serviceEntryTitle: '',
+    selfServiceLabel: '',
+    servicePointLabel: '',
+    afterSalesLabel: '',
+    repairQuoteLabel: '',
   },
 
   onLoad(options) {
-    if (options.id) this.loadGuide(options.id);
-    else this.setData({ loading: false });
+    const self = this;
+    const doRefresh = () => {
+      self.refreshI18n();
+      if (options.id) self.loadGuide(options.id);
+      else self.setData({ loading: false });
+    };
+    if (i18n.isLoaded()) {
+      doRefresh();
+    } else {
+      i18n.loadI18nTexts(doRefresh);
+    }
+  },
+
+  refreshI18n() {
+    this.setData({
+      loadingText: i18n.t('common.loading'),
+      helpTitle: i18n.t('guideDetail.helpTitle'),
+      manualLabel: i18n.t('guideDetail.manual'),
+      faqLabel: i18n.t('guideDetail.faq'),
+      serviceEntryTitle: i18n.t('guideDetail.serviceEntry'),
+      selfServiceLabel: i18n.t('guideDetail.selfService'),
+      servicePointLabel: i18n.t('guideDetail.servicePoint'),
+      afterSalesLabel: i18n.t('guideDetail.afterSales'),
+      repairQuoteLabel: i18n.t('guideDetail.repairQuote'),
+    });
   },
 
   loadGuide(id) {

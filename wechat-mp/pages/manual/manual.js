@@ -8,17 +8,37 @@ Page({
     guideName: '',
     helpItems: [],
     manualPdfUrl: '',
-    loadingText: i18n.t('common.loading'),
-    manualSuffix: i18n.t('manual.suffix'),
-    chapterCountPrefix: i18n.t('manual.chapterCountPrefix'),
-    chapterCountSuffix: i18n.t('manual.chapterCountSuffix'),
-    tocTitle: i18n.t('manual.toc'),
-    viewManualText: i18n.t('manual.viewManual'),
+    loadingText: '',
+    manualSuffix: '',
+    chapterCountPrefix: '',
+    chapterCountSuffix: '',
+    tocTitle: '',
+    viewManualText: '',
   },
 
   onLoad(options) {
-    if (options.id) this.loadGuide(options.id);
-    else this.setData({ loading: false });
+    const self = this;
+    const doRefresh = () => {
+      self.refreshI18n();
+      if (options.id) self.loadGuide(options.id);
+      else self.setData({ loading: false });
+    };
+    if (i18n.isLoaded()) {
+      doRefresh();
+    } else {
+      i18n.loadI18nTexts(doRefresh);
+    }
+  },
+
+  refreshI18n() {
+    this.setData({
+      loadingText: i18n.t('common.loading'),
+      manualSuffix: i18n.t('manual.suffix'),
+      chapterCountPrefix: i18n.t('manual.chapterCountPrefix'),
+      chapterCountSuffix: i18n.t('manual.chapterCountSuffix'),
+      tocTitle: i18n.t('manual.toc'),
+      viewManualText: i18n.t('manual.viewManual'),
+    });
   },
 
   loadGuide(id) {

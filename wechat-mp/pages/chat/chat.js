@@ -20,12 +20,20 @@ Page({
   },
 
   onShow() {
-    this.refreshI18n();
-    const loggedIn = app.isLoggedIn();
-    const info = app.globalData.userInfo || {};
-    const initial = (info.nickname || info.username || i18n.t('chat.userAvatar'))[0];
-    this.setData({ isLoggedIn: loggedIn, userInitial: initial });
-    this.loadMessages();
+    const self = this;
+    const doRefresh = () => {
+      self.refreshI18n();
+      const loggedIn = app.isLoggedIn();
+      const info = app.globalData.userInfo || {};
+      const initial = (info.nickname || info.username || i18n.t('chat.userAvatar'))[0];
+      self.setData({ isLoggedIn: loggedIn, userInitial: initial });
+      self.loadMessages();
+    };
+    if (i18n.isLoaded()) {
+      doRefresh();
+    } else {
+      i18n.loadI18nTexts(doRefresh);
+    }
   },
 
   refreshI18n() {

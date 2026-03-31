@@ -14,36 +14,67 @@ Page({
     editId: '',
     contactName: '',
     contactPhone: '',
-    country: i18n.t('country.cn'),
+    country: '',
     customCountry: '',
     province: '',
     city: '',
     district: '',
     detailAddress: '',
     isDefault: false,
-    countries: buildCountries(),
+    countries: [],
     countryIdx: 0,
-    labelContact: i18n.t('addressEdit.contact'),
-    labelPhone: i18n.t('addressEdit.phone'),
-    labelCountry: i18n.t('addressEdit.country'),
-    labelCustomCountry: i18n.t('addressEdit.customCountry'),
-    labelRegion: i18n.t('addressEdit.region'),
-    labelAddress: i18n.t('addressEdit.address'),
-    labelDefault: i18n.t('addressEdit.setDefault'),
-    phContact: i18n.t('addressEdit.phContact'),
-    phPhone: i18n.t('addressEdit.phPhone'),
-    phSelect: i18n.t('addressEdit.phSelect'),
-    phCustomCountry: i18n.t('addressEdit.phCustomCountry'),
-    phRegion: i18n.t('addressEdit.phRegion'),
-    phAddress: i18n.t('addressEdit.phAddress'),
-    saveText: i18n.t('addressEdit.save'),
+    labelContact: '',
+    labelPhone: '',
+    labelCountry: '',
+    labelCustomCountry: '',
+    labelRegion: '',
+    labelAddress: '',
+    labelDefault: '',
+    phContact: '',
+    phPhone: '',
+    phSelect: '',
+    phCustomCountry: '',
+    phRegion: '',
+    phAddress: '',
+    saveText: '',
   },
 
   onLoad(opts) {
-    if (opts.id) {
-      this.setData({ editId: opts.id });
-      this.loadAddress(opts.id);
+    const self = this;
+    const doRefresh = () => {
+      self.refreshI18n();
+      if (opts.id) {
+        self.setData({ editId: opts.id });
+        self.loadAddress(opts.id);
+      }
+    };
+    if (i18n.isLoaded()) {
+      doRefresh();
+    } else {
+      i18n.loadI18nTexts(doRefresh);
     }
+  },
+
+  refreshI18n() {
+    const countries = buildCountries();
+    this.setData({
+      countries,
+      country: this.data.country || countries[0],
+      labelContact: i18n.t('addressEdit.contact'),
+      labelPhone: i18n.t('addressEdit.phone'),
+      labelCountry: i18n.t('addressEdit.country'),
+      labelCustomCountry: i18n.t('addressEdit.customCountry'),
+      labelRegion: i18n.t('addressEdit.region'),
+      labelAddress: i18n.t('addressEdit.address'),
+      labelDefault: i18n.t('addressEdit.setDefault'),
+      phContact: i18n.t('addressEdit.phContact'),
+      phPhone: i18n.t('addressEdit.phPhone'),
+      phSelect: i18n.t('addressEdit.phSelect'),
+      phCustomCountry: i18n.t('addressEdit.phCustomCountry'),
+      phRegion: i18n.t('addressEdit.phRegion'),
+      phAddress: i18n.t('addressEdit.phAddress'),
+      saveText: i18n.t('addressEdit.save'),
+    });
   },
 
   loadAddress(id) {

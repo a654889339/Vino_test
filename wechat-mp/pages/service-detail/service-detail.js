@@ -26,8 +26,6 @@ function buildCountryList() {
     i18n.t('country.fr'), i18n.t('country.my'), i18n.t('country.th'), i18n.t('country.other'),
   ];
 }
-const countryList = buildCountryList();
-
 Page({
   data: {
     serviceId: null,
@@ -37,53 +35,53 @@ Page({
     submitting: false,
     contactName: '',
     contactPhone: '',
-    country: i18n.t('country.cn'),
+    country: '',
     customCountry: '',
     region: [],
     detailAddress: '',
     remark: '',
-    countryList,
+    countryList: [],
     countryIndex: 0,
-    loadingText: i18n.t('common.loading'),
-    highlightsTitle: i18n.t('serviceDetail.highlights'),
-    highlight1: i18n.t('serviceDetail.highlight1'),
-    highlight2: i18n.t('serviceDetail.highlight2'),
-    highlight3: i18n.t('serviceDetail.highlight3'),
-    highlight4: i18n.t('serviceDetail.highlight4'),
-    stepsTitle: i18n.t('serviceDetail.stepsTitle'),
-    step1: i18n.t('serviceDetail.step1'),
-    step2: i18n.t('serviceDetail.step2'),
-    step3: i18n.t('serviceDetail.step3'),
-    step4: i18n.t('serviceDetail.step4'),
-    step5: i18n.t('serviceDetail.step5'),
-    consultText: i18n.t('serviceDetail.consult'),
-    bookNowText: i18n.t('serviceDetail.bookNow'),
-    modalTitle: i18n.t('serviceDetail.modalTitle'),
-    labelContact: i18n.t('serviceBook.contactName'),
-    labelPhone: i18n.t('serviceBook.contactPhone'),
-    labelCategory: i18n.t('serviceBook.category'),
-    labelProduct: i18n.t('serviceBook.product'),
-    labelSerial: i18n.t('serviceBook.serial'),
-    labelMyProduct: i18n.t('serviceBook.fromMyProducts'),
-    labelCountry: i18n.t('serviceBook.country'),
-    labelCustomCountry: i18n.t('serviceBook.customCountry'),
-    labelRegion: i18n.t('serviceBook.region'),
-    labelAddress: i18n.t('serviceBook.address'),
-    labelRemark: i18n.t('serviceBook.remark'),
-    phContact: i18n.t('serviceBook.phContact'),
-    phPhone: i18n.t('serviceBook.phPhone'),
-    phCategory: i18n.t('serviceBook.phCategory'),
-    phProduct: i18n.t('serviceBook.phProduct'),
-    phSerial: i18n.t('serviceBook.phSerial'),
-    phMyProduct: i18n.t('serviceBook.phMyProduct'),
-    phCountry: i18n.t('serviceBook.phCountry'),
-    phCustomCountry: i18n.t('serviceBook.phCustomCountry'),
-    phRegion: i18n.t('serviceBook.phRegion'),
-    phAddress: i18n.t('serviceBook.phAddress'),
-    phRemark: i18n.t('serviceBook.phRemark'),
-    totalLabel: i18n.t('serviceDetail.total'),
-    confirmBookText: i18n.t('serviceDetail.confirmBook'),
-    clearSelText: i18n.t('serviceBook.clearSelection'),
+    loadingText: '',
+    highlightsTitle: '',
+    highlight1: '',
+    highlight2: '',
+    highlight3: '',
+    highlight4: '',
+    stepsTitle: '',
+    step1: '',
+    step2: '',
+    step3: '',
+    step4: '',
+    step5: '',
+    consultText: '',
+    bookNowText: '',
+    modalTitle: '',
+    labelContact: '',
+    labelPhone: '',
+    labelCategory: '',
+    labelProduct: '',
+    labelSerial: '',
+    labelMyProduct: '',
+    labelCountry: '',
+    labelCustomCountry: '',
+    labelRegion: '',
+    labelAddress: '',
+    labelRemark: '',
+    phContact: '',
+    phPhone: '',
+    phCategory: '',
+    phProduct: '',
+    phSerial: '',
+    phMyProduct: '',
+    phCountry: '',
+    phCustomCountry: '',
+    phRegion: '',
+    phAddress: '',
+    phRemark: '',
+    totalLabel: '',
+    confirmBookText: '',
+    clearSelText: '',
     productSerial: '',
     myProducts: [],
     productSerialPickerLabels: [],
@@ -100,12 +98,25 @@ Page({
   },
 
   onLoad(options) {
+    const self = this;
     const id = options.id;
+    const doRefresh = () => {
+      self.refreshI18n();
+      self.setData({ serviceId: id });
+      self.loadService(id);
+    };
+    if (i18n.isLoaded()) {
+      doRefresh();
+    } else {
+      i18n.loadI18nTexts(doRefresh);
+    }
+  },
+
+  refreshI18n() {
     const cl = buildCountryList();
     this.setData({
-      serviceId: id,
       countryList: cl,
-      country: cl[0],
+      country: this.data.country || cl[0],
       loadingText: i18n.t('common.loading'),
       highlightsTitle: i18n.t('serviceDetail.highlights'),
       highlight1: i18n.t('serviceDetail.highlight1'),
@@ -147,7 +158,6 @@ Page({
       confirmBookText: i18n.t('serviceDetail.confirmBook'),
       clearSelText: i18n.t('serviceBook.clearSelection'),
     });
-    this.loadService(id);
   },
 
   loadService(id) {

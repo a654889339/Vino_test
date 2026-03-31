@@ -15,8 +15,16 @@ Page({
   },
 
   onShow() {
-    this.refreshI18n();
-    this.loadList();
+    const self = this;
+    const doRefresh = () => {
+      self.refreshI18n();
+      self.loadList();
+    };
+    if (i18n.isLoaded()) {
+      doRefresh();
+    } else {
+      i18n.loadI18nTexts(doRefresh);
+    }
   },
 
   refreshI18n() {

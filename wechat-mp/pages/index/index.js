@@ -4,18 +4,18 @@ const i18n = require('../../utils/i18n.js');
 
 Page({
   data: {
-    currentLang: i18n.getLang(),
+    currentLang: '',
     headerLogoUrl: '',
     heroBgUrl: '',
     heroBgList: [],
-    navSectionTitle: i18n.t('home.selfBook'),
-    myProductsTitle: i18n.t('home.myProducts'),
-    langLabel: i18n.isEn() ? 'EN' : i18n.t('lang.zhLabel'),
-    progressQueryText: i18n.t('home.progressQuery'),
-    vinoProductsText: i18n.t('home.vinoProducts'),
-    viewAllText: i18n.t('home.viewAll'),
-    featuredText: i18n.t('home.featured'),
-    viewMoreText: i18n.t('home.viewMore'),
+    navSectionTitle: '',
+    myProductsTitle: '',
+    langLabel: '',
+    progressQueryText: '',
+    vinoProductsText: '',
+    viewAllText: '',
+    featuredText: '',
+    viewMoreText: '',
     navLgItems: [],
     navSmItems: [],
     myProducts: [],
@@ -27,35 +27,50 @@ Page({
     myProductsSectionStyle: '',
     hotServiceSectionStyle: '',
     exploreVino: null,
-    recommends: [
-      { id: 1, title: i18n.t('home.memberBenefits'), desc: i18n.t('home.exclusiveDiscount'), emoji: '🏅', bg: 'linear-gradient(135deg, #F59E0B, #D97706)' },
-      { id: 2, title: i18n.t('home.serviceGuarantee'), desc: i18n.t('home.worryfreeAfterSales'), emoji: '🛡️', bg: 'linear-gradient(135deg, #10B981, #059669)' },
-      { id: 3, title: i18n.t('home.pointsMall'), desc: i18n.t('home.giftExchange'), emoji: '🎁', bg: 'linear-gradient(135deg, #EC4899, #DB2777)' },
-      { id: 4, title: i18n.t('home.inviteReward'), desc: i18n.t('home.shareCommission'), emoji: '👥', bg: 'linear-gradient(135deg, #6366F1, #4F46E5)' },
-    ],
+    recommends: [],
   },
 
   onShow() {
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({ selected: 0 });
     }
+    const self = this;
+    const doRefresh = () => {
+      self.refreshI18n();
+      i18n.detectLangByIp((lang) => {
+        self.setData({
+          currentLang: lang,
+          langLabel: i18n.isEn() ? 'EN' : i18n.t('lang.zhLabel'),
+        });
+      });
+      self.loadHomeConfig();
+      self.loadMyProducts();
+    };
+    if (i18n.isLoaded()) {
+      doRefresh();
+    } else {
+      i18n.loadI18nTexts(doRefresh);
+    }
+  },
+
+  refreshI18n() {
     this.setData({
       currentLang: i18n.getLang(),
       langLabel: i18n.isEn() ? 'EN' : i18n.t('lang.zhLabel'),
+      navSectionTitle: i18n.t('home.selfBook'),
+      myProductsTitle: i18n.t('home.myProducts'),
       progressQueryText: i18n.t('home.progressQuery'),
       vinoProductsText: i18n.t('home.vinoProducts'),
       viewAllText: i18n.t('home.viewAll'),
       featuredText: i18n.t('home.featured'),
       viewMoreText: i18n.t('home.viewMore'),
+      recommends: [
+        { id: 1, title: i18n.t('home.memberBenefits'), desc: i18n.t('home.exclusiveDiscount'), emoji: '🏅', bg: 'linear-gradient(135deg, #F59E0B, #D97706)' },
+        { id: 2, title: i18n.t('home.serviceGuarantee'), desc: i18n.t('home.worryfreeAfterSales'), emoji: '🛡️', bg: 'linear-gradient(135deg, #10B981, #059669)' },
+        { id: 3, title: i18n.t('home.pointsMall'), desc: i18n.t('home.giftExchange'), emoji: '🎁', bg: 'linear-gradient(135deg, #EC4899, #DB2777)' },
+        { id: 4, title: i18n.t('home.inviteReward'), desc: i18n.t('home.shareCommission'), emoji: '👥', bg: 'linear-gradient(135deg, #6366F1, #4F46E5)' },
+      ],
     });
-    i18n.detectLangByIp((lang) => {
-      this.setData({
-        currentLang: lang,
-        langLabel: i18n.isEn() ? 'EN' : i18n.t('lang.zhLabel'),
-      });
-    });
-    this.loadHomeConfig();
-    this.loadMyProducts();
   },
 
   onLangTap() {
@@ -65,16 +80,11 @@ Page({
       success: (res) => {
         const lang = res.tapIndex === 1 ? 'en' : 'zh';
         i18n.setLang(lang);
-        this.setData({
-          currentLang: lang,
-          langLabel: lang === 'en' ? 'EN' : i18n.t('lang.zhLabel'),
-          progressQueryText: i18n.t('home.progressQuery'),
-          vinoProductsText: i18n.t('home.vinoProducts'),
-          viewAllText: i18n.t('home.viewAll'),
-          featuredText: i18n.t('home.featured'),
-          viewMoreText: i18n.t('home.viewMore'),
-        });
+        this.refreshI18n();
         this.loadHomeConfig();
+        if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+          this.getTabBar().refreshLabels();
+        }
       },
     });
   },
@@ -326,6 +336,7 @@ Page({
           navSmItems: navSm,
           vinoItems,
           featuredItems,
+          recommends,
           vinoSectionStyle: buildSectionSkinContainerStyle(items, 'vinoProduct', 'vino'),
           frSectionStyle: buildSectionSkinContainerStyle(items, 'featuredRecommend', 'fr'),
           homeScrollStyle: buildSectionSkinContainerStyle(items, 'homeScroll', 'card'),

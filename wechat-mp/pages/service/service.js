@@ -6,15 +6,27 @@ Page({
   data: {
     categories: [],
     loading: true,
-    loadingText: i18n.t('common.loading'),
+    loadingText: '',
   },
 
   onShow() {
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({ selected: 2 });
     }
+    const self = this;
+    const doRefresh = () => {
+      self.refreshI18n();
+      self.loadServices();
+    };
+    if (i18n.isLoaded()) {
+      doRefresh();
+    } else {
+      i18n.loadI18nTexts(doRefresh);
+    }
+  },
+
+  refreshI18n() {
     this.setData({ loadingText: i18n.t('common.loading') });
-    this.loadServices();
   },
 
   loadServices() {

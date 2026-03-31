@@ -6,16 +6,35 @@ Page({
     loading: true,
     guideName: '',
     sections: [],
-    loadingText: i18n.t('common.loading'),
-    maintenanceSuffix: i18n.t('maintenance.suffix'),
-    sectionCountPrefix: i18n.t('maintenance.sectionCountPrefix'),
-    sectionCountSuffix: i18n.t('maintenance.sectionCountSuffix'),
-    tocTitle: i18n.t('maintenance.toc'),
+    loadingText: '',
+    maintenanceSuffix: '',
+    sectionCountPrefix: '',
+    sectionCountSuffix: '',
+    tocTitle: '',
   },
 
   onLoad(options) {
-    if (options.id) this.loadGuide(options.id);
-    else this.setData({ loading: false });
+    const self = this;
+    const doRefresh = () => {
+      self.refreshI18n();
+      if (options.id) self.loadGuide(options.id);
+      else self.setData({ loading: false });
+    };
+    if (i18n.isLoaded()) {
+      doRefresh();
+    } else {
+      i18n.loadI18nTexts(doRefresh);
+    }
+  },
+
+  refreshI18n() {
+    this.setData({
+      loadingText: i18n.t('common.loading'),
+      maintenanceSuffix: i18n.t('maintenance.suffix'),
+      sectionCountPrefix: i18n.t('maintenance.sectionCountPrefix'),
+      sectionCountSuffix: i18n.t('maintenance.sectionCountSuffix'),
+      tocTitle: i18n.t('maintenance.toc'),
+    });
   },
 
   loadGuide(id) {

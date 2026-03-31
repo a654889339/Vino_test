@@ -18,9 +18,17 @@ Page({
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({ selected: 3 });
     }
-    this.refreshI18n();
-    this.checkLoginState();
-    this.loadMineBg();
+    const self = this;
+    const doRefresh = () => {
+      self.refreshI18n();
+      self.checkLoginState();
+      self.loadMineBg();
+    };
+    if (i18n.isLoaded()) {
+      doRefresh();
+    } else {
+      i18n.loadI18nTexts(doRefresh);
+    }
   },
 
   refreshI18n() {

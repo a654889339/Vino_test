@@ -8,6 +8,13 @@ Page({
       url = 'https://' + url;
     }
     this.setData({ url });
-    wx.setNavigationBarTitle({ title: i18n.t('webview.aboutVino') });
+    const setTitle = () => {
+      wx.setNavigationBarTitle({ title: i18n.t('webview.aboutVino') });
+    };
+    if (i18n.isLoaded()) {
+      setTitle();
+    } else {
+      i18n.loadI18nTexts(setTitle);
+    }
   },
 });

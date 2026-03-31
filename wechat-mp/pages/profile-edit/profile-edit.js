@@ -12,16 +12,16 @@ Page({
     bindCode: '',
     smsCountdown: 0,
     sendingSmsCode: false,
-    labelAvatar: i18n.t('profileEdit.changeAvatar'),
-    labelNickname: i18n.t('profileEdit.changeNickname'),
-    labelPhone: i18n.t('profileEdit.phone'),
-    selectAvatarText: i18n.t('profileEdit.selectAvatar'),
-    nicknamePh: i18n.t('profileEdit.nicknamePh'),
-    changeText: i18n.t('profileEdit.change'),
-    phonePh: i18n.t('profileEdit.phonePh'),
-    codePh: i18n.t('profileEdit.codePh'),
-    getCodeText: i18n.t('profileEdit.getCode'),
-    bindText: i18n.t('profileEdit.bind'),
+    labelAvatar: '',
+    labelNickname: '',
+    labelPhone: '',
+    selectAvatarText: '',
+    nicknamePh: '',
+    changeText: '',
+    phonePh: '',
+    codePh: '',
+    getCodeText: '',
+    bindText: '',
   },
 
   onShow() {
@@ -29,7 +29,31 @@ Page({
       wx.navigateTo({ url: '/pages/login/login' });
       return;
     }
-    this.loadUser();
+    const self = this;
+    const doRefresh = () => {
+      self.refreshI18n();
+      self.loadUser();
+    };
+    if (i18n.isLoaded()) {
+      doRefresh();
+    } else {
+      i18n.loadI18nTexts(doRefresh);
+    }
+  },
+
+  refreshI18n() {
+    this.setData({
+      labelAvatar: i18n.t('profileEdit.changeAvatar'),
+      labelNickname: i18n.t('profileEdit.changeNickname'),
+      labelPhone: i18n.t('profileEdit.phone'),
+      selectAvatarText: i18n.t('profileEdit.selectAvatar'),
+      nicknamePh: i18n.t('profileEdit.nicknamePh'),
+      changeText: i18n.t('profileEdit.change'),
+      phonePh: i18n.t('profileEdit.phonePh'),
+      codePh: i18n.t('profileEdit.codePh'),
+      getCodeText: i18n.t('profileEdit.getCode'),
+      bindText: i18n.t('profileEdit.bind'),
+    });
   },
 
   loadUser() {

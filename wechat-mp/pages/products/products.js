@@ -19,17 +19,30 @@ Page({
     searchKeyword: '',
     categoryBannerUrl: '',
     listLoading: false,
-    searchPlaceholder: i18n.t('products.searchPlaceholder'),
-    loadingText: i18n.t('common.loading'),
-    noMatchText: i18n.t('products.noMatch'),
-    noCategoryProductText: i18n.t('products.noCategoryProduct'),
-    noConfigText: i18n.t('products.noConfig'),
+    searchPlaceholder: '',
+    loadingText: '',
+    noMatchText: '',
+    noCategoryProductText: '',
+    noConfigText: '',
   },
 
   onShow() {
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({ selected: 1 });
     }
+    const self = this;
+    const doRefresh = () => {
+      self.refreshI18n();
+      if (!self.data.categories.length) self.loadCategories();
+    };
+    if (i18n.isLoaded()) {
+      doRefresh();
+    } else {
+      i18n.loadI18nTexts(doRefresh);
+    }
+  },
+
+  refreshI18n() {
     this.setData({
       searchPlaceholder: i18n.t('products.searchPlaceholder'),
       loadingText: i18n.t('common.loading'),
@@ -37,7 +50,6 @@ Page({
       noCategoryProductText: i18n.t('products.noCategoryProduct'),
       noConfigText: i18n.t('products.noConfig'),
     });
-    if (!this.data.categories.length) this.loadCategories();
   },
 
   loadCategories() {
