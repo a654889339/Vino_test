@@ -251,9 +251,9 @@ Page({
           let iconUrl = '';
           let iconUrlThumb = '';
           if (g) {
-            title = (g.name && String(g.name).trim()) || title;
-            iconUrl = (g.iconUrl && String(g.iconUrl).trim()) || '';
-            iconUrlThumb = (g.iconUrlThumb && String(g.iconUrlThumb).trim()) || '';
+            title = i18n.pick(g, 'name') || title;
+            iconUrl = i18n.pick(g, 'iconUrl') || '';
+            iconUrlThumb = i18n.pick(g, 'iconUrlThumb') || '';
           }
           if (!iconUrl && row.imageUrl) iconUrl = row.imageUrl;
           if (!iconUrlThumb && row.imageUrlThumb) iconUrlThumb = row.imageUrlThumb;
@@ -279,10 +279,10 @@ Page({
           let coverImage = '';
           let coverThumb = '';
           if (g) {
-            title = (g.name && String(g.name).trim()) || title;
-            subtitle = (g.subtitle && String(g.subtitle).trim()) || subtitle;
-            coverImage = (g.coverImage && String(g.coverImage).trim()) || '';
-            coverThumb = (g.coverImageThumb && String(g.coverImageThumb).trim()) || '';
+            title = i18n.pick(g, 'name') || title;
+            subtitle = i18n.pick(g, 'subtitle') || subtitle;
+            coverImage = i18n.pick(g, 'coverImage') || '';
+            coverThumb = i18n.pick(g, 'coverImageThumb') || '';
           }
           if (!coverImage && row.imageUrl) coverImage = row.imageUrl;
           if (!coverThumb && row.imageUrlThumb) coverThumb = row.imageUrlThumb;

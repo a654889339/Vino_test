@@ -102,12 +102,10 @@ Page({
         const raw = res.data || [];
         const sorted = sortGuidesByDisplayOrder(raw, cat.name);
         const list = sorted.map(g => {
-          const iconUrl = g.iconUrl
-            ? (g.iconUrl.startsWith('http') ? g.iconUrl : base + g.iconUrl)
-            : '';
-          const iconUrlThumb = g.iconUrlThumb
-            ? (g.iconUrlThumb.startsWith('http') ? g.iconUrlThumb : base + g.iconUrlThumb)
-            : '';
+          const rawIcon = pick(g, 'iconUrl') || '';
+          const rawThumb = pick(g, 'iconUrlThumb') || '';
+          const iconUrl = rawIcon ? (rawIcon.startsWith('http') ? rawIcon : base + rawIcon) : '';
+          const iconUrlThumb = rawThumb ? (rawThumb.startsWith('http') ? rawThumb : base + rawThumb) : '';
           return {
             id: g.id,
             name: pick(g, 'name'),

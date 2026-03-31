@@ -470,13 +470,13 @@ const myProductsDisplay = computed(() => {
     if (!g) {
       return { ...item };
     }
-    const iconUrl = (g.iconUrl != null && String(g.iconUrl).trim()) ? String(g.iconUrl).trim() : (item.iconUrl || '');
-    const iconUrlThumb = (g.iconUrlThumb != null && String(g.iconUrlThumb).trim()) ? String(g.iconUrlThumb).trim() : (item.iconUrlThumb || '');
+    const iconUrl = pick(g, 'iconUrl') || (item.iconUrl || '');
+    const iconUrlThumb = pick(g, 'iconUrlThumb') || (item.iconUrlThumb || '');
     return {
       ...item,
       iconUrl,
       iconUrlThumb,
-      productName: (g.name != null && String(g.name).trim()) ? String(g.name).trim() : (item.productName || item.productKey),
+      productName: pick(g, 'name') || (item.productName || item.productKey),
       guideIcon: (g.icon != null ? String(g.icon) : '') || (item.guideIcon || ''),
     };
   });
@@ -499,12 +499,12 @@ const featuredRecommendItems = computed(() => {
         coverThumb: i.imageUrlThumb || '',
       };
     }
-    const coverImg = (g.coverImage != null && String(g.coverImage).trim()) ? String(g.coverImage).trim() : (i.imageUrl || '');
-    const coverThumb = (g.coverImageThumb != null && String(g.coverImageThumb).trim()) ? String(g.coverImageThumb).trim() : (i.imageUrlThumb || '');
+    const coverImg = pick(g, 'coverImage') || (i.imageUrl || '');
+    const coverThumb = pick(g, 'coverImageThumb') || (i.imageUrlThumb || '');
     return {
       id: i.id,
-      title: (g.name != null && String(g.name).trim()) ? String(g.name).trim() : (i.title || ''),
-      subtitle: (g.subtitle != null && String(g.subtitle).trim()) ? String(g.subtitle).trim() : ((i.desc || '').trim()),
+      title: pick(g, 'name') || (i.title || ''),
+      subtitle: pick(g, 'subtitle') || ((i.desc || '').trim()),
       path,
       coverImage: coverImg || (i.imageUrl || ''),
       coverThumb: coverThumb || (i.imageUrlThumb || ''),
@@ -548,11 +548,11 @@ const vinoProductItems = computed(() => {
         imageUrlThumb: i.imageUrlThumb || '',
       };
     }
-    const iconUrl = (g.iconUrl != null && String(g.iconUrl).trim()) ? String(g.iconUrl).trim() : '';
-    const iconUrlThumb = (g.iconUrlThumb != null && String(g.iconUrlThumb).trim()) ? String(g.iconUrlThumb).trim() : '';
+    const iconUrl = pick(g, 'iconUrl') || '';
+    const iconUrlThumb = pick(g, 'iconUrlThumb') || '';
     return {
       id: i.id,
-      title: (g.name != null && String(g.name).trim()) ? String(g.name).trim() : (i.title || ''),
+      title: pick(g, 'name') || (i.title || ''),
       path,
       icon: g.icon != null ? String(g.icon) : (i.icon || ''),
       imageUrl: iconUrl || (i.imageUrl || ''),
