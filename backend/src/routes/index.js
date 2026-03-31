@@ -15,6 +15,7 @@ const adminController = require('../controllers/adminController');
 const seedController = require('../controllers/seedController');
 const analyticsController = require('../controllers/analyticsController');
 const mediaController = require('../controllers/mediaController');
+const i18nController = require('../controllers/i18nController');
 
 const router = Router();
 
@@ -37,6 +38,11 @@ router.use('/outlet', outletRoutes);
 
 router.post('/admin/generate-thumbs', authMiddleware, adminMiddleware, adminController.generateThumbs);
 router.post('/admin/seed', authMiddleware, adminMiddleware, seedController.seedData);
+
+router.get('/i18n', i18nController.list);
+router.post('/i18n/bulk', authMiddleware, adminMiddleware, i18nController.bulkUpsert);
+router.put('/i18n/:id', authMiddleware, adminMiddleware, i18nController.update);
+router.delete('/i18n/:id', authMiddleware, adminMiddleware, i18nController.remove);
 
 router.get('/health', (req, res) => {
   res.json({ code: 0, message: 'Vino服务运行中', timestamp: new Date().toISOString() });

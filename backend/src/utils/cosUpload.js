@@ -296,6 +296,28 @@ async function uploadWithThumb(buffer, filename, contentType, opts = {}) {
   return { url, thumbUrl };
 }
 
+/** Set an existing COS object's ACL to public-read */
+function setObjectPublicRead(key) {
+  return new Promise((resolve) => {
+    const client = getClient();
+    if (!client || !key) { resolve(false); return; }
+    client.putObjectAcl({ Bucket, Region, Key: key, ACL: 'public-read' }, (err) => {
+      if (err) { console.warn('[COS] setObjectPublicRead failed for', key, err.message); resolve(false); }
+      else { resolve(true); }
+    });
+  });
+}
+
+/** Ensure all vino/uploads/ objects referenced by URLs are public-read */
+async function ensurePublicRead(urls) {
+  const keys = (Array.isArray(urls) ? urls : [urls])
+    .map(u => urlToKey(u))
+    .filter(Boolean);
+  for (const k of keys) {
+    await setObjectPublicRead(k);
+  }
+}
+
 module.exports = {
   upload,
   uploadThumb,
@@ -311,4 +333,6 @@ module.exports = {
   streamObjectToResponse,
   isKeyAllowedForProxy,
   isSigningEnabled,
+  setObjectPublicRead,
+  ensurePublicRead,
 };

@@ -4,7 +4,7 @@
   <div v-if="showTabbar && tabbarItems.length" class="app-tabbar-shell">
     <div v-if="tabbarSkinLayer" class="section-skin-layer app-tabbar-skin" :style="tabbarSkinLayer" aria-hidden="true" />
     <van-tabbar route active-color="var(--vino-primary)" class="app-tabbar-bar">
-      <van-tabbar-item v-for="(item, i) in tabbarItems" :key="item.path || i" :to="item.path" :icon="item.icon">{{ item.title }}</van-tabbar-item>
+      <van-tabbar-item v-for="(item, i) in tabbarItems" :key="item.path || i" :to="item.path" :icon="item.icon">{{ item.i18nKey ? t(item.i18nKey) : item.title }}</van-tabbar-item>
     </van-tabbar>
   </div>
   <ChatWidget ref="chatWidgetRef" :hide-fab="hideChatFab" />
@@ -18,14 +18,15 @@ import ChatWidget from '@/components/ChatWidget.vue';
 import { homeConfigApi } from '@/api';
 import { initFromHomeConfigList } from '@/utils/currency';
 import { buildSectionSkinLayerStyle } from '@/utils/sectionSkin';
+import { loadI18nTexts, t } from '@/utils/i18n';
 
 const route = useRoute();
 
 const DEFAULT_TABBAR = [
-  { title: '首页', icon: 'wap-home-o', path: '/' },
-  { title: '产品', icon: 'label-o', path: '/products' },
-  { title: '服务', icon: 'apps-o', path: '/services' },
-  { title: '我的', icon: 'contact-o', path: '/mine' },
+  { title: '首页', icon: 'wap-home-o', path: '/', i18nKey: 'tabbar.home' },
+  { title: '产品', icon: 'label-o', path: '/products', i18nKey: 'tabbar.products' },
+  { title: '服务', icon: 'apps-o', path: '/services', i18nKey: 'tabbar.services' },
+  { title: '我的', icon: 'contact-o', path: '/mine', i18nKey: 'tabbar.mine' },
 ];
 
 const tabbarItems = ref([...DEFAULT_TABBAR]);
@@ -78,7 +79,7 @@ async function loadCurrencyConfig() {
 }
 
 onMounted(async () => {
-  await Promise.all([loadTabbarConfig(), loadCurrencyConfig()]);
+  await Promise.all([loadI18nTexts(), loadTabbarConfig(), loadCurrencyConfig()]);
 });
 
 const hiddenTabRoutes = ['/login', '/register', '/service/', '/address', '/guide/'];

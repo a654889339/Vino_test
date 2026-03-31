@@ -19,6 +19,7 @@ function getJwtExpMs(token) {
 }
 
 const currencyUtil = require('./utils/currency.js');
+const i18n = require('./utils/i18n.js');
 
 App({
   globalData: {
@@ -46,6 +47,7 @@ App({
 
   onLaunch() {
     this.loadCurrencySymbol();
+    i18n.loadI18nTexts();
     const token = wx.getStorageSync('vino_token');
     if (token) {
       const expMs = getJwtExpMs(token);

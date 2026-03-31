@@ -194,6 +194,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <div class="dash-nav-item" data-page="homeConfig" onclick="switchPage('homeConfig')">首页配置</div>
     <div class="dash-nav-item" data-page="homeAnimConfig" onclick="switchPage('homeAnimConfig')">首页动画配置</div>
     <div class="dash-nav-item" data-page="pageThemeConfig" onclick="switchPage('pageThemeConfig')">页面基础配置</div>
+    <div class="dash-nav-item" data-page="i18nConfig" onclick="switchPage('i18nConfig')">语言翻译</div>
     <div class="dash-nav-item" data-page="messages" onclick="switchPage('messages')">留言板</div>
   </div>
   <div class="dash-body">
@@ -620,6 +621,41 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <tbody id="pageThemeBody"></tbody>
         </table>
         <div class="order-empty" id="pageThemeEmpty" style="display:none">暂无页面基础配置</div>
+      </div>
+    </div>
+
+    <!-- I18n Config Page -->
+    <div class="dash-page" id="page-i18nConfig">
+      <div class="dash-section">
+        <div class="section-header">
+          <h3>语言翻译配置</h3>
+        </div>
+        <p style="font-size:13px;color:#666;margin-bottom:16px">管理前端和小程序所有硬编码的中英文文字。修改后点击「保存」即可生效。</p>
+        <div style="margin-bottom:12px;display:flex;gap:10px;align-items:center">
+          <input class="form-input" id="i18nSearchInput" placeholder="搜索key或文本..." oninput="filterI18nTable()" style="width:260px" />
+          <button class="btn" onclick="openI18nAddModal()" style="background:#059669;color:#fff">+ 新增翻译</button>
+        </div>
+        <table class="order-table" id="i18nTable">
+          <thead><tr><th style="width:50px">ID</th><th style="width:240px">Key</th><th>中文</th><th>英文</th><th style="width:80px">操作</th></tr></thead>
+          <tbody id="i18nTableBody"></tbody>
+        </table>
+        <div class="order-empty" id="i18nEmpty" style="display:none">暂无翻译条目</div>
+        <div style="margin-top:12px;text-align:right">
+          <button class="btn" onclick="saveAllI18n()" style="background:var(--primary);color:#fff;padding:10px 32px;font-size:15px">保存所有修改</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- I18n Add Modal -->
+    <div class="modal-overlay" id="i18nAddModal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+      <div class="modal-content" style="max-width:440px">
+        <div class="modal-header"><h3>新增翻译条目</h3><span class="modal-close" onclick="document.getElementById('i18nAddModal').style.display='none'">&times;</span></div>
+        <div class="modal-body">
+          <div class="form-group"><label>Key</label><input class="form-input" id="i18nAddKey" placeholder="如 home.title" /></div>
+          <div class="form-group"><label>中文</label><input class="form-input" id="i18nAddZh" /></div>
+          <div class="form-group"><label>英文</label><input class="form-input" id="i18nAddEn" /></div>
+        </div>
+        <div class="modal-footer"><button class="btn" onclick="submitI18nAdd()" style="background:var(--primary);color:#fff">添加</button></div>
       </div>
     </div>
 
@@ -1356,14 +1392,14 @@ async function api(path, options = {}) {
 let currentHCPage = 'homeConfig';
 let currentGroup = 'ToC';
 
-const tocPages = ['overview','orders','users','guides','serviceConfig','inventory','homeConfig','homeAnimConfig','pageThemeConfig','messages'];
+const tocPages = ['overview','orders','users','guides','serviceConfig','inventory','homeConfig','homeAnimConfig','pageThemeConfig','i18nConfig','messages'];
 const outletPages = ['outletOverview','outletOrders','outletUsers','outletHomeConfig','outletHomeAnimConfig','outletMineConfig','outletMessages'];
 
 const tocNavItems = [
   {page:'overview',label:'概览'},{page:'orders',label:'订单管理'},{page:'users',label:'用户管理'},
   {page:'guides',label:'商品配置'},{page:'serviceConfig',label:'服务配置'},{page:'inventory',label:'商品库存'},
   {page:'homeConfig',label:'首页配置'},{page:'homeAnimConfig',label:'首页动画配置'},
-  {page:'pageThemeConfig',label:'页面基础配置'},{page:'messages',label:'留言板'}
+  {page:'pageThemeConfig',label:'页面基础配置'},{page:'i18nConfig',label:'语言翻译'},{page:'messages',label:'留言板'}
 ];
 const outletNavItems = [
   {page:'outletOverview',label:'概览'},{page:'outletOrders',label:'订单管理'},{page:'outletUsers',label:'用户管理'},
@@ -1416,6 +1452,7 @@ function switchPage(page) {
   if (page === 'homeConfig') { currentHCPage = 'homeConfig'; loadHomeConfig(); loadGuides(); }
   if (page === 'homeAnimConfig') { currentHCPage = 'homeAnimConfig'; loadHomeConfig(); }
   if (page === 'pageThemeConfig') { currentHCPage = 'pageTheme'; loadHomeConfig(); }
+  if (page === 'i18nConfig') { loadI18nTexts(); }
   if (page === 'messages') { loadConversations(); startMsgPolling(); }
   if (page === 'overview') { loadOrderStats(); loadPageVisitStats(); }
   if (page === 'outletOverview') { loadOutletStats(); loadPageVisitStats(); }
@@ -4500,6 +4537,91 @@ async function sendOutletReply() {
 
 function startOutletMsgPolling() { stopOutletMsgPolling(); outletMsgPollTimer = setInterval(() => { loadOutletConversations(); if (outletCurrentChatUserId) loadOutletChatMessages(outletCurrentChatUserId); }, 10000); }
 function stopOutletMsgPolling() { if (outletMsgPollTimer) { clearInterval(outletMsgPollTimer); outletMsgPollTimer = null; } }
+
+/* ========== I18n Translation Config ========== */
+let i18nData = [];
+
+async function loadI18nTexts() {
+  try {
+    const res = await api('/i18n');
+    if (res.code !== 0) return;
+    i18nData = res.data || [];
+    renderI18nTable(i18nData);
+  } catch (e) { console.error('loadI18nTexts', e); }
+}
+
+function renderI18nTable(data) {
+  const tbody = document.getElementById('i18nTableBody');
+  const emptyEl = document.getElementById('i18nEmpty');
+  if (!data.length) { tbody.innerHTML = ''; emptyEl.style.display = ''; return; }
+  emptyEl.style.display = 'none';
+  tbody.innerHTML = data.map(r => `<tr data-i18n-id="${r.id}">
+    <td>${r.id}</td>
+    <td><code style="font-size:12px;background:#f3f4f6;padding:2px 6px;border-radius:4px">${r.key}</code></td>
+    <td><input class="form-input i18n-zh" data-id="${r.id}" value="${escH(r.zh)}" style="width:100%" /></td>
+    <td><input class="form-input i18n-en" data-id="${r.id}" value="${escH(r.en)}" style="width:100%" /></td>
+    <td><button class="btn" onclick="deleteI18n(${r.id})" style="background:#DC2626;color:#fff;padding:4px 10px;font-size:12px">删除</button></td>
+  </tr>`).join('');
+}
+
+function escH(s) { return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function filterI18nTable() {
+  const q = (document.getElementById('i18nSearchInput').value || '').toLowerCase().trim();
+  if (!q) { renderI18nTable(i18nData); return; }
+  const filtered = i18nData.filter(r => r.key.toLowerCase().includes(q) || (r.zh||'').toLowerCase().includes(q) || (r.en||'').toLowerCase().includes(q));
+  renderI18nTable(filtered);
+}
+
+async function saveAllI18n() {
+  const rows = [];
+  document.querySelectorAll('#i18nTableBody tr').forEach(tr => {
+    const id = tr.getAttribute('data-i18n-id');
+    const orig = i18nData.find(r => String(r.id) === id);
+    if (!orig) return;
+    const zh = tr.querySelector('.i18n-zh').value;
+    const en = tr.querySelector('.i18n-en').value;
+    if (zh !== orig.zh || en !== orig.en) {
+      rows.push({ key: orig.key, zh, en });
+    }
+  });
+  if (!rows.length) { alert('无修改'); return; }
+  try {
+    const res = await api('/i18n/bulk', { method: 'POST', body: { rows } });
+    if (res.code === 0) { i18nData = res.data; renderI18nTable(i18nData); alert('保存成功 (' + rows.length + ' 条)'); }
+    else alert('保存失败: ' + (res.message || ''));
+  } catch (e) { alert('保存失败: ' + e.message); }
+}
+
+async function deleteI18n(id) {
+  if (!confirm('确认删除此翻译条目？')) return;
+  try {
+    await api('/i18n/' + id, { method: 'DELETE' });
+    await loadI18nTexts();
+  } catch (e) { alert('删除失败: ' + e.message); }
+}
+
+function openI18nAddModal() {
+  document.getElementById('i18nAddKey').value = '';
+  document.getElementById('i18nAddZh').value = '';
+  document.getElementById('i18nAddEn').value = '';
+  document.getElementById('i18nAddModal').style.display = 'flex';
+}
+
+async function submitI18nAdd() {
+  const key = document.getElementById('i18nAddKey').value.trim();
+  const zh = document.getElementById('i18nAddZh').value.trim();
+  const en = document.getElementById('i18nAddEn').value.trim();
+  if (!key) { alert('Key不能为空'); return; }
+  try {
+    const res = await api('/i18n/bulk', { method: 'POST', body: { rows: [{ key, zh, en }] } });
+    if (res.code === 0) {
+      i18nData = res.data;
+      renderI18nTable(i18nData);
+      document.getElementById('i18nAddModal').style.display = 'none';
+    } else alert('添加失败: ' + (res.message || ''));
+  } catch (e) { alert('添加失败: ' + e.message); }
+}
 </script>
 </body>
 </html>

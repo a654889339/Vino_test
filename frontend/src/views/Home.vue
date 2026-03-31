@@ -42,9 +42,9 @@
           <div class="share-qr">
             <canvas ref="qrCanvas"></canvas>
           </div>
-          <p class="share-hint">扫描二维码，打开 Vino 服务站</p>
+          <p class="share-hint">{{ t('home.shareHint') }}</p>
           <div class="share-url">{{ shareUrl }}</div>
-          <van-button size="small" round plain type="primary" color="#B91C1C" class="share-copy-btn" @click="copyUrl">复制链接</van-button>
+          <van-button size="small" round plain type="primary" color="#B91C1C" class="share-copy-btn" @click="copyUrl">{{ t('home.copyLink') }}</van-button>
         </div>
         <van-icon name="close" size="28" color="rgba(255,255,255,0.6)" class="share-close" @click="showShare = false" />
       </div>
@@ -58,7 +58,7 @@
     <div class="section card-section first-card" v-if="navLgItems.length || navSmItems.length" :style="firstCardSectionStyle">
       <div class="section-header">
         <h3>{{ navSectionTitle }}</h3>
-        <span class="more" @click="$router.push('/services')">进度查询 ›</span>
+        <span class="more" @click="$router.push('/services')">{{ t('home.progressQuery') }}</span>
       </div>
       <!-- 大图标行 -->
       <div class="nav-lg-row" v-if="navLgItems.length">
@@ -87,8 +87,8 @@
       <div v-if="skinLayerVinoProduct" class="section-skin-layer" :style="skinLayerVinoProduct" aria-hidden="true" />
       <div class="vino-product-inner">
       <div class="vino-product-head">
-        <h3>Vino产品</h3>
-        <span class="vino-more" @click="$router.push('/products')">全部 ›</span>
+        <h3>{{ t('home.vinoProducts') }}</h3>
+        <span class="vino-more" @click="$router.push('/products')">{{ t('home.viewAll') }}</span>
       </div>
       <div class="vino-product-grid">
         <div
@@ -121,7 +121,7 @@
       <div v-if="skinLayerFeaturedRecommend" class="section-skin-layer" :style="skinLayerFeaturedRecommend" aria-hidden="true" />
       <div class="featured-recommend-inner">
         <div class="featured-recommend-head">
-          <h3>甄选推荐</h3>
+          <h3>{{ t('home.featured') }}</h3>
         </div>
         <div class="featured-recommend-scroll">
           <div
@@ -156,7 +156,7 @@
       <div class="section-skin-content">
       <div class="section-header">
         <h3>{{ myProductsTitle }}</h3>
-        <span class="more" @click="$router.push('/mine/products')">查看全部 ›</span>
+        <span class="more" @click="$router.push('/mine/products')">{{ t('home.viewMore') }}</span>
       </div>
       <input ref="qrFileInputRef" type="file" accept="image/*" class="hidden-input" @change="onQrFileChange" />
       <div class="my-products-list">
@@ -237,7 +237,7 @@ import { homeConfigApi, authApi, guideApi } from '@/api';
 import LodImg from '@/components/LodImg.vue';
 import PageThemeLayer from '@/components/PageThemeLayer.vue';
 import LangSwitcher from '@/components/LangSwitcher.vue';
-import { detectLangByIp } from '@/utils/i18n';
+import { detectLangByIp, t } from '@/utils/i18n';
 import { resolvePublicUrl } from '@/utils/mediaUrl';
 import { buildSectionSkinLayerStyle, buildSectionSkinContainerStyle } from '@/utils/sectionSkin';
 
@@ -290,7 +290,7 @@ function productGuideSlug(item) {
 function onMyProductItemClick(item) {
   const slug = productGuideSlug(item);
   if (!slug) {
-    showToast('暂无产品指南');
+    showToast(t('home.noGuide'));
     return;
   }
   router.push('/guide/' + encodeURIComponent(slug));
@@ -415,11 +415,11 @@ const heroBgList = computed(() => {
 const heroBgFallback = computed(() => allItems.value.find(i => i.section === 'homeBg' && i.status === 'active')?.imageUrl || '');
 const navSectionTitle = computed(() => {
   const item = allItems.value.find(i => i.section === 'navSectionTitle' && i.status === 'active');
-  return (item?.title || '').trim() || '自助预约';
+  return (item?.title || '').trim() || t('home.selfBook');
 });
 const myProductsTitle = computed(() => {
   const item = allItems.value.find(i => i.section === 'myProducts' && i.status === 'active');
-  return (item?.title || '').trim() || '我的商品';
+  return (item?.title || '').trim() || t('home.myProducts');
 });
 // 首页板块整体上下偏移量(px)，来自后台首页配置
 const homeSectionOffsetPx = computed(() => {
@@ -624,12 +624,12 @@ const exploreVinoVisible = computed(() => {
   return !!(img || path);
 });
 const exploreVinoBarTitle = computed(() => {
-  const t = (exploreVinoRow.value?.title || '').trim();
-  return t || '探索VINO';
+  const txt = (exploreVinoRow.value?.title || '').trim();
+  return txt || t('home.exploreVino');
 });
 const exploreVinoMainTitle = computed(() => {
-  const t = (exploreVinoRow.value?.icon || '').trim();
-  return t || 'VINO';
+  const txt = (exploreVinoRow.value?.icon || '').trim();
+  return txt || 'VINO';
 });
 const exploreVinoSubTitle = computed(() => (exploreVinoRow.value?.desc || '').trim());
 const exploreVinoImgSrc = computed(() => {

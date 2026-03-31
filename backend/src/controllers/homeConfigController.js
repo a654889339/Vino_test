@@ -22,12 +22,18 @@ exports.list = async (req, res) => {
     if (req.query.section) where.section = req.query.section;
     if (!req.query.all) where.status = 'active';
     const items = await HomeConfig.findAll({ where, order: [['section','ASC'],['sortOrder','ASC'],['id','ASC']] });
+    const cosUrls = [];
     const data = items.map(it => {
       const o = it.get ? it.get({ plain: true }) : it;
       const thumb = (o.imageUrlThumb && o.imageUrlThumb.trim()) ? o.imageUrlThumb.trim() : null;
-      return { ...o, imageUrl: fixProxyUrl(o.imageUrl), imageUrlThumb: fixProxyUrl(thumb) };
+      const fixedImg = fixProxyUrl(o.imageUrl);
+      const fixedThumb = fixProxyUrl(thumb);
+      if (fixedImg) cosUrls.push(fixedImg);
+      if (fixedThumb) cosUrls.push(fixedThumb);
+      return { ...o, imageUrl: fixedImg, imageUrlThumb: fixedThumb };
     });
     res.json({ code: 0, data });
+    if (cosUrls.length) cosUpload.ensurePublicRead(cosUrls).catch(() => {});
   } catch (e) {
     res.status(500).json({ code: 1, message: e.message });
   }
