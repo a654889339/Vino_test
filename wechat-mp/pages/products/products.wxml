@@ -5,7 +5,7 @@
       <input
         class="products-search-input"
         type="text"
-        placeholder="请输入设备型号或系列"
+        placeholder="{{searchPlaceholder}}"
         placeholder-class="products-search-placeholder"
         value="{{searchKeyword}}"
         bindinput="onSearchInput"
@@ -29,7 +29,7 @@
         <image class="category-banner-img" src="{{categoryBannerUrl}}" mode="widthFix" />
       </view>
 
-      <view wx:if="{{listLoading}}" class="main-loading">加载中...</view>
+      <view wx:if="{{listLoading}}" class="main-loading">{{loadingText}}</view>
       <view wx:elif="{{filteredDeviceGuides.length}}" class="product-grid">
         <view
           class="grid-card"
@@ -48,13 +48,13 @@
           </view>
         </view>
       </view>
-      <view wx:elif="{{selectedCategoryId && !listLoading && deviceGuides.length && !filteredDeviceGuides.length}}" class="main-empty">未找到匹配的商品</view>
-      <view wx:elif="{{selectedCategoryId && !listLoading && !deviceGuides.length}}" class="main-empty">该种类下暂无商品</view>
+      <view wx:elif="{{selectedCategoryId && !listLoading && deviceGuides.length && !filteredDeviceGuides.length}}" class="main-empty">{{noMatchText}}</view>
+      <view wx:elif="{{selectedCategoryId && !listLoading && !deviceGuides.length}}" class="main-empty">{{noCategoryProductText}}</view>
     </view>
   </view>
 
   <view wx:if="{{!listLoading && !categories.length}}" class="empty-hint">
-    <text>暂无商品配置</text>
+    <text>{{noConfigText}}</text>
   </view>
 
   <view class="tab-bar-placeholder"></view>

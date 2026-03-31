@@ -10,7 +10,7 @@
             v-model.trim="searchKeyword"
             type="search"
             class="products-search-input"
-            placeholder="请输入设备型号或系列"
+            :placeholder="t('products.searchPlaceholder')"
             enterkeyhint="search"
             autocomplete="off"
           />
@@ -62,15 +62,15 @@
             </button>
           </div>
           <div v-else-if="selectedCategoryId && !listLoading && sortedDeviceGuides.length && !filteredDeviceGuides.length" class="main-empty">
-            未找到匹配的商品
+            {{ t('products.emptyNoMatch') }}
           </div>
-          <div v-else-if="selectedCategoryId && !listLoading && !sortedDeviceGuides.length" class="main-empty">该种类下暂无商品</div>
+          <div v-else-if="selectedCategoryId && !listLoading && !sortedDeviceGuides.length" class="main-empty">{{ t('products.emptyCategoryEmpty') }}</div>
         </div>
       </div>
 
       <div v-if="!listLoading && !sortedCategories.length" class="empty-hint">
         <van-icon name="info-o" size="48" color="#ccc" />
-        <p>暂无商品配置</p>
+        <p>{{ t('products.emptyNoConfig') }}</p>
       </div>
 
       <div class="products-bottom-space" aria-hidden="true" />
@@ -84,7 +84,7 @@ import { useRouter } from 'vue-router';
 import { guideApi } from '@/api';
 import LodImg from '@/components/LodImg.vue';
 import PageThemeLayer from '@/components/PageThemeLayer.vue';
-import { pick } from '@/utils/i18n';
+import { pick, t } from '@/utils/i18n';
 import {
   sortGuidesByDisplayOrder,
   sortCategoriesForSidebar,

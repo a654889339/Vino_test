@@ -1,10 +1,16 @@
 const app = getApp();
+const i18n = require('../../utils/i18n.js');
 
 Page({
   data: {
     loading: true,
     guideName: '',
     sections: [],
+    loadingText: i18n.t('common.loading'),
+    maintenanceSuffix: i18n.t('maintenance.suffix'),
+    sectionCountPrefix: i18n.t('maintenance.sectionCountPrefix'),
+    sectionCountSuffix: i18n.t('maintenance.sectionCountSuffix'),
+    tocTitle: i18n.t('maintenance.toc'),
   },
 
   onLoad(options) {

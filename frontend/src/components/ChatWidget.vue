@@ -1,6 +1,6 @@
 <template>
   <div class="chat-widget">
-    <!-- Floating Button（部分页面隐藏，但组件仍挂载以便意见反馈可打开） -->
+    <!-- Floating Button -->
     <div v-show="!hideFab" class="chat-fab" @click="toggleChat">
       <van-icon name="chat-o" size="24" color="#fff" />
       <div v-if="unreadCount > 0" class="chat-badge">{{ unreadCount > 99 ? '99+' : unreadCount }}</div>
@@ -18,17 +18,17 @@
     >
       <div class="chat-panel">
         <div class="chat-header">
-          <span class="chat-title">在线客服</span>
+          <span class="chat-title">{{ t('chat.title') }}</span>
           <van-icon name="cross" size="20" color="#999" class="chat-close" @click="showChat = false" />
         </div>
 
         <div class="chat-body" ref="chatBody">
           <div v-if="loading" style="text-align:center;padding:40px"><van-loading size="24" /></div>
           <template v-else>
-            <div v-if="!messages.length" class="chat-empty">暂无消息，发送第一条消息开始对话吧</div>
+            <div v-if="!messages.length" class="chat-empty">{{ t('chat.emptyHint') }}</div>
             <div v-for="msg in messages" :key="msg.id" :class="['chat-msg', msg.sender === 'user' ? 'chat-msg-right' : 'chat-msg-left']">
               <div class="chat-avatar" :class="msg.sender === 'admin' ? 'avatar-admin' : 'avatar-user'">
-                {{ msg.sender === 'admin' ? '客' : (userInitial || '我') }}
+                {{ msg.sender === 'admin' ? t('chat.adminAvatar') : (userInitial || t('chat.userAvatar')) }}
               </div>
               <div class="chat-bubble-wrap">
                 <div v-if="msg.type === 'image'" :class="['chat-bubble', 'bubble-img', msg.sender === 'admin' ? 'bubble-admin' : 'bubble-user']">
@@ -43,14 +43,14 @@
 
         <div class="chat-footer">
           <div class="chat-input-wrap">
-            <button class="chat-img-btn" @click="triggerImagePick" :disabled="sending || !isLoggedIn" title="发送图片">
+            <button class="chat-img-btn" @click="triggerImagePick" :disabled="sending || !isLoggedIn" :title="t('chat.sendImageTitle')">
               <van-icon name="photo-o" size="22" color="#666" />
             </button>
             <input type="file" ref="fileInput" accept="image/*" style="display:none" @change="onImageSelected" />
             <input
               v-model="inputText"
               class="chat-input"
-              placeholder="输入消息..."
+              :placeholder="t('chat.inputPh')"
               @keydown.enter="sendMessage"
               :disabled="sending || !isLoggedIn"
             />
@@ -58,7 +58,7 @@
               <van-icon name="guide-o" size="20" :color="inputText.trim() ? '#fff' : 'rgba(255,255,255,0.5)'" />
             </button>
           </div>
-          <div v-if="!isLoggedIn" class="chat-login-hint" @click="goLogin">请先登录后发送消息</div>
+          <div v-if="!isLoggedIn" class="chat-login-hint" @click="goLogin">{{ t('chat.loginHint') }}</div>
         </div>
       </div>
     </van-popup>
@@ -82,6 +82,7 @@ import { useRouter } from 'vue-router';
 import { showToast, showImagePreview } from 'vant';
 import { messageApi } from '@/api';
 import { useUserStore } from '@/stores/user';
+import { t } from '@/utils/i18n';
 
 defineProps({
   hideFab: { type: Boolean, default: false },
@@ -99,17 +100,14 @@ const chatBody = ref(null);
 const fileInput = ref(null);
 
 const isLoggedIn = computed(() => !!userStore.token);
-// 用户昵称首字，用于聊天头像显示
 const userInitial = computed(() => {
   const n = userStore.userInfo?.nickname || userStore.userInfo?.username || '';
-  return n ? n[0] : '我';
+  return n ? n[0] : t('chat.userAvatar');
 });
 
-// 轮询定时器：面板关闭时每 15 秒检查未读数，面板打开时每 3 秒拉取新消息
 let pollTimer = null;
 let activePollTimer = null;
 
-// 格式化消息时间：当天只显示时分，非当天显示月/日 时分
 const formatTime = (t) => {
   if (!t) return '';
   const d = new Date(t);
@@ -124,8 +122,6 @@ const scrollToBottom = async () => {
   if (chatBody.value) chatBody.value.scrollTop = chatBody.value.scrollHeight;
 };
 
-// 加载当前用户的全部聊天记录，同时清零未读计数（服务端会标记已读）
-// smartScroll: 仅在有新消息时滚动到底部，避免用户翻看历史时被强制滚动
 const loadMessages = async (smartScroll = false) => {
   if (!isLoggedIn.value) return;
   try {
@@ -138,7 +134,6 @@ const loadMessages = async (smartScroll = false) => {
   } catch { /* ignore */ }
 };
 
-// 轮询检查未读消息数，用于悬浮按钮红点显示
 const checkUnread = async () => {
   if (!isLoggedIn.value) return;
   try {
@@ -147,7 +142,6 @@ const checkUnread = async () => {
   } catch { /* ignore */ }
 };
 
-// 发送消息：调用 API 后追加到消息列表并滚动到底部
 const sendMessage = async () => {
   const content = inputText.value.trim();
   if (!content || sending.value || !isLoggedIn.value) return;
@@ -159,18 +153,16 @@ const sendMessage = async () => {
       messages.value.push(res.data);
       scrollToBottom();
     } else {
-      showToast(res.message || '发送失败');
+      showToast(res.message || t('chat.sendFailed'));
     }
   } catch {
-    showToast('发送失败');
+    showToast(t('chat.sendFailed'));
   }
   sending.value = false;
 };
 
-// 待发送的自动消息（由 openWithAutoMessage 设置，面板打开后自动发送）
 let pendingAutoMsg = '';
 
-// 开启面板打开期间的快速轮询（3 秒），快速感知管理员回复
 const startActivePoll = () => {
   stopActivePoll();
   activePollTimer = setInterval(() => loadMessages(true), 3000);
@@ -179,7 +171,6 @@ const stopActivePoll = () => {
   if (activePollTimer) { clearInterval(activePollTimer); activePollTimer = null; }
 };
 
-// 面板打开时：加载消息 + 启动快速轮询；若有待发自动消息则立即发送
 const onOpen = async () => {
   await loadMessages();
   startActivePoll();
@@ -200,10 +191,6 @@ const toggleChat = () => {
   showChat.value = !showChat.value;
 };
 
-/**
- * 外部调用接口：打开聊天面板并自动发送一条消息
- * 用于"咨询"按钮场景，自动发送商品简介
- */
 const openWithAutoMessage = (msg) => {
   pendingAutoMsg = msg || '';
   showChat.value = true;
@@ -231,10 +218,10 @@ const onImageSelected = async (e) => {
         scrollToBottom();
       }
     } else {
-      showToast('图片上传失败');
+      showToast(t('chat.uploadFailed'));
     }
   } catch {
-    showToast('图片上传失败');
+    showToast(t('chat.uploadFailed'));
   }
   sending.value = false;
 };
@@ -297,7 +284,6 @@ onBeforeUnmount(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  /* 与 App 固定底栏同高，避免输入区与「首页/产品/…」底栏重叠 */
   padding-bottom: calc(75px + env(safe-area-inset-bottom, 0px));
   box-sizing: border-box;
 }

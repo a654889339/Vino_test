@@ -1,4 +1,5 @@
 const app = getApp();
+const i18n = require('../../utils/i18n.js');
 
 Page({
   data: {
@@ -6,8 +7,9 @@ Page({
     inputText: '',
     loading: false,
     isLoggedIn: false,
-    userInitial: '我',
+    userInitial: '',
     scrollToId: '',
+    i18n: {},
   },
 
   pollTimer: null,
@@ -18,11 +20,25 @@ Page({
   },
 
   onShow() {
+    this.refreshI18n();
     const loggedIn = app.isLoggedIn();
     const info = app.globalData.userInfo || {};
-    const initial = (info.nickname || info.username || '我')[0];
+    const initial = (info.nickname || info.username || i18n.t('chat.userAvatar'))[0];
     this.setData({ isLoggedIn: loggedIn, userInitial: initial });
     this.loadMessages();
+  },
+
+  refreshI18n() {
+    this.setData({
+      i18n: {
+        emptyHint: i18n.t('chat.emptyHint'),
+        loading: i18n.t('chat.loading'),
+        adminAvatar: i18n.t('chat.adminAvatar'),
+        inputPlaceholder: i18n.t('chat.inputPlaceholder'),
+        loginHint: i18n.t('chat.loginHint'),
+        send: i18n.t('chat.send'),
+      },
+    });
   },
 
   onHide() {
@@ -114,7 +130,7 @@ Page({
 
   chooseImage() {
     if (!this.data.isLoggedIn) {
-      wx.showToast({ title: '请先登录', icon: 'none' });
+      wx.showToast({ title: i18n.t('chat.loginRequired'), icon: 'none' });
       return;
     }
     wx.chooseMedia({
@@ -124,7 +140,7 @@ Page({
       success: (res) => {
         const file = res.tempFiles[0];
         if (!file) return;
-        wx.showLoading({ title: '发送中...' });
+        wx.showLoading({ title: i18n.t('chat.sending') });
         wx.uploadFile({
           url: app.globalData.baseUrl + '/messages/upload-image',
           filePath: file.tempFilePath,
@@ -146,14 +162,14 @@ Page({
                   }
                 });
               } else {
-                wx.showToast({ title: '发送失败', icon: 'none' });
+                wx.showToast({ title: i18n.t('chat.sendFailed'), icon: 'none' });
               }
             } catch {
-              wx.showToast({ title: '发送失败', icon: 'none' });
+              wx.showToast({ title: i18n.t('chat.sendFailed'), icon: 'none' });
             }
           },
           fail: () => {
-            wx.showToast({ title: '上传失败', icon: 'none' });
+            wx.showToast({ title: i18n.t('chat.uploadFailed'), icon: 'none' });
           },
           complete: () => {
             wx.hideLoading();
@@ -179,11 +195,11 @@ Page({
           this.setData({ messages });
           this.scrollBottom();
         } else {
-          wx.showToast({ title: res.message || '发送失败', icon: 'none' });
+          wx.showToast({ title: res.message || i18n.t('chat.sendFailed'), icon: 'none' });
         }
       })
       .catch(() => {
-        wx.showToast({ title: '发送失败', icon: 'none' });
+        wx.showToast({ title: i18n.t('chat.sendFailed'), icon: 'none' });
       });
   },
 });

@@ -1,6 +1,6 @@
 <template>
   <div class="register-page">
-    <van-nav-bar title="注册" left-arrow @click-left="$router.back()" />
+    <van-nav-bar :title="t('register.title')" left-arrow @click-left="$router.back()" />
 
     <div class="register-header">
       <img
@@ -19,38 +19,38 @@
         <circle cx="498" cy="38" r="10" stroke="#999" stroke-width="1.5" fill="none"/>
         <text x="498" y="43" font-family="Arial" font-size="14" fill="#999" text-anchor="middle" font-weight="bold">R</text>
       </svg>
-      <h2>创建账号</h2>
+      <h2>{{ t('register.heading') }}</h2>
     </div>
 
     <div class="register-form">
       <van-tabs v-model:active="registerMode" class="register-tabs">
-        <van-tab title="邮箱注册" name="email">
+        <van-tab :title="t('register.tabEmail')" name="email">
           <van-cell-group inset>
-            <van-field v-model="form.username" label="账号" placeholder="请输入用户名（2-50字符）" left-icon="manager-o" maxlength="50" />
-            <van-field v-model="form.password" type="password" label="密码" placeholder="请输入密码（至少6位）" left-icon="lock" autocomplete="new-password" />
-            <van-field v-model="form.email" label="邮箱" placeholder="请输入邮箱" left-icon="envelop-o" type="email" />
-            <van-field v-model="form.code" label="验证码" placeholder="请输入邮箱验证码" left-icon="shield-o" maxlength="6">
+            <van-field v-model="form.username" :label="t('register.username')" :placeholder="t('register.usernamePh')" left-icon="manager-o" maxlength="50" />
+            <van-field v-model="form.password" type="password" :label="t('register.password')" :placeholder="t('register.passwordPh')" left-icon="lock" autocomplete="new-password" />
+            <van-field v-model="form.email" :label="t('register.email')" :placeholder="t('register.emailPh')" left-icon="envelop-o" type="email" />
+            <van-field v-model="form.code" :label="t('register.code')" :placeholder="t('register.emailCodePh')" left-icon="shield-o" maxlength="6">
               <template #button>
                 <van-button size="small" type="primary" color="#B91C1C" :disabled="countdown > 0 || sendingCode" :loading="sendingCode" @click="handleSendCode">
-                  {{ countdown > 0 ? countdown + 's' : '发送验证码' }}
+                  {{ countdown > 0 ? countdown + 's' : t('register.sendEmailCode') }}
                 </van-button>
               </template>
             </van-field>
-            <van-field v-model="form.nickname" label="昵称" placeholder="选填" left-icon="contact-o" maxlength="50" />
+            <van-field v-model="form.nickname" :label="t('register.nickname')" :placeholder="t('register.nicknamePh')" left-icon="contact-o" maxlength="50" />
           </van-cell-group>
         </van-tab>
-        <van-tab title="手机号注册" name="phone">
+        <van-tab :title="t('register.tabPhone')" name="phone">
           <van-cell-group inset>
-            <van-field v-model="form.phone" label="手机号" placeholder="请输入11位手机号" left-icon="phone-o" type="tel" maxlength="11" />
-            <van-field v-model="form.smsCode" label="验证码" placeholder="请输入短信验证码" left-icon="shield-o" maxlength="6">
+            <van-field v-model="form.phone" :label="t('login.phone')" :placeholder="t('login.phonePh')" left-icon="phone-o" type="tel" maxlength="11" />
+            <van-field v-model="form.smsCode" :label="t('register.code')" :placeholder="t('login.smsCodePh')" left-icon="shield-o" maxlength="6">
               <template #button>
                 <van-button size="small" type="primary" color="#B91C1C" :disabled="smsCountdown > 0 || sendingSmsCode" :loading="sendingSmsCode" @click="handleSendSmsCode">
-                  {{ smsCountdown > 0 ? smsCountdown + 's' : '获取验证码' }}
+                  {{ smsCountdown > 0 ? smsCountdown + 's' : t('login.sendSms') }}
                 </van-button>
               </template>
             </van-field>
-            <van-field v-model="form.password" type="password" label="密码" placeholder="请输入密码（至少6位）" left-icon="lock" autocomplete="new-password" />
-            <van-field v-model="form.nickname" label="昵称" placeholder="选填" left-icon="contact-o" maxlength="50" />
+            <van-field v-model="form.password" type="password" :label="t('register.password')" :placeholder="t('register.passwordPh')" left-icon="lock" autocomplete="new-password" />
+            <van-field v-model="form.nickname" :label="t('register.nickname')" :placeholder="t('register.nicknamePh')" left-icon="contact-o" maxlength="50" />
           </van-cell-group>
         </van-tab>
       </van-tabs>
@@ -64,10 +64,10 @@
           :loading="loading"
           @click="handleRegister"
         >
-          注册
+          {{ t('register.submit') }}
         </van-button>
         <p class="login-link">
-          已有账号？<span @click="$router.replace('/login')">去登录</span>
+          {{ t('register.hasAccount') }}<span @click="$router.replace('/login')">{{ t('register.loginLink') }}</span>
         </p>
       </div>
     </div>
@@ -80,7 +80,7 @@ import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { authApi, homeConfigApi } from '@/api';
 import { showToast } from 'vant';
-import { pick } from '@/utils/i18n';
+import { pick, t } from '@/utils/i18n';
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -122,25 +122,25 @@ let smsTimer = null;
 
 const handleSendCode = async () => {
   if (!form.email) {
-    showToast('请先输入邮箱');
+    showToast(t('请先输入邮箱', 'Please enter your email first'));
     return;
   }
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(form.email)) {
-    showToast('邮箱格式不正确');
+    showToast(t('邮箱格式不正确', 'Invalid email format'));
     return;
   }
   sendingCode.value = true;
   try {
     await authApi.sendCode({ email: form.email });
-    showToast('验证码已发送');
+    showToast(t('验证码已发送', 'Verification code sent'));
     countdown.value = 60;
     timer = setInterval(() => {
       countdown.value--;
       if (countdown.value <= 0) clearInterval(timer);
     }, 1000);
   } catch (err) {
-    const msg = err.response?.data?.message || err.message || '发送失败';
+    const msg = err.response?.data?.message || err.message || t('发送失败', 'Send failed');
     showToast(msg);
   } finally {
     sendingCode.value = false;
@@ -149,20 +149,20 @@ const handleSendCode = async () => {
 
 const handleSendSmsCode = async () => {
   if (!/^1\d{10}$/.test(form.phone)) {
-    showToast('请输入正确的11位手机号');
+    showToast(t('请输入正确的11位手机号', 'Please enter a valid 11-digit phone number'));
     return;
   }
   sendingSmsCode.value = true;
   try {
     await authApi.sendSmsCode({ phone: form.phone, scene: 'register' });
-    showToast('验证码已发送');
+    showToast(t('验证码已发送', 'Verification code sent'));
     smsCountdown.value = 60;
     smsTimer = setInterval(() => {
       smsCountdown.value--;
       if (smsCountdown.value <= 0) clearInterval(smsTimer);
     }, 1000);
   } catch (err) {
-    const msg = err.response?.data?.message || err.message || '发送失败';
+    const msg = err.response?.data?.message || err.message || t('发送失败', 'Send failed');
     showToast(msg);
   } finally {
     sendingSmsCode.value = false;
@@ -172,24 +172,24 @@ const handleSendSmsCode = async () => {
 const handleRegister = async () => {
   if (registerMode.value === 'phone') {
     if (!form.phone || !form.smsCode || !form.password) {
-      showToast('请填写手机号、验证码和密码');
+      showToast(t('请填写手机号、验证码和密码', 'Please fill in phone, code and password'));
       return;
     }
     if (!/^1\d{10}$/.test(form.phone)) {
-      showToast('手机号格式不正确');
+      showToast(t('手机号格式不正确', 'Invalid phone number format'));
       return;
     }
     if (form.password.length < 6) {
-      showToast('密码至少6位');
+      showToast(t('密码至少6位', 'Password must be at least 6 characters'));
       return;
     }
   } else {
     if (!form.username || !form.password || !form.email || !form.code) {
-      showToast('请填写完整信息');
+      showToast(t('请填写完整信息', 'Please fill in all fields'));
       return;
     }
     if (form.password.length < 6) {
-      showToast('密码至少6位');
+      showToast(t('密码至少6位', 'Password must be at least 6 characters'));
       return;
     }
   }
@@ -201,10 +201,10 @@ const handleRegister = async () => {
     const res = await authApi.register(payload);
     const d = res.data || res;
     userStore.setAuth(d.token, d.user);
-    showToast('注册成功');
+    showToast(t('register.registerOk'));
     router.replace('/');
   } catch (err) {
-    showToast(err.message || '注册失败');
+    showToast(err.message || t('register.registerFailed'));
   } finally {
     loading.value = false;
   }

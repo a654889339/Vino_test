@@ -5,8 +5,8 @@
       <text wx:else class="avatar-text">{{avatarInitial}}</text>
     </view>
     <view class="profile-info">
-      <text class="profile-name">{{isLoggedIn ? (userInfo.nickname || userInfo.username || '用户') : '点击登录'}}</text>
-      <text class="profile-desc">{{isLoggedIn ? (maskedPhone || userInfo.email || '') : '登录享更多权益'}}</text>
+      <text class="profile-name">{{isLoggedIn ? (userInfo.nickname || userInfo.username || i18n.user) : i18n.tapLogin}}</text>
+      <text class="profile-desc">{{isLoggedIn ? (maskedPhone || userInfo.email || '') : i18n.loginBenefits}}</text>
     </view>
   </view>
 
@@ -32,7 +32,7 @@
   </view>
 
   <view class="logout-area" wx:if="{{isLoggedIn}}">
-    <button class="btn-logout" bindtap="logout">退出登录</button>
+    <button class="btn-logout" bindtap="logout">{{i18n.logout}}</button>
   </view>
 
   <view class="tab-bar-placeholder"></view>

@@ -1,32 +1,32 @@
 <template>
   <div class="profile-edit-page">
-    <van-nav-bar title="个人资料" left-arrow @click-left="$router.back()" />
+    <van-nav-bar :title="t('profileEdit.title')" left-arrow @click-left="$router.back()" />
 
     <div class="card">
       <div class="edit-row">
-        <span class="edit-label">更换头像</span>
+        <span class="edit-label">{{ t('profileEdit.changeAvatar') }}</span>
         <label class="edit-avatar-wrap">
           <input type="file" accept="image/*" class="edit-file-input" @change="onAvatarChange" />
           <img v-if="avatarUrl" :src="avatarUrl" class="avatar-preview" alt="" />
-          <span v-else class="edit-btn-text">选择头像</span>
+          <span v-else class="edit-btn-text">{{ t('profileEdit.chooseAvatar') }}</span>
         </label>
       </div>
       <div class="edit-row">
-        <span class="edit-label">修改昵称</span>
+        <span class="edit-label">{{ t('profileEdit.changeNickname') }}</span>
         <input
           v-model="nickname"
           type="text"
           class="edit-nickname-input"
-          placeholder="点击修改"
+          :placeholder="t('profileEdit.nicknamePh')"
           maxlength="50"
           @blur="onNicknameBlur"
         />
       </div>
       <div class="edit-row edit-row-phone">
-        <span class="edit-label">手机号</span>
+        <span class="edit-label">{{ t('profileEdit.phone') }}</span>
         <template v-if="userPhone">
           <span class="phone-masked">{{ maskedPhone }}</span>
-          <span class="edit-link" @click="onChangePhone">更换</span>
+          <span class="edit-link" @click="onChangePhone">{{ t('profileEdit.changePhone') }}</span>
         </template>
         <template v-else>
           <div class="bind-phone-inline">
@@ -34,14 +34,14 @@
               v-model="bindPhone"
               type="tel"
               class="bind-phone-input"
-              placeholder="11位手机号"
+              :placeholder="t('profileEdit.phonePh')"
               maxlength="11"
             />
             <input
               v-model="bindCode"
               type="tel"
               class="bind-code-input"
-              placeholder="验证码"
+              :placeholder="t('profileEdit.codePh')"
               maxlength="6"
             />
             <van-button
@@ -51,10 +51,10 @@
               :loading="sendingSmsCode"
               @click="onSendBindCode"
             >
-              {{ smsCountdown > 0 ? smsCountdown + 's' : '获取验证码' }}
+              {{ smsCountdown > 0 ? smsCountdown + 's' : t('profileEdit.sendSms') }}
             </van-button>
             <van-button size="small" type="primary" color="#B91C1C" class="btn-bind-phone" @click="onSubmitBindPhone">
-              绑定
+              {{ t('profileEdit.bind') }}
             </van-button>
           </div>
         </template>
@@ -69,6 +69,7 @@ import { useRouter } from 'vue-router';
 import { showToast } from 'vant';
 import { useUserStore } from '@/stores/user';
 import { authApi } from '@/api';
+import { t } from '@/utils/i18n';
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -133,10 +134,10 @@ const onAvatarChange = async (e) => {
       await authApi.updateProfile({ avatar: url });
       await userStore.fetchProfile();
       avatarUrl.value = url;
-      showToast('头像已更新');
+      showToast(t('头像已更新', 'Avatar updated'));
     }
   } catch (err) {
-    showToast(err.message || '上传失败');
+    showToast(err.message || t('上传失败', 'Upload failed'));
   }
 };
 
@@ -147,9 +148,9 @@ const onNicknameBlur = async () => {
   try {
     await authApi.updateProfile({ nickname: name });
     await userStore.fetchProfile();
-    showToast('昵称已更新');
+    showToast(t('昵称已更新', 'Nickname updated'));
   } catch (err) {
-    showToast(err.message || '更新失败');
+    showToast(err.message || t('更新失败', 'Update failed'));
     nickname.value = current;
   }
 };
@@ -157,13 +158,13 @@ const onNicknameBlur = async () => {
 const onSendBindCode = async () => {
   const phone = bindPhone.value.replace(/\D/g, '').slice(0, 11);
   if (!/^1\d{10}$/.test(phone)) {
-    showToast('请输入正确的11位手机号');
+    showToast(t('请输入正确的11位手机号', 'Please enter a valid 11-digit phone number'));
     return;
   }
   sendingSmsCode.value = true;
   try {
     await authApi.sendSmsCode({ phone });
-    showToast('验证码已发送');
+    showToast(t('验证码已发送', 'Verification code sent'));
     smsCountdown.value = 60;
     if (countdownTimer) clearInterval(countdownTimer);
     countdownTimer = setInterval(() => {
@@ -171,7 +172,7 @@ const onSendBindCode = async () => {
       if (smsCountdown.value <= 0) clearInterval(countdownTimer);
     }, 1000);
   } catch (err) {
-    showToast(err.message || '发送失败');
+    showToast(err.message || t('发送失败', 'Send failed'));
   } finally {
     sendingSmsCode.value = false;
   }
@@ -181,11 +182,11 @@ const onSubmitBindPhone = async () => {
   const phone = bindPhone.value.replace(/\D/g, '').slice(0, 11);
   const code = bindCode.value.replace(/\D/g, '').slice(0, 6);
   if (!/^1\d{10}$/.test(phone)) {
-    showToast('请输入正确的11位手机号');
+    showToast(t('请输入正确的11位手机号', 'Please enter a valid 11-digit phone number'));
     return;
   }
   if (code.length !== 6) {
-    showToast('请输入6位验证码');
+    showToast(t('请输入6位验证码', 'Please enter 6-digit code'));
     return;
   }
   try {
@@ -195,9 +196,9 @@ const onSubmitBindPhone = async () => {
     userPhone.value = u?.phone || '';
     bindPhone.value = '';
     bindCode.value = '';
-    showToast('绑定成功');
+    showToast(t('绑定成功', 'Phone bound successfully'));
   } catch (err) {
-    showToast(err.message || '绑定失败');
+    showToast(err.message || t('绑定失败', 'Binding failed'));
   }
 };
 

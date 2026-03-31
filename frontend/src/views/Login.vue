@@ -1,6 +1,6 @@
 <template>
   <div class="login-page">
-    <van-nav-bar title="登录" left-arrow @click-left="$router.back()" />
+    <van-nav-bar :title="t('login.title')" left-arrow @click-left="$router.back()" />
 
     <div class="login-header">
       <img
@@ -19,45 +19,45 @@
         <circle cx="498" cy="38" r="10" stroke="#999" stroke-width="1.5" fill="none"/>
         <text x="498" y="43" font-family="Arial" font-size="14" fill="#999" text-anchor="middle" font-weight="bold">R</text>
       </svg>
-      <h2>{{ splashDesc || '欢迎使用 Vino 服务' }}</h2>
+      <h2>{{ splashDesc || t('login.welcome') }}</h2>
       <!-- 登录页下方：显示后台 首页配置-首页logo-描述 -->
       <p v-if="headerLogoDesc" class="login-header-desc">{{ headerLogoDesc }}</p>
     </div>
 
     <div class="login-form">
       <van-tabs v-model:active="loginMode" class="login-tabs">
-        <van-tab title="账号密码" name="account">
+        <van-tab :title="t('login.tabAccount')" name="account">
           <van-cell-group inset>
             <van-field
               v-model="form.username"
-              label="账号"
-              placeholder="请输入用户名"
+              :label="t('login.account')"
+              :placeholder="t('login.usernamePh')"
               left-icon="manager-o"
             />
             <van-field
               v-model="form.password"
               type="password"
-              label="密码"
-              placeholder="请输入密码"
+              :label="t('login.password')"
+              :placeholder="t('login.passwordPh')"
               left-icon="lock"
               autocomplete="current-password"
             />
           </van-cell-group>
         </van-tab>
-        <van-tab title="手机验证码" name="phone">
+        <van-tab :title="t('login.tabPhone')" name="phone">
           <van-cell-group inset>
             <van-field
               v-model="form.phone"
-              label="手机号"
-              placeholder="请输入11位手机号"
+              :label="t('login.phone')"
+              :placeholder="t('login.phonePh')"
               left-icon="phone-o"
               type="tel"
               maxlength="11"
             />
             <van-field
               v-model="form.smsCode"
-              label="验证码"
-              placeholder="请输入短信验证码"
+              :label="t('login.smsCode')"
+              :placeholder="t('login.smsCodePh')"
               left-icon="shield-o"
               maxlength="6"
             >
@@ -70,7 +70,7 @@
                   :loading="sendingCode"
                   @click="handleSendSmsCode"
                 >
-                  {{ countdown > 0 ? countdown + 's' : '获取验证码' }}
+                  {{ countdown > 0 ? countdown + 's' : t('login.sendSms') }}
                 </van-button>
               </template>
             </van-field>
@@ -87,10 +87,10 @@
           :loading="loading"
           @click="handleLogin"
         >
-          登录
+          {{ t('login.submit') }}
         </van-button>
         <p class="register-link">
-          还没有账号？<span @click="handleRegister">立即注册</span>
+          {{ t('login.noAccount') }}<span @click="handleRegister">{{ t('login.registerLink') }}</span>
         </p>
       </div>
     </div>
@@ -103,7 +103,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { showToast } from 'vant';
 import { homeConfigApi, authApi } from '@/api';
-import { pick } from '@/utils/i18n';
+import { pick, t } from '@/utils/i18n';
 
 const router = useRouter();
 const route = useRoute();
@@ -137,20 +137,20 @@ let countdownTimer = null;
 
 const handleSendSmsCode = async () => {
   if (!/^1\d{10}$/.test(form.phone)) {
-    showToast('请输入正确的11位手机号');
+    showToast(t('请输入正确的11位手机号', 'Please enter a valid 11-digit phone number'));
     return;
   }
   sendingCode.value = true;
   try {
     await authApi.sendSmsCode({ phone: form.phone });
-    showToast('验证码已发送');
+    showToast(t('验证码已发送', 'Verification code sent'));
     countdown.value = 60;
     countdownTimer = setInterval(() => {
       countdown.value--;
       if (countdown.value <= 0) clearInterval(countdownTimer);
     }, 1000);
   } catch (err) {
-    showToast(err.message || '发送失败');
+    showToast(err.message || t('发送失败', 'Send failed'));
   } finally {
     sendingCode.value = false;
   }
@@ -159,16 +159,16 @@ const handleSendSmsCode = async () => {
 const handleLogin = async () => {
   if (loginMode.value === 'phone') {
     if (!form.phone || !form.smsCode) {
-      showToast('请填写手机号和验证码');
+      showToast(t('请填写手机号和验证码', 'Please enter phone number and verification code'));
       return;
     }
     if (!/^1\d{10}$/.test(form.phone)) {
-      showToast('手机号格式不正确');
+      showToast(t('手机号格式不正确', 'Invalid phone number format'));
       return;
     }
   } else {
     if (!form.username || !form.password) {
-      showToast('请填写完整信息');
+      showToast(t('请填写完整信息', 'Please fill in all fields'));
       return;
     }
   }
@@ -178,7 +178,7 @@ const handleLogin = async () => {
       ? { phone: form.phone, code: form.smsCode }
       : { username: form.username, password: form.password };
     await userStore.login(payload);
-    showToast('登录成功');
+    showToast(t('login.loginOk'));
     const redirect = route.query.redirect;
     if (redirect && typeof redirect === 'string' && redirect.startsWith('/')) {
       router.replace(decodeURIComponent(redirect));
@@ -186,7 +186,7 @@ const handleLogin = async () => {
       router.replace('/');
     }
   } catch (err) {
-    showToast(err.message || '登录失败');
+    showToast(err.message || t('login.loginFailed'));
   } finally {
     loading.value = false;
   }

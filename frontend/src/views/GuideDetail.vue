@@ -1,6 +1,6 @@
 <template>
   <div class="guide-detail-page">
-    <van-nav-bar :title="guide.name || '设备指南'" left-arrow @click-left="$router.back()" />
+    <van-nav-bar :title="guide.name || t('guideDetail.title')" left-arrow @click-left="$router.back()" />
 
     <van-loading v-if="loading" size="36" style="text-align:center;padding:80px 0" />
 
@@ -42,32 +42,32 @@
 
       <!-- Help Links -->
       <div v-if="helpItems.length || sections.length" class="section-card">
-        <h3 class="section-title">使用帮助</h3>
+        <h3 class="section-title">{{ t('guideDetail.helpSection') }}</h3>
         <van-cell-group inset :border="false">
-          <van-cell v-if="helpItems.length" title="电子说明书" icon="description" is-link @click="$router.push(`/guide/${guide.id}/manual`)" />
-          <van-cell v-if="sections.length" title="常见问题与保养建议" icon="info-o" is-link @click="$router.push(`/guide/${guide.id}/maintenance`)" />
+          <van-cell v-if="helpItems.length" :title="t('guideDetail.manual')" icon="description" is-link @click="$router.push(`/guide/${guide.id}/manual`)" />
+          <van-cell v-if="sections.length" :title="t('guideDetail.maintenance')" icon="info-o" is-link @click="$router.push(`/guide/${guide.id}/maintenance`)" />
         </van-cell-group>
       </div>
 
       <!-- Service Entry -->
       <div class="section-card">
-        <h3 class="section-title">服务入口</h3>
+        <h3 class="section-title">{{ t('guideDetail.serviceSection') }}</h3>
         <div class="service-entry-grid">
           <div class="entry-item" @click="$router.push('/services')">
             <div class="entry-icon" style="background:#EDE9FE"><van-icon name="service-o" size="22" color="#7C3AED" /></div>
-            <span>自助服务</span>
+            <span>{{ t('guideDetail.selfService') }}</span>
           </div>
           <div class="entry-item" @click="$router.push('/services')">
             <div class="entry-icon" style="background:#DBEAFE"><van-icon name="location-o" size="22" color="#2563EB" /></div>
-            <span>服务网点</span>
+            <span>{{ t('guideDetail.stores') }}</span>
           </div>
           <div class="entry-item" @click="$router.push('/services')">
             <div class="entry-icon" style="background:#D1FAE5"><van-icon name="shield-o" size="22" color="#059669" /></div>
-            <span>售后政策</span>
+            <span>{{ t('guideDetail.policy') }}</span>
           </div>
           <div class="entry-item" @click="$router.push('/services')">
             <div class="entry-icon" style="background:#FEF3C7"><van-icon name="balance-list-o" size="22" color="#D97706" /></div>
-            <span>维修报价</span>
+            <span>{{ t('guideDetail.repairQuote') }}</span>
           </div>
         </div>
       </div>
@@ -84,7 +84,7 @@
     </div>
     <!-- 固定底部：返回主页（始终可见可点） -->
     <div class="guide-footer-fixed">
-      <van-button type="primary" color="#B91C1C" block round class="btn-home" @click="goHome">返回主页</van-button>
+      <van-button type="primary" color="#B91C1C" block round class="btn-home" @click="goHome">{{ t('guideDetail.backHome') }}</van-button>
     </div>
   </div>
 </template>
@@ -94,6 +94,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { showImagePreview } from 'vant';
 import { guideApi } from '@/api';
+import { t } from '@/utils/i18n';
 import LodImg from '@/components/LodImg.vue';
 
 const route = useRoute();

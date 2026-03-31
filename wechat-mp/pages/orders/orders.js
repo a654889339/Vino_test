@@ -1,32 +1,50 @@
 const app = getApp();
 const { formatPriceDisplay } = require('../../utils/currency.js');
+const i18n = require('../../utils/i18n.js');
 
-const statusMap = {
-  pending: { text: '待支付', type: 'warning' },
-  paid: { text: '已支付', type: 'primary' },
-  processing: { text: '进行中', type: 'primary' },
-  completed: { text: '已完成', type: 'success' },
-  cancelled: { text: '已取消', type: 'default' },
-};
+function getStatusMap() {
+  return {
+    pending: { text: i18n.t('orders.pendingPay'), type: 'warning' },
+    paid: { text: i18n.t('orders.paid'), type: 'primary' },
+    processing: { text: i18n.t('orders.processing'), type: 'primary' },
+    completed: { text: i18n.t('orders.completed'), type: 'success' },
+    cancelled: { text: i18n.t('orders.cancelled'), type: 'default' },
+  };
+}
 
 Page({
   data: {
     isLoggedIn: false,
     activeTab: 0,
-    tabs: [
-      { key: 'all', name: '全部' },
-      { key: 'pending', name: '待支付' },
-      { key: 'paid', name: '已支付' },
-      { key: 'processing', name: '进行中' },
-      { key: 'completed', name: '已完成' },
-    ],
+    tabs: [],
     orders: [],
     loading: true,
-    statusMap,
+    i18n: {},
   },
 
   onShow() {
+    this.refreshI18n();
     this.loadOrders();
+  },
+
+  refreshI18n() {
+    this.setData({
+      i18n: {
+        loading: i18n.t('orders.loading'),
+        empty: i18n.t('orders.empty'),
+        pay: i18n.t('orders.pay'),
+        cancelOrder: i18n.t('orders.cancelOrder'),
+        loginTip: i18n.t('orders.loginTip'),
+        goLogin: i18n.t('orders.goLogin'),
+      },
+      tabs: [
+        { key: 'all', name: i18n.t('orders.all') },
+        { key: 'pending', name: i18n.t('orders.pendingPay') },
+        { key: 'paid', name: i18n.t('orders.paid') },
+        { key: 'processing', name: i18n.t('orders.processing') },
+        { key: 'completed', name: i18n.t('orders.completed') },
+      ],
+    });
   },
 
   onPullDownRefresh() {
@@ -45,6 +63,7 @@ Page({
     const status = this.data.tabs[this.data.activeTab].key;
     const url = status === 'all' ? '/orders/mine' : `/orders/mine?status=${status}`;
     this.setData({ loading: true });
+    const statusMap = getStatusMap();
     return app
       .request({ url })
       .then(res => {
@@ -63,7 +82,7 @@ Page({
       .catch(err => {
         this.setData({ loading: false, orders: [] });
         if (err.message === '请先登录') {
-          wx.showToast({ title: '请先登录', icon: 'none' });
+          wx.showToast({ title: i18n.t('orders.loginRequired'), icon: 'none' });
         }
       });
   },
@@ -94,36 +113,36 @@ Page({
           signType: p.signType || 'RSA',
           paySign: p.paySign,
           success: () => {
-            wx.showToast({ title: '支付成功', icon: 'success' });
+            wx.showToast({ title: i18n.t('orders.paySuccess'), icon: 'success' });
             this.loadOrders();
           },
           fail: (err) => {
             const msg = (err && err.errMsg) || '';
             if (msg.indexOf('cancel') !== -1) return;
-            wx.showToast({ title: '支付未完成', icon: 'none' });
+            wx.showToast({ title: i18n.t('orders.payIncomplete'), icon: 'none' });
           },
         });
       })
       .catch((err) => {
-        wx.showToast({ title: err.message || '无法发起支付', icon: 'none' });
+        wx.showToast({ title: err.message || i18n.t('orders.payFailed'), icon: 'none' });
       });
   },
 
   cancelOrder(e) {
     const id = e.currentTarget.dataset.id;
     wx.showModal({
-      title: '取消订单',
-      content: '确定要取消该订单吗？',
+      title: i18n.t('orders.cancelTitle'),
+      content: i18n.t('orders.cancelConfirm'),
       success: res => {
         if (res.confirm) {
           app
             .request({ method: 'PUT', url: `/orders/${id}/cancel` })
             .then(() => {
-              wx.showToast({ title: '订单已取消', icon: 'success' });
+              wx.showToast({ title: i18n.t('orders.orderCancelled'), icon: 'success' });
               this.loadOrders();
             })
             .catch(err => {
-              wx.showToast({ title: err.message || '取消失败', icon: 'none' });
+              wx.showToast({ title: err.message || i18n.t('orders.cancelFailed'), icon: 'none' });
             });
         }
       },

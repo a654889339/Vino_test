@@ -1,8 +1,8 @@
 <template>
   <div class="detail-page">
-    <van-nav-bar title="服务详情" left-arrow @click-left="$router.back()" />
+    <van-nav-bar :title="t('serviceDetail.title')" left-arrow @click-left="$router.back()" />
 
-    <van-loading v-if="loading" class="page-loading" size="36" vertical>加载中...</van-loading>
+    <van-loading v-if="loading" class="page-loading" size="36" vertical>{{ t('common.loading') }}</van-loading>
 
     <template v-else>
       <div class="detail-cover">
@@ -19,13 +19,13 @@
           <span v-if="shouldShowPrice(pick(serviceData, 'price'))" class="detail-price">{{ formatPriceDisplay(pick(serviceData, 'price'), servicePriceCurrencyOverride) }}</span>
           <template v-if="showOriginPrice">
             <span class="origin-price">{{ formatPriceDisplay(pick(serviceData, 'originPrice'), servicePriceCurrencyOverride) }}</span>
-            <van-tag type="primary" color="#B91C1C">限时优惠</van-tag>
+            <van-tag type="primary" color="#B91C1C">{{ t('serviceDetail.promoTag') }}</van-tag>
           </template>
         </div>
 
         <van-divider />
 
-        <h3>服务亮点</h3>
+        <h3>{{ t('serviceDetail.highlights') }}</h3>
         <div class="features">
           <div class="feature-item" v-for="f in features" :key="f.title">
             <van-icon :name="f.icon" size="20" color="#B91C1C" />
@@ -38,20 +38,20 @@
 
         <van-divider />
 
-        <h3>服务流程</h3>
+        <h3>{{ t('serviceDetail.flow') }}</h3>
         <van-steps direction="vertical" :active="0" active-color="#B91C1C">
-          <van-step>在线下单</van-step>
-          <van-step>工程师接单</van-step>
-          <van-step>上门服务</van-step>
-          <van-step>验收确认</van-step>
-          <van-step>完成评价</van-step>
+          <van-step>{{ t('serviceDetail.stepOrder') }}</van-step>
+          <van-step>{{ t('serviceDetail.stepAccept') }}</van-step>
+          <van-step>{{ t('serviceDetail.stepService') }}</van-step>
+          <van-step>{{ t('serviceDetail.stepVerify') }}</van-step>
+          <van-step>{{ t('serviceDetail.stepRate') }}</van-step>
         </van-steps>
       </div>
 
       <div class="detail-footer">
-        <van-button icon="chat-o" type="default" size="small" @click="onConsult">咨询</van-button>
+        <van-button icon="chat-o" type="default" size="small" @click="onConsult">{{ t('serviceDetail.consult') }}</van-button>
         <van-button type="primary" color="#B91C1C" block round @click="onBookClick">
-          立即预约
+          {{ t('serviceDetail.bookNow') }}
         </van-button>
       </div>
     </template>
@@ -64,7 +64,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { serviceApi } from '@/api';
 import { showDialog } from 'vant';
 import { formatPriceDisplay, shouldShowPrice } from '@/utils/currency';
-import { pick } from '@/utils/i18n';
+import { pick, t } from '@/utils/i18n';
 
 const route = useRoute();
 const router = useRouter();
@@ -79,9 +79,9 @@ const onConsult = () => {
   const pricePart = Number(displayPrice) !== 0 && displayPrice != null && displayPrice !== ''
     ? `（${formatPriceDisplay(displayPrice, currencyOv)}）`
     : '';
-  const title = pick(s, 'title') || '该服务';
+  const title = pick(s, 'title') || t('serviceDetail.thisService');
   const desc = pick(s, 'description');
-  const msg = `我想咨询一下【${title}】${pricePart}${desc ? '：' + desc : ''}`;
+  const msg = `${t('serviceDetail.consultMsgPrefix')}【${title}】${pricePart}${desc ? ': ' + desc : ''}`;
   if (chatWidgetRef.value) {
     chatWidgetRef.value.openWithAutoMessage(msg);
   }
@@ -91,7 +91,7 @@ const onBookClick = () => {
   const token = localStorage.getItem('vino_token');
   const id = route.params.id;
   if (!token) {
-    showDialog({ title: '未登录', message: '请先登录后再预约服务' }).then(() => {
+    showDialog({ title: t('serviceDetail.loginTitle'), message: t('serviceDetail.loginMsg') }).then(() => {
       router.push({ path: '/login', query: { redirect: `/service/${id}/book` } });
     });
     return;
@@ -100,15 +100,15 @@ const onBookClick = () => {
 };
 
 const fallbackServices = {
-  1: { title: '设备维修', description: '专业工程师提供全方位维修服务，品质保障，售后无忧。', price: '99', originPrice: '159', icon: 'setting-o', bg: 'linear-gradient(135deg, #B91C1C, #991B1B)' },
-  2: { title: '上门维修', description: '快速响应，工程师2小时内上门服务。', price: '149', originPrice: '199', icon: 'location-o', bg: 'linear-gradient(135deg, #DC2626, #B91C1C)' },
-  3: { title: '远程支持', description: '在线视频指导，远程诊断问题。', price: '29', originPrice: '49', icon: 'phone-o', bg: 'linear-gradient(135deg, #EF4444, #DC2626)' },
-  4: { title: '深度清洁', description: '全方位清洁保养，焕然一新。', price: '149', originPrice: '199', icon: 'brush-o', bg: 'linear-gradient(135deg, #2563EB, #1D4ED8)' },
-  5: { title: '日常清洁', description: '基础维护清洁，保持良好状态。', price: '69', originPrice: '89', icon: 'smile-o', bg: 'linear-gradient(135deg, #3B82F6, #2563EB)' },
-  6: { title: '全面检测', description: '系统全面评估，发现潜在问题。', price: '49', originPrice: '79', icon: 'scan', bg: 'linear-gradient(135deg, #059669, #047857)' },
-  7: { title: '性能优化', description: '提速升级，优化系统性能。', price: '79', originPrice: '129', icon: 'fire-o', bg: 'linear-gradient(135deg, #10B981, #059669)' },
-  8: { title: '数据恢复', description: '专业数据找回，高成功率。', price: '199', originPrice: '299', icon: 'replay', bg: 'linear-gradient(135deg, #7C3AED, #6D28D9)' },
-  9: { title: '数据备份', description: '安全迁移，完整备份保护。', price: '59', originPrice: '89', icon: 'description', bg: 'linear-gradient(135deg, #8B5CF6, #7C3AED)' },
+  1: { title: t('services.deviceRepair'), description: t('services.deviceRepairDesc'), price: '99', originPrice: '159', icon: 'setting-o', bg: 'linear-gradient(135deg, #B91C1C, #991B1B)' },
+  2: { title: t('services.onSiteRepair'), description: t('services.onSiteRepairDesc'), price: '149', originPrice: '199', icon: 'location-o', bg: 'linear-gradient(135deg, #DC2626, #B91C1C)' },
+  3: { title: t('services.remoteSupport'), description: t('services.remoteSupportDesc'), price: '29', originPrice: '49', icon: 'phone-o', bg: 'linear-gradient(135deg, #EF4444, #DC2626)' },
+  4: { title: t('services.deepClean'), description: t('services.deepCleanDesc'), price: '149', originPrice: '199', icon: 'brush-o', bg: 'linear-gradient(135deg, #2563EB, #1D4ED8)' },
+  5: { title: t('services.dailyClean'), description: t('services.dailyCleanDesc'), price: '69', originPrice: '89', icon: 'smile-o', bg: 'linear-gradient(135deg, #3B82F6, #2563EB)' },
+  6: { title: t('services.fullInspect'), description: t('services.fullInspectDesc'), price: '49', originPrice: '79', icon: 'scan', bg: 'linear-gradient(135deg, #059669, #047857)' },
+  7: { title: t('services.optimize'), description: t('services.optimizeDesc'), price: '79', originPrice: '129', icon: 'fire-o', bg: 'linear-gradient(135deg, #10B981, #059669)' },
+  8: { title: t('services.dataRecovery'), description: t('services.dataRecoveryDesc'), price: '199', originPrice: '299', icon: 'replay', bg: 'linear-gradient(135deg, #7C3AED, #6D28D9)' },
+  9: { title: t('services.dataBackup'), description: t('services.dataBackupDesc'), price: '59', originPrice: '89', icon: 'description', bg: 'linear-gradient(135deg, #8B5CF6, #7C3AED)' },
 };
 
 const serviceData = ref({ title: '', description: '', price: '0' });
@@ -128,10 +128,10 @@ const showOriginPrice = computed(() => {
 });
 
 const features = [
-  { title: '品质保障', desc: '全部原装配件', icon: 'shield-o' },
-  { title: '快速响应', desc: '2小时内上门', icon: 'clock-o' },
-  { title: '透明报价', desc: '无隐形消费', icon: 'balance-list-o' },
-  { title: '售后无忧', desc: '90天质保', icon: 'certificate' },
+  { title: t('serviceDetail.highlight1'), desc: t('serviceDetail.highlight1Desc'), icon: 'shield-o' },
+  { title: t('serviceDetail.highlight2'), desc: t('serviceDetail.highlight2Desc'), icon: 'clock-o' },
+  { title: t('serviceDetail.highlight3'), desc: t('serviceDetail.highlight3Desc'), icon: 'balance-list-o' },
+  { title: t('serviceDetail.highlight4'), desc: t('serviceDetail.highlight4Desc'), icon: 'certificate' },
 ];
 
 onMounted(async () => {

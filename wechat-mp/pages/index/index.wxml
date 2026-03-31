@@ -18,7 +18,7 @@
         <text wx:else class="hero-logo-text">VINO</text>
         <view class="hero-actions">
           <view class="lang-switcher" bindtap="onLangTap">
-            <text class="lang-label">{{currentLang === 'en' ? 'EN' : '中'}}</text>
+            <text class="lang-label">{{langLabel}}</text>
             <text class="lang-arrow">▾</text>
           </view>
         </view>
@@ -30,7 +30,7 @@
   <view class="card-section" wx:if="{{navLgItems.length || navSmItems.length}}" style="{{homeScrollStyle}}">
     <view class="section-header">
       <text class="section-title">{{navSectionTitle}}</text>
-      <text class="section-more" bindtap="goService">进度查询 ›</text>
+      <text class="section-more" bindtap="goService">{{progressQueryText}}</text>
     </view>
     <scroll-view scroll-x class="nav-lg-row" wx:if="{{navLgItems.length}}">
       <view class="nav-lg-item" wx:for="{{navLgItems}}" wx:key="id" bindtap="goPath" data-path="{{item.path}}">
@@ -56,8 +56,8 @@
   <view wx:if="{{vinoItems.length}}" class="vino-section" style="{{vinoSectionStyle}}">
     <view class="vino-inner">
       <view class="vino-head">
-        <text class="vino-title">Vino产品</text>
-        <text class="vino-more" bindtap="goProducts">全部 ›</text>
+        <text class="vino-title">{{vinoProductsText}}</text>
+        <text class="vino-more" bindtap="goProducts">{{viewAllText}}</text>
       </view>
       <view class="vino-grid">
         <view class="vino-cell" wx:for="{{vinoItems}}" wx:key="id" bindtap="goVinoGuide" data-slug="{{item.path}}">
@@ -74,7 +74,7 @@
   <!-- 甄选推荐 -->
   <view wx:if="{{featuredItems.length}}" class="fr-section" style="{{frSectionStyle}}">
     <view class="fr-head">
-      <text class="fr-title">甄选推荐</text>
+      <text class="fr-title">{{featuredText}}</text>
     </view>
     <scroll-view scroll-x class="fr-scroll" show-scrollbar="{{false}}" enable-flex="{{false}}">
       <view class="fr-card" wx:for="{{featuredItems}}" wx:key="id" bindtap="goFeaturedGuide" data-slug="{{item.path}}">
@@ -94,7 +94,7 @@
   <view wx:if="{{myProducts.length}}" class="card-section" style="{{myProductsSectionStyle}}">
     <view class="section-header">
       <text class="section-title">{{myProductsTitle}}</text>
-      <text class="section-more" bindtap="goMyProducts">查看全部 ›</text>
+      <text class="section-more" bindtap="goMyProducts">{{viewMoreText}}</text>
     </view>
     <view class="my-products-list">
       <view class="my-product-item {{item.guideSlug || item.guide ? 'my-product-item--clickable' : ''}}" wx:for="{{myProducts}}" wx:key="productKey" bindtap="goMyProductGuide" data-slug="{{item.guideSlug || item.guide}}">

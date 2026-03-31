@@ -1,6 +1,7 @@
 const app = getApp();
 const { sortGuidesByDisplayOrder, sortCategoriesForSidebar } = require('../../utils/productGuideOrder.js');
-const { pick } = require('../../utils/i18n.js');
+const i18n = require('../../utils/i18n.js');
+const { pick } = i18n;
 
 function resolveMediaUrl(u) {
   if (!u || !String(u).trim()) return '';
@@ -18,12 +19,24 @@ Page({
     searchKeyword: '',
     categoryBannerUrl: '',
     listLoading: false,
+    searchPlaceholder: i18n.t('products.searchPlaceholder'),
+    loadingText: i18n.t('common.loading'),
+    noMatchText: i18n.t('products.noMatch'),
+    noCategoryProductText: i18n.t('products.noCategoryProduct'),
+    noConfigText: i18n.t('products.noConfig'),
   },
 
   onShow() {
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({ selected: 1 });
     }
+    this.setData({
+      searchPlaceholder: i18n.t('products.searchPlaceholder'),
+      loadingText: i18n.t('common.loading'),
+      noMatchText: i18n.t('products.noMatch'),
+      noCategoryProductText: i18n.t('products.noCategoryProduct'),
+      noConfigText: i18n.t('products.noConfig'),
+    });
     if (!this.data.categories.length) this.loadCategories();
   },
 

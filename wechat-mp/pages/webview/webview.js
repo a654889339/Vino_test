@@ -1,3 +1,5 @@
+const i18n = require('../../utils/i18n.js');
+
 Page({
   data: { url: '' },
   onLoad(options) {
@@ -6,5 +8,6 @@ Page({
       url = 'https://' + url;
     }
     this.setData({ url });
+    wx.setNavigationBarTitle({ title: i18n.t('webview.aboutVino') });
   },
 });

@@ -12,12 +12,12 @@
         <van-icon v-else name="user-o" size="36" color="#fff" />
       </div>
       <div class="profile-info" v-if="userStore.isLoggedIn">
-        <h3>{{ userStore.userInfo?.nickname || userStore.userInfo?.username || '用户' }}</h3>
+        <h3>{{ userStore.userInfo?.nickname || userStore.userInfo?.username || t('mine.user') }}</h3>
         <p>{{ profileSubtitle }}</p>
       </div>
       <div class="profile-info" v-else>
-        <h3>点击登录</h3>
-        <p>登录享更多权益</p>
+        <h3>{{ t('mine.tapLogin') }}</h3>
+        <p>{{ t('mine.loginBenefits') }}</p>
       </div>
     </div>
 
@@ -29,30 +29,30 @@
     </div>
 
     <van-cell-group inset class="menu-group">
-      <van-cell title="我的订单" icon="orders-o" is-link to="/orders" />
-      <van-cell title="我的商品" icon="bag-o" is-link to="/mine/products" />
-      <van-cell title="地址管理" icon="location-o" is-link to="/address" />
+      <van-cell :title="t('mine.orders')" icon="orders-o" is-link to="/orders" />
+      <van-cell :title="t('mine.products')" icon="bag-o" is-link to="/mine/products" />
+      <van-cell :title="t('mine.address')" icon="location-o" is-link to="/address" />
     </van-cell-group>
 
     <van-cell-group inset class="menu-group">
-      <van-cell title="意见反馈" icon="comment-o" is-link @click="openFeedback" />
-      <van-cell title="关于Vino" icon="info-o" is-link @click="openAbout" />
-      <van-cell title="联系我们" icon="phone-o" is-link @click="openContact" />
+      <van-cell :title="t('mine.feedback')" icon="comment-o" is-link @click="openFeedback" />
+      <van-cell :title="t('mine.about')" icon="info-o" is-link @click="openAbout" />
+      <van-cell :title="t('mine.contact')" icon="phone-o" is-link @click="openContact" />
     </van-cell-group>
 
     <div class="logout-area" v-if="userStore.isLoggedIn">
-      <van-button block plain type="default" class="logout-btn" @click="handleLogout">退出登录</van-button>
+      <van-button block plain type="default" class="logout-btn" @click="handleLogout">{{ t('mine.logout') }}</van-button>
     </div>
 
     <div class="mine-tabbar-spacer"></div>
 
     <van-dialog
       v-model:show="contactDialogVisible"
-      title="联系我们"
-      :message="'客服电话：' + CONTACT_PHONE"
+      :title="t('mine.contactTitle')"
+      :message="t('mine.contactPhone') + CONTACT_PHONE"
       show-cancel-button
-      cancel-button-text="关闭"
-      confirm-button-text="复制"
+      :cancel-button-text="t('common.close')"
+      :confirm-button-text="t('common.copy')"
       @confirm="onContactCopy"
     />
   </div>
@@ -66,6 +66,7 @@ import { showToast } from 'vant';
 import { homeConfigApi } from '@/api';
 import PageThemeLayer from '@/components/PageThemeLayer.vue';
 import { copyTextToClipboardSync } from '@/utils/clipboard';
+import { t } from '@/utils/i18n';
 
 const userStore = useUserStore();
 const router = useRouter();
@@ -73,10 +74,10 @@ const chatWidgetRef = inject('chatWidget', ref(null));
 
 const profileSubtitle = computed(() => {
   const u = userStore.userInfo;
-  if (!u) return '未绑定手机';
+  if (!u) return t('mine.noPhone');
   if (u.phone) return u.phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
   if (u.email) return u.email;
-  return '未绑定手机';
+  return t('mine.noPhone');
 });
 
 const onProfileHeaderClick = () => {
@@ -122,19 +123,19 @@ const openContact = () => {
 const onContactCopy = () => {
   const ok = copyTextToClipboardSync(CONTACT_PHONE);
   if (ok) {
-    showToast('已复制');
+    showToast(t('mine.copied'));
     contactDialogVisible.value = false;
   } else {
-    showToast('复制失败，请长按号码手动复制');
+    showToast(t('mine.copyFailed'));
   }
 };
 
-const stats = [
-  { label: '待支付', value: 0 },
-  { label: '进行中', value: 0 },
-  { label: '待评价', value: 0 },
-  { label: '售后', value: 0 },
-];
+const stats = computed(() => [
+  { label: t('mine.pendingPay'), value: 0 },
+  { label: t('mine.inProgress'), value: 0 },
+  { label: t('mine.pendingReview'), value: 0 },
+  { label: t('mine.afterSales'), value: 0 },
+]);
 
 onMounted(async () => {
   if (userStore.isLoggedIn && !userStore.userInfo) {

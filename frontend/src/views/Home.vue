@@ -372,12 +372,12 @@ async function onQrFileChange(e) {
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const decoded = jsQR(imageData.data, imageData.width, imageData.height);
     if (!decoded || !decoded.data) {
-      showToast('未能识别二维码，请上传清晰的商品二维码图片');
+      showToast(t('home.qrUnclear'));
       return;
     }
     const { sn, guide } = parseSnAndGuideFromUrl(decoded.data);
     if (!sn) {
-      showToast('二维码中未包含序列号，请使用商品绑定二维码');
+      showToast(t('home.qrNoSerial'));
       return;
     }
     const res = await authApi.bindProduct({ sn });
@@ -387,13 +387,13 @@ async function onQrFileChange(e) {
         router.push('/guide/' + encodeURIComponent(guideSlug));
         return;
       }
-      showToast('绑定成功');
+      showToast(t('home.bindOk'));
       await loadMyProducts();
     } else {
-      showToast(res.message || '绑定失败');
+      showToast(res.message || t('home.bindFailed'));
     }
   } catch (err) {
-    const msg = err?.response?.data?.message || err?.message || '识别或绑定失败';
+    const msg = err?.response?.data?.message || err?.message || t('home.bindError');
     showToast(msg);
   } finally {
     addProductLoading.value = false;
@@ -525,7 +525,7 @@ function onFeaturedImgError(id) {
 function openFeaturedRecommendGuide(item) {
   const slug = item.path;
   if (!slug) {
-    showToast('未配置商品链接');
+    showToast(t('home.noProductLink'));
     return;
   }
   router.push('/guide/' + encodeURIComponent(slug));
@@ -609,7 +609,7 @@ const myProductsSectionStyle = computed(() => buildSectionSkinContainerStyle(all
 function openVinoProductGuide(item) {
   const slug = item.path;
   if (!slug) {
-    showToast('未配置商品链接');
+    showToast(t('home.noProductLink'));
     return;
   }
   router.push('/guide/' + encodeURIComponent(slug));
@@ -651,7 +651,7 @@ const exploreVinoImgSrc = computed(() => {
 function openExploreVinoLink() {
   const raw = (exploreVinoRow.value?.path || '').trim();
   if (!raw) {
-    showToast('未配置跳转链接');
+    showToast(t('home.noLink'));
     return;
   }
   if (/^https?:\/\//i.test(raw)) {
@@ -672,8 +672,8 @@ watch(showShare, async (val) => {
 });
 
 const copyUrl = async () => {
-  try { await navigator.clipboard.writeText(shareUrl); showToast('链接已复制'); }
-  catch { showToast('复制失败，请手动复制'); }
+  try { await navigator.clipboard.writeText(shareUrl); showToast(t('home.linkCopied')); }
+  catch { showToast(t('home.copyFailed')); }
 };
 </script>
 

@@ -1,19 +1,42 @@
 const app = getApp();
+const i18n = require('../../utils/i18n.js');
+
+function buildCountries() {
+  return [
+    i18n.t('country.cn'), i18n.t('country.hk'), i18n.t('country.mo'), i18n.t('country.tw'),
+    i18n.t('country.us'), i18n.t('country.jp'), i18n.t('country.kr'), i18n.t('country.sg'),
+    i18n.t('country.other'),
+  ];
+}
 
 Page({
   data: {
     editId: '',
     contactName: '',
     contactPhone: '',
-    country: '中国大陆',
+    country: i18n.t('country.cn'),
     customCountry: '',
     province: '',
     city: '',
     district: '',
     detailAddress: '',
     isDefault: false,
-    countries: ['中国大陆', '中国香港', '中国澳门', '中国台湾', '美国', '日本', '韩国', '新加坡', '其他'],
+    countries: buildCountries(),
     countryIdx: 0,
+    labelContact: i18n.t('addressEdit.contact'),
+    labelPhone: i18n.t('addressEdit.phone'),
+    labelCountry: i18n.t('addressEdit.country'),
+    labelCustomCountry: i18n.t('addressEdit.customCountry'),
+    labelRegion: i18n.t('addressEdit.region'),
+    labelAddress: i18n.t('addressEdit.address'),
+    labelDefault: i18n.t('addressEdit.setDefault'),
+    phContact: i18n.t('addressEdit.phContact'),
+    phPhone: i18n.t('addressEdit.phPhone'),
+    phSelect: i18n.t('addressEdit.phSelect'),
+    phCustomCountry: i18n.t('addressEdit.phCustomCountry'),
+    phRegion: i18n.t('addressEdit.phRegion'),
+    phAddress: i18n.t('addressEdit.phAddress'),
+    saveText: i18n.t('addressEdit.save'),
   },
 
   onLoad(opts) {
@@ -32,7 +55,7 @@ Page({
           this.setData({
             contactName: addr.contactName || '',
             contactPhone: addr.contactPhone || '',
-            country: addr.country || '中国大陆',
+            country: addr.country || i18n.t('country.cn'),
             customCountry: addr.customCountry || '',
             province: addr.province || '',
             city: addr.city || '',
@@ -66,9 +89,9 @@ Page({
 
   save() {
     const { editId, contactName, contactPhone, country, customCountry, province, city, district, detailAddress, isDefault } = this.data;
-    if (!contactName.trim()) return wx.showToast({ title: '请输入联系人', icon: 'none' });
-    if (!contactPhone.trim()) return wx.showToast({ title: '请输入手机号', icon: 'none' });
-    if (!detailAddress.trim()) return wx.showToast({ title: '请输入详细地址', icon: 'none' });
+    if (!contactName.trim()) return wx.showToast({ title: i18n.t('addressEdit.errContact'), icon: 'none' });
+    if (!contactPhone.trim()) return wx.showToast({ title: i18n.t('addressEdit.errPhone'), icon: 'none' });
+    if (!detailAddress.trim()) return wx.showToast({ title: i18n.t('addressEdit.errAddress'), icon: 'none' });
 
     const body = { contactName, contactPhone, country, customCountry, province, city, district, detailAddress, isDefault };
     const url = editId ? '/addresses/' + editId : '/addresses';
@@ -76,9 +99,9 @@ Page({
 
     app.request({ url, method, data: body })
       .then(() => {
-        wx.showToast({ title: '保存成功' });
+        wx.showToast({ title: i18n.t('addressEdit.saveSuccess') });
         setTimeout(() => wx.navigateBack(), 500);
       })
-      .catch(() => wx.showToast({ title: '保存失败', icon: 'none' }));
+      .catch(() => wx.showToast({ title: i18n.t('addressEdit.saveFailed'), icon: 'none' }));
   },
 });

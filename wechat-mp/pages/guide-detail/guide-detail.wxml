@@ -1,5 +1,5 @@
 <view class="page">
-  <view wx:if="{{loading}}" class="loading">加载中...</view>
+  <view wx:if="{{loading}}" class="loading">{{loadingText}}</view>
 
   <block wx:elif="{{guide.id}}">
     <!-- Hero + Media merged block -->
@@ -32,36 +32,36 @@
 
     <!-- Help Links -->
     <view wx:if="{{helpItems.length || sections.length || guide.manualPdfUrl}}" class="card">
-      <text class="title">使用帮助</text>
+      <text class="title">{{helpTitle}}</text>
       <view wx:if="{{helpItems.length || guide.manualPdfUrl}}" class="help-row" bindtap="goManual">
-        <text class="help-title">电子说明书</text>
+        <text class="help-title">{{manualLabel}}</text>
         <text class="help-arrow">›</text>
       </view>
       <view wx:if="{{sections.length}}" class="help-row" bindtap="goMaintenance">
-        <text class="help-title">常见问题与保养建议</text>
+        <text class="help-title">{{faqLabel}}</text>
         <text class="help-arrow">›</text>
       </view>
     </view>
 
     <!-- Service entries -->
     <view class="card">
-      <text class="title">服务入口</text>
+      <text class="title">{{serviceEntryTitle}}</text>
       <view class="entry-grid">
         <view class="entry-item" bindtap="goServices">
           <view class="entry-icon" style="background:#EDE9FE"><text>🔧</text></view>
-          <text>自助服务</text>
+          <text>{{selfServiceLabel}}</text>
         </view>
         <view class="entry-item" bindtap="goServices">
           <view class="entry-icon" style="background:#DBEAFE"><text>📍</text></view>
-          <text>服务网点</text>
+          <text>{{servicePointLabel}}</text>
         </view>
         <view class="entry-item" bindtap="goServices">
           <view class="entry-icon" style="background:#D1FAE5"><text>🛡</text></view>
-          <text>售后政策</text>
+          <text>{{afterSalesLabel}}</text>
         </view>
         <view class="entry-item" bindtap="goServices">
           <view class="entry-icon" style="background:#FEF3C7"><text>💰</text></view>
-          <text>维修报价</text>
+          <text>{{repairQuoteLabel}}</text>
         </view>
       </view>
     </view>

@@ -1,4 +1,5 @@
 const app = getApp();
+const i18n = require('../../utils/i18n.js');
 
 Page({
   data: {
@@ -8,28 +9,44 @@ Page({
     avatarUrl: '',
     maskedPhone: '',
     profileHeaderStyle: 'background: linear-gradient(135deg, #B91C1C, #7F1D1D);',
-    stats: [
-      { label: '待支付', value: 0 },
-      { label: '进行中', value: 0 },
-      { label: '待评价', value: 0 },
-      { label: '售后', value: 0 },
-    ],
-    menus: [
-      { title: '我的订单', icon: '/images/icons/mine-orders.svg', url: '/pages/orders/orders' },
-      { title: '我的商品', icon: '/images/icons/mine-bag.svg', url: '/pages/my-products/my-products' },
-      { title: '地址管理', icon: '/images/icons/mine-location.svg', url: '/pages/address/address' },
-      { title: '意见反馈', icon: '/images/icons/mine-comment.svg', url: '', chat: true },
-      { title: '关于Vino', icon: '/images/icons/mine-info.svg', url: '', webUrl: 'www.vinotech.cn' },
-      { title: '联系我们', icon: '/images/icons/mine-phone.svg', url: '', contact: true },
-    ],
+    stats: [],
+    menus: [],
+    i18n: {},
   },
 
   onShow() {
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({ selected: 3 });
     }
+    this.refreshI18n();
     this.checkLoginState();
     this.loadMineBg();
+  },
+
+  refreshI18n() {
+    const vals = this.data.stats.map(s => s.value);
+    this.setData({
+      i18n: {
+        user: i18n.t('mine.user'),
+        tapLogin: i18n.t('mine.tapLogin'),
+        loginBenefits: i18n.t('mine.loginBenefits'),
+        logout: i18n.t('mine.logout'),
+      },
+      stats: [
+        { label: i18n.t('mine.pendingPay'), value: vals[0] || 0 },
+        { label: i18n.t('mine.inProgress'), value: vals[1] || 0 },
+        { label: i18n.t('mine.pendingReview'), value: vals[2] || 0 },
+        { label: i18n.t('mine.afterSales'), value: vals[3] || 0 },
+      ],
+      menus: [
+        { title: i18n.t('mine.orders'), icon: '/images/icons/mine-orders.svg', url: '/pages/orders/orders' },
+        { title: i18n.t('mine.products'), icon: '/images/icons/mine-bag.svg', url: '/pages/my-products/my-products' },
+        { title: i18n.t('mine.address'), icon: '/images/icons/mine-location.svg', url: '/pages/address/address' },
+        { title: i18n.t('mine.feedback'), icon: '/images/icons/mine-comment.svg', url: '', chat: true },
+        { title: i18n.t('mine.about'), icon: '/images/icons/mine-info.svg', url: '', webUrl: 'www.vinotech.cn' },
+        { title: i18n.t('mine.contact'), icon: '/images/icons/mine-phone.svg', url: '', contact: true },
+      ],
+    });
   },
 
   loadMineBg() {
@@ -91,34 +108,34 @@ Page({
       wx.navigateTo({ url: '/pages/webview/webview?url=' + encodeURIComponent(item.webUrl) });
     } else if (item.contact) {
       wx.showModal({
-        title: '联系我们',
-        content: '客服电话：400-8030-683',
-        cancelText: '复制',
-        confirmText: '立刻拨打',
+        title: i18n.t('mine.contactTitle'),
+        content: i18n.t('mine.contactPhone'),
+        cancelText: i18n.t('mine.copy'),
+        confirmText: i18n.t('mine.callNow'),
         success: (res) => {
           if (res.confirm) {
             wx.makePhoneCall({ phoneNumber: '4008030683' });
           } else {
-            wx.setClipboardData({ data: '400-8030-683', success: () => wx.showToast({ title: '已复制' }) });
+            wx.setClipboardData({ data: '400-8030-683', success: () => wx.showToast({ title: i18n.t('mine.copied') }) });
           }
         },
       });
     } else if (item.url) {
       wx.navigateTo({ url: item.url, fail() { wx.switchTab({ url: item.url }); } });
     } else {
-      wx.showToast({ title: '功能开发中', icon: 'none' });
+      wx.showToast({ title: i18n.t('mine.comingSoon'), icon: 'none' });
     }
   },
 
   logout() {
     wx.showModal({
-      title: '退出登录',
-      content: '确定要退出登录吗？',
+      title: i18n.t('mine.logout'),
+      content: i18n.t('mine.logoutConfirm'),
       success: res => {
         if (res.confirm) {
           app.clearToken();
           this.setData({ userInfo: null, isLoggedIn: false, avatarUrl: '', avatarInitial: 'V' });
-          wx.showToast({ title: '已退出', icon: 'success' });
+          wx.showToast({ title: i18n.t('mine.loggedOut'), icon: 'success' });
         }
       },
     });

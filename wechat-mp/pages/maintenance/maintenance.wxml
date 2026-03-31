@@ -1,14 +1,14 @@
 <view class="page">
-  <view wx:if="{{loading}}" class="loading">加载中...</view>
+  <view wx:if="{{loading}}" class="loading">{{loadingText}}</view>
   <block wx:else>
     <view class="header">
-      <text class="main-title">{{guideName}} · 常见问题与保养建议</text>
-      <text wx:if="{{sections.length > 1}}" class="section-count">共 {{sections.length}} 个章节</text>
+      <text class="main-title">{{guideName}} · {{maintenanceSuffix}}</text>
+      <text wx:if="{{sections.length > 1}}" class="section-count">{{sectionCountPrefix}} {{sections.length}} {{sectionCountSuffix}}</text>
     </view>
 
     <!-- TOC -->
     <view wx:if="{{sections.length > 1}}" class="toc-card">
-      <text class="toc-title">目录</text>
+      <text class="toc-title">{{tocTitle}}</text>
       <view wx:for="{{sections}}" wx:key="index" class="toc-item">
         <text class="toc-num">{{index + 1}}</text>
         <text class="toc-text">{{item.title}}</text>

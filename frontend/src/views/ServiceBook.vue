@@ -1,8 +1,8 @@
 <template>
   <div class="book-page">
-    <van-nav-bar title="预约下单" left-arrow @click-left="goBack" />
+    <van-nav-bar :title="t('serviceBook.title')" left-arrow @click-left="goBack" />
 
-    <van-loading v-if="loading" class="page-loading" size="36" vertical>加载中...</van-loading>
+    <van-loading v-if="loading" class="page-loading" size="36" vertical>{{ t('common.loading') }}</van-loading>
 
     <template v-else>
       <div class="book-body">
@@ -20,8 +20,8 @@
         <div class="order-form-scroll">
           <div v-if="savedAddresses.length" class="saved-addr-section">
             <div class="saved-addr-title">
-              <span>从已保存地址选取</span>
-              <span class="saved-addr-clear" v-if="selectedAddrId" @click="clearSelectedAddr">清除选择</span>
+              <span>{{ t('serviceBook.pickAddr') }}</span>
+              <span class="saved-addr-clear" v-if="selectedAddrId" @click="clearSelectedAddr">{{ t('serviceBook.clearSelection') }}</span>
             </div>
             <div class="saved-addr-list">
               <div
@@ -33,7 +33,7 @@
               >
                 <div class="saved-addr-name">
                   {{ addr.contactName }} {{ addr.contactPhone }}
-                  <van-tag v-if="addr.isDefault" type="primary" color="#B91C1C" size="mini">默认</van-tag>
+                  <van-tag v-if="addr.isDefault" type="primary" color="#B91C1C" size="mini">{{ t('serviceBook.tagDefault') }}</van-tag>
                 </div>
                 <div class="saved-addr-detail">{{ formatSavedAddr(addr) }}</div>
               </div>
@@ -41,15 +41,15 @@
           </div>
 
           <van-cell-group inset>
-            <van-field v-model="orderForm.contactName" label="联系人" placeholder="请输入联系人姓名" />
-            <van-field v-model="orderForm.contactPhone" label="联系电话" type="tel" placeholder="请输入联系电话" />
+            <van-field v-model="orderForm.contactName" :label="t('serviceBook.contact')" :placeholder="t('serviceBook.contactPh')" />
+            <van-field v-model="orderForm.contactPhone" :label="t('serviceBook.phone')" type="tel" :placeholder="t('serviceBook.phonePh')" />
           </van-cell-group>
 
           <van-cell-group inset class="mt12">
             <div class="picker-trigger" @click="productFieldsLocked || (showCategoryPicker = !showCategoryPicker)">
-              <span class="picker-label">商品种类</span>
+              <span class="picker-label">{{ t('serviceBook.productCategory') }}</span>
               <span :class="['picker-value', { placeholder: !orderForm.categoryId, disabled: productFieldsLocked }]">
-                {{ selectedCategoryName || '请选择商品种类' }}
+                {{ selectedCategoryName || t('serviceBook.productCategoryPh') }}
               </span>
               <van-icon v-if="!productFieldsLocked" :name="showCategoryPicker ? 'arrow-up' : 'arrow-down'" class="picker-arrow" />
               <van-icon v-else name="lock" class="picker-arrow" size="14" color="#999" />
@@ -70,9 +70,9 @@
 
           <van-cell-group inset class="mt12" v-if="orderForm.categoryId">
             <div class="picker-trigger" @click="productFieldsLocked || (showGuidePicker = !showGuidePicker)">
-              <span class="picker-label">具体商品</span>
+              <span class="picker-label">{{ t('serviceBook.productGuide') }}</span>
               <span :class="['picker-value', { placeholder: !orderForm.guideId, disabled: productFieldsLocked }]">
-                {{ selectedGuideName || '请选择具体商品' }}
+                {{ selectedGuideName || t('serviceBook.productGuidePh') }}
               </span>
               <van-icon v-if="!productFieldsLocked" :name="showGuidePicker ? 'arrow-up' : 'arrow-down'" class="picker-arrow" />
               <van-icon v-else name="lock" class="picker-arrow" size="14" color="#999" />
@@ -94,8 +94,8 @@
           <van-cell-group inset class="mt12">
             <van-field
               v-model="orderForm.productSerial"
-              label="商品序列号"
-              placeholder="选填，可手动输入或点击下方我的商品"
+              :label="t('serviceBook.serial')"
+              :placeholder="t('serviceBook.serialPh')"
               maxlength="128"
               :disabled="productFieldsLocked"
             />
@@ -103,8 +103,8 @@
 
           <div v-if="myProducts.length" class="saved-addr-section">
             <div class="saved-addr-title">
-              <span>从「我的商品」选择</span>
-              <span v-if="productFieldsLocked" class="saved-addr-clear" @click="unlockProductFields">清除选择</span>
+              <span>{{ t('serviceBook.fromMyProducts') }}</span>
+              <span v-if="productFieldsLocked" class="saved-addr-clear" @click="unlockProductFields">{{ t('serviceBook.clearSelection') }}</span>
             </div>
             <div class="saved-addr-list">
               <div
@@ -130,9 +130,9 @@
 
           <van-cell-group inset class="mt12">
             <div class="picker-trigger" @click="showInlineCountry = !showInlineCountry; showInlineArea = false">
-              <span class="picker-label">国家/地区</span>
+              <span class="picker-label">{{ t('serviceBook.country') }}</span>
               <span :class="['picker-value', { placeholder: !orderForm.country }]">
-                {{ countryDisplay || '请选择国家/地区' }}
+                {{ countryDisplay || t('serviceBook.countryPh') }}
               </span>
               <van-icon :name="showInlineCountry ? 'arrow-up' : 'arrow-down'" class="picker-arrow" />
             </div>
@@ -150,17 +150,17 @@
             </div>
 
             <van-field
-              v-if="orderForm.country === '其他'"
+              v-if="orderForm.country === t('country.other')"
               v-model="orderForm.customCountry"
-              label="自定义国家"
-              placeholder="请输入国家/地区名称"
+              :label="t('serviceBook.customCountry')"
+              :placeholder="t('serviceBook.customCountryPh')"
             />
 
-            <template v-if="orderForm.country === '中国大陆'">
+            <template v-if="orderForm.country === t('country.cn')">
               <div class="picker-trigger" @click="showInlineArea = !showInlineArea; showInlineCountry = false">
-                <span class="picker-label">省/市/区</span>
+                <span class="picker-label">{{ t('serviceBook.area') }}</span>
                 <span :class="['picker-value', { placeholder: !orderForm.province }]">
-                  {{ areaDisplay || '请选择省市区' }}
+                  {{ areaDisplay || t('serviceBook.areaPh') }}
                 </span>
                 <van-icon :name="showInlineArea ? 'arrow-up' : 'arrow-down'" class="picker-arrow" />
               </div>
@@ -175,18 +175,18 @@
           </van-cell-group>
 
           <van-cell-group inset class="mt12">
-            <van-field v-model="orderForm.detailAddress" label="详细地址" placeholder="请输入小区/街道等具体地址" />
-            <van-field v-model="orderForm.remark" label="备注" type="textarea" rows="2" placeholder="其他需要说明的事项（选填）" />
+            <van-field v-model="orderForm.detailAddress" :label="t('serviceBook.detail')" :placeholder="t('serviceBook.detailPh')" />
+            <van-field v-model="orderForm.remark" :label="t('serviceBook.remark')" type="textarea" rows="2" :placeholder="t('serviceBook.remarkPh')" />
           </van-cell-group>
         </div>
 
         <div class="order-submit-area">
           <div class="order-total">
-            <span>合计：</span>
+            <span>{{ t('serviceBook.total') }}</span>
             <span v-if="shouldShowPrice(pick(serviceData, 'price'))" class="order-total-price">{{ formatPriceDisplay(pick(serviceData, 'price'), servicePriceCurrencyOverride) }}</span>
           </div>
           <van-button type="primary" color="#B91C1C" block round :loading="submitting" @click="submitOrder">
-            确认预约
+            {{ t('serviceBook.submit') }}
           </van-button>
         </div>
       </div>
@@ -200,7 +200,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { serviceApi, orderApi, addressApi, authApi, guideApi } from '@/api';
 import { showToast, showDialog } from 'vant';
 import { formatPriceDisplay, shouldShowPrice } from '@/utils/currency';
-import { pick } from '@/utils/i18n';
+import { pick, t } from '@/utils/i18n';
 import { areaList } from '@vant/area-data';
 
 const route = useRoute();
@@ -219,9 +219,9 @@ const showGuidePicker = ref(false);
 const productFieldsLocked = ref(false);
 
 const countryColumns = [
-  '中国大陆', '中国香港', '中国澳门', '中国台湾',
-  '美国', '英国', '日本', '韩国', '新加坡', '澳大利亚',
-  '加拿大', '德国', '法国', '马来西亚', '泰国', '其他',
+  t('country.cn'), t('country.hk'), t('country.mo'), t('country.tw'),
+  t('country.us'), t('country.uk'), t('country.jp'), t('country.kr'), t('country.sg'), t('country.au'),
+  t('country.ca'), t('country.de'), t('country.fr'), t('country.my'), t('country.th'), t('country.other'),
 ];
 
 const orderForm = reactive({
@@ -286,7 +286,7 @@ const unlockProductFields = () => {
 };
 
 const countryDisplay = computed(() => {
-  if (orderForm.country === '其他' && orderForm.customCountry) return `其他 - ${orderForm.customCountry}`;
+  if (orderForm.country === t('country.other') && orderForm.customCountry) return `${t('country.other')} - ${orderForm.customCountry}`;
   return orderForm.country || '';
 });
 
@@ -315,12 +315,12 @@ const onAreaConfirm = ({ selectedOptions }) => {
 
 const buildFullAddress = () => {
   const parts = [];
-  if (orderForm.country === '其他') {
-    parts.push(orderForm.customCountry || '其他');
+  if (orderForm.country === t('country.other')) {
+    parts.push(orderForm.customCountry || t('country.other'));
   } else if (orderForm.country) {
     parts.push(orderForm.country);
   }
-  if (orderForm.country === '中国大陆' && orderForm.province) {
+  if (orderForm.country === t('country.cn') && orderForm.province) {
     parts.push(orderForm.province, orderForm.city, orderForm.district);
   }
   if (orderForm.detailAddress) parts.push(orderForm.detailAddress);
@@ -329,9 +329,9 @@ const buildFullAddress = () => {
 
 const formatSavedAddr = (addr) => {
   const parts = [];
-  if (addr.country === '其他') parts.push(addr.customCountry || '其他');
+  if (addr.country === t('country.other')) parts.push(addr.customCountry || t('country.other'));
   else if (addr.country) parts.push(addr.country);
-  if (addr.country === '中国大陆') {
+  if (addr.country === t('country.cn')) {
     if (addr.province) parts.push(addr.province);
     if (addr.city) parts.push(addr.city);
     if (addr.district) parts.push(addr.district);
@@ -395,15 +395,15 @@ const loadProductCategoriesAndGuides = async () => {
 };
 
 const fallbackServices = {
-  1: { title: '设备维修', description: '专业工程师提供全方位维修服务，品质保障，售后无忧。', price: '99', originPrice: '159', icon: 'setting-o', bg: 'linear-gradient(135deg, #B91C1C, #991B1B)' },
-  2: { title: '上门维修', description: '快速响应，工程师2小时内上门服务。', price: '149', originPrice: '199', icon: 'location-o', bg: 'linear-gradient(135deg, #DC2626, #B91C1C)' },
-  3: { title: '远程支持', description: '在线视频指导，远程诊断问题。', price: '29', originPrice: '49', icon: 'phone-o', bg: 'linear-gradient(135deg, #EF4444, #DC2626)' },
-  4: { title: '深度清洁', description: '全方位清洁保养，焕然一新。', price: '149', originPrice: '199', icon: 'brush-o', bg: 'linear-gradient(135deg, #2563EB, #1D4ED8)' },
-  5: { title: '日常清洁', description: '基础维护清洁，保持良好状态。', price: '69', originPrice: '89', icon: 'smile-o', bg: 'linear-gradient(135deg, #3B82F6, #2563EB)' },
-  6: { title: '全面检测', description: '系统全面评估，发现潜在问题。', price: '49', originPrice: '79', icon: 'scan', bg: 'linear-gradient(135deg, #059669, #047857)' },
-  7: { title: '性能优化', description: '提速升级，优化系统性能。', price: '79', originPrice: '129', icon: 'fire-o', bg: 'linear-gradient(135deg, #10B981, #059669)' },
-  8: { title: '数据恢复', description: '专业数据找回，高成功率。', price: '199', originPrice: '299', icon: 'replay', bg: 'linear-gradient(135deg, #7C3AED, #6D28D9)' },
-  9: { title: '数据备份', description: '安全迁移，完整备份保护。', price: '59', originPrice: '89', icon: 'description', bg: 'linear-gradient(135deg, #8B5CF6, #7C3AED)' },
+  1: { title: t('services.deviceRepair'), description: t('services.deviceRepairDesc'), price: '99', originPrice: '159', icon: 'setting-o', bg: 'linear-gradient(135deg, #B91C1C, #991B1B)' },
+  2: { title: t('services.onSiteRepair'), description: t('services.onSiteRepairDesc'), price: '149', originPrice: '199', icon: 'location-o', bg: 'linear-gradient(135deg, #DC2626, #B91C1C)' },
+  3: { title: t('services.remoteSupport'), description: t('services.remoteSupportDesc'), price: '29', originPrice: '49', icon: 'phone-o', bg: 'linear-gradient(135deg, #EF4444, #DC2626)' },
+  4: { title: t('services.deepClean'), description: t('services.deepCleanDesc'), price: '149', originPrice: '199', icon: 'brush-o', bg: 'linear-gradient(135deg, #2563EB, #1D4ED8)' },
+  5: { title: t('services.dailyClean'), description: t('services.dailyCleanDesc'), price: '69', originPrice: '89', icon: 'smile-o', bg: 'linear-gradient(135deg, #3B82F6, #2563EB)' },
+  6: { title: t('services.fullInspect'), description: t('services.fullInspectDesc'), price: '49', originPrice: '79', icon: 'scan', bg: 'linear-gradient(135deg, #059669, #047857)' },
+  7: { title: t('services.optimize'), description: t('services.optimizeDesc'), price: '79', originPrice: '129', icon: 'fire-o', bg: 'linear-gradient(135deg, #10B981, #059669)' },
+  8: { title: t('services.dataRecovery'), description: t('services.dataRecoveryDesc'), price: '199', originPrice: '299', icon: 'replay', bg: 'linear-gradient(135deg, #7C3AED, #6D28D9)' },
+  9: { title: t('services.dataBackup'), description: t('services.dataBackupDesc'), price: '59', originPrice: '89', icon: 'description', bg: 'linear-gradient(135deg, #8B5CF6, #7C3AED)' },
 };
 
 const serviceData = ref({ title: '', description: '', price: '0' });
@@ -429,7 +429,7 @@ onMounted(async () => {
   const id = route.params.id;
   const token = localStorage.getItem('vino_token');
   if (!token) {
-    showDialog({ title: '未登录', message: '请先登录后再预约服务' }).then(() => {
+    showDialog({ title: t('serviceDetail.loginTitle'), message: t('serviceDetail.loginMsg') }).then(() => {
       router.replace({ path: '/login', query: { redirect: `/service/${id}/book` } });
     });
     return;
@@ -462,14 +462,14 @@ onMounted(async () => {
 });
 
 const submitOrder = async () => {
-  if (!orderForm.categoryId) { showToast('请选择商品种类'); return; }
-  if (!orderForm.guideId) { showToast('请选择具体商品'); return; }
-  if (!orderForm.contactName.trim()) { showToast('请输入联系人'); return; }
-  if (!orderForm.contactPhone.trim()) { showToast('请输入联系电话'); return; }
-  if (!orderForm.country) { showToast('请选择国家/地区'); return; }
-  if (orderForm.country === '其他' && !orderForm.customCountry.trim()) { showToast('请输入国家/地区名称'); return; }
-  if (orderForm.country === '中国大陆' && !orderForm.province) { showToast('请选择省市区'); return; }
-  if (!orderForm.detailAddress.trim()) { showToast('请输入详细地址'); return; }
+  if (!orderForm.categoryId) { showToast(t('serviceBook.productCategoryPh')); return; }
+  if (!orderForm.guideId) { showToast(t('serviceBook.productGuidePh')); return; }
+  if (!orderForm.contactName.trim()) { showToast(t('serviceBook.contactPh')); return; }
+  if (!orderForm.contactPhone.trim()) { showToast(t('serviceBook.phonePh')); return; }
+  if (!orderForm.country) { showToast(t('serviceBook.countryPh')); return; }
+  if (orderForm.country === t('country.other') && !orderForm.customCountry.trim()) { showToast(t('serviceBook.customCountryPh')); return; }
+  if (orderForm.country === t('country.cn') && !orderForm.province) { showToast(t('serviceBook.areaPh')); return; }
+  if (!orderForm.detailAddress.trim()) { showToast(t('serviceBook.detailPh')); return; }
 
   const fullAddress = buildFullAddress();
   submitting.value = true;
@@ -486,11 +486,11 @@ const submitOrder = async () => {
       productSerial: orderForm.productSerial.trim(),
       guideId: orderForm.guideId,
     });
-    showDialog({ title: '预约成功', message: '您的服务已预约成功，我们会尽快安排工程师。' }).then(() => {
+    showDialog({ title: t('serviceBook.successTitle'), message: t('serviceBook.successMsg') }).then(() => {
       router.push('/orders');
     });
   } catch (err) {
-    showToast(err.message || '下单失败');
+    showToast(err.message || t('serviceBook.orderFailed'));
   } finally {
     submitting.value = false;
   }

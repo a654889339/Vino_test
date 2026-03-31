@@ -1,6 +1,6 @@
 <template>
   <div class="address-page">
-    <van-nav-bar title="地址管理" left-arrow @click-left="$router.back()" />
+    <van-nav-bar :title="t('addressList.title')" left-arrow @click-left="$router.back()" />
 
     <van-pull-refresh v-model="refreshing" @refresh="loadAddresses">
       <div class="address-list" v-if="addresses.length">
@@ -9,42 +9,42 @@
             <div class="addr-header">
               <span class="addr-name">{{ addr.contactName }}</span>
               <span class="addr-phone">{{ addr.contactPhone }}</span>
-              <van-tag v-if="addr.isDefault" type="primary" color="#B91C1C" size="mini">默认</van-tag>
+              <van-tag v-if="addr.isDefault" type="primary" color="#B91C1C" size="mini">{{ t('addressList.default') }}</van-tag>
             </div>
             <div class="addr-detail">{{ formatAddress(addr) }}</div>
             <div class="addr-actions">
               <div class="addr-default" @click.stop="onSetDefault(addr)" v-if="!addr.isDefault">
                 <van-icon name="circle" size="16" color="#ccc" />
-                <span>设为默认</span>
+                <span>{{ t('addressList.setDefault') }}</span>
               </div>
               <div class="addr-default active" v-else>
                 <van-icon name="checked" size="16" color="#B91C1C" />
-                <span>默认地址</span>
+                <span>{{ t('addressList.defaultAddr') }}</span>
               </div>
               <div class="addr-btns">
                 <span class="addr-btn" @click.stop="onEdit(addr)">
-                  <van-icon name="edit" size="14" /> 编辑
+                  <van-icon name="edit" size="14" /> {{ t('common.edit') }}
                 </span>
                 <span class="addr-btn delete" @click.stop="onDelete(addr)">
-                  <van-icon name="delete-o" size="14" /> 删除
+                  <van-icon name="delete-o" size="14" /> {{ t('common.delete') }}
                 </span>
               </div>
             </div>
           </div>
           <template #right>
-            <van-button square type="danger" text="删除" class="swipe-delete" @click="onDelete(addr)" />
+            <van-button square type="danger" :text="t('common.delete')" class="swipe-delete" @click="onDelete(addr)" />
           </template>
         </van-swipe-cell>
       </div>
 
-      <van-empty v-else-if="!loading" description="暂无收货地址" image="search" />
+      <van-empty v-else-if="!loading" :description="t('addressList.empty')" image="search" />
     </van-pull-refresh>
 
-    <van-loading v-if="loading" class="page-loading" size="30" vertical>加载中...</van-loading>
+    <van-loading v-if="loading" class="page-loading" size="30" vertical>{{ t('common.loading') }}</van-loading>
 
     <div class="add-btn-wrap">
       <van-button type="primary" color="#B91C1C" block round icon="plus" @click="$router.push('/address/add')">
-        新增地址
+        {{ t('addressList.add') }}
       </van-button>
     </div>
   </div>
@@ -55,6 +55,7 @@ import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { addressApi } from '@/api';
 import { showToast, showConfirmDialog } from 'vant';
+import { t } from '@/utils/i18n';
 
 const router = useRouter();
 const addresses = ref([]);
@@ -63,12 +64,12 @@ const refreshing = ref(false);
 
 const formatAddress = (addr) => {
   const parts = [];
-  if (addr.country === '其他') {
-    parts.push(addr.customCountry || '其他');
+  if (addr.country === t('country.other')) {
+    parts.push(addr.customCountry || t('country.other'));
   } else if (addr.country) {
     parts.push(addr.country);
   }
-  if (addr.country === '中国大陆') {
+  if (addr.country === t('country.cn')) {
     if (addr.province) parts.push(addr.province);
     if (addr.city) parts.push(addr.city);
     if (addr.district) parts.push(addr.district);
@@ -82,7 +83,7 @@ const loadAddresses = async () => {
     const res = await addressApi.list();
     addresses.value = res.data;
   } catch (err) {
-    showToast(err.message || '加载失败');
+    showToast(err.message || t('common.loadFailed'));
   } finally {
     loading.value = false;
     refreshing.value = false;
@@ -95,9 +96,9 @@ const onEdit = (addr) => {
 
 const onDelete = async (addr) => {
   try {
-    await showConfirmDialog({ title: '确认删除', message: `确定删除该地址吗？` });
+    await showConfirmDialog({ title: t('common.confirmDelete'), message: t('addressList.deleteConfirm') });
     await addressApi.remove(addr.id);
-    showToast('已删除');
+    showToast(t('addressList.deleted'));
     loadAddresses();
   } catch {}
 };
@@ -105,10 +106,10 @@ const onDelete = async (addr) => {
 const onSetDefault = async (addr) => {
   try {
     await addressApi.setDefault(addr.id);
-    showToast('已设为默认');
+    showToast(t('addressList.setDefaultOk'));
     loadAddresses();
   } catch (err) {
-    showToast(err.message || '操作失败');
+    showToast(err.message || t('common.opFailed'));
   }
 };
 

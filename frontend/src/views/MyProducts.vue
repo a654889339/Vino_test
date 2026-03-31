@@ -1,28 +1,28 @@
 <template>
   <div class="my-products-page">
-    <van-nav-bar title="我的商品" left-arrow @click-left="$router.back()">
+    <van-nav-bar :title="t('myProducts.title')" left-arrow @click-left="$router.back()">
       <template #right>
-        <span class="nav-add-btn" @click="onAddProductClick">添加商品</span>
+        <span class="nav-add-btn" @click="onAddProductClick">{{ t('myProducts.add') }}</span>
       </template>
     </van-nav-bar>
     <input ref="qrFileInputRef" type="file" accept="image/*" class="hidden-input" @change="onQrFileChange" />
-    <van-empty v-if="!loading && list.length === 0" description="暂无绑定商品，点击右上角「添加商品」上传二维码" />
+    <van-empty v-if="!loading && list.length === 0" :description="t('myProducts.empty')" />
     <div v-else class="list">
       <div v-for="(item, i) in list" :key="item.productKey + i" class="item-card">
         <div class="item-row">
-          <span class="label">种类</span>
+          <span class="label">{{ t('myProducts.category') }}</span>
           <span class="value">{{ item.categoryName || '-' }}</span>
         </div>
         <div class="item-row">
-          <span class="label">名称</span>
+          <span class="label">{{ t('myProducts.name') }}</span>
           <span class="value">{{ item.productName || item.productKey }}</span>
         </div>
         <div class="item-row">
-          <span class="label">序列号</span>
+          <span class="label">{{ t('myProducts.serial') }}</span>
           <span class="value sn">{{ item.productKey }}</span>
         </div>
         <div class="item-row">
-          <span class="label">绑定时间</span>
+          <span class="label">{{ t('myProducts.boundAt') }}</span>
           <span class="value">{{ formatTime(item.boundAt) }}</span>
         </div>
       </div>
@@ -36,6 +36,7 @@ import { useRouter } from 'vue-router';
 import jsQR from 'jsqr';
 import { showToast } from 'vant';
 import { authApi } from '@/api';
+import { t } from '@/utils/i18n';
 
 const router = useRouter();
 const loading = ref(true);
@@ -43,9 +44,9 @@ const list = ref([]);
 const qrFileInputRef = ref(null);
 const addProductLoading = ref(false);
 
-function formatTime(t) {
-  if (!t) return '-';
-  const d = new Date(t);
+function formatTime(ts) {
+  if (!ts) return '-';
+  const d = new Date(ts);
   return d.toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
 }
 
@@ -126,10 +127,10 @@ async function onQrFileChange(e) {
         router.push('/guide/' + encodeURIComponent(guideSlug));
         return;
       }
-      showToast('绑定成功');
+      showToast(t('home.bindOk'));
       await loadList();
     } else {
-      showToast(res.message || '绑定失败');
+      showToast(res.message || t('home.bindFailed'));
     }
   } catch (err) {
     const msg = err?.response?.data?.message || err?.message || '识别或绑定失败';

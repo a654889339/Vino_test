@@ -6,18 +6,18 @@
 
     <template v-else>
       <div class="maint-header">
-        <h1 class="maint-title">{{ guide.name }} 维护指南</h1>
+        <h1 class="maint-title">{{ guide.name }} {{ t('maintenance.title') }}</h1>
         <p v-if="guide.subtitle" class="maint-subtitle">{{ guide.subtitle }}</p>
       </div>
 
       <div v-if="!sections.length" class="maint-empty">
         <van-icon name="info-o" size="48" color="#ddd" />
-        <p>暂无维护内容</p>
+        <p>{{ t('maintenance.empty') }}</p>
       </div>
 
       <!-- Table of Contents -->
       <div v-if="sections.length > 1" class="maint-toc">
-        <div class="toc-title">目录</div>
+        <div class="toc-title">{{ t('maintenance.toc') }}</div>
         <div
           v-for="(sec, i) in sections"
           :key="'toc-'+i"
@@ -47,8 +47,8 @@
       </div>
 
       <div class="maint-footer">
-        <p>以上内容仅供参考，请以实际情况为准</p>
-        <p>{{ guide.name }} · 维护指南</p>
+        <p>{{ t('maintenance.disclaimer') }}</p>
+        <p>{{ guide.name }} · {{ t('maintenance.title') }}</p>
       </div>
     </template>
   </div>
@@ -58,12 +58,13 @@
 import { ref, computed, onMounted, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import { guideApi } from '@/api';
+import { t } from '@/utils/i18n';
 
 const route = useRoute();
 const loading = ref(true);
 const guide = ref({});
 
-const title = computed(() => guide.value.name ? `${guide.value.name}维护指南` : '维护指南');
+const title = computed(() => guide.value.name ? `${guide.value.name} ${t('maintenance.faq')}` : t('maintenance.faq'));
 
 const sections = computed(() => {
   const s = guide.value.sections;

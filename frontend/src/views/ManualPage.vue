@@ -6,18 +6,18 @@
 
     <template v-else>
       <div class="manual-header">
-        <h1 class="manual-title">{{ guide.name }}{{ title ? ' ' : '' }}使用说明书</h1>
+        <h1 class="manual-title">{{ guide.name }} {{ t('manual.title') }}</h1>
         <p v-if="guide.subtitle" class="manual-subtitle">{{ guide.subtitle }}</p>
       </div>
 
       <div v-if="!chapters.length" class="manual-empty">
         <van-icon name="description" size="48" color="#ddd" />
-        <p>暂无说明书内容</p>
+        <p>{{ t('manual.empty') }}</p>
       </div>
 
       <!-- Table of Contents -->
       <div v-if="chapters.length > 1" class="manual-toc">
-        <div class="toc-title">目录</div>
+        <div class="toc-title">{{ t('manual.toc') }}</div>
         <div
           v-for="(ch, i) in chapters"
           :key="'toc-'+i"
@@ -45,12 +45,12 @@
       </div>
 
       <div v-if="manualWebUrl" class="manual-pdf-bar">
-        <van-button type="primary" block round icon="share-o" @click="openManualWeb">打开说明书网页</van-button>
+        <van-button type="primary" block round icon="share-o" @click="openManualWeb">{{ t('manual.openWeb') }}</van-button>
       </div>
 
       <div class="manual-footer">
-        <p>以上内容仅供参考，请以实际产品为准</p>
-        <p>{{ guide.name }} · 电子说明书</p>
+        <p>{{ t('manual.disclaimer') }}</p>
+        <p>{{ guide.name }} · {{ t('manual.title') }}</p>
       </div>
     </template>
   </div>
@@ -62,6 +62,7 @@ import { useRoute } from 'vue-router';
 import { guideApi } from '@/api';
 import { resolvePublicUrl } from '@/utils/mediaUrl';
 import { showToast } from 'vant';
+import { t } from '@/utils/i18n';
 
 const route = useRoute();
 const loading = ref(true);
@@ -74,7 +75,7 @@ const manualWebUrl = computed(() => {
   return s ? resolvePublicUrl(s) : '';
 });
 
-const title = computed(() => guide.value.name ? `${guide.value.name}说明书` : '电子说明书');
+const title = computed(() => guide.value.name ? `${guide.value.name} ${t('manual.title')}` : t('manual.title'));
 
 const chapters = computed(() => {
   const h = guide.value.helpItems;
@@ -94,7 +95,7 @@ function openManualWeb() {
   try {
     window.open(url, '_blank', 'noopener,noreferrer');
   } catch {
-    showToast('无法打开链接');
+    showToast(t('manual.openFailed'));
   }
 }
 

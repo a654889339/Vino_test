@@ -4,38 +4,38 @@
       <view class="logo-circle">
         <text class="logo-text">V</text>
       </view>
-      <text class="app-name">Vino 服务</text>
-      <text class="app-desc">专业·高效·可信赖</text>
+      <text class="app-name">{{welcomeText}}</text>
+      <text class="app-desc">{{sloganText}}</text>
       <text wx:if="{{headerLogoDesc}}" class="header-logo-desc">{{headerLogoDesc}}</text>
     </view>
 
     <!-- 微信一键登录 -->
     <block wx:if="{{!isLoggedIn}}">
       <button class="btn-wx-login" loading="{{logging}}" disabled="{{logging}}" bindtap="wxLogin">
-        <text wx:if="{{!logging}}">微信一键登录</text>
-        <text wx:else>登录中...</text>
+        <text wx:if="{{!logging}}">{{wxLoginText}}</text>
+        <text wx:else>{{loggingText}}</text>
       </button>
-      <text class="login-tip">点击登录即表示同意《用户协议》和《隐私政策》</text>
+      <text class="login-tip">{{agreementText}}</text>
     </block>
 
     <!-- 登录成功后设置头像和昵称（新用户） -->
     <block wx:if="{{isLoggedIn && showProfile}}">
       <view class="profile-setup">
-        <text class="setup-title">完善个人资料</text>
+        <text class="setup-title">{{setupTitle}}</text>
         <view class="avatar-area">
           <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
             <image wx:if="{{tempAvatarUrl}}" class="avatar-img" src="{{tempAvatarUrl}}" mode="aspectFill" />
             <view wx:else class="avatar-placeholder">
-              <text class="avatar-placeholder-text">点击设置头像</text>
+              <text class="avatar-placeholder-text">{{avatarPlaceholder}}</text>
             </view>
           </button>
         </view>
         <view class="nickname-area">
-          <text class="field-label">昵称</text>
-          <input type="nickname" class="nickname-input" placeholder="请输入昵称" value="{{tempNickname}}" bindinput="onNicknameInput" bindchange="onNicknameInput" />
+          <text class="field-label">{{nicknameLabel}}</text>
+          <input type="nickname" class="nickname-input" placeholder="{{nicknamePlaceholder}}" value="{{tempNickname}}" bindinput="onNicknameInput" bindchange="onNicknameInput" />
         </view>
-        <button class="btn-save" bindtap="saveProfile" loading="{{saving}}">保存并进入</button>
-        <text class="skip-link" bindtap="skipProfile">跳过，直接进入</text>
+        <button class="btn-save" bindtap="saveProfile" loading="{{saving}}">{{saveAndEnter}}</button>
+        <text class="skip-link" bindtap="skipProfile">{{skipText}}</text>
       </view>
     </block>
   </view>

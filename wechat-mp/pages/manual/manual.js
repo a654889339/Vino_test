@@ -1,5 +1,6 @@
 const app = getApp();
 const { openManual } = require('../../utils/openManual.js');
+const i18n = require('../../utils/i18n.js');
 
 Page({
   data: {
@@ -7,6 +8,12 @@ Page({
     guideName: '',
     helpItems: [],
     manualPdfUrl: '',
+    loadingText: i18n.t('common.loading'),
+    manualSuffix: i18n.t('manual.suffix'),
+    chapterCountPrefix: i18n.t('manual.chapterCountPrefix'),
+    chapterCountSuffix: i18n.t('manual.chapterCountSuffix'),
+    tocTitle: i18n.t('manual.toc'),
+    viewManualText: i18n.t('manual.viewManual'),
   },
 
   onLoad(options) {

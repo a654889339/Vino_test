@@ -1,9 +1,17 @@
 const app = getApp();
+const i18n = require('../../utils/i18n.js');
 
 Page({
   data: {
     addresses: [],
     loading: false,
+    emptyText: i18n.t('addressList.empty'),
+    defaultTag: i18n.t('addressList.default'),
+    setDefaultText: i18n.t('addressList.setDefault'),
+    deleteText: i18n.t('addressList.delete'),
+    addText: i18n.t('addressList.add'),
+    confirmDeleteTitle: i18n.t('addressList.confirmDeleteTitle'),
+    confirmDeleteContent: i18n.t('addressList.confirmDeleteContent'),
   },
 
   onShow() {
@@ -14,9 +22,9 @@ Page({
     this.setData({ loading: true });
     app.request({ url: '/addresses' })
       .then(res => {
-        const list = (res.data || []).map(a => ({
+          const list = (res.data || []).map(a => ({
           ...a,
-          fullAddress: [a.country === '其他' ? a.customCountry : a.country, a.province, a.city, a.district, a.detailAddress].filter(Boolean).join(' '),
+          fullAddress: [a.country === i18n.t('country.other') ? a.customCountry : a.country, a.province, a.city, a.district, a.detailAddress].filter(Boolean).join(' '),
         }));
         this.setData({ addresses: list, loading: false });
       })
@@ -36,19 +44,19 @@ Page({
     const id = e.currentTarget.dataset.id;
     app.request({ url: '/addresses/' + id + '/default', method: 'PUT' })
       .then(() => this.loadAddresses())
-      .catch(() => wx.showToast({ title: '操作失败', icon: 'none' }));
+      .catch(() => wx.showToast({ title: i18n.t('common.operationFailed'), icon: 'none' }));
   },
 
   deleteAddr(e) {
     const id = e.currentTarget.dataset.id;
     wx.showModal({
-      title: '确认删除',
-      content: '确定要删除这个地址吗？',
+      title: i18n.t('addressList.confirmDeleteTitle'),
+      content: i18n.t('addressList.confirmDeleteContent'),
       success: res => {
         if (res.confirm) {
           app.request({ url: '/addresses/' + id, method: 'DELETE' })
             .then(() => this.loadAddresses())
-            .catch(() => wx.showToast({ title: '删除失败', icon: 'none' }));
+            .catch(() => wx.showToast({ title: i18n.t('addressList.deleteFailed'), icon: 'none' }));
         }
       },
     });

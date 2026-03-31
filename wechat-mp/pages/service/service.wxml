@@ -1,6 +1,6 @@
 <view class="page">
   <view class="loading-wrap" wx:if="{{loading}}">
-    <text>加载中...</text>
+    <text>{{loadingText}}</text>
   </view>
   <view class="svc-body" wx:else>
     <view class="svc-section" wx:for="{{categories}}" wx:for-item="cat" wx:key="key">

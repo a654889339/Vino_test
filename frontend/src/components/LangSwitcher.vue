@@ -1,10 +1,10 @@
 <template>
   <div class="lang-switcher" @click="toggle">
-    <span class="lang-label">{{ isEn ? 'EN' : '中' }}</span>
+    <span class="lang-label">{{ isEn ? 'EN' : t('lang.zhLabel') }}</span>
     <van-icon :name="open ? 'arrow-up' : 'arrow-down'" size="12" color="rgba(255,255,255,0.7)" />
     <Transition name="lang-drop">
       <div v-if="open" class="lang-dropdown" @click.stop>
-        <div class="lang-option" :class="{ active: !isEn }" @click="select('zh')">中文</div>
+        <div class="lang-option" :class="{ active: !isEn }" @click="select('zh')">{{ t('lang.zhName') }}</div>
         <div class="lang-option" :class="{ active: isEn }" @click="select('en')">English</div>
       </div>
     </Transition>
@@ -13,7 +13,7 @@
 
 <script setup>
 import { ref } from 'vue';
-import { currentLang, isEn, setLang } from '@/utils/i18n';
+import { currentLang, isEn, setLang, t } from '@/utils/i18n';
 
 const open = ref(false);
 const toggle = () => { open.value = !open.value; };

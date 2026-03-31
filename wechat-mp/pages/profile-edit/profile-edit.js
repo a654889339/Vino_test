@@ -1,4 +1,5 @@
 const app = getApp();
+const i18n = require('../../utils/i18n.js');
 
 Page({
   data: {
@@ -11,6 +12,16 @@ Page({
     bindCode: '',
     smsCountdown: 0,
     sendingSmsCode: false,
+    labelAvatar: i18n.t('profileEdit.changeAvatar'),
+    labelNickname: i18n.t('profileEdit.changeNickname'),
+    labelPhone: i18n.t('profileEdit.phone'),
+    selectAvatarText: i18n.t('profileEdit.selectAvatar'),
+    nicknamePh: i18n.t('profileEdit.nicknamePh'),
+    changeText: i18n.t('profileEdit.change'),
+    phonePh: i18n.t('profileEdit.phonePh'),
+    codePh: i18n.t('profileEdit.codePh'),
+    getCodeText: i18n.t('profileEdit.getCode'),
+    bindText: i18n.t('profileEdit.bind'),
   },
 
   onShow() {
@@ -59,7 +70,7 @@ Page({
   onSendBindCode() {
     const phone = (this.data.bindPhone || '').trim();
     if (!/^1\d{10}$/.test(phone)) {
-      wx.showToast({ title: '请输入正确手机号', icon: 'none' });
+      wx.showToast({ title: i18n.t('profileEdit.errPhone'), icon: 'none' });
       return;
     }
     this.setData({ sendingSmsCode: true });
@@ -69,7 +80,7 @@ Page({
       data: { phone },
     })
       .then(() => {
-        wx.showToast({ title: '验证码已发送', icon: 'success' });
+        wx.showToast({ title: i18n.t('profileEdit.codeSent'), icon: 'success' });
         this.setData({ smsCountdown: 60, sendingSmsCode: false });
         const t = setInterval(() => {
           const n = this.data.smsCountdown - 1;
@@ -79,18 +90,18 @@ Page({
       })
       .catch((err) => {
         this.setData({ sendingSmsCode: false });
-        wx.showToast({ title: err.message || '发送失败', icon: 'none' });
+        wx.showToast({ title: err.message || i18n.t('profileEdit.sendFailed'), icon: 'none' });
       });
   },
 
   onSubmitBindPhone() {
     const { bindPhone, bindCode } = this.data;
     if (!/^1\d{10}$/.test(bindPhone)) {
-      wx.showToast({ title: '请输入正确手机号', icon: 'none' });
+      wx.showToast({ title: i18n.t('profileEdit.errPhone'), icon: 'none' });
       return;
     }
     if (!bindCode || bindCode.length !== 6) {
-      wx.showToast({ title: '请输入6位验证码', icon: 'none' });
+      wx.showToast({ title: i18n.t('profileEdit.errCode'), icon: 'none' });
       return;
     }
     app.request({
@@ -109,10 +120,10 @@ Page({
           bindPhone: '',
           bindCode: '',
         });
-        wx.showToast({ title: '绑定成功', icon: 'success' });
+        wx.showToast({ title: i18n.t('profileEdit.bindSuccess'), icon: 'success' });
       })
       .catch((err) => {
-        wx.showToast({ title: err.message || '绑定失败', icon: 'none' });
+        wx.showToast({ title: err.message || i18n.t('profileEdit.bindFailed'), icon: 'none' });
       });
   },
 
@@ -128,7 +139,7 @@ Page({
   onUpdateAvatar(e) {
     const tempUrl = e.detail.avatarUrl;
     if (!tempUrl) return;
-    wx.showLoading({ title: '上传中...' });
+    wx.showLoading({ title: i18n.t('profileEdit.uploading') });
     wx.uploadFile({
       url: app.globalData.baseUrl + '/auth/upload-avatar',
       filePath: tempUrl,
@@ -142,17 +153,17 @@ Page({
             const cosUrl = data.data.url;
             if (app.globalData.userInfo) app.globalData.userInfo.avatar = cosUrl;
             this.setData({ avatarUrl: cosUrl });
-            wx.showToast({ title: '头像已更新', icon: 'success' });
+            wx.showToast({ title: i18n.t('profileEdit.avatarUpdated'), icon: 'success' });
           } else {
-            wx.showToast({ title: data.message || '上传失败', icon: 'none' });
+            wx.showToast({ title: data.message || i18n.t('profileEdit.uploadFailed'), icon: 'none' });
           }
         } catch {
-          wx.showToast({ title: '上传失败', icon: 'none' });
+          wx.showToast({ title: i18n.t('profileEdit.uploadFailed'), icon: 'none' });
         }
       },
       fail: () => {
         wx.hideLoading();
-        wx.showToast({ title: '上传失败', icon: 'none' });
+        wx.showToast({ title: i18n.t('profileEdit.uploadFailed'), icon: 'none' });
       },
     });
   },
@@ -168,9 +179,9 @@ Page({
       const user = res.data || {};
       app.globalData.userInfo = user;
       this.setData({ nickname: user.nickname || user.username || '' });
-      wx.showToast({ title: '昵称已更新', icon: 'success' });
+      wx.showToast({ title: i18n.t('profileEdit.nicknameUpdated'), icon: 'success' });
     }).catch(() => {
-      wx.showToast({ title: '更新失败', icon: 'none' });
+      wx.showToast({ title: i18n.t('profileEdit.updateFailed'), icon: 'none' });
     });
   },
 });

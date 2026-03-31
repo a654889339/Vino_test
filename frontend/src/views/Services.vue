@@ -32,27 +32,27 @@
 import { ref, onMounted } from 'vue';
 import { serviceApi } from '@/api';
 import PageThemeLayer from '@/components/PageThemeLayer.vue';
-import { pick } from '@/utils/i18n';
+import { pick, t } from '@/utils/i18n';
 
 const categories = ref([]);
 
 const fallbackCategories = [
-  { key: 'repair', name: '售后维修', items: [
-    { id: 1, title: '设备维修', desc: '', icon: 'setting-o', iconUrl: '', bg: '#B91C1C' },
-    { id: 2, title: '上门维修', desc: '', icon: 'location-o', iconUrl: '', bg: '#DC2626' },
-    { id: 3, title: '远程支持', desc: '', icon: 'phone-o', iconUrl: '', bg: '#EF4444' },
+  { key: 'repair', name: t('services.repair'), items: [
+    { id: 1, title: t('services.deviceRepair'), desc: '', icon: 'setting-o', iconUrl: '', bg: '#B91C1C' },
+    { id: 2, title: t('services.onSiteRepair'), desc: '', icon: 'location-o', iconUrl: '', bg: '#DC2626' },
+    { id: 3, title: t('services.remoteSupport'), desc: '', icon: 'phone-o', iconUrl: '', bg: '#EF4444' },
   ]},
-  { key: 'clean', name: '清洁维养', items: [
-    { id: 4, title: '深度清洁', desc: '', icon: 'brush-o', iconUrl: '', bg: '#2563EB' },
-    { id: 5, title: '日常清洁', desc: '', icon: 'smile-o', iconUrl: '', bg: '#3B82F6' },
+  { key: 'clean', name: t('services.clean'), items: [
+    { id: 4, title: t('services.deepClean'), desc: '', icon: 'brush-o', iconUrl: '', bg: '#2563EB' },
+    { id: 5, title: t('services.dailyClean'), desc: '', icon: 'smile-o', iconUrl: '', bg: '#3B82F6' },
   ]},
-  { key: 'inspect', name: '检测', items: [
-    { id: 6, title: '全面检测', desc: '', icon: 'scan', iconUrl: '', bg: '#059669' },
-    { id: 7, title: '性能优化', desc: '', icon: 'fire-o', iconUrl: '', bg: '#10B981' },
+  { key: 'inspect', name: t('services.inspect'), items: [
+    { id: 6, title: t('services.fullInspect'), desc: '', icon: 'scan', iconUrl: '', bg: '#059669' },
+    { id: 7, title: t('services.optimize'), desc: '', icon: 'fire-o', iconUrl: '', bg: '#10B981' },
   ]},
-  { key: 'data', name: '数据', items: [
-    { id: 8, title: '数据恢复', desc: '', icon: 'replay', iconUrl: '', bg: '#7C3AED' },
-    { id: 9, title: '数据备份', desc: '', icon: 'description', iconUrl: '', bg: '#8B5CF6' },
+  { key: 'data', name: t('services.data'), items: [
+    { id: 8, title: t('services.dataRecovery'), desc: '', icon: 'replay', iconUrl: '', bg: '#7C3AED' },
+    { id: 9, title: t('services.dataBackup'), desc: '', icon: 'description', iconUrl: '', bg: '#8B5CF6' },
   ]},
 ];
 
@@ -67,7 +67,7 @@ onMounted(async () => {
       services.forEach(s => {
         const cat = s.serviceCategory || s.category;
         const catKey = cat?.key ?? cat?.id ?? (typeof cat === 'string' ? cat : 'repair');
-        const catName = cat?.name ?? (typeof cat === 'string' ? cat : '维修');
+        const catName = cat?.name ?? (typeof cat === 'string' ? cat : t('services.repairFallback'));
         if (!catMap[catKey]) {
           catMap[catKey] = {
             key: String(catKey),

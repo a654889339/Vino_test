@@ -1,14 +1,14 @@
 <view class="page">
-  <view wx:if="{{loading}}" class="loading">加载中...</view>
+  <view wx:if="{{loading}}" class="loading">{{loadingText}}</view>
   <block wx:else>
     <view class="header">
-      <text class="main-title">{{guideName}} · 电子说明书</text>
-      <text wx:if="{{helpItems.length > 1}}" class="chapter-count">共 {{helpItems.length}} 个章节</text>
+      <text class="main-title">{{guideName}} · {{manualSuffix}}</text>
+      <text wx:if="{{helpItems.length > 1}}" class="chapter-count">{{chapterCountPrefix}} {{helpItems.length}} {{chapterCountSuffix}}</text>
     </view>
 
     <!-- TOC -->
     <view wx:if="{{helpItems.length > 1}}" class="toc-card">
-      <text class="toc-title">目录</text>
+      <text class="toc-title">{{tocTitle}}</text>
       <view wx:for="{{helpItems}}" wx:key="index" class="toc-item">
         <text class="toc-num">{{index + 1}}</text>
         <text class="toc-text">{{item.title}}</text>
@@ -25,7 +25,7 @@
     </view>
 
     <view wx:if="{{manualPdfUrl}}" class="pdf-bar">
-      <button class="pdf-btn" bindtap="onOpenManual">查看说明书</button>
+      <button class="pdf-btn" bindtap="onOpenManual">{{viewManualText}}</button>
     </view>
   </block>
 </view>

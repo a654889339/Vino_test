@@ -8,8 +8,14 @@ Page({
     headerLogoUrl: '',
     heroBgUrl: '',
     heroBgList: [],
-    navSectionTitle: '自助预约',
-    myProductsTitle: '我的商品',
+    navSectionTitle: i18n.t('home.selfBook'),
+    myProductsTitle: i18n.t('home.myProducts'),
+    langLabel: i18n.isEn() ? 'EN' : i18n.t('lang.zhLabel'),
+    progressQueryText: i18n.t('home.progressQuery'),
+    vinoProductsText: i18n.t('home.vinoProducts'),
+    viewAllText: i18n.t('home.viewAll'),
+    featuredText: i18n.t('home.featured'),
+    viewMoreText: i18n.t('home.viewMore'),
     navLgItems: [],
     navSmItems: [],
     myProducts: [],
@@ -22,10 +28,10 @@ Page({
     hotServiceSectionStyle: '',
     exploreVino: null,
     recommends: [
-      { id: 1, title: '会员权益', desc: '专属折扣', emoji: '🏅', bg: 'linear-gradient(135deg, #F59E0B, #D97706)' },
-      { id: 2, title: '服务保障', desc: '无忧售后', emoji: '🛡️', bg: 'linear-gradient(135deg, #10B981, #059669)' },
-      { id: 3, title: '积分商城', desc: '好礼兑换', emoji: '🎁', bg: 'linear-gradient(135deg, #EC4899, #DB2777)' },
-      { id: 4, title: '邀请有礼', desc: '分享得佣金', emoji: '👥', bg: 'linear-gradient(135deg, #6366F1, #4F46E5)' },
+      { id: 1, title: i18n.t('home.memberBenefits'), desc: i18n.t('home.exclusiveDiscount'), emoji: '🏅', bg: 'linear-gradient(135deg, #F59E0B, #D97706)' },
+      { id: 2, title: i18n.t('home.serviceGuarantee'), desc: i18n.t('home.worryfreeAfterSales'), emoji: '🛡️', bg: 'linear-gradient(135deg, #10B981, #059669)' },
+      { id: 3, title: i18n.t('home.pointsMall'), desc: i18n.t('home.giftExchange'), emoji: '🎁', bg: 'linear-gradient(135deg, #EC4899, #DB2777)' },
+      { id: 4, title: i18n.t('home.inviteReward'), desc: i18n.t('home.shareCommission'), emoji: '👥', bg: 'linear-gradient(135deg, #6366F1, #4F46E5)' },
     ],
   },
 
@@ -33,20 +39,41 @@ Page({
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({ selected: 0 });
     }
-    this.setData({ currentLang: i18n.getLang() });
-    i18n.detectLangByIp((lang) => { this.setData({ currentLang: lang }); });
+    this.setData({
+      currentLang: i18n.getLang(),
+      langLabel: i18n.isEn() ? 'EN' : i18n.t('lang.zhLabel'),
+      progressQueryText: i18n.t('home.progressQuery'),
+      vinoProductsText: i18n.t('home.vinoProducts'),
+      viewAllText: i18n.t('home.viewAll'),
+      featuredText: i18n.t('home.featured'),
+      viewMoreText: i18n.t('home.viewMore'),
+    });
+    i18n.detectLangByIp((lang) => {
+      this.setData({
+        currentLang: lang,
+        langLabel: i18n.isEn() ? 'EN' : i18n.t('lang.zhLabel'),
+      });
+    });
     this.loadHomeConfig();
     this.loadMyProducts();
   },
 
   onLangTap() {
-    const items = ['中文', 'English'];
+    const items = [i18n.t('lang.zhName'), 'English'];
     wx.showActionSheet({
       itemList: items,
       success: (res) => {
         const lang = res.tapIndex === 1 ? 'en' : 'zh';
         i18n.setLang(lang);
-        this.setData({ currentLang: lang });
+        this.setData({
+          currentLang: lang,
+          langLabel: lang === 'en' ? 'EN' : i18n.t('lang.zhLabel'),
+          progressQueryText: i18n.t('home.progressQuery'),
+          vinoProductsText: i18n.t('home.vinoProducts'),
+          viewAllText: i18n.t('home.viewAll'),
+          featuredText: i18n.t('home.featured'),
+          viewMoreText: i18n.t('home.viewMore'),
+        });
         this.loadHomeConfig();
       },
     });
@@ -93,7 +120,7 @@ Page({
   goVinoGuide(e) {
     const slug = (e.currentTarget.dataset.slug && String(e.currentTarget.dataset.slug).trim()) || '';
     if (!slug) {
-      wx.showToast({ title: '未配置商品', icon: 'none' });
+      wx.showToast({ title: i18n.t('home.noProduct'), icon: 'none' });
       return;
     }
     wx.navigateTo({
@@ -104,7 +131,7 @@ Page({
   goFeaturedGuide(e) {
     const slug = (e.currentTarget.dataset.slug && String(e.currentTarget.dataset.slug).trim()) || '';
     if (!slug) {
-      wx.showToast({ title: '未配置商品', icon: 'none' });
+      wx.showToast({ title: i18n.t('home.noProduct'), icon: 'none' });
       return;
     }
     wx.navigateTo({
@@ -115,7 +142,7 @@ Page({
   goExploreVino() {
     const ev = this.data.exploreVino;
     if (!ev || !ev.path) {
-      wx.showToast({ title: '未配置链接', icon: 'none' });
+      wx.showToast({ title: i18n.t('home.noLink'), icon: 'none' });
       return;
     }
     const link = String(ev.path).trim();
@@ -137,7 +164,7 @@ Page({
   goMyProductGuide(e) {
     const slug = (e.currentTarget.dataset.slug && String(e.currentTarget.dataset.slug).trim()) || '';
     if (!slug) {
-      wx.showToast({ title: '暂无产品指南', icon: 'none' });
+      wx.showToast({ title: i18n.t('home.noGuide'), icon: 'none' });
       return;
     }
     wx.navigateTo({
@@ -271,7 +298,7 @@ Page({
           if (img || pathEv) {
             const thumb = i18n.pick(evRow, 'imageUrlThumb').trim();
             const displayBg = thumb ? toFull(thumb) : (img ? toFull(img) : '');
-            const barTitle = i18n.pick(evRow, 'title').trim() || '探索VINO';
+            const barTitle = i18n.pick(evRow, 'title').trim() || i18n.t('home.exploreVino');
             const mainTitle = i18n.pick(evRow, 'icon').trim() || 'VINO';
             const subTitle = i18n.pick(evRow, 'desc').trim();
             exploreVino = { barTitle, mainTitle, subTitle, path: pathEv, displayBg };
@@ -293,8 +320,8 @@ Page({
           headerLogoUrl: headerLogo ? toFull(i18n.pick(headerLogo, 'imageUrl')) : '',
           heroBgUrl: singleBg,
           heroBgList: homeBgList,
-          navSectionTitle: (navSectionTitleItem && navSectionTitleItem.title) ? navSectionTitleItem.title.trim() : '自助预约',
-          myProductsTitle: (myProductsTitleItem && myProductsTitleItem.title) ? myProductsTitleItem.title.trim() : '我的商品',
+          navSectionTitle: (navSectionTitleItem && navSectionTitleItem.title) ? navSectionTitleItem.title.trim() : i18n.t('home.selfBook'),
+          myProductsTitle: (myProductsTitleItem && myProductsTitleItem.title) ? myProductsTitleItem.title.trim() : i18n.t('home.myProducts'),
           navLgItems: navLg,
           navSmItems: navSm,
           vinoItems,

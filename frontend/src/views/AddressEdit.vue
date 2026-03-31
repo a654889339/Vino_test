@@ -1,20 +1,20 @@
 <template>
   <div class="address-edit-page">
-    <van-nav-bar :title="isEdit ? '编辑地址' : '新增地址'" left-arrow @click-left="$router.back()" />
+    <van-nav-bar :title="isEdit ? t('addressEdit.titleEdit') : t('addressEdit.titleNew')" left-arrow @click-left="$router.back()" />
 
-    <van-loading v-if="pageLoading" class="page-loading" size="30" vertical>加载中...</van-loading>
+    <van-loading v-if="pageLoading" class="page-loading" size="30" vertical>{{ t('common.loading') }}</van-loading>
 
     <div v-else class="form-wrap">
       <van-cell-group inset>
-        <van-field v-model="form.contactName" label="联系人" placeholder="请输入联系人姓名" />
-        <van-field v-model="form.contactPhone" label="联系电话" type="tel" placeholder="请输入联系电话" />
+        <van-field v-model="form.contactName" :label="t('addressEdit.contact')" :placeholder="t('addressEdit.contactPh')" />
+        <van-field v-model="form.contactPhone" :label="t('addressEdit.phone')" type="tel" :placeholder="t('addressEdit.phonePh')" />
       </van-cell-group>
 
       <van-cell-group inset class="mt12">
         <div class="picker-trigger" @click="showCountryList = !showCountryList; showAreaPicker = false">
-          <span class="picker-label">国家/地区</span>
+          <span class="picker-label">{{ t('addressEdit.country') }}</span>
           <span :class="['picker-value', { placeholder: !form.country }]">
-            {{ countryDisplay || '请选择国家/地区' }}
+            {{ countryDisplay || t('addressEdit.countryPh') }}
           </span>
           <van-icon :name="showCountryList ? 'arrow-up' : 'arrow-down'" class="picker-arrow" />
         </div>
@@ -32,17 +32,17 @@
         </div>
 
         <van-field
-          v-if="form.country === '其他'"
+          v-if="form.country === t('country.other')"
           v-model="form.customCountry"
-          label="自定义国家"
-          placeholder="请输入国家/地区名称"
+          :label="t('addressEdit.customCountry')"
+          :placeholder="t('addressEdit.customCountryPh')"
         />
 
-        <template v-if="form.country === '中国大陆'">
+        <template v-if="form.country === t('country.cn')">
           <div class="picker-trigger" @click="showAreaPicker = !showAreaPicker; showCountryList = false">
-            <span class="picker-label">省/市/区</span>
+            <span class="picker-label">{{ t('addressEdit.area') }}</span>
             <span :class="['picker-value', { placeholder: !form.province }]">
-              {{ areaDisplay || '请选择省市区' }}
+              {{ areaDisplay || t('addressEdit.areaPh') }}
             </span>
             <van-icon :name="showAreaPicker ? 'arrow-up' : 'arrow-down'" class="picker-arrow" />
           </div>
@@ -57,17 +57,17 @@
       </van-cell-group>
 
       <van-cell-group inset class="mt12">
-        <van-field v-model="form.detailAddress" label="详细地址" type="textarea" rows="2" placeholder="请输入小区/街道等具体地址" />
+        <van-field v-model="form.detailAddress" :label="t('addressEdit.detail')" type="textarea" rows="2" :placeholder="t('addressEdit.detailPh')" />
       </van-cell-group>
 
       <div class="default-switch">
-        <span>设为默认地址</span>
+        <span>{{ t('addressEdit.setDefault') }}</span>
         <van-switch v-model="form.isDefault" size="20" active-color="#B91C1C" />
       </div>
 
       <div class="save-btn-wrap">
         <van-button type="primary" color="#B91C1C" block round :loading="saving" @click="onSave">
-          保存
+          {{ t('addressEdit.save') }}
         </van-button>
       </div>
     </div>
@@ -80,6 +80,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { addressApi } from '@/api';
 import { showToast } from 'vant';
 import { areaList } from '@vant/area-data';
+import { t } from '@/utils/i18n';
 
 const route = useRoute();
 const router = useRouter();
@@ -89,11 +90,11 @@ const saving = ref(false);
 const showCountryList = ref(false);
 const showAreaPicker = ref(false);
 
-const countryColumns = [
-  '中国大陆', '中国香港', '中国澳门', '中国台湾',
-  '美国', '英国', '日本', '韩国', '新加坡', '澳大利亚',
-  '加拿大', '德国', '法国', '马来西亚', '泰国', '其他',
-];
+const countryColumns = computed(() => [
+  t('country.cn'), t('country.hk'), t('country.mo'), t('country.tw'),
+  t('country.us'), t('country.uk'), t('country.jp'), t('country.kr'), t('country.sg'), t('country.au'),
+  t('country.ca'), t('country.de'), t('country.fr'), t('country.my'), t('country.th'), t('country.other'),
+]);
 
 const form = reactive({
   contactName: '',
@@ -108,7 +109,7 @@ const form = reactive({
 });
 
 const countryDisplay = computed(() => {
-  if (form.country === '其他' && form.customCountry) return `其他 - ${form.customCountry}`;
+  if (form.country === t('country.other') && form.customCountry) return `${t('country.other')} - ${form.customCountry}`;
   return form.country || '';
 });
 
@@ -134,12 +135,12 @@ const onAreaConfirm = ({ selectedOptions }) => {
 };
 
 const onSave = async () => {
-  if (!form.contactName.trim()) { showToast('请输入联系人'); return; }
-  if (!form.contactPhone.trim()) { showToast('请输入联系电话'); return; }
-  if (!form.country) { showToast('请选择国家/地区'); return; }
-  if (form.country === '其他' && !form.customCountry.trim()) { showToast('请输入国家/地区名称'); return; }
-  if (form.country === '中国大陆' && !form.province) { showToast('请选择省市区'); return; }
-  if (!form.detailAddress.trim()) { showToast('请输入详细地址'); return; }
+  if (!form.contactName.trim()) { showToast(t('addressEdit.contactPh')); return; }
+  if (!form.contactPhone.trim()) { showToast(t('addressEdit.phonePh')); return; }
+  if (!form.country) { showToast(t('addressEdit.countryPh')); return; }
+  if (form.country === t('country.other') && !form.customCountry.trim()) { showToast(t('addressEdit.customCountryPh')); return; }
+  if (form.country === t('country.cn') && !form.province) { showToast(t('addressEdit.areaPh')); return; }
+  if (!form.detailAddress.trim()) { showToast(t('addressEdit.detailPh')); return; }
 
   saving.value = true;
   try {
@@ -148,10 +149,10 @@ const onSave = async () => {
     } else {
       await addressApi.create({ ...form });
     }
-    showToast('保存成功');
+    showToast(t('addressEdit.saveOk'));
     router.back();
   } catch (err) {
-    showToast(err.message || '保存失败');
+    showToast(err.message || t('addressEdit.saveFailed'));
   } finally {
     saving.value = false;
   }
@@ -177,7 +178,7 @@ onMounted(async () => {
         });
       }
     } catch (err) {
-      showToast('加载地址失败');
+      showToast(t('common.loadFailed'));
     } finally {
       pageLoading.value = false;
     }

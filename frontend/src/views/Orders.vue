@@ -4,13 +4,13 @@
     <van-tabs v-model:active="activeTab" sticky color="var(--vino-primary)" @change="onTabChange">
       <van-tab v-for="tab in tabs" :key="tab.key" :title="tab.name">
         <van-pull-refresh v-model="refreshing" @refresh="onRefresh">
-          <van-loading v-if="firstLoading" class="page-loading" size="28" vertical>加载中...</van-loading>
-          <van-empty v-else-if="!orders.length && !loadingMore" description="暂无订单" />
+          <van-loading v-if="firstLoading" class="page-loading" size="28" vertical>{{ t('common.loading') }}</van-loading>
+          <van-empty v-else-if="!orders.length && !loadingMore" :description="t('orders.empty')" />
           <van-list
             v-else
             v-model:loading="loadingMore"
             :finished="finished"
-            finished-text="没有更多了"
+            :finished-text="t('orders.noMore')"
             @load="loadMore"
           >
             <div class="order-list">
@@ -31,7 +31,7 @@
                   <span v-if="shouldShowPrice(order.price)" class="order-price">{{ formatPriceDisplay(order.price) }}</span>
                 </div>
                 <div class="order-actions" v-if="order.status === 'pending'">
-                  <van-button size="small" plain @click="cancelOrder(order)">取消订单</van-button>
+                  <van-button size="small" plain @click="cancelOrder(order)">{{ t('orders.cancel') }}</van-button>
                 </div>
               </div>
             </div>
@@ -45,12 +45,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { orderApi } from '@/api';
 import { showToast, showConfirmDialog } from 'vant';
 import { formatPriceDisplay, shouldShowPrice } from '@/utils/currency';
 import PageThemeLayer from '@/components/PageThemeLayer.vue';
+import { t } from '@/utils/i18n';
 
 const router = useRouter();
 const activeTab = ref(0);
@@ -62,13 +63,13 @@ const orders = ref([]);
 let currentPage = 1;
 const pageSize = 10;
 
-const tabs = [
-  { key: 'all', name: '全部' },
-  { key: 'pending', name: '待支付' },
-  { key: 'paid', name: '已支付' },
-  { key: 'processing', name: '进行中' },
-  { key: 'completed', name: '已完成' },
-];
+const tabs = computed(() => [
+  { key: 'all', name: t('orders.all') },
+  { key: 'pending', name: t('orders.pendingPay') },
+  { key: 'paid', name: t('orders.paid') },
+  { key: 'processing', name: t('orders.processing') },
+  { key: 'completed', name: t('orders.completed') },
+]);
 
 const iconColors = {
   'setting-o': '#B91C1C', 'location-o': '#DC2626', 'phone-o': '#EF4444',
@@ -77,15 +78,15 @@ const iconColors = {
 };
 const iconColor = (icon) => iconColors[icon] || '#B91C1C';
 
-const formatTime = (t) => {
-  if (!t) return '';
-  return new Date(t).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+const formatTime = (ts) => {
+  if (!ts) return '';
+  return new Date(ts).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
 };
 
 const fetchOrders = async (page) => {
   const token = localStorage.getItem('vino_token');
   if (!token) return { list: [], total: 0 };
-  const status = tabs[activeTab.value].key;
+  const status = tabs.value[activeTab.value].key;
   const res = await orderApi.mine({ status, page, pageSize });
   const d = res.data || {};
   return { list: d.list || [], total: d.total || 0 };
@@ -102,7 +103,7 @@ const loadInitial = async () => {
     if (list.length >= total || list.length < pageSize) finished.value = true;
   } catch (err) {
     if (err.response?.status === 401) {
-      showToast('请先登录');
+      showToast(t('orders.loginFirst'));
       router.push('/login');
     }
   } finally {
@@ -134,9 +135,9 @@ const onTabChange = () => {
 
 const cancelOrder = async (order) => {
   try {
-    await showConfirmDialog({ title: '取消订单', message: '确定要取消该订单吗？' });
+    await showConfirmDialog({ title: t('orders.cancel'), message: t('orders.cancelConfirm') });
     await orderApi.cancel(order.id);
-    showToast('订单已取消');
+    showToast(t('orders.cancelled2'));
     loadInitial();
   } catch { /* user cancelled dialog */ }
 };

@@ -1,5 +1,6 @@
 const app = getApp();
 const { formatPriceDisplay } = require('../../utils/currency.js');
+const i18n = require('../../utils/i18n.js');
 
 function enrichServiceData(s) {
   const sym = app.globalData.currencySymbol || '¥';
@@ -7,8 +8,8 @@ function enrichServiceData(s) {
   const showOrigin = op != null && op !== '' && Number(op) > 0;
   return {
     id: s.id,
-    title: s.title || '服务',
-    description: s.description || '专业服务，品质保障',
+    title: s.title || i18n.t('tabbar.services'),
+    description: s.description || i18n.t('serviceDetail.defaultDesc'),
     price: s.price,
     originPrice: s.originPrice,
     priceDisplay: formatPriceDisplay(s.price, sym),
@@ -17,7 +18,15 @@ function enrichServiceData(s) {
   };
 }
 
-const countryList = ['中国大陆', '中国香港', '中国澳门', '中国台湾', '美国', '英国', '日本', '韩国', '新加坡', '澳大利亚', '加拿大', '德国', '法国', '马来西亚', '泰国', '其他'];
+function buildCountryList() {
+  return [
+    i18n.t('country.cn'), i18n.t('country.hk'), i18n.t('country.mo'), i18n.t('country.tw'),
+    i18n.t('country.us'), i18n.t('country.uk'), i18n.t('country.jp'), i18n.t('country.kr'),
+    i18n.t('country.sg'), i18n.t('country.au'), i18n.t('country.ca'), i18n.t('country.de'),
+    i18n.t('country.fr'), i18n.t('country.my'), i18n.t('country.th'), i18n.t('country.other'),
+  ];
+}
+const countryList = buildCountryList();
 
 Page({
   data: {
@@ -28,13 +37,53 @@ Page({
     submitting: false,
     contactName: '',
     contactPhone: '',
-    country: '中国大陆',
+    country: i18n.t('country.cn'),
     customCountry: '',
     region: [],
     detailAddress: '',
     remark: '',
     countryList,
     countryIndex: 0,
+    loadingText: i18n.t('common.loading'),
+    highlightsTitle: i18n.t('serviceDetail.highlights'),
+    highlight1: i18n.t('serviceDetail.highlight1'),
+    highlight2: i18n.t('serviceDetail.highlight2'),
+    highlight3: i18n.t('serviceDetail.highlight3'),
+    highlight4: i18n.t('serviceDetail.highlight4'),
+    stepsTitle: i18n.t('serviceDetail.stepsTitle'),
+    step1: i18n.t('serviceDetail.step1'),
+    step2: i18n.t('serviceDetail.step2'),
+    step3: i18n.t('serviceDetail.step3'),
+    step4: i18n.t('serviceDetail.step4'),
+    step5: i18n.t('serviceDetail.step5'),
+    consultText: i18n.t('serviceDetail.consult'),
+    bookNowText: i18n.t('serviceDetail.bookNow'),
+    modalTitle: i18n.t('serviceDetail.modalTitle'),
+    labelContact: i18n.t('serviceBook.contactName'),
+    labelPhone: i18n.t('serviceBook.contactPhone'),
+    labelCategory: i18n.t('serviceBook.category'),
+    labelProduct: i18n.t('serviceBook.product'),
+    labelSerial: i18n.t('serviceBook.serial'),
+    labelMyProduct: i18n.t('serviceBook.fromMyProducts'),
+    labelCountry: i18n.t('serviceBook.country'),
+    labelCustomCountry: i18n.t('serviceBook.customCountry'),
+    labelRegion: i18n.t('serviceBook.region'),
+    labelAddress: i18n.t('serviceBook.address'),
+    labelRemark: i18n.t('serviceBook.remark'),
+    phContact: i18n.t('serviceBook.phContact'),
+    phPhone: i18n.t('serviceBook.phPhone'),
+    phCategory: i18n.t('serviceBook.phCategory'),
+    phProduct: i18n.t('serviceBook.phProduct'),
+    phSerial: i18n.t('serviceBook.phSerial'),
+    phMyProduct: i18n.t('serviceBook.phMyProduct'),
+    phCountry: i18n.t('serviceBook.phCountry'),
+    phCustomCountry: i18n.t('serviceBook.phCustomCountry'),
+    phRegion: i18n.t('serviceBook.phRegion'),
+    phAddress: i18n.t('serviceBook.phAddress'),
+    phRemark: i18n.t('serviceBook.phRemark'),
+    totalLabel: i18n.t('serviceDetail.total'),
+    confirmBookText: i18n.t('serviceDetail.confirmBook'),
+    clearSelText: i18n.t('serviceBook.clearSelection'),
     productSerial: '',
     myProducts: [],
     productSerialPickerLabels: [],
@@ -52,7 +101,52 @@ Page({
 
   onLoad(options) {
     const id = options.id;
-    this.setData({ serviceId: id });
+    const cl = buildCountryList();
+    this.setData({
+      serviceId: id,
+      countryList: cl,
+      country: cl[0],
+      loadingText: i18n.t('common.loading'),
+      highlightsTitle: i18n.t('serviceDetail.highlights'),
+      highlight1: i18n.t('serviceDetail.highlight1'),
+      highlight2: i18n.t('serviceDetail.highlight2'),
+      highlight3: i18n.t('serviceDetail.highlight3'),
+      highlight4: i18n.t('serviceDetail.highlight4'),
+      stepsTitle: i18n.t('serviceDetail.stepsTitle'),
+      step1: i18n.t('serviceDetail.step1'),
+      step2: i18n.t('serviceDetail.step2'),
+      step3: i18n.t('serviceDetail.step3'),
+      step4: i18n.t('serviceDetail.step4'),
+      step5: i18n.t('serviceDetail.step5'),
+      consultText: i18n.t('serviceDetail.consult'),
+      bookNowText: i18n.t('serviceDetail.bookNow'),
+      modalTitle: i18n.t('serviceDetail.modalTitle'),
+      labelContact: i18n.t('serviceBook.contactName'),
+      labelPhone: i18n.t('serviceBook.contactPhone'),
+      labelCategory: i18n.t('serviceBook.category'),
+      labelProduct: i18n.t('serviceBook.product'),
+      labelSerial: i18n.t('serviceBook.serial'),
+      labelMyProduct: i18n.t('serviceBook.fromMyProducts'),
+      labelCountry: i18n.t('serviceBook.country'),
+      labelCustomCountry: i18n.t('serviceBook.customCountry'),
+      labelRegion: i18n.t('serviceBook.region'),
+      labelAddress: i18n.t('serviceBook.address'),
+      labelRemark: i18n.t('serviceBook.remark'),
+      phContact: i18n.t('serviceBook.phContact'),
+      phPhone: i18n.t('serviceBook.phPhone'),
+      phCategory: i18n.t('serviceBook.phCategory'),
+      phProduct: i18n.t('serviceBook.phProduct'),
+      phSerial: i18n.t('serviceBook.phSerial'),
+      phMyProduct: i18n.t('serviceBook.phMyProduct'),
+      phCountry: i18n.t('serviceBook.phCountry'),
+      phCustomCountry: i18n.t('serviceBook.phCustomCountry'),
+      phRegion: i18n.t('serviceBook.phRegion'),
+      phAddress: i18n.t('serviceBook.phAddress'),
+      phRemark: i18n.t('serviceBook.phRemark'),
+      totalLabel: i18n.t('serviceDetail.total'),
+      confirmBookText: i18n.t('serviceDetail.confirmBook'),
+      clearSelText: i18n.t('serviceBook.clearSelection'),
+    });
     this.loadService(id);
   },
 
@@ -68,8 +162,8 @@ Page({
           loading: false,
           serviceData: enrichServiceData({
             id: s.id,
-            title: s.title || '服务',
-            description: s.description || '专业服务，品质保障',
+            title: s.title || i18n.t('tabbar.services'),
+            description: s.description || i18n.t('serviceDetail.defaultDesc'),
             price: s.price || 0,
             originPrice: s.originPrice,
           }),
@@ -82,15 +176,15 @@ Page({
 
   getFallbackService(id) {
     const map = {
-      1: { title: '设备维修', description: '专业工程师提供全方位维修服务，品质保障，售后无忧。', price: '99', originPrice: '159' },
-      2: { title: '上门维修', description: '快速响应，工程师2小时内上门服务。', price: '149', originPrice: '199' },
-      3: { title: '远程支持', description: '在线视频指导，远程诊断问题。', price: '29', originPrice: '49' },
-      4: { title: '深度清洁', description: '全方位清洁保养，焕然一新。', price: '149', originPrice: '199' },
-      5: { title: '日常清洁', description: '基础维护清洁，保持良好状态。', price: '69', originPrice: '89' },
-      6: { title: '全面检测', description: '系统全面评估，发现潜在问题。', price: '49', originPrice: '79' },
-      7: { title: '性能优化', description: '提速升级，优化系统性能。', price: '79', originPrice: '129' },
-      8: { title: '数据恢复', description: '专业数据找回，高成功率。', price: '199', originPrice: '299' },
-      9: { title: '数据备份', description: '安全迁移，完整备份保护。', price: '59', originPrice: '89' },
+      1: { title: i18n.t('services.deviceRepair'), description: i18n.t('serviceDetail.fallbackDesc1'), price: '99', originPrice: '159' },
+      2: { title: i18n.t('services.onsiteRepair'), description: i18n.t('serviceDetail.fallbackDesc2'), price: '149', originPrice: '199' },
+      3: { title: i18n.t('services.remoteSupport'), description: i18n.t('serviceDetail.fallbackDesc3'), price: '29', originPrice: '49' },
+      4: { title: i18n.t('services.deepClean'), description: i18n.t('serviceDetail.fallbackDesc4'), price: '149', originPrice: '199' },
+      5: { title: i18n.t('services.dailyClean'), description: i18n.t('serviceDetail.fallbackDesc5'), price: '69', originPrice: '89' },
+      6: { title: i18n.t('services.fullInspect'), description: i18n.t('serviceDetail.fallbackDesc6'), price: '49', originPrice: '79' },
+      7: { title: i18n.t('services.perfOptimize'), description: i18n.t('serviceDetail.fallbackDesc7'), price: '79', originPrice: '129' },
+      8: { title: i18n.t('services.dataRecovery'), description: i18n.t('serviceDetail.fallbackDesc8'), price: '199', originPrice: '299' },
+      9: { title: i18n.t('services.dataBackup'), description: i18n.t('serviceDetail.fallbackDesc9'), price: '59', originPrice: '89' },
     };
     return map[id] || map[1];
   },
@@ -98,10 +192,15 @@ Page({
   onConsult() {
     const s = this.data.serviceData;
     const sym = app.globalData.currencySymbol || '¥';
+    const lp = i18n.isEn() ? '(' : '\uff08';
+    const rp = i18n.isEn() ? ')' : '\uff09';
+    const lb = i18n.isEn() ? '[' : '\u3010';
+    const rb = i18n.isEn() ? ']' : '\u3011';
+    const col = i18n.isEn() ? ': ' : '\uff1a';
     const pricePart = Number(s.price) !== 0 && s.price != null && s.price !== ''
-      ? '（' + formatPriceDisplay(s.price, sym) + '）'
+      ? lp + formatPriceDisplay(s.price, sym) + rp
       : '';
-    const msg = '我想咨询一下【' + (s.title || '该服务') + '】' + pricePart + (s.description ? '：' + s.description : '');
+    const msg = i18n.t('serviceDetail.consultPrefix') + lb + (s.title || i18n.t('tabbar.services')) + rb + pricePart + (s.description ? col + s.description : '');
     wx.navigateTo({ url: '/pages/chat/chat?autoMsg=' + encodeURIComponent(msg) });
   },
 
@@ -112,7 +211,7 @@ Page({
   buildMyProductsPickerPayload(res) {
     const list = (res && res.data) || [];
     const productSerialPickerLabels = list.map((p) => {
-      const name = ((p && p.productName) || '商品').trim() || '商品';
+      const name = ((p && p.productName) || i18n.t('serviceBook.productLabel')).trim() || i18n.t('serviceBook.productLabel');
       const key = String((p && p.productKey) || '').trim();
       return key ? `${name} · ${key}` : name;
     });
@@ -130,7 +229,7 @@ Page({
       showOrderForm: true,
       contactName: '',
       contactPhone: '',
-      country: '中国大陆',
+      country: i18n.t('country.cn'),
       customCountry: '',
       region: [],
       detailAddress: '',
@@ -153,14 +252,14 @@ Page({
       const p = profile || {};
       const a = addr || {};
       const list = this.data.countryList;
-      let country = trimStr(a.country) || '中国大陆';
+      let country = trimStr(a.country) || i18n.t('country.cn');
       let idx = list.indexOf(country);
       if (idx < 0) {
-        country = '中国大陆';
+        country = i18n.t('country.cn');
         idx = 0;
       }
       let region = [];
-      if (country === '中国大陆' && (a.province || a.city || a.district)) {
+      if (country === i18n.t('country.cn') && (a.province || a.city || a.district)) {
         region = [a.province || '', a.city || '', a.district || ''];
       }
       const phoneFromAddr = trimStr(a.contactPhone);
@@ -352,12 +451,12 @@ Page({
   buildFullAddress() {
     const { country, customCountry, region, detailAddress } = this.data;
     const parts = [];
-    if (country === '其他') {
-      parts.push(customCountry || '其他');
+    if (country === i18n.t('country.other')) {
+      parts.push(customCountry || i18n.t('country.other'));
     } else if (country) {
       parts.push(country);
     }
-    if (country === '中国大陆' && region && region.length === 3 && (region[0] || region[1] || region[2])) {
+    if (country === i18n.t('country.cn') && region && region.length === 3 && (region[0] || region[1] || region[2])) {
       parts.push(region[0], region[1], region[2]);
     }
     if (detailAddress) parts.push(detailAddress);
@@ -367,35 +466,35 @@ Page({
   submitOrder() {
     const { contactName, contactPhone, country, customCountry, region, detailAddress, serviceData, productSerial, selectedCategoryId, selectedGuideId } = this.data;
     if (!selectedCategoryId) {
-      wx.showToast({ title: '请选择商品种类', icon: 'none' });
+      wx.showToast({ title: i18n.t('serviceBook.errCategory'), icon: 'none' });
       return;
     }
     if (!selectedGuideId) {
-      wx.showToast({ title: '请选择具体商品', icon: 'none' });
+      wx.showToast({ title: i18n.t('serviceBook.errProduct'), icon: 'none' });
       return;
     }
     if (!contactName || !contactName.trim()) {
-      wx.showToast({ title: '请输入联系人', icon: 'none' });
+      wx.showToast({ title: i18n.t('serviceBook.errContact'), icon: 'none' });
       return;
     }
     if (!contactPhone || !contactPhone.trim()) {
-      wx.showToast({ title: '请输入联系电话', icon: 'none' });
+      wx.showToast({ title: i18n.t('serviceBook.errPhone'), icon: 'none' });
       return;
     }
     if (!country) {
-      wx.showToast({ title: '请选择国家/地区', icon: 'none' });
+      wx.showToast({ title: i18n.t('serviceBook.errCountry'), icon: 'none' });
       return;
     }
-    if (country === '其他' && !(customCountry && customCountry.trim())) {
-      wx.showToast({ title: '请输入国家/地区名称', icon: 'none' });
+    if (country === i18n.t('country.other') && !(customCountry && customCountry.trim())) {
+      wx.showToast({ title: i18n.t('serviceBook.errCustomCountry'), icon: 'none' });
       return;
     }
-    if (country === '中国大陆' && (!region || region.length < 3 || !region[0])) {
-      wx.showToast({ title: '请选择省市区', icon: 'none' });
+    if (country === i18n.t('country.cn') && (!region || region.length < 3 || !region[0])) {
+      wx.showToast({ title: i18n.t('serviceBook.errRegion'), icon: 'none' });
       return;
     }
     if (!detailAddress || !detailAddress.trim()) {
-      wx.showToast({ title: '请输入详细地址', icon: 'none' });
+      wx.showToast({ title: i18n.t('serviceBook.errAddress'), icon: 'none' });
       return;
     }
 
@@ -423,8 +522,8 @@ Page({
       .then(() => {
         this.setData({ showOrderForm: false, submitting: false });
         wx.showModal({
-          title: '预约成功',
-          content: '您的服务已预约成功，我们会尽快安排工程师。',
+          title: i18n.t('serviceDetail.bookSuccess'),
+          content: i18n.t('serviceDetail.bookSuccessMsg'),
           showCancel: false,
           success: () => {
             wx.navigateTo({ url: '/pages/orders/orders' });
@@ -433,7 +532,7 @@ Page({
       })
       .catch(err => {
         this.setData({ submitting: false });
-        wx.showToast({ title: err.message || '下单失败', icon: 'none' });
+        wx.showToast({ title: err.message || i18n.t('serviceDetail.bookFailed'), icon: 'none' });
       });
   },
 });

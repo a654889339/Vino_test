@@ -6,12 +6,14 @@ Page({
   data: {
     categories: [],
     loading: true,
+    loadingText: i18n.t('common.loading'),
   },
 
   onShow() {
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({ selected: 2 });
     }
+    this.setData({ loadingText: i18n.t('common.loading') });
     this.loadServices();
   },
 
@@ -26,7 +28,7 @@ Page({
           services.forEach(s => {
             const cat = s.serviceCategory || s.category || {};
             const catKey = cat.key || cat.id || 'other';
-            const catName = i18n.pick(cat, 'name') || (typeof s.category === 'string' ? s.category : '其他');
+            const catName = i18n.pick(cat, 'name') || (typeof s.category === 'string' ? s.category : i18n.t('country.other'));
             if (!catMap[catKey]) {
               catMap[catKey] = { key: String(catKey), name: catName, items: [] };
               catOrder.push(catKey);
@@ -41,7 +43,7 @@ Page({
             const priceNum = Number(priceRaw);
             catMap[catKey].items.push({
               id: s.id,
-              title: i18n.pick(s, 'title') || '服务',
+              title: i18n.pick(s, 'title') || i18n.t('tabbar.services'),
               description: i18n.pick(s, 'description'),
               icon: s.icon || 'setting-o',
               iconUrl: s.iconUrl || '',
@@ -62,22 +64,22 @@ Page({
 
   getFallbackCategories() {
     return [
-      { key: 'repair', name: '售后维修', items: [
-        { id: 1, title: '设备维修', emoji: '🔧', icon: '', iconUrl: '' },
-        { id: 2, title: '上门维修', emoji: '🏠', icon: '', iconUrl: '' },
-        { id: 3, title: '远程支持', emoji: '📞', icon: '', iconUrl: '' },
+      { key: 'repair', name: i18n.t('services.catRepair'), items: [
+        { id: 1, title: i18n.t('services.deviceRepair'), emoji: '🔧', icon: '', iconUrl: '' },
+        { id: 2, title: i18n.t('services.onsiteRepair'), emoji: '🏠', icon: '', iconUrl: '' },
+        { id: 3, title: i18n.t('services.remoteSupport'), emoji: '📞', icon: '', iconUrl: '' },
       ]},
-      { key: 'clean', name: '清洁维养', items: [
-        { id: 4, title: '深度清洁', emoji: '✨', icon: '', iconUrl: '' },
-        { id: 5, title: '日常清洁', emoji: '🧹', icon: '', iconUrl: '' },
+      { key: 'clean', name: i18n.t('services.catClean'), items: [
+        { id: 4, title: i18n.t('services.deepClean'), emoji: '✨', icon: '', iconUrl: '' },
+        { id: 5, title: i18n.t('services.dailyClean'), emoji: '🧹', icon: '', iconUrl: '' },
       ]},
-      { key: 'inspect', name: '检测', items: [
-        { id: 6, title: '全面检测', emoji: '🔍', icon: '', iconUrl: '' },
-        { id: 7, title: '性能优化', emoji: '🚀', icon: '', iconUrl: '' },
+      { key: 'inspect', name: i18n.t('services.catInspect'), items: [
+        { id: 6, title: i18n.t('services.fullInspect'), emoji: '🔍', icon: '', iconUrl: '' },
+        { id: 7, title: i18n.t('services.perfOptimize'), emoji: '🚀', icon: '', iconUrl: '' },
       ]},
-      { key: 'data', name: '数据', items: [
-        { id: 8, title: '数据恢复', emoji: '💾', icon: '', iconUrl: '' },
-        { id: 9, title: '数据备份', emoji: '📁', icon: '', iconUrl: '' },
+      { key: 'data', name: i18n.t('services.catData'), items: [
+        { id: 8, title: i18n.t('services.dataRecovery'), emoji: '💾', icon: '', iconUrl: '' },
+        { id: 9, title: i18n.t('services.dataBackup'), emoji: '📁', icon: '', iconUrl: '' },
       ]},
     ];
   },

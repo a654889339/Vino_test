@@ -1,6 +1,6 @@
 <view class="page">
   <view class="loading-wrap" wx:if="{{loading}}">
-    <text>加载中...</text>
+    <text>{{loadingText}}</text>
   </view>
   <block wx:else>
     <view class="detail-cover">
@@ -15,38 +15,38 @@
       </view>
 
       <view class="section">
-        <text class="section-title">服务亮点</text>
+        <text class="section-title">{{highlightsTitle}}</text>
         <view class="feature-list">
-          <view class="feature-item"><text class="feature-dot">·</text> 品质保障，全部原装配件</view>
-          <view class="feature-item"><text class="feature-dot">·</text> 快速响应，2小时内上门</view>
-          <view class="feature-item"><text class="feature-dot">·</text> 透明报价，无隐形消费</view>
-          <view class="feature-item"><text class="feature-dot">·</text> 售后无忧，90天质保</view>
+          <view class="feature-item"><text class="feature-dot">·</text> {{highlight1}}</view>
+          <view class="feature-item"><text class="feature-dot">·</text> {{highlight2}}</view>
+          <view class="feature-item"><text class="feature-dot">·</text> {{highlight3}}</view>
+          <view class="feature-item"><text class="feature-dot">·</text> {{highlight4}}</view>
         </view>
       </view>
 
       <view class="section">
-        <text class="section-title">服务流程</text>
+        <text class="section-title">{{stepsTitle}}</text>
         <view class="steps">
-          <text>1. 在线下单</text>
-          <text>2. 工程师接单</text>
-          <text>3. 上门服务</text>
-          <text>4. 验收确认</text>
-          <text>5. 完成评价</text>
+          <text>1. {{step1}}</text>
+          <text>2. {{step2}}</text>
+          <text>3. {{step3}}</text>
+          <text>4. {{step4}}</text>
+          <text>5. {{step5}}</text>
         </view>
       </view>
     </view>
 
     <view class="detail-footer">
-      <view class="btn-consult" bindtap="onConsult">💬 咨询</view>
-      <button class="btn-book" type="default" hover-class="none" bindtap="onBookTap">立即预约</button>
+      <view class="btn-consult" bindtap="onConsult">💬 {{consultText}}</view>
+      <button class="btn-book" type="default" hover-class="none" bindtap="onBookTap">{{bookNowText}}</button>
     </view>
   </block>
 
-  <!-- Order Form Modal：catch 阻止遮罩误触关闭；scroll-view 避免键盘与原生 picker 在部分机型上闪退 -->
+  <!-- Order Form Modal -->
   <view class="modal-mask" wx:if="{{showOrderForm}}" catchtouchmove="preventTouchMove" catchtap="closeOrderForm">
     <view class="modal-sheet" catchtap="preventClose" catchtouchmove="preventClose">
       <view class="modal-header">
-        <text class="modal-title">预约服务</text>
+        <text class="modal-title">{{modalTitle}}</text>
         <text class="modal-close" catchtap="closeOrderForm">×</text>
       </view>
       <view class="order-service-info">
@@ -59,10 +59,10 @@
 
       <scroll-view class="modal-scroll" scroll-y show-scrollbar="{{true}}">
         <view class="form-group">
-          <text class="form-label">联系人</text>
+          <text class="form-label">{{labelContact}}</text>
           <input
             class="form-input"
-            placeholder="请输入联系人姓名"
+            placeholder="{{phContact}}"
             value="{{contactName}}"
             maxlength="50"
             adjust-position="{{true}}"
@@ -71,11 +71,11 @@
           />
         </view>
         <view class="form-group">
-          <text class="form-label">联系电话</text>
+          <text class="form-label">{{labelPhone}}</text>
           <input
             class="form-input"
             type="digit"
-            placeholder="请输入联系电话"
+            placeholder="{{phPhone}}"
             value="{{contactPhone}}"
             maxlength="11"
             adjust-position="{{true}}"
@@ -85,7 +85,7 @@
         </view>
 
         <view class="form-group">
-          <text class="form-label">商品种类</text>
+          <text class="form-label">{{labelCategory}}</text>
           <picker
             wx:if="{{!productFieldsLocked}}"
             mode="selector"
@@ -93,13 +93,13 @@
             value="{{categoryPickerIndex}}"
             bindchange="onCategoryPickerChange"
           >
-            <view class="picker-value">{{selectedCategoryId ? categoryPickerLabels[categoryPickerIndex] : '请选择商品种类 ▾'}}</view>
+            <view class="picker-value">{{selectedCategoryId ? categoryPickerLabels[categoryPickerIndex] : phCategory + ' ▾'}}</view>
           </picker>
           <view wx:else class="picker-value picker-locked">{{categoryPickerLabels[categoryPickerIndex] || '-'}} 🔒</view>
         </view>
 
         <view class="form-group" wx:if="{{selectedCategoryId && filteredGuideLabels.length}}">
-          <text class="form-label">具体商品</text>
+          <text class="form-label">{{labelProduct}}</text>
           <picker
             wx:if="{{!productFieldsLocked}}"
             mode="selector"
@@ -107,16 +107,16 @@
             value="{{guidePickerIndex}}"
             bindchange="onGuidePickerChange"
           >
-            <view class="picker-value">{{selectedGuideId ? filteredGuideLabels[guidePickerIndex] : '请选择具体商品 ▾'}}</view>
+            <view class="picker-value">{{selectedGuideId ? filteredGuideLabels[guidePickerIndex] : phProduct + ' ▾'}}</view>
           </picker>
           <view wx:else class="picker-value picker-locked">{{filteredGuideLabels[guidePickerIndex] || '-'}} 🔒</view>
         </view>
 
         <view class="form-group">
-          <text class="form-label">商品序列号（选填）</text>
+          <text class="form-label">{{labelSerial}}</text>
           <input
             class="form-input"
-            placeholder="可手动输入，或下方选择「我的商品」"
+            placeholder="{{phSerial}}"
             value="{{productSerial}}"
             maxlength="128"
             adjust-position="{{true}}"
@@ -128,8 +128,8 @@
 
         <view class="form-group" wx:if="{{myProducts.length}}">
           <view class="my-product-header">
-            <text class="form-label">从「我的商品」选择</text>
-            <text wx:if="{{productFieldsLocked}}" class="unlock-btn" catchtap="unlockProductFields">清除选择</text>
+            <text class="form-label">{{labelMyProduct}}</text>
+            <text wx:if="{{productFieldsLocked}}" class="unlock-btn" catchtap="unlockProductFields">{{clearSelText}}</text>
           </view>
           <picker
             mode="selector"
@@ -138,34 +138,34 @@
             bindchange="onMyProductSerialPick"
             disabled="{{productFieldsLocked}}"
           >
-            <view class="picker-value picker-value-serial">{{productFieldsLocked ? productSerialPickerLabels[productSerialPickerIndex] + ' 🔒' : '选择我的商品 ▾'}}</view>
+            <view class="picker-value picker-value-serial">{{productFieldsLocked ? productSerialPickerLabels[productSerialPickerIndex] + ' 🔒' : phMyProduct + ' ▾'}}</view>
           </picker>
         </view>
 
         <view class="form-group">
-          <text class="form-label">国家/地区</text>
+          <text class="form-label">{{labelCountry}}</text>
           <picker mode="selector" range="{{countryList}}" value="{{countryIndex}}" bindchange="onCountryChange">
-            <view class="picker-value">{{country || '请选择国家/地区'}}</view>
+            <view class="picker-value">{{country || phCountry}}</view>
           </picker>
         </view>
 
-        <view class="form-group" wx:if="{{country === '其他'}}">
-          <text class="form-label">自定义国家</text>
-          <input class="form-input" placeholder="请输入国家/地区名称" value="{{customCountry}}" maxlength="100" adjust-position="{{true}}" bindinput="inputCustomCountry" />
+        <view class="form-group" wx:if="{{country === countryList[countryList.length - 1]}}">
+          <text class="form-label">{{labelCustomCountry}}</text>
+          <input class="form-input" placeholder="{{phCustomCountry}}" value="{{customCountry}}" maxlength="100" adjust-position="{{true}}" bindinput="inputCustomCountry" />
         </view>
 
-        <view class="form-group" wx:if="{{country === '中国大陆'}}">
-          <text class="form-label">省/市/区</text>
+        <view class="form-group" wx:if="{{country === countryList[0]}}">
+          <text class="form-label">{{labelRegion}}</text>
           <picker mode="region" value="{{region}}" bindchange="onRegionChange">
-            <view class="picker-value">{{region[0] && region[1] ? region[0] + ' ' + region[1] + (region[2] ? ' ' + region[2] : '') : '请选择省市区'}}</view>
+            <view class="picker-value">{{region[0] && region[1] ? region[0] + ' ' + region[1] + (region[2] ? ' ' + region[2] : '') : phRegion}}</view>
           </picker>
         </view>
 
         <view class="form-group">
-          <text class="form-label">详细地址</text>
+          <text class="form-label">{{labelAddress}}</text>
           <input
             class="form-input"
-            placeholder="请输入小区/街道等具体地址"
+            placeholder="{{phAddress}}"
             value="{{detailAddress}}"
             maxlength="500"
             adjust-position="{{true}}"
@@ -174,10 +174,10 @@
           />
         </view>
         <view class="form-group">
-          <text class="form-label">备注</text>
+          <text class="form-label">{{labelRemark}}</text>
           <textarea
             class="form-textarea"
-            placeholder="其他需要说明的事项（选填）"
+            placeholder="{{phRemark}}"
             value="{{remark}}"
             maxlength="500"
             adjust-position="{{true}}"
@@ -189,8 +189,8 @@
       </scroll-view>
 
       <view class="form-submit">
-        <view class="order-total">合计：<text wx:if="{{serviceData.priceDisplay}}" class="order-total-price">{{serviceData.priceDisplay}}</text></view>
-        <button class="btn-submit" type="default" hover-class="none" loading="{{submitting}}" disabled="{{submitting}}" bindtap="submitOrder">确认预约</button>
+        <view class="order-total">{{totalLabel}}<text wx:if="{{serviceData.priceDisplay}}" class="order-total-price">{{serviceData.priceDisplay}}</text></view>
+        <button class="btn-submit" type="default" hover-class="none" loading="{{submitting}}" disabled="{{submitting}}" bindtap="submitOrder">{{confirmBookText}}</button>
       </view>
     </view>
   </view>

@@ -1,4 +1,5 @@
 const app = getApp();
+const i18n = require('../../utils/i18n.js');
 
 Page({
   data: {
@@ -9,6 +10,17 @@ Page({
     tempAvatarUrl: '',
     tempNickname: '',
     headerLogoDesc: '',
+    welcomeText: 'Vino ' + i18n.t('login.welcome'),
+    sloganText: i18n.t('login.slogan'),
+    wxLoginText: i18n.t('login.wxLogin'),
+    loggingText: i18n.t('login.logging'),
+    agreementText: i18n.t('login.agreement'),
+    setupTitle: i18n.t('login.setupTitle'),
+    avatarPlaceholder: i18n.t('login.avatarPlaceholder'),
+    nicknameLabel: i18n.t('login.nicknameLabel'),
+    nicknamePlaceholder: i18n.t('login.nicknamePlaceholder'),
+    saveAndEnter: i18n.t('login.saveAndEnter'),
+    skipText: i18n.t('login.skip'),
   },
 
   onLoad() {
@@ -26,7 +38,7 @@ Page({
     wx.login({
       success: (loginRes) => {
         if (!loginRes.code) {
-          wx.showToast({ title: '获取登录凭证失败', icon: 'none' });
+          wx.showToast({ title: i18n.t('login.codeError'), icon: 'none' });
           this.setData({ logging: false });
           return;
         }
@@ -47,12 +59,12 @@ Page({
             }
           })
           .catch((err) => {
-            wx.showToast({ title: err.message || '登录失败', icon: 'none' });
+            wx.showToast({ title: err.message || i18n.t('login.loginFailed'), icon: 'none' });
             this.setData({ logging: false });
           });
       },
       fail: () => {
-        wx.showToast({ title: '微信登录失败', icon: 'none' });
+        wx.showToast({ title: i18n.t('login.wxLoginFailed'), icon: 'none' });
         this.setData({ logging: false });
       },
     });
@@ -92,7 +104,7 @@ Page({
         .then((res) => {
           app.globalData.userInfo = res.data;
           this.setData({ saving: false });
-          wx.showToast({ title: '设置成功', icon: 'success' });
+          wx.showToast({ title: i18n.t('login.setupSuccess'), icon: 'success' });
           setTimeout(() => this.goBack(), 800);
         })
         .catch(() => {

@@ -1,27 +1,27 @@
 <view class="page">
   <view class="add-bar">
-    <button class="add-btn" bindtap="addProduct">添加商品</button>
+    <button class="add-btn" bindtap="addProduct">{{i18n.addBtn}}</button>
   </view>
   <view class="empty" wx:if="{{!list.length && !loading}}">
     <text class="empty-icon">📦</text>
-    <text class="empty-text">暂无绑定商品，点击上方「添加商品」上传二维码或拍照</text>
+    <text class="empty-text">{{i18n.empty}}</text>
   </view>
 
   <view class="card" wx:for="{{list}}" wx:key="productKey">
     <view class="row">
-      <text class="label">种类</text>
+      <text class="label">{{i18n.category}}</text>
       <text class="value">{{item.categoryName || '-'}}</text>
     </view>
     <view class="row">
-      <text class="label">名称</text>
+      <text class="label">{{i18n.name}}</text>
       <text class="value">{{item.productName || item.productKey}}</text>
     </view>
     <view class="row">
-      <text class="label">序列号</text>
+      <text class="label">{{i18n.serial}}</text>
       <text class="value sn">{{item.productKey}}</text>
     </view>
     <view class="row">
-      <text class="label">绑定时间</text>
+      <text class="label">{{i18n.boundAt}}</text>
       <text class="value">{{item.boundAtStr}}</text>
     </view>
   </view>

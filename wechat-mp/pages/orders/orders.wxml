@@ -12,10 +12,10 @@
   </view>
 
   <view class="loading-wrap" wx:if="{{loading}}">
-    <text>加载中...</text>
+    <text>{{i18n.loading}}</text>
   </view>
   <view class="empty-wrap" wx:elif="{{isLoggedIn && !orders.length}}">
-    <text>暂无订单</text>
+    <text>{{i18n.empty}}</text>
   </view>
   <view class="order-list" wx:else>
     <view class="order-card" wx:for="{{orders}}" wx:key="id">
@@ -33,15 +33,15 @@
         <text wx:if="{{item.priceDisplay}}" class="order-price">{{item.priceDisplay}}</text>
       </view>
       <view class="order-actions" wx:if="{{item.status === 'pending'}}">
-        <button class="btn-pay" size="mini" bindtap="payOrder" data-id="{{item.id}}">去支付</button>
-        <button class="btn-cancel" size="mini" bindtap="cancelOrder" data-id="{{item.id}}">取消订单</button>
+        <button class="btn-pay" size="mini" bindtap="payOrder" data-id="{{item.id}}">{{i18n.pay}}</button>
+        <button class="btn-cancel" size="mini" bindtap="cancelOrder" data-id="{{item.id}}">{{i18n.cancelOrder}}</button>
       </view>
     </view>
   </view>
 
   <view class="login-tip" wx:if="{{!isLoggedIn && !loading}}">
-    <text>请先登录查看订单</text>
-    <navigator url="/pages/login/login" class="link-login">去登录</navigator>
+    <text>{{i18n.loginTip}}</text>
+    <navigator url="/pages/login/login" class="link-login">{{i18n.goLogin}}</navigator>
   </view>
 
   <view class="tab-bar-placeholder"></view>

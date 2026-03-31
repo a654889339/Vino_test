@@ -1,4 +1,5 @@
 const app = getApp();
+const i18n = require('../../utils/i18n.js');
 
 function formatTime(t) {
   if (!t) return '-';
@@ -10,10 +11,25 @@ Page({
   data: {
     list: [],
     loading: true,
+    i18n: {},
   },
 
   onShow() {
+    this.refreshI18n();
     this.loadList();
+  },
+
+  refreshI18n() {
+    this.setData({
+      i18n: {
+        addBtn: i18n.t('myProducts.addBtn'),
+        empty: i18n.t('myProducts.empty'),
+        category: i18n.t('myProducts.category'),
+        name: i18n.t('myProducts.name'),
+        serial: i18n.t('myProducts.serial'),
+        boundAt: i18n.t('myProducts.boundAt'),
+      },
+    });
   },
 
   loadList() {
@@ -37,9 +53,9 @@ Page({
     const app = getApp();
     if (!app.isLoggedIn()) {
       wx.showModal({
-        title: '未登录',
-        content: '请先登录后再添加商品',
-        confirmText: '去登录',
+        title: i18n.t('myProducts.notLoggedIn'),
+        content: i18n.t('myProducts.loginFirst'),
+        confirmText: i18n.t('myProducts.goLogin'),
         success: (res) => {
           if (res.confirm) wx.navigateTo({ url: '/pages/login/login' });
         },
@@ -53,7 +69,7 @@ Page({
       success: (res) => {
         const file = res.tempFiles[0];
         if (!file) return;
-        wx.showLoading({ title: '识别中...' });
+        wx.showLoading({ title: i18n.t('myProducts.recognizing') });
         wx.uploadFile({
           url: app.globalData.baseUrl + '/auth/bind-by-qr-image',
           filePath: file.tempFilePath,
@@ -63,7 +79,7 @@ Page({
             try {
               const data = JSON.parse(uploadRes.data);
               if (data.code === 0 && data.data) {
-                wx.showToast({ title: '绑定成功', icon: 'success' });
+                wx.showToast({ title: i18n.t('myProducts.bindSuccess'), icon: 'success' });
                 this.loadList();
                 if (data.data.guideSlug) {
                   setTimeout(() => {
@@ -71,13 +87,13 @@ Page({
                   }, 800);
                 }
               } else {
-                wx.showToast({ title: data.message || '绑定失败', icon: 'none' });
+                wx.showToast({ title: data.message || i18n.t('myProducts.bindFailed'), icon: 'none' });
               }
             } catch {
-              wx.showToast({ title: '绑定失败', icon: 'none' });
+              wx.showToast({ title: i18n.t('myProducts.bindFailed'), icon: 'none' });
             }
           },
-          fail: () => wx.showToast({ title: '上传失败', icon: 'none' }),
+          fail: () => wx.showToast({ title: i18n.t('myProducts.uploadFailed'), icon: 'none' }),
           complete: () => wx.hideLoading(),
         });
       },
