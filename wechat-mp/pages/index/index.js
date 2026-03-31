@@ -173,8 +173,8 @@ Page({
         const homeBgItems = items.filter(i => i.section === 'homeBg' && i.status === 'active');
         const homeBgList = homeBgItems.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
           .map(i => {
-            const url = toFull(i.imageUrl);
-            const thumb = (i.imageUrlThumb && i.imageUrlThumb.trim()) ? toFull(i.imageUrlThumb.trim()) : '';
+            const url = toFull(i18n.pick(i, 'imageUrl'));
+            const thumb = '';
             const displayUrl = url;
             return { url, thumb, displayUrl };
           })
@@ -266,18 +266,15 @@ Page({
         const evRow = items.find(i => i.section === 'exploreVino' && i.status === 'active');
         let exploreVino = null;
         if (evRow) {
-          const img = (evRow.imageUrl || '').trim();
+          const img = i18n.pick(evRow, 'imageUrl').trim();
           const pathEv = (evRow.path || '').trim();
           if (img || pathEv) {
-            const thumb = (evRow.imageUrlThumb || '').trim();
-            const displayBg = thumb ? toFull(thumb) : (img ? toFull(evRow.imageUrl) : '');
-            exploreVino = {
-              barTitle: (evRow.title && String(evRow.title).trim()) || '探索VINO',
-              mainTitle: (evRow.icon && String(evRow.icon).trim()) || 'VINO',
-              subTitle: (evRow.desc || '').trim(),
-              path: pathEv,
-              displayBg,
-            };
+            const thumb = i18n.pick(evRow, 'imageUrlThumb').trim();
+            const displayBg = thumb ? toFull(thumb) : (img ? toFull(img) : '');
+            const barTitle = i18n.pick(evRow, 'title').trim() || '探索VINO';
+            const mainTitle = i18n.pick(evRow, 'icon').trim() || 'VINO';
+            const subTitle = i18n.pick(evRow, 'desc').trim();
+            exploreVino = { barTitle, mainTitle, subTitle, path: pathEv, displayBg };
           }
         }
 
@@ -293,7 +290,7 @@ Page({
           : this.data.recommends;
 
         this.setData({
-          headerLogoUrl: headerLogo ? toFull(headerLogo.imageUrl) : '',
+          headerLogoUrl: headerLogo ? toFull(i18n.pick(headerLogo, 'imageUrl')) : '',
           heroBgUrl: singleBg,
           heroBgList: homeBgList,
           navSectionTitle: (navSectionTitleItem && navSectionTitleItem.title) ? navSectionTitleItem.title.trim() : '自助预约',

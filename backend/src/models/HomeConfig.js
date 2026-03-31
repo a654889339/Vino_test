@@ -40,6 +40,31 @@ const HomeConfig = sequelize.define('HomeConfig', {
     type: DataTypes.STRING(20),
     defaultValue: '',
   },
+  titleEn: {
+    type: DataTypes.STRING(100),
+    defaultValue: '',
+    comment: 'English title',
+  },
+  descEn: {
+    type: DataTypes.STRING(200),
+    defaultValue: '',
+    comment: 'English description',
+  },
+  iconEn: {
+    type: DataTypes.STRING(100),
+    defaultValue: '',
+    comment: 'English icon/secondary title',
+  },
+  imageUrlEn: {
+    type: DataTypes.STRING(500),
+    defaultValue: '',
+    comment: 'Image URL (English)',
+  },
+  imageUrlThumbEn: {
+    type: DataTypes.STRING(500),
+    defaultValue: '',
+    comment: 'Thumbnail URL (English)',
+  },
   sortOrder: {
     type: DataTypes.INTEGER,
     defaultValue: 0,

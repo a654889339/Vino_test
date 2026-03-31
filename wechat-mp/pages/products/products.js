@@ -51,8 +51,9 @@ Page({
     const cats = this.data.categories || [];
     const cat = cats.find(c => c.id === id);
     let url = '';
-    if (cat && cat.thumbnailUrl) {
-      url = resolveMediaUrl(cat.thumbnailUrl);
+    if (cat) {
+      const tu = pick(cat, 'thumbnailUrl');
+      if (tu) url = resolveMediaUrl(tu);
     }
     this.setData({ categoryBannerUrl: url });
   },

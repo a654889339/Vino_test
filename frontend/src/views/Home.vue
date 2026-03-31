@@ -237,7 +237,7 @@ import { homeConfigApi, authApi, guideApi } from '@/api';
 import LodImg from '@/components/LodImg.vue';
 import PageThemeLayer from '@/components/PageThemeLayer.vue';
 import LangSwitcher from '@/components/LangSwitcher.vue';
-import { detectLangByIp, t } from '@/utils/i18n';
+import { detectLangByIp, t, pick } from '@/utils/i18n';
 import { resolvePublicUrl } from '@/utils/mediaUrl';
 import { buildSectionSkinLayerStyle, buildSectionSkinContainerStyle } from '@/utils/sectionSkin';
 
@@ -402,17 +402,19 @@ async function onQrFileChange(e) {
 
 const headerLogoUrl = computed(() => {
   const logo = allItems.value.find(i => i.section === 'headerLogo' && i.status === 'active');
-  return logo?.imageUrl || '';
+  return logo ? pick(logo, 'imageUrl') : '';
 });
-// 有缩略图则先加载缩略图再原图，无则直接原图
 const heroBgList = computed(() => {
   const list = allItems.value.filter(i => i.section === 'homeBg' && i.status === 'active');
   return (list || [])
     .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
-    .map(i => ({ url: i.imageUrl, thumb: '' }))
+    .map(i => ({ url: pick(i, 'imageUrl'), thumb: '' }))
     .filter(i => i.url);
 });
-const heroBgFallback = computed(() => allItems.value.find(i => i.section === 'homeBg' && i.status === 'active')?.imageUrl || '');
+const heroBgFallback = computed(() => {
+  const item = allItems.value.find(i => i.section === 'homeBg' && i.status === 'active');
+  return item ? pick(item, 'imageUrl') : '';
+});
 const navSectionTitle = computed(() => {
   const item = allItems.value.find(i => i.section === 'navSectionTitle' && i.status === 'active');
   return (item?.title || '').trim() || t('home.selfBook');
@@ -624,18 +626,25 @@ const exploreVinoVisible = computed(() => {
   return !!(img || path);
 });
 const exploreVinoBarTitle = computed(() => {
-  const txt = (exploreVinoRow.value?.title || '').trim();
-  return txt || t('home.exploreVino');
+  const r = exploreVinoRow.value;
+  const txt = r ? pick(r, 'title') : '';
+  return txt.trim() || t('home.exploreVino');
 });
 const exploreVinoMainTitle = computed(() => {
-  const txt = (exploreVinoRow.value?.icon || '').trim();
-  return txt || 'VINO';
+  const r = exploreVinoRow.value;
+  const txt = r ? pick(r, 'icon') : '';
+  return txt.trim() || 'VINO';
 });
-const exploreVinoSubTitle = computed(() => (exploreVinoRow.value?.desc || '').trim());
+const exploreVinoSubTitle = computed(() => {
+  const r = exploreVinoRow.value;
+  return r ? pick(r, 'desc').trim() : '';
+});
 const exploreVinoImgSrc = computed(() => {
   const r = exploreVinoRow.value;
   if (!r) return '';
-  const u = (r.imageUrlThumb || r.imageUrl || '').trim();
+  const thumb = pick(r, 'imageUrlThumb');
+  const img = pick(r, 'imageUrl');
+  const u = (thumb || img || '').trim();
   return u ? resolvePublicUrl(u) : '';
 });
 

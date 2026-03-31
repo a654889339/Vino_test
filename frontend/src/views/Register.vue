@@ -80,6 +80,7 @@ import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { authApi, homeConfigApi } from '@/api';
 import { showToast } from 'vant';
+import { pick } from '@/utils/i18n';
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -92,10 +93,12 @@ onMounted(async () => {
     const res = await homeConfigApi.list();
     const items = res.data || [];
     const headerLogo = items.find(i => i.section === 'headerLogo' && i.status === 'active');
-    if (headerLogo && headerLogo.imageUrl) headerLogoUrl.value = headerLogo.imageUrl;
+    const logoImg = headerLogo ? pick(headerLogo, 'imageUrl') : '';
+    if (logoImg) headerLogoUrl.value = logoImg;
     else {
       const splash = items.find(i => i.section === 'splash' && i.status === 'active');
-      if (splash && splash.imageUrl) headerLogoUrl.value = splash.imageUrl;
+      const splashImg = splash ? pick(splash, 'imageUrl') : '';
+      if (splashImg) headerLogoUrl.value = splashImg;
     }
   } catch (_) {}
 });

@@ -103,6 +103,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { showToast } from 'vant';
 import { homeConfigApi, authApi } from '@/api';
+import { pick } from '@/utils/i18n';
 
 const router = useRouter();
 const route = useRoute();
@@ -119,7 +120,8 @@ onMounted(async () => {
     const items = res.data || [];
     const splash = items.find(i => i.section === 'splash' && i.status === 'active');
     if (splash) {
-      if (splash.imageUrl) splashImageUrl.value = splash.imageUrl;
+      const imgUrl = pick(splash, 'imageUrl');
+      if (imgUrl) splashImageUrl.value = imgUrl;
       if (splash.desc) splashDesc.value = splash.desc;
     }
     const headerLogo = items.find(i => i.section === 'headerLogo' && i.status === 'active');

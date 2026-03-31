@@ -551,34 +551,66 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <div class="section-header" style="flex-wrap:wrap;gap:12px;align-items:flex-start">
           <h3>探索 VINO</h3>
         </div>
-        <p style="font-size:13px;color:#666;margin-bottom:16px">与 Vino 产品、甄选推荐同级；前台展示在<strong>首页最下方</strong>。配置背景图、跳转链接与卡片内大/小标题（参考品牌探索卡）。上传方式与<strong>商品管理 · 展示大图</strong>相同：选择文件后全屏转圈等待，成功后写入 URL。</p>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px">
-          <span style="width:96px;font-size:13px;color:#666;flex-shrink:0">栏目标题</span>
-          <input type="text" id="exploreVino_barTitle" class="form-input" style="flex:1;min-width:200px" placeholder="探索VINO" />
+        <p style="font-size:13px;color:#666;margin-bottom:16px">与 Vino 产品、甄选推荐同级；前台展示在<strong>首页最下方</strong>。先选语种，再分别配置标题和背景图。</p>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px">
+          <span style="width:96px;font-size:13px;color:#666;flex-shrink:0">语种</span>
+          <select class="form-input" id="exploreVino_lang" style="width:140px" onchange="onExploreVinoLangChange()"><option value="zh">中文</option><option value="en">English</option></select>
         </div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px">
-          <span style="width:96px;font-size:13px;color:#666;flex-shrink:0">卡片大标题</span>
-          <input type="text" id="exploreVino_mainTitle" class="form-input" style="flex:1;min-width:200px" placeholder="VINO" />
+        <div id="exploreVino_zhFields">
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px">
+            <span style="width:96px;font-size:13px;color:#666;flex-shrink:0">栏目标题</span>
+            <input type="text" id="exploreVino_barTitle" class="form-input" style="flex:1;min-width:200px" placeholder="探索VINO" />
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px">
+            <span style="width:96px;font-size:13px;color:#666;flex-shrink:0">卡片大标题</span>
+            <input type="text" id="exploreVino_mainTitle" class="form-input" style="flex:1;min-width:200px" placeholder="VINO" />
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px">
+            <span style="width:96px;font-size:13px;color:#666;flex-shrink:0">卡片副标题</span>
+            <input type="text" id="exploreVino_subTitle" class="form-input" style="flex:1;min-width:200px" placeholder="可选" />
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px">
+            <span style="width:96px;font-size:13px;color:#666;flex-shrink:0">背景图 URL</span>
+            <input type="text" id="exploreVino_imageUrl" class="form-input" style="flex:1;min-width:200px" placeholder="上传后自动填入" />
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px">
+            <span style="width:96px;font-size:13px;color:#666;flex-shrink:0">缩略图 URL</span>
+            <input type="text" id="exploreVino_imageUrlThumb" class="form-input" style="flex:1;min-width:200px" placeholder="可选，优先加载" />
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
+            <label style="padding:8px 14px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">上传背景图<input type="file" accept="image/*" style="display:none" onchange="uploadExploreVinoBg(this)" /></label>
+            <img id="exploreVino_preview" style="max-width:160px;max-height:100px;border-radius:8px;display:none;border:1px solid #eee;object-fit:cover" alt="" />
+          </div>
         </div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px">
-          <span style="width:96px;font-size:13px;color:#666;flex-shrink:0">卡片副标题</span>
-          <input type="text" id="exploreVino_subTitle" class="form-input" style="flex:1;min-width:200px" placeholder="可选" />
+        <div id="exploreVino_enFields" style="display:none">
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px">
+            <span style="width:96px;font-size:13px;color:#666;flex-shrink:0">Bar Title</span>
+            <input type="text" id="exploreVino_barTitleEn" class="form-input" style="flex:1;min-width:200px" placeholder="Explore VINO" />
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px">
+            <span style="width:96px;font-size:13px;color:#666;flex-shrink:0">Card Title</span>
+            <input type="text" id="exploreVino_mainTitleEn" class="form-input" style="flex:1;min-width:200px" placeholder="VINO" />
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px">
+            <span style="width:96px;font-size:13px;color:#666;flex-shrink:0">Subtitle</span>
+            <input type="text" id="exploreVino_subTitleEn" class="form-input" style="flex:1;min-width:200px" placeholder="Optional" />
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px">
+            <span style="width:96px;font-size:13px;color:#666;flex-shrink:0">BG URL (EN)</span>
+            <input type="text" id="exploreVino_imageUrlEn" class="form-input" style="flex:1;min-width:200px" placeholder="English background" />
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px">
+            <span style="width:96px;font-size:13px;color:#666;flex-shrink:0">Thumb (EN)</span>
+            <input type="text" id="exploreVino_imageUrlThumbEn" class="form-input" style="flex:1;min-width:200px" placeholder="Optional" />
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
+            <label style="padding:8px 14px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">Upload BG<input type="file" accept="image/*" style="display:none" onchange="uploadExploreVinoBgEn(this)" /></label>
+            <img id="exploreVino_previewEn" style="max-width:160px;max-height:100px;border-radius:8px;display:none;border:1px solid #eee;object-fit:cover" alt="" />
+          </div>
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px">
           <span style="width:96px;font-size:13px;color:#666;flex-shrink:0">跳转链接</span>
           <input type="text" id="exploreVino_link" class="form-input" style="flex:1;min-width:200px" placeholder="https://… 或 /products 等站内路径" />
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px">
-          <span style="width:96px;font-size:13px;color:#666;flex-shrink:0">背景图 URL</span>
-          <input type="text" id="exploreVino_imageUrl" class="form-input" style="flex:1;min-width:200px" placeholder="上传后自动填入" />
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px">
-          <span style="width:96px;font-size:13px;color:#666;flex-shrink:0">缩略图 URL</span>
-          <input type="text" id="exploreVino_imageUrlThumb" class="form-input" style="flex:1;min-width:200px" placeholder="可选，优先加载" />
-        </div>
-        <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
-          <label style="padding:8px 14px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">上传背景图<input type="file" accept="image/*" style="display:none" onchange="uploadExploreVinoBg(this)" /></label>
-          <img id="exploreVino_preview" style="max-width:160px;max-height:100px;border-radius:8px;display:none;border:1px solid #eee;object-fit:cover" alt="" />
         </div>
         <button type="button" class="btn" onclick="saveExploreVinoConfig()" style="background:#059669;color:#fff">保存探索 VINO</button>
       </div>
@@ -599,7 +631,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <button class="btn" onclick="openHCEditorFromAnim()" style="margin-left:auto;background:#059669;color:#fff">+ 新增项目</button>
         </div>
         <table class="order-table" id="hcAnimTable">
-          <thead><tr><th>ID</th><th>板块</th><th>标题</th><th>描述</th><th>图标</th><th>图片</th><th>颜色/背景</th><th>跳转</th><th>价格</th><th>排序</th><th>状态</th><th>操作</th></tr></thead>
+          <thead><tr><th>ID</th><th>板块</th><th>标题</th><th>描述</th><th>图片</th><th>颜色/背景</th><th>排序</th><th>状态</th><th>操作</th></tr></thead>
           <tbody id="hcAnimBody"></tbody>
         </table>
         <div class="order-empty" id="hcAnimEmpty" style="display:none">暂无配置项</div>
@@ -712,19 +744,42 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <input class="form-input" id="hcIcon" placeholder="如 apps-o, setting-o" />
         </div>
         <div class="form-group" id="hcImageGroup" style="display:none">
-          <label>开场动画图片 <span style="font-weight:normal;color:#999;font-size:12px">（建议使用透明背景PNG）</span></label>
-          <div style="display:flex;gap:8px;align-items:center">
-            <input class="form-input" id="hcImageUrl" placeholder="上传开场动画Logo图片" style="flex:1" />
-            <label style="padding:8px 16px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">
-              上传图片<input type="file" accept="image/*" style="display:none" onchange="uploadHCImage(this)" />
-            </label>
+          <div id="hcImageLangRow" style="display:none;margin-bottom:10px">
+            <label>语种</label>
+            <select class="form-input" id="hcImageLang" onchange="onHCImageLangChange()"><option value="zh">中文</option><option value="en">English</option></select>
           </div>
-          <img id="hcImagePreview" style="max-width:200px;max-height:100px;margin-top:8px;border-radius:8px;display:none;border:1px solid #eee;background:#1a1a1a;padding:8px" />
-          <div class="form-group" id="hcImageThumbGroup" style="display:none;margin-top:8px">
-            <label>缩略图 URL <span style="font-weight:normal;color:#999;font-size:12px">（可选，配置后前台先加载缩略图再加载原图）</span></label>
+          <div id="hcImageZh">
+            <label>图片（中文） <span style="font-weight:normal;color:#999;font-size:12px">（建议尺寸 750x600 以上，将显示在首页顶部）</span></label>
             <div style="display:flex;gap:8px;align-items:center">
-              <input class="form-input" id="hcImageUrlThumb" placeholder="留空则直接使用原图或系统推导缩略图" style="flex:1" />
-              <label style="padding:8px 16px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">上传图片<input type="file" accept="image/*" style="display:none" onchange="uploadHCImageThumb(this)" /></label>
+              <input class="form-input" id="hcImageUrl" placeholder="上传图片" style="flex:1" />
+              <label style="padding:8px 16px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">
+                上传图片<input type="file" accept="image/*" style="display:none" onchange="uploadHCImage(this)" />
+              </label>
+            </div>
+            <img id="hcImagePreview" style="max-width:200px;max-height:100px;margin-top:8px;border-radius:8px;display:none;border:1px solid #eee;background:#1a1a1a;padding:8px" />
+            <div class="form-group" id="hcImageThumbGroup" style="display:none;margin-top:8px">
+              <label>缩略图 URL <span style="font-weight:normal;color:#999;font-size:12px">（可选，配置后前台先加载缩略图再加载原图）</span></label>
+              <div style="display:flex;gap:8px;align-items:center">
+                <input class="form-input" id="hcImageUrlThumb" placeholder="留空则直接使用原图或系统推导缩略图" style="flex:1" />
+                <label style="padding:8px 16px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">上传图片<input type="file" accept="image/*" style="display:none" onchange="uploadHCImageThumb(this)" /></label>
+              </div>
+            </div>
+          </div>
+          <div id="hcImageEn" style="display:none;margin-top:10px">
+            <label>Image (EN)</label>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input class="form-input" id="hcImageUrlEn" placeholder="Upload English image" style="flex:1" />
+              <label style="padding:8px 16px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">
+                Upload<input type="file" accept="image/*" style="display:none" onchange="uploadHCImageEn(this)" />
+              </label>
+            </div>
+            <img id="hcImagePreviewEn" style="max-width:200px;max-height:100px;margin-top:8px;border-radius:8px;display:none;border:1px solid #eee;background:#1a1a1a;padding:8px" />
+            <div class="form-group" style="margin-top:8px">
+              <label>Thumbnail URL (EN)</label>
+              <div style="display:flex;gap:8px;align-items:center">
+                <input class="form-input" id="hcImageUrlThumbEn" placeholder="Optional" style="flex:1" />
+                <label style="padding:8px 16px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">Upload<input type="file" accept="image/*" style="display:none" onchange="uploadHCImageThumbEn(this)" /></label>
+              </div>
             </div>
           </div>
         </div>
@@ -939,15 +994,31 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         </div>
         <div class="modal-body">
           <input type="hidden" id="categoryEditId" />
-          <div class="form-group"><label>种类名称 *</label><input class="form-input" id="categoryName" placeholder="如：空调" /></div>
-          <div class="form-group"><label>英文名称</label><input class="form-input" id="categoryNameEn" placeholder="e.g. Air Conditioner" /></div>
           <div class="form-group">
-            <label>分类页缩略图 <span style="font-weight:normal;color:#999;font-size:12px">（前台/小程序产品页，搜索框下方横幅）</span></label>
-            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-              <input class="form-input" id="categoryThumbnailUrl" placeholder="上传后自动填充，也可粘贴 COS 或完整 URL" style="flex:1;min-width:200px" />
-              <label style="padding:8px 14px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">上传图片<input type="file" accept="image/*" style="display:none" onchange="uploadCategoryThumbnail(this)" /></label>
+            <label>语种</label>
+            <select class="form-input" id="categoryLang" onchange="onCategoryLangChange()"><option value="zh">中文</option><option value="en">English</option></select>
+          </div>
+          <div id="categoryLangZh">
+            <div class="form-group"><label>种类名称 *</label><input class="form-input" id="categoryName" placeholder="如：空调" /></div>
+            <div class="form-group">
+              <label>分类页缩略图 <span style="font-weight:normal;color:#999;font-size:12px">（前台/小程序产品页，搜索框下方横幅）</span></label>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                <input class="form-input" id="categoryThumbnailUrl" placeholder="上传后自动填充，也可粘贴 COS 或完整 URL" style="flex:1;min-width:200px" />
+                <label style="padding:8px 14px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">上传图片<input type="file" accept="image/*" style="display:none" onchange="uploadCategoryThumbnail(this)" /></label>
+              </div>
+              <div id="categoryThumbPreview" style="margin-top:8px;min-height:0"></div>
             </div>
-            <div id="categoryThumbPreview" style="margin-top:8px;min-height:0"></div>
+          </div>
+          <div id="categoryLangEn" style="display:none">
+            <div class="form-group"><label>Category Name (EN) *</label><input class="form-input" id="categoryNameEn" placeholder="e.g. Air Conditioner" /></div>
+            <div class="form-group">
+              <label>Thumbnail (EN) <span style="font-weight:normal;color:#999;font-size:12px">(product page banner for English)</span></label>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                <input class="form-input" id="categoryThumbnailUrlEn" placeholder="Upload or paste URL" style="flex:1;min-width:200px" />
+                <label style="padding:8px 14px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">Upload<input type="file" accept="image/*" style="display:none" onchange="uploadCategoryThumbnailEn(this)" /></label>
+              </div>
+              <div id="categoryThumbPreviewEn" style="margin-top:8px;min-height:0"></div>
+            </div>
           </div>
           <div class="form-group"><label>排序</label><input type="number" class="form-input" id="categorySort" value="0" /></div>
           <div class="form-group"><label>状态</label><select class="form-input" id="categoryStatus"><option value="active">启用</option><option value="inactive">禁用</option></select></div>
@@ -2040,7 +2111,22 @@ function openCategoryEditor(id) {
       ? '<img src="' + thumbStr.replace(/"/g, '&quot;') + '" style="max-width:200px;max-height:120px;border-radius:8px;border:1px solid #eee;object-fit:contain" alt="预览" />'
       : '';
   }
+  const thumbEnStr = c && c.thumbnailUrlEn ? String(c.thumbnailUrlEn).trim() : '';
+  document.getElementById('categoryThumbnailUrlEn').value = thumbEnStr;
+  const prevEn = document.getElementById('categoryThumbPreviewEn');
+  if (prevEn) {
+    prevEn.innerHTML = thumbEnStr
+      ? '<img src="' + thumbEnStr.replace(/"/g, '&quot;') + '" style="max-width:200px;max-height:120px;border-radius:8px;border:1px solid #eee;object-fit:contain" alt="预览" />'
+      : '';
+  }
+  document.getElementById('categoryLang').value = 'zh';
+  onCategoryLangChange();
   document.getElementById('categoryModal').style.display = 'flex';
+}
+function onCategoryLangChange() {
+  const lang = document.getElementById('categoryLang').value;
+  document.getElementById('categoryLangZh').style.display = lang === 'zh' ? '' : 'none';
+  document.getElementById('categoryLangEn').style.display = lang === 'en' ? '' : 'none';
 }
 
 function closeCategoryEditor() { document.getElementById('categoryModal').style.display = 'none'; }
@@ -2050,10 +2136,12 @@ async function saveCategory() {
   const name = document.getElementById('categoryName').value.trim();
   if (!name) { alert('请填写种类名称'); return; }
   const thumb = document.getElementById('categoryThumbnailUrl').value.trim();
+  const thumbEn = document.getElementById('categoryThumbnailUrlEn').value.trim();
   const body = {
     name,
     nameEn: (document.getElementById('categoryNameEn').value || '').trim(),
     thumbnailUrl: thumb || null,
+    thumbnailUrlEn: thumbEn || null,
     sortOrder: parseInt(document.getElementById('categorySort').value, 10) || 0,
     status: document.getElementById('categoryStatus').value,
   };
@@ -2095,6 +2183,24 @@ async function uploadCategoryThumbnail(input) {
     } catch (e) {
       alert('上传失败');
     }
+  });
+  input.value = '';
+}
+
+async function uploadCategoryThumbnailEn(input) {
+  if (!input.files[0]) return;
+  const file = input.files[0];
+  if (!file.type.startsWith('image/')) { alert('Please select an image'); input.value = ''; return; }
+  await runWithUploadOverlay(file.name, async () => {
+    try {
+      const res = await doUpload(file);
+      const url = res && res.data && (res.data.url || res.data.thumbUrl);
+      if (res.code === 0 && url) {
+        document.getElementById('categoryThumbnailUrlEn').value = String(url);
+        const prev = document.getElementById('categoryThumbPreviewEn');
+        if (prev) prev.innerHTML = '<img src="' + String(url).replace(/"/g, '&quot;') + '" style="max-width:200px;max-height:120px;border-radius:8px;border:1px solid #eee;object-fit:contain" />';
+      } else alert((res && res.message) || 'Upload failed');
+    } catch { alert('Upload failed'); }
   });
   input.value = '';
 }
@@ -3034,43 +3140,53 @@ function fillExploreVinoForm() {
   const row = (allHCItems || []).find(function (i) {
     return i.section === 'exploreVino' && i.status === 'active';
   });
-  const bt = document.getElementById('exploreVino_barTitle');
-  const mt = document.getElementById('exploreVino_mainTitle');
-  const st = document.getElementById('exploreVino_subTitle');
-  const lk = document.getElementById('exploreVino_link');
-  const iu = document.getElementById('exploreVino_imageUrl');
-  const iut = document.getElementById('exploreVino_imageUrlThumb');
-  const prev = document.getElementById('exploreVino_preview');
-  if (!bt || !mt || !st || !lk || !iu || !iut) return;
-  bt.value = row ? (row.title || '') : '';
-  mt.value = row ? (row.icon || '') : '';
-  st.value = row ? (row.desc || '') : '';
-  lk.value = row ? (row.path || '') : '';
-  iu.value = row ? (row.imageUrl || '') : '';
-  iut.value = row ? (row.imageUrlThumb || '') : '';
+  var el = function(id) { return document.getElementById(id); };
+  if (!el('exploreVino_barTitle')) return;
+  el('exploreVino_barTitle').value = row ? (row.title || '') : '';
+  el('exploreVino_mainTitle').value = row ? (row.icon || '') : '';
+  el('exploreVino_subTitle').value = row ? (row.desc || '') : '';
+  el('exploreVino_link').value = row ? (row.path || '') : '';
+  el('exploreVino_imageUrl').value = row ? (row.imageUrl || '') : '';
+  el('exploreVino_imageUrlThumb').value = row ? (row.imageUrlThumb || '') : '';
+  el('exploreVino_barTitleEn').value = row ? (row.titleEn || '') : '';
+  el('exploreVino_mainTitleEn').value = row ? (row.iconEn || '') : '';
+  el('exploreVino_subTitleEn').value = row ? (row.descEn || '') : '';
+  el('exploreVino_imageUrlEn').value = row ? (row.imageUrlEn || '') : '';
+  el('exploreVino_imageUrlThumbEn').value = row ? (row.imageUrlThumbEn || '') : '';
+  var prev = el('exploreVino_preview');
   if (prev) {
     const u = row && row.imageUrl ? adminResolvePublicUrl(row.imageUrl) : '';
-    if (u) { prev.src = u; prev.style.display = 'block'; }
-    else { prev.style.display = 'none'; }
+    if (u) { prev.src = u; prev.style.display = 'block'; } else prev.style.display = 'none';
   }
+  var prevEn = el('exploreVino_previewEn');
+  if (prevEn) {
+    const u = row && row.imageUrlEn ? adminResolvePublicUrl(row.imageUrlEn) : '';
+    if (u) { prevEn.src = u; prevEn.style.display = 'block'; } else prevEn.style.display = 'none';
+  }
+  if (el('exploreVino_lang')) { el('exploreVino_lang').value = 'zh'; onExploreVinoLangChange(); }
+}
+function onExploreVinoLangChange() {
+  var lang = document.getElementById('exploreVino_lang').value;
+  document.getElementById('exploreVino_zhFields').style.display = lang === 'zh' ? '' : 'none';
+  document.getElementById('exploreVino_enFields').style.display = lang === 'en' ? '' : 'none';
 }
 
 async function saveExploreVinoConfig() {
-  const title = (document.getElementById('exploreVino_barTitle') && document.getElementById('exploreVino_barTitle').value || '').trim();
-  const icon = (document.getElementById('exploreVino_mainTitle') && document.getElementById('exploreVino_mainTitle').value || '').trim();
-  const desc = (document.getElementById('exploreVino_subTitle') && document.getElementById('exploreVino_subTitle').value || '').trim();
-  const path = (document.getElementById('exploreVino_link') && document.getElementById('exploreVino_link').value || '').trim();
-  const imageUrl = (document.getElementById('exploreVino_imageUrl') && document.getElementById('exploreVino_imageUrl').value || '').trim();
-  const imageUrlThumb = (document.getElementById('exploreVino_imageUrlThumb') && document.getElementById('exploreVino_imageUrlThumb').value || '').trim();
+  var el = function(id) { var e = document.getElementById(id); return e ? e.value.trim() : ''; };
   const existing = (allHCItems || []).find(function (i) { return i.section === 'exploreVino'; });
   const body = {
     section: 'exploreVino',
-    title: title || '探索VINO',
-    icon: icon || 'VINO',
-    desc: desc,
-    path: path,
-    imageUrl: imageUrl,
-    imageUrlThumb: imageUrlThumb,
+    title: el('exploreVino_barTitle') || '探索VINO',
+    icon: el('exploreVino_mainTitle') || 'VINO',
+    desc: el('exploreVino_subTitle'),
+    path: el('exploreVino_link'),
+    imageUrl: el('exploreVino_imageUrl'),
+    imageUrlThumb: el('exploreVino_imageUrlThumb'),
+    titleEn: el('exploreVino_barTitleEn'),
+    iconEn: el('exploreVino_mainTitleEn'),
+    descEn: el('exploreVino_subTitleEn'),
+    imageUrlEn: el('exploreVino_imageUrlEn'),
+    imageUrlThumbEn: el('exploreVino_imageUrlThumbEn'),
     color: '',
     price: '',
     sortOrder: 0,
@@ -3110,6 +3226,35 @@ async function uploadExploreVinoBg(input) {
         if (prev) { prev.src = res.data.url; prev.style.display = 'block'; }
       } else alert(res.message || '上传失败');
     } catch (e) { alert('上传失败'); }
+  });
+  input.value = '';
+}
+
+async function uploadExploreVinoBgEn(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 10 * 1024 * 1024) { alert('Max 10MB'); input.value = ''; return; }
+  if (!file.type.startsWith('image/')) { alert('Image only'); input.value = ''; return; }
+  const token = localStorage.getItem('vino_admin_token');
+  if (!token) { alert('Login first'); input.value = ''; return; }
+  await runWithUploadOverlay(file.name, async () => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch(API + '/home-config/upload', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token },
+        body: formData
+      }).then(r => r.json());
+      if (res.code === 0 && res.data && res.data.url) {
+        var iu = document.getElementById('exploreVino_imageUrlEn');
+        var iut = document.getElementById('exploreVino_imageUrlThumbEn');
+        if (iu) iu.value = res.data.url;
+        if (res.data.thumbUrl && iut) iut.value = res.data.thumbUrl;
+        var prev = document.getElementById('exploreVino_previewEn');
+        if (prev) { prev.src = res.data.url; prev.style.display = 'block'; }
+      } else alert(res.message || 'Upload failed');
+    } catch { alert('Upload failed'); }
   });
   input.value = '';
 }
@@ -3265,11 +3410,8 @@ function renderHCAnimTable() {
     <td><span style="padding:2px 8px;border-radius:10px;font-size:12px;background:#F3F4F6">${SECTION_LABELS[h.section]||h.section}</span></td>
     <td style="font-weight:500">${h.title}</td>
     <td style="color:#666;font-size:13px">${h.desc||''}</td>
-    <td>${h.icon ? '<span style="font-family:monospace;font-size:12px;background:#F3F4F6;padding:2px 6px;border-radius:4px">'+h.icon+'</span>' : '-'}</td>
     <td>${h.imageUrl ? '<img src="'+(h.imageUrlThumb||h.imageUrl)+'" data-full-src="'+(h.imageUrlThumb?(h.imageUrl||''):'')+'" style="max-width:60px;max-height:30px;border-radius:4px;background:#1a1a1a;padding:2px" class="lod-img" />' : '-'}</td>
     <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px" title="${h.color||''}">${h.color ? '<span style="display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:middle;margin-right:4px;background:'+h.color+'"></span>'+h.color.substring(0,25) : '-'}</td>
-    <td style="font-size:12px">${h.path||'-'}</td>
-    <td>${h.price !== undefined && h.price !== null && String(h.price).trim() !== '' ? formatAdminPrice(h.price) : '-'}</td>
     <td>${h.sortOrder}</td>
     <td><span style="display:inline-block;padding:4px 14px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:500;transition:all .2s;${h.status==='active'?'background:#D1FAE5;color:#059669':'background:#F3F4F6;color:#999'}" onclick="toggleHCStatus(${h.id},'${h.status}')">${h.status==='active'?'启用':'禁用'}</span></td>
     <td style="white-space:nowrap">
@@ -3523,11 +3665,17 @@ function onHCSectionChange() {
   titleLabel.textContent = '标题';
   titleInput.placeholder = '显示标题';
   document.getElementById('hcPriceGroup').style.display = 'none';
-  document.getElementById('hcIconGroup').style.display = noIcon.includes(sec) ? 'none' : '';
   document.getElementById('hcPathGroup').style.display = noPath.includes(sec) ? 'none' : '';
   document.getElementById('hcImageGroup').style.display = showImage.includes(sec) ? '' : 'none';
   document.getElementById('hcImageThumbGroup').style.display = showImage.includes(sec) ? '' : 'none';
   document.getElementById('hcColorGroup').style.display = hideColor.includes(sec) ? 'none' : '';
+  var isAnimSec = ['splash','headerLogo','homeBg'].includes(sec);
+  document.getElementById('hcImageLangRow').style.display = isAnimSec ? '' : 'none';
+  document.getElementById('hcImageZh').style.display = '';
+  document.getElementById('hcImageEn').style.display = 'none';
+  var langSel = document.getElementById('hcImageLang');
+  if (langSel) langSel.value = 'zh';
+  document.getElementById('hcIconGroup').style.display = (isAnimSec || noIcon.includes(sec)) ? 'none' : '';
   const colorLabel = document.getElementById('hcColorLabel');
   const colorInput = document.getElementById('hcColor');
   const imgLabel = document.getElementById('hcImageGroup').querySelector('label');
@@ -3606,13 +3754,25 @@ function openHCEditor(id) {
   document.getElementById('hcPrice').value = item ? (item.price||'') : '';
   document.getElementById('hcImageUrl').value = item ? (item.imageUrl||'') : '';
   document.getElementById('hcImageUrlThumb').value = item ? (item.imageUrlThumb||'') : '';
+  document.getElementById('hcImageUrlEn').value = item ? (item.imageUrlEn||'') : '';
+  document.getElementById('hcImageUrlThumbEn').value = item ? (item.imageUrlThumbEn||'') : '';
   document.getElementById('hcSortOrder').value = item ? item.sortOrder : 0;
   document.getElementById('hcStatus').value = item ? item.status : 'active';
   const preview = document.getElementById('hcImagePreview');
   if (item && item.imageUrl) { preview.src = item.imageUrl; preview.style.display = 'block'; }
   else { preview.style.display = 'none'; }
+  const previewEn = document.getElementById('hcImagePreviewEn');
+  if (item && item.imageUrlEn) { previewEn.src = item.imageUrlEn; previewEn.style.display = 'block'; }
+  else { previewEn.style.display = 'none'; }
+  var langSel = document.getElementById('hcImageLang');
+  if (langSel) { langSel.value = 'zh'; }
   onHCSectionChange();
   document.getElementById('hcModal').style.display = 'flex';
+}
+function onHCImageLangChange() {
+  var lang = document.getElementById('hcImageLang').value;
+  document.getElementById('hcImageZh').style.display = lang === 'zh' ? '' : 'none';
+  document.getElementById('hcImageEn').style.display = lang === 'en' ? '' : 'none';
 }
 
 function closeHCEditor() { document.getElementById('hcModal').style.display = 'none'; }
@@ -3632,6 +3792,8 @@ async function saveHC() {
     price: document.getElementById('hcPrice').value,
     imageUrl: document.getElementById('hcImageUrl').value,
     imageUrlThumb: document.getElementById('hcImageUrlThumb').value,
+    imageUrlEn: document.getElementById('hcImageUrlEn').value,
+    imageUrlThumbEn: document.getElementById('hcImageUrlThumbEn').value,
     sortOrder: parseInt(document.getElementById('hcSortOrder').value) || 0,
     status: document.getElementById('hcStatus').value,
   };
@@ -3717,6 +3879,41 @@ async function uploadHCImageThumb(input) {
         const tb = document.getElementById('hcImageUrlThumb'); if (tb) tb.value = res.data.url;
       } else alert(res.message || '上传失败');
     } catch (e) { alert('上传失败: ' + (e.message || '')); }
+  });
+  input.value = '';
+}
+
+async function uploadHCImageEn(input) {
+  const file = input.files[0]; if (!file) return;
+  if (!file.type.startsWith('image/')) { alert('Image only'); input.value = ''; return; }
+  const token = localStorage.getItem('vino_admin_token');
+  if (!token) { alert('Login first'); input.value = ''; return; }
+  await runWithUploadOverlay(file.name, async () => {
+    try {
+      const fd = new FormData(); fd.append('file', file);
+      const res = await fetch(API + '/home-config/upload', { method:'POST', headers:{'Authorization':'Bearer '+token}, body:fd }).then(r=>r.json());
+      if (res.code === 0 && res.data?.url) {
+        document.getElementById('hcImageUrlEn').value = res.data.url;
+        if (res.data.thumbUrl) { var tb = document.getElementById('hcImageUrlThumbEn'); if (tb) tb.value = res.data.thumbUrl; }
+        var p = document.getElementById('hcImagePreviewEn'); if (p) { p.src = res.data.url; p.style.display = 'block'; }
+      } else alert(res.message || 'Upload failed');
+    } catch { alert('Upload failed'); }
+  });
+  input.value = '';
+}
+async function uploadHCImageThumbEn(input) {
+  const file = input.files[0]; if (!file) return;
+  if (!file.type.startsWith('image/')) { alert('Image only'); input.value = ''; return; }
+  const token = localStorage.getItem('vino_admin_token');
+  if (!token) { alert('Login first'); input.value = ''; return; }
+  await runWithUploadOverlay(file.name, async () => {
+    try {
+      const fd = new FormData(); fd.append('file', file);
+      const res = await fetch(API + '/home-config/upload', { method:'POST', headers:{'Authorization':'Bearer '+token}, body:fd }).then(r=>r.json());
+      if (res.code === 0 && res.data?.url) {
+        var tb = document.getElementById('hcImageUrlThumbEn'); if (tb) tb.value = res.data.url;
+      } else alert(res.message || 'Upload failed');
+    } catch { alert('Upload failed'); }
   });
   input.value = '';
 }

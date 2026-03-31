@@ -128,7 +128,7 @@ const currentCategory = computed(() =>
 );
 
 const currentCategoryBannerSrc = computed(() => {
-  const u = currentCategory.value?.thumbnailUrl;
+  const u = pick(currentCategory.value, 'thumbnailUrl');
   if (!u || !String(u).trim()) return '';
   return fullUrl(String(u).trim());
 });

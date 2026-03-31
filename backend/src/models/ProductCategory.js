@@ -22,6 +22,11 @@ const ProductCategory = sequelize.define('ProductCategory', {
     defaultValue: '',
     comment: '种类名称（英文）',
   },
+  thumbnailUrlEn: {
+    type: DataTypes.STRING(1024),
+    allowNull: true,
+    comment: '分类页缩略图（英文）',
+  },
   sortOrder: {
     type: DataTypes.INTEGER,
     defaultValue: 0,

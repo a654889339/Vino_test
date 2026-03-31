@@ -15,6 +15,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { homeConfigApi } from '@/api';
+import { pick } from '@/utils/i18n';
 
 const visible = ref(true);
 const splashConfig = ref(null);
@@ -24,7 +25,7 @@ const backgroundColor = computed(() => {
 });
 
 const splashImageUrl = computed(() => {
-  return splashConfig.value?.imageUrl || '';
+  return pick(splashConfig.value, 'imageUrl') || '';
 });
 
 const isLightBg = computed(() => {

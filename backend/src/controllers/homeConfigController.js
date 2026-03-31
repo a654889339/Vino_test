@@ -2,7 +2,7 @@ const HomeConfig = require('../models/HomeConfig');
 const cosUpload = require('../utils/cosUpload');
 const path = require('path');
 
-const FIELDS = ['section','title','desc','icon','color','path','price','sortOrder','status','imageUrl','imageUrlThumb'];
+const FIELDS = ['section','title','desc','icon','color','path','price','sortOrder','status','imageUrl','imageUrlThumb','titleEn','descEn','iconEn','imageUrlEn','imageUrlThumbEn'];
 
 /** 将旧的 /api/media/cos?key=... 代理 URL 还原为直链 COS URL */
 function fixProxyUrl(url) {
