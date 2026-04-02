@@ -167,7 +167,7 @@
           :class="{ 'my-product-item--clickable': !!productGuideSlug(item) }"
           @click="onMyProductItemClick(item)"
         >
-          <span class="my-product-category">{{ item.categoryName || '-' }}</span>
+          <span class="my-product-category">{{ pick(item, 'categoryName') || '-' }}</span>
           <div class="my-product-icon-wrap">
             <img
               v-if="myProductShowImg(item)"

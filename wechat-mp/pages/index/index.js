@@ -109,6 +109,7 @@ Page({
           const thumb = item.iconUrlThumb ? toFull(item.iconUrlThumb) : '';
           return {
             ...item,
+            categoryName: i18n.pick(item, 'categoryName') || item.categoryName || '',
             iconUrl: full,
             iconUrlThumb: thumb,
             displayIconUrl: (thumb || full || '').trim(),

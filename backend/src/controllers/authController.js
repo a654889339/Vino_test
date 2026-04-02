@@ -623,10 +623,11 @@ exports.myProducts = async (req, res) => {
 
     const invCatNames = [...new Set(products.map(p => (p.category && p.category.name) || '').filter(Boolean))];
     const productCats = invCatNames.length
-      ? await ProductCategory.findAll({ where: { name: { [Op.in]: invCatNames } }, attributes: ['id', 'name'] })
+      ? await ProductCategory.findAll({ where: { name: { [Op.in]: invCatNames } }, attributes: ['id', 'name', 'nameEn'] })
       : [];
     const invNameToPcId = {};
-    productCats.forEach(pc => { invNameToPcId[pc.name] = pc.id; });
+    const invNameToNameEn = {};
+    productCats.forEach(pc => { invNameToPcId[pc.name] = pc.id; invNameToNameEn[pc.name] = pc.nameEn || ''; });
 
     const pcIds = productCats.map(pc => pc.id);
     const defaultSlugByPcId = {};
@@ -656,9 +657,11 @@ exports.myProducts = async (req, res) => {
     products.forEach(p => {
       const guideSlug = resolveEffectiveSlug(p);
       if (guideSlug) effectiveSlugs.push(guideSlug);
+      const catName = (p.category && p.category.name) || '';
       infoMap[p.serialNumber] = {
         productName: p.name,
-        categoryName: (p.category && p.category.name) || '',
+        categoryName: catName,
+        categoryNameEn: invNameToNameEn[catName] || '',
         guideSlug,
       };
     });
@@ -686,6 +689,7 @@ exports.myProducts = async (req, res) => {
         productKey: l.productKey,
         productName: (info && info.productName) || l.productKey,
         categoryName: (info && info.categoryName) || '',
+        categoryNameEn: (info && info.categoryNameEn) || '',
         guideSlug: (info && info.guideSlug) || '',
         guideId: (guide && guide.guideId) || null,
         categoryId: (guide && guide.categoryId) || null,

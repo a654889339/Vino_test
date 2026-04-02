@@ -80,6 +80,7 @@ Page({
         const sym = app.globalData.currencySymbol || '¥';
         const data = (Array.isArray(arr) ? arr : []).map(o => ({
           ...o,
+          serviceTitle: i18n.pick(o, 'serviceTitle') || o.serviceTitle || '',
           priceDisplay: formatPriceDisplay(o.price, sym),
           statusText: (statusMap[o.status] || {}).text || o.status,
           statusType: (statusMap[o.status] || {}).type || 'default',

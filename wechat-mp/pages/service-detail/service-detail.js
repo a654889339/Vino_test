@@ -9,7 +9,9 @@ function enrichServiceData(s) {
   return {
     id: s.id,
     title: s.title || i18n.t('tabbar.services'),
+    titleEn: s.titleEn || '',
     description: s.description || i18n.t('serviceDetail.defaultDesc'),
+    descriptionEn: s.descriptionEn || '',
     price: s.price,
     originPrice: s.originPrice,
     priceDisplay: formatPriceDisplay(s.price, sym),
@@ -173,7 +175,9 @@ Page({
           serviceData: enrichServiceData({
             id: s.id,
             title: s.title || i18n.t('tabbar.services'),
+            titleEn: s.titleEn || '',
             description: s.description || i18n.t('serviceDetail.defaultDesc'),
+            descriptionEn: s.descriptionEn || '',
             price: s.price || 0,
             originPrice: s.originPrice,
           }),
@@ -513,7 +517,8 @@ Page({
 
     const payload = {
       serviceId: parseInt(this.data.serviceId, 10) || null,
-      serviceTitle: serviceData.title,
+      serviceTitle: serviceData.title || '',
+      serviceTitleEn: serviceData.titleEn || '',
       serviceIcon: 'setting-o',
       price: serviceData.price,
       contactName: contactName.trim(),

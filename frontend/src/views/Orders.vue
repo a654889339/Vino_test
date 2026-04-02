@@ -17,14 +17,14 @@
               <div v-for="order in orders" :key="order.id" class="order-card">
                 <div class="order-header">
                   <span class="order-no">{{ order.orderNo }}</span>
-                  <van-tag :type="order.statusType" size="medium">{{ order.statusText }}</van-tag>
+                  <van-tag :type="order.statusType" size="medium">{{ pick(order, 'statusText') }}</van-tag>
                 </div>
                 <div class="order-body">
                   <div class="order-icon" :style="{ background: iconColor(order.serviceIcon) }">
                     <van-icon :name="order.serviceIcon || 'setting-o'" size="28" color="#fff" />
                   </div>
                   <div class="order-info">
-                    <h4>{{ order.serviceTitle }}</h4>
+                    <h4>{{ pick(order, 'serviceTitle') }}</h4>
                     <p>{{ formatTime(order.createdAt) }}</p>
                     <p v-if="order.contactName" class="order-contact">{{ order.contactName }} {{ order.contactPhone }}</p>
                   </div>
@@ -51,7 +51,7 @@ import { orderApi } from '@/api';
 import { showToast, showConfirmDialog } from 'vant';
 import { formatPriceDisplay, shouldShowPrice } from '@/utils/currency';
 import PageThemeLayer from '@/components/PageThemeLayer.vue';
-import { t } from '@/utils/i18n';
+import { t, pick } from '@/utils/i18n';
 
 const router = useRouter();
 const activeTab = ref(0);

@@ -23,6 +23,11 @@ const Order = sequelize.define('Order', {
     type: DataTypes.STRING(200),
     allowNull: false,
   },
+  serviceTitleEn: {
+    type: DataTypes.STRING(200),
+    allowNull: true,
+    defaultValue: '',
+  },
   serviceIcon: {
     type: DataTypes.STRING(100),
     defaultValue: 'setting-o',

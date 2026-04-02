@@ -476,9 +476,10 @@ const submitOrder = async () => {
   try {
     await orderApi.create({
       serviceId: Number(route.params.id) || null,
-      serviceTitle: pick(serviceData.value, 'title'),
+      serviceTitle: serviceData.value.title || '',
+      serviceTitleEn: serviceData.value.titleEn || '',
       serviceIcon: serviceIcon.value,
-      price: pick(serviceData.value, 'price'),
+      price: serviceData.value.price || 0,
       contactName: orderForm.contactName.trim(),
       contactPhone: orderForm.contactPhone.trim(),
       address: fullAddress,

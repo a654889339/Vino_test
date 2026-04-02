@@ -21,7 +21,14 @@ exports.categories = async (req, res) => {
       order: [['sortOrder', 'ASC'], ['id', 'ASC']],
       attributes: ['id', 'name', 'nameEn', 'sortOrder', 'thumbnailUrl', 'thumbnailUrlEn'],
     });
-    res.json({ code: 0, data: list });
+    const data = list.map(c => c.get ? c.get({ plain: true }) : c);
+    res.json({ code: 0, data });
+    const cosUrls = [];
+    data.forEach(c => {
+      if (c.thumbnailUrl && cosUpload.isCosUploadUrl(c.thumbnailUrl)) cosUrls.push(c.thumbnailUrl);
+      if (c.thumbnailUrlEn && cosUpload.isCosUploadUrl(c.thumbnailUrlEn)) cosUrls.push(c.thumbnailUrlEn);
+    });
+    if (cosUrls.length) cosUpload.ensurePublicRead(cosUrls).catch(() => {});
   } catch (err) {
     console.error('[Guide] categories error:', err.message);
     res.status(500).json({ code: 500, message: '获取种类失败' });
@@ -32,7 +39,6 @@ exports.list = async (req, res) => {
   try {
     const { categoryId } = req.query;
     const where = { status: 'active' };
-    /** 按种类筛选时同时包含「未选择种类」的商品（categoryId 为空），避免后台未绑定种类的商品在前端/小程序全部消失 */
     if (categoryId != null && categoryId !== '') {
       const cid = parseInt(categoryId, 10);
       if (!Number.isNaN(cid)) {
@@ -43,7 +49,16 @@ exports.list = async (req, res) => {
       where,
       order: [['sortOrder', 'ASC'], ['id', 'ASC']],
     });
-    res.json({ code: 0, data: guides.map(attachGuideThumbUrls) });
+    const data = guides.map(attachGuideThumbUrls);
+    res.json({ code: 0, data });
+    const cosUrls = [];
+    data.forEach(g => {
+      if (g.iconUrl && cosUpload.isCosUploadUrl(g.iconUrl)) cosUrls.push(g.iconUrl);
+      if (g.iconUrlThumb && cosUpload.isCosUploadUrl(g.iconUrlThumb)) cosUrls.push(g.iconUrlThumb);
+      if (g.coverImage && cosUpload.isCosUploadUrl(g.coverImage)) cosUrls.push(g.coverImage);
+      if (g.coverImageThumb && cosUpload.isCosUploadUrl(g.coverImageThumb)) cosUrls.push(g.coverImageThumb);
+    });
+    if (cosUrls.length) cosUpload.ensurePublicRead(cosUrls).catch(() => {});
   } catch (err) {
     console.error('[Guide] list error:', err.message);
     res.status(500).json({ code: 500, message: '获取列表失败' });
@@ -57,7 +72,14 @@ exports.detail = async (req, res) => {
       ? await DeviceGuide.findByPk(param)
       : await DeviceGuide.findOne({ where: { slug: param } });
     if (!guide) return res.status(404).json({ code: 404, message: '不存在' });
-    res.json({ code: 0, data: attachGuideThumbUrls(guide) });
+    const data = attachGuideThumbUrls(guide);
+    res.json({ code: 0, data });
+    const cosUrls = [];
+    if (data.iconUrl && cosUpload.isCosUploadUrl(data.iconUrl)) cosUrls.push(data.iconUrl);
+    if (data.iconUrlThumb && cosUpload.isCosUploadUrl(data.iconUrlThumb)) cosUrls.push(data.iconUrlThumb);
+    if (data.coverImage && cosUpload.isCosUploadUrl(data.coverImage)) cosUrls.push(data.coverImage);
+    if (data.coverImageThumb && cosUpload.isCosUploadUrl(data.coverImageThumb)) cosUrls.push(data.coverImageThumb);
+    if (cosUrls.length) cosUpload.ensurePublicRead(cosUrls).catch(() => {});
   } catch (err) {
     console.error('[Guide] detail error:', err.message);
     res.status(500).json({ code: 500, message: '获取详情失败' });

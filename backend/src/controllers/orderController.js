@@ -14,16 +14,16 @@ function generateOrderNo() {
 }
 
 const STATUS_MAP = {
-  pending: { text: '待支付', type: 'warning' },
-  paid: { text: '已支付', type: 'primary' },
-  processing: { text: '进行中', type: 'primary' },
-  completed: { text: '已完成', type: 'success' },
-  cancelled: { text: '已取消', type: 'default' },
+  pending: { text: '待支付', textEn: 'Unpaid', type: 'warning' },
+  paid: { text: '已支付', textEn: 'Paid', type: 'primary' },
+  processing: { text: '进行中', textEn: 'In Progress', type: 'primary' },
+  completed: { text: '已完成', textEn: 'Completed', type: 'success' },
+  cancelled: { text: '已取消', textEn: 'Cancelled', type: 'default' },
 };
 
 exports.create = async (req, res) => {
   try {
-    const { serviceId, serviceTitle, serviceIcon, price, contactName, contactPhone, address, appointmentTime, remark, productSerial, guideId } = req.body;
+    const { serviceId, serviceTitle, serviceTitleEn, serviceIcon, price, contactName, contactPhone, address, appointmentTime, remark, productSerial, guideId } = req.body;
     if (!serviceTitle || !price) {
       return res.status(400).json({ code: 400, message: '服务信息不完整' });
     }
@@ -35,6 +35,7 @@ exports.create = async (req, res) => {
       userId: req.user.id,
       serviceId: serviceId || null,
       serviceTitle,
+      serviceTitleEn: serviceTitleEn || '',
       serviceIcon: serviceIcon || 'setting-o',
       price,
       contactName: contactName || '',
@@ -70,7 +71,7 @@ exports.myOrders = async (req, res) => {
     });
     const list = rows.map((o) => {
       const s = STATUS_MAP[o.status] || STATUS_MAP.pending;
-      return { ...o.toJSON(), statusText: s.text, statusType: s.type };
+      return { ...o.toJSON(), statusText: s.text, statusTextEn: s.textEn, statusType: s.type };
     });
     res.json({ code: 0, data: { list, total: count, page: pg, pageSize: ps } });
   } catch (err) {
@@ -87,7 +88,7 @@ exports.detail = async (req, res) => {
       return res.status(403).json({ code: 403, message: '无权查看' });
     }
     const s = STATUS_MAP[order.status] || STATUS_MAP.pending;
-    res.json({ code: 0, data: { ...order.toJSON(), statusText: s.text, statusType: s.type } });
+    res.json({ code: 0, data: { ...order.toJSON(), statusText: s.text, statusTextEn: s.textEn, statusType: s.type } });
   } catch (err) {
     console.error('[Order] detail error:', err.message);
     res.status(500).json({ code: 500, message: '获取订单详情失败' });
@@ -141,7 +142,7 @@ exports.adminList = async (req, res) => {
     });
     const list = rows.map((o) => {
       const s = STATUS_MAP[o.status] || STATUS_MAP.pending;
-      return { ...o.toJSON(), statusText: s.text, statusType: s.type };
+      return { ...o.toJSON(), statusText: s.text, statusTextEn: s.textEn, statusType: s.type };
     });
     res.json({ code: 0, data: { list, total: count, page: pg, pageSize: ps } });
   } catch (err) {
@@ -171,7 +172,7 @@ exports.adminUpdateStatus = async (req, res) => {
     order.status = status;
     await order.save();
     const s = STATUS_MAP[order.status];
-    res.json({ code: 0, data: { ...order.toJSON(), statusText: s.text, statusType: s.type } });
+    res.json({ code: 0, data: { ...order.toJSON(), statusText: s.text, statusTextEn: s.textEn, statusType: s.type } });
   } catch (err) {
     console.error('[Order] adminUpdateStatus error:', err.message);
     res.status(500).json({ code: 500, message: '更新状态失败' });

@@ -11,7 +11,7 @@
       <div v-for="(item, i) in list" :key="item.productKey + i" class="item-card">
         <div class="item-row">
           <span class="label">{{ t('myProducts.category') }}</span>
-          <span class="value">{{ item.categoryName || '-' }}</span>
+          <span class="value">{{ pick(item, 'categoryName') || '-' }}</span>
         </div>
         <div class="item-row">
           <span class="label">{{ t('myProducts.name') }}</span>
@@ -36,7 +36,7 @@ import { useRouter } from 'vue-router';
 import jsQR from 'jsqr';
 import { showToast } from 'vant';
 import { authApi } from '@/api';
-import { t } from '@/utils/i18n';
+import { t, pick } from '@/utils/i18n';
 
 const router = useRouter();
 const loading = ref(true);

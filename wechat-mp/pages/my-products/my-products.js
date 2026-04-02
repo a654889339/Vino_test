@@ -50,6 +50,7 @@ Page({
       .then(res => {
         const list = (res.data || []).map(item => ({
           ...item,
+          categoryName: i18n.pick(item, 'categoryName') || item.categoryName || '',
           boundAtStr: formatTime(item.boundAt),
         }));
         this.setData({ list, loading: false });
