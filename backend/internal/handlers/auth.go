@@ -17,7 +17,6 @@ import (
 
 	"vino/backend/internal/config"
 	"vino/backend/internal/db"
-	"vino/backend/internal/middleware"
 	"vino/backend/internal/models"
 	"vino/backend/internal/resp"
 	"vino/backend/internal/services"
