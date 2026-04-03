@@ -13,7 +13,7 @@ import (
 	"strings"
 
 	"github.com/disintegration/imaging"
-	"github.com/tencentyun/cos-go-sdk-v5/cos"
+	cos "github.com/tencentyun/cos-go-sdk-v5"
 	_ "golang.org/x/image/webp"
 )
 
