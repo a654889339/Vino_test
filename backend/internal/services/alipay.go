@@ -1,7 +1,6 @@
 package services
 
 import (
-	"context"
 	"fmt"
 
 	"vino/backend/internal/config"
@@ -26,7 +25,7 @@ func AlipayOAuthToken(cfg *config.Config, code string) (userID string, err error
 	var p alipay.SystemOauthToken
 	p.GrantType = "authorization_code"
 	p.Code = code
-	r, err := client.SystemOauthToken(context.Background(), p)
+	r, err := client.SystemOauthToken(p)
 	if err != nil {
 		return "", err
 	}

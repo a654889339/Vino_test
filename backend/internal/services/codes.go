@@ -49,7 +49,7 @@ var (
 
 	smsMu    sync.Mutex
 	smsCodes = map[string]*smsRec{}
-	smsSendM = map[string]int64
+	smsSendM = map[string]int64{}
 )
 
 const (

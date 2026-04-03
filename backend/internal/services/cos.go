@@ -33,11 +33,11 @@ func cosClient() (*cos.Client, error) {
 	u, _ := url.Parse(fmt.Sprintf("https://%s.cos.%s.myqcloud.com", cosBucket, cosRegion))
 	b := &cos.BaseURL{BucketURL: u}
 	return cos.NewClient(b, &http.Client{
-		Transport: cos.AuthorizationTransport{
+		Transport: &cos.AuthorizationTransport{
 			SecretID:  sid,
 			SecretKey: sk,
 		},
-	})
+	}), nil
 }
 
 func CosBase() string { return cosBaseURL }
@@ -131,9 +131,11 @@ func UploadThumb(ctx context.Context, buf []byte, filename, contentType string) 
 	}
 	key := "vino/uploads/thumb/" + filename
 	_, err = c.Object.Put(ctx, key, bytes.NewReader(buf), &cos.ObjectPutOptions{
+		ACLHeaderOptions: &cos.ACLHeaderOptions{
+			XCosACL: "public-read",
+		},
 		ObjectPutHeaderOptions: &cos.ObjectPutHeaderOptions{
 			ContentType: contentType,
-			XCosACL:     "public-read",
 		},
 	})
 	if err != nil {
@@ -170,9 +172,11 @@ func UploadCOS(ctx context.Context, buf []byte, filename, contentType string) (s
 	}
 	key := "vino/uploads/" + filename
 	_, err = c.Object.Put(ctx, key, bytes.NewReader(buf), &cos.ObjectPutOptions{
+		ACLHeaderOptions: &cos.ACLHeaderOptions{
+			XCosACL: "public-read",
+		},
 		ObjectPutHeaderOptions: &cos.ObjectPutHeaderOptions{
 			ContentType: contentType,
-			XCosACL:     "public-read",
 		},
 	})
 	if err != nil {
@@ -188,9 +192,11 @@ func UploadCOSReader(ctx context.Context, r io.Reader, filename, contentType str
 	}
 	key := "vino/uploads/" + filename
 	_, err = c.Object.Put(ctx, key, r, &cos.ObjectPutOptions{
+		ACLHeaderOptions: &cos.ACLHeaderOptions{
+			XCosACL: "public-read",
+		},
 		ObjectPutHeaderOptions: &cos.ObjectPutHeaderOptions{
 			ContentType: contentType,
-			XCosACL:     "public-read",
 		},
 	})
 	if err != nil {

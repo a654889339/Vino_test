@@ -2,7 +2,6 @@ package db
 
 import (
 	"fmt"
-	"log"
 
 	"vino/backend/internal/config"
 	"vino/backend/internal/models"
