@@ -12,6 +12,7 @@ require (
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	github.com/smartwalle/alipay/v3 v3.2.20
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.937
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.0.937
 	github.com/tencentyun/cos-go-sdk-v5 v0.7.47
 	github.com/xuri/excelize/v2 v2.8.1
 	golang.org/x/crypto v0.25.0
