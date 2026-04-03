@@ -6,7 +6,7 @@ WORKDIR /src
 ENV GOPROXY=https://goproxy.cn,direct
 ENV GOSUMDB=sum.golang.google.cn
 COPY . .
-RUN go mod download && CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /vino-server ./cmd/server
+RUN go mod tidy && CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /vino-server ./cmd/server
 
 FROM alpine:3.19
 RUN apk add --no-cache ca-certificates tzdata
