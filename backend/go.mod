@@ -9,7 +9,6 @@ require (
 	github.com/go-mail/mail/v2 v2.3.0
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/makiuchi-d/gozxing v0.1.1
-	github.com/nfnt/resize v0.0.0-20180221184811-83c6a993b6ff
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	github.com/smartwalle/alipay/v3 v3.2.20
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.937
