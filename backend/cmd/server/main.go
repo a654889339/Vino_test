@@ -21,7 +21,8 @@ func main() {
 		log.Fatalf("[Vino] DB connect: %v", err)
 	}
 	if err := db.AutoMigrate(); err != nil {
-		log.Fatalf("[Vino] AutoMigrate: %v", err)
+		// 与已有 MySQL 表结构不完全一致时仅告警，避免进程退出（可手工对齐外键/列类型）
+		log.Printf("[Vino] AutoMigrate: %v", err)
 	}
 	if err := bootstrap.Run(); err != nil {
 		log.Fatalf("[Vino] bootstrap: %v", err)
