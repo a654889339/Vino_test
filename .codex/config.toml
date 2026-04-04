@@ -1,0 +1,10 @@
+model = "gpt-5.4"
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+
+# Prefer deeper planning for repo-wide or cross-surface tasks.
+model_reasoning_effort = "medium"
+model_reasoning_summary = "auto"
+
+[profiles.plan]
+model_reasoning_effort = "high"
