@@ -44,8 +44,8 @@
               <image wx:if="{{item.iconUrl}}" src="{{item.displayIconUrl}}" class="grid-card-img" mode="aspectFit" data-id="{{item.id}}" binderror="onGridIconError" />
               <text wx:else class="grid-card-placeholder">📦</text>
             </view>
-            <text class="grid-card-name">{{item.name}}</text>
           </view>
+          <text class="grid-card-name">{{item.name}}</text>
         </view>
       </view>
       <view wx:elif="{{selectedCategoryId && !listLoading && deviceGuides.length && !filteredDeviceGuides.length}}" class="main-empty">{{noMatchText}}</view>

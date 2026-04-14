@@ -49,14 +49,16 @@
               class="grid-card"
               @click="openGuide(d)"
             >
-              <div class="grid-card-icon">
-                <LodImg
-                  v-if="d.iconUrl"
-                  :src="fullUrl(d.iconUrl)"
-                  :thumb="d.iconUrlThumb ? fullUrl(d.iconUrlThumb) : ''"
-                  class="grid-card-icon-img"
-                />
-                <van-icon v-else :name="d.icon || 'photo-o'" size="28" color="#6b7280" />
+              <div class="grid-card-inner">
+                <div class="grid-card-icon">
+                  <LodImg
+                    v-if="d.iconUrl"
+                    :src="fullUrl(d.iconUrl)"
+                    :thumb="d.iconUrlThumb ? fullUrl(d.iconUrlThumb) : ''"
+                    class="grid-card-icon-img"
+                  />
+                  <van-icon v-else :name="d.icon || 'photo-o'" size="28" color="#6b7280" />
+                </div>
               </div>
               <span class="grid-card-name">{{ pick(d, 'name') }}</span>
             </button>
@@ -324,31 +326,36 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 14px 8px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 12px;
-  background: #ffffff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  gap: 6px;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-  min-height: 104px;
+  transition: transform 0.2s;
   -webkit-tap-highlight-color: transparent;
 }
 
 .grid-card:active {
   transform: scale(0.98);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.grid-card-inner {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 .grid-card-icon {
-  width: 48px;
-  height: 48px;
+  width: 80%;
+  aspect-ratio: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 12px;
-  background: #f3f4f6;
   overflow: hidden;
 }
 
