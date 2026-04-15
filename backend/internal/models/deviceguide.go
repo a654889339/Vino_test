@@ -29,16 +29,17 @@ type DeviceGuide struct {
 	CategoryID         *int           `gorm:"column:categoryId" json:"categoryId"`
 	SortOrder          int            `gorm:"column:sortOrder" json:"sortOrder"`
 	QrcodeURL          string         `gorm:"column:qrcodeUrl;size:500" json:"qrcodeUrl"`
-	NameEn             string         `gorm:"size:100" json:"nameEn"`
-	SubtitleEn         string         `gorm:"size:200" json:"subtitleEn"`
-	BadgeEn            string         `gorm:"size:20" json:"badgeEn"`
-	DescriptionEn      string         `gorm:"type:text" json:"descriptionEn"`
+	// 注意：数据库字段使用驼峰（如 nameEn），需显式指定 column，避免 GORM 默认转成 name_en 导致 1054
+	NameEn             string         `gorm:"column:nameEn;size:100" json:"nameEn"`
+	SubtitleEn         string         `gorm:"column:subtitleEn;size:200" json:"subtitleEn"`
+	BadgeEn            string         `gorm:"column:badgeEn;size:20" json:"badgeEn"`
+	DescriptionEn      string         `gorm:"column:descriptionEn;type:text" json:"descriptionEn"`
 	IconURLEn          string         `gorm:"column:iconUrlEn;size:500" json:"iconUrlEn"`
 	IconURLThumbEn     string         `gorm:"column:iconUrlThumbEn;size:500" json:"iconUrlThumbEn"`
 	CoverImageEn       string         `gorm:"column:coverImageEn;size:500" json:"coverImageEn"`
 	CoverImageThumbEn  string         `gorm:"column:coverImageThumbEn;size:500" json:"coverImageThumbEn"`
-	EmojiEn            string         `gorm:"size:20" json:"emojiEn"`
-	GradientEn         string         `gorm:"size:300" json:"gradientEn"`
+	EmojiEn            string         `gorm:"column:emojiEn;size:20" json:"emojiEn"`
+	GradientEn         string         `gorm:"column:gradientEn;size:300" json:"gradientEn"`
 	Status             string         `gorm:"type:enum('active','inactive');default:active" json:"status"`
 	CreatedAt          time.Time      `json:"createdAt"`
 	UpdatedAt          time.Time      `json:"updatedAt"`

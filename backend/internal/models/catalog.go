@@ -8,7 +8,7 @@ type ServiceCategory struct {
 	Bg        *string   `gorm:"size:50" json:"bg"`
 	BgOpacity *float64  `gorm:"column:bgOpacity;type:decimal(5,2)" json:"bgOpacity"`
 	Key       *string   `gorm:"size:50" json:"key"`
-	NameEn    string    `gorm:"size:100" json:"nameEn"`
+	NameEn    string    `gorm:"column:nameEn;size:100" json:"nameEn"`
 	SortOrder int       `gorm:"column:sortOrder" json:"sortOrder"`
 	Status    string    `gorm:"type:enum('active','inactive');default:active" json:"status"`
 	CreatedAt time.Time `json:"createdAt"`
@@ -49,7 +49,7 @@ type ProductCategory struct {
 	ID              int       `gorm:"primaryKey" json:"id"`
 	Name            string    `gorm:"size:100;not null" json:"name"`
 	ThumbnailURL    *string   `gorm:"column:thumbnail_url;size:1024" json:"thumbnailUrl"`
-	NameEn          string    `gorm:"size:100" json:"nameEn"`
+	NameEn          string    `gorm:"column:nameEn;size:100" json:"nameEn"`
 	ThumbnailURLEn  *string   `gorm:"column:thumbnailUrlEn;size:1024" json:"thumbnailUrlEn"`
 	SortOrder       int       `gorm:"column:sortOrder" json:"sortOrder"`
 	Status          string    `gorm:"type:enum('active','inactive');default:active" json:"status"`
@@ -70,9 +70,9 @@ type HomeConfig struct {
 	Color            string    `gorm:"size:200" json:"color"`
 	Path             string    `gorm:"size:200" json:"path"`
 	Price            string    `gorm:"size:20" json:"price"`
-	TitleEn          string    `gorm:"size:100" json:"titleEn"`
-	DescEn           string    `gorm:"size:200" json:"descEn"`
-	IconEn           string    `gorm:"size:100" json:"iconEn"`
+	TitleEn          string    `gorm:"column:titleEn;size:100" json:"titleEn"`
+	DescEn           string    `gorm:"column:descEn;size:200" json:"descEn"`
+	IconEn           string    `gorm:"column:iconEn;size:100" json:"iconEn"`
 	ImageURLEn       string    `gorm:"column:imageUrlEn;size:500" json:"imageUrlEn"`
 	ImageURLThumbEn  string    `gorm:"column:imageUrlThumbEn;size:500" json:"imageUrlThumbEn"`
 	SortOrder        int       `gorm:"column:sortOrder" json:"sortOrder"`
