@@ -24,6 +24,44 @@ const (
 
 var cosBaseURL = fmt.Sprintf("https://%s.cos.%s.myqcloud.com", cosBucket, cosRegion)
 
+// CosConfigured reports whether COS credentials are set (uploads / backups).
+func CosConfigured() bool {
+	sid := os.Getenv("COS_SECRET_ID")
+	sk := os.Getenv("COS_SECRET_KEY")
+	return sid != "" && sk != ""
+}
+
+// CosBucket returns the configured bucket id (name-appid), for admin responses.
+func CosBucket() string { return cosBucket }
+
+func validateBackupKey(key string) error {
+	key = strings.TrimSpace(key)
+	if key == "" || strings.Contains(key, "..") || strings.Contains(key, "\\") {
+		return fmt.Errorf("invalid key")
+	}
+	if strings.HasPrefix(key, "log/backend/") || strings.HasPrefix(key, "db_save/") {
+		return nil
+	}
+	return fmt.Errorf("backup key must use log/backend/ or db_save/ prefix")
+}
+
+// PutBackupObject uploads a private object (audit hourly logs, DB dump). No public-read ACL.
+func PutBackupObject(ctx context.Context, key string, body []byte, contentType string) error {
+	if err := validateBackupKey(key); err != nil {
+		return err
+	}
+	c, err := cosClient()
+	if err != nil {
+		return err
+	}
+	_, err = c.Object.Put(ctx, key, bytes.NewReader(body), &cos.ObjectPutOptions{
+		ObjectPutHeaderOptions: &cos.ObjectPutHeaderOptions{
+			ContentType: contentType,
+		},
+	})
+	return err
+}
+
 func cosClient() (*cos.Client, error) {
 	sid := os.Getenv("COS_SECRET_ID")
 	sk := os.Getenv("COS_SECRET_KEY")

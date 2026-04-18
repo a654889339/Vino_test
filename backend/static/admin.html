@@ -182,6 +182,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   <div class="dash-sidebar" id="dashSidebar">
     <div class="dash-sidebar-item active" id="sidebarToC" onclick="switchGroup('ToC')">To C管理</div>
     <div class="dash-sidebar-item" id="sidebarOutlet" onclick="switchGroup('Outlet')">服务商/分销商管理</div>
+    <div class="dash-sidebar-item" id="sidebarDebug" onclick="switchGroup('Debug')">调试窗口</div>
   </div>
   <div class="dash-main">
   <div class="dash-topnav" id="dashTopNav">
@@ -236,6 +237,33 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <button class="refresh-btn" style="background:#7C3AED;padding:8px 20px" id="seedBtn" onclick="runSeed()">生成测试数据</button>
         </div>
         <div id="seedResult" style="margin-top:8px;font-size:13px;color:#059669"></div>
+      </div>
+    </div>
+
+    <!--调试窗口：ToC 数据 -->
+    <div class="dash-page" id="page-debugTocData">
+      <div class="dash-section">
+        <h3>ToC 数据调试窗口</h3>
+        <p style="font-size:13px;color:#666;margin-bottom:12px">审计日志上传至腾讯云 COS（<code style="font-size:12px">log/backend/</code>）；数据库备份对象键 <code style="font-size:12px">db_save/年-月/日.sql.gz</code>。生产环境建议宿主机配置 cron 执行 <code style="font-size:12px">scripts/db_backup_to_cos.sh</code>。</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <button type="button" class="refresh-btn" style="background:#0f766e;padding:8px 20px" onclick="runAuditLogBackup()">日志备份</button>
+          <button type="button" class="refresh-btn" style="background:#1d4ed8;padding:8px 20px" onclick="runDbBackup()">db备份</button>
+        </div>
+        <div id="opsBackupResult" style="margin-top:10px;font-size:13px;color:#059669;white-space:pre-wrap;word-break:break-all"></div>
+      </div>
+    </div>
+
+    <!-- 调试窗口：To C 页面配置 -->
+    <div class="dash-page" id="page-debugTocPage">
+      <div class="dash-section">
+        <h3>To C页面配置调试窗口</h3>
+        <p style="font-size:13px;color:#666;margin-bottom:16px">以下入口与「To C 管理」顶栏一致，便于从此处集中跳转调试前台页面与文案。</p>
+        <div style="display:flex;flex-wrap:wrap;gap:10px">
+          <button type="button" class="refresh-btn" onclick="switchGroup('ToC'); switchPage('homeConfig')">首页配置</button>
+          <button type="button" class="refresh-btn" onclick="switchGroup('ToC'); switchPage('homeAnimConfig')">首页动画配置</button>
+          <button type="button" class="refresh-btn" onclick="switchGroup('ToC'); switchPage('pageThemeConfig')">页面基础配置</button>
+          <button type="button" class="refresh-btn" onclick="switchGroup('ToC'); switchPage('i18nConfig')">语言翻译</button>
+        </div>
       </div>
     </div>
 
@@ -1507,6 +1535,7 @@ let currentGroup = 'ToC';
 
 const tocPages = ['overview','orders','users','guides','serviceConfig','inventory','homeConfig','homeAnimConfig','pageThemeConfig','i18nConfig','messages'];
 const outletPages = ['outletOverview','outletOrders','outletUsers','outletHomeConfig','outletHomeAnimConfig','outletMineConfig','outletMessages'];
+const debugPages = ['debugTocData','debugTocPage'];
 
 const tocNavItems = [
   {page:'overview',label:'概览'},{page:'orders',label:'订单管理'},{page:'users',label:'用户管理'},
@@ -1518,6 +1547,10 @@ const outletNavItems = [
   {page:'outletOverview',label:'概览'},{page:'outletOrders',label:'订单管理'},{page:'outletUsers',label:'用户管理'},
   {page:'outletServiceConfig',label:'服务配置'},{page:'outletHomeConfig',label:'首页配置'},{page:'outletHomeAnimConfig',label:'首页动画配置'},
   {page:'outletMineConfig',label:'个人中心配置'},{page:'outletMessages',label:'留言板'}
+];
+const debugNavItems = [
+  {page:'debugTocData',label:'ToC 数据调试窗口'},
+  {page:'debugTocPage',label:'To C页面配置调试窗口'}
 ];
 
 function renderTopNav(items, activePage) {
@@ -1534,8 +1567,17 @@ function switchGroup(group) {
   currentGroup = group;
   document.querySelectorAll('.dash-sidebar-item').forEach(s => s.classList.remove('active'));
   document.getElementById('sidebar' + group).classList.add('active');
-  const firstPage = group === 'ToC' ? 'overview' : 'outletOverview';
-  const items = group === 'ToC' ? tocNavItems : outletNavItems;
+  let firstPage, items;
+  if (group === 'ToC') {
+    firstPage = 'overview';
+    items = tocNavItems;
+  } else if (group === 'Outlet') {
+    firstPage = 'outletOverview';
+    items = outletNavItems;
+  } else {
+    firstPage = 'debugTocData';
+    items = debugNavItems;
+  }
   renderTopNav(items, firstPage);
   switchPage(firstPage);
 }
@@ -1550,10 +1592,20 @@ function switchPage(page) {
   if (tocPages.includes(page)) {
     document.getElementById('sidebarToC').classList.add('active');
     document.getElementById('sidebarOutlet').classList.remove('active');
+    const sd = document.getElementById('sidebarDebug');
+    if (sd) sd.classList.remove('active');
   }
   if (outletPages.includes(page)) {
     document.getElementById('sidebarOutlet').classList.add('active');
     document.getElementById('sidebarToC').classList.remove('active');
+    const sd = document.getElementById('sidebarDebug');
+    if (sd) sd.classList.remove('active');
+  }
+  if (debugPages.includes(page)) {
+    const sd = document.getElementById('sidebarDebug');
+    if (sd) sd.classList.add('active');
+    document.getElementById('sidebarToC').classList.remove('active');
+    document.getElementById('sidebarOutlet').classList.remove('active');
   }
   if (page !== 'messages') { stopMsgPolling(); currentChatUserId = null; }
   if (page !== 'outletMessages') { stopOutletMsgPolling(); outletCurrentChatUserId = null; }
@@ -1636,6 +1688,11 @@ function showDashboard(user) {
   document.getElementById('healthLink').textContent = 'http://' + host + ':5202/api/health';
   const outletSidebar = document.getElementById('sidebarOutlet');
   if (outletSidebar) outletSidebar.style.display = user.role !== 'admin' ? 'none' : '';
+  const debugSidebar = document.getElementById('sidebarDebug');
+  if (debugSidebar) debugSidebar.style.display = user.role !== 'admin' ? 'none' : '';
+  currentGroup = 'ToC';
+  document.querySelectorAll('.dash-sidebar-item').forEach(s => s.classList.remove('active'));
+  document.getElementById('sidebarToC').classList.add('active');
   renderTopNav(tocNavItems, 'overview');
   loadOrderStats();
   loadPageVisitStats();
@@ -1808,6 +1865,46 @@ async function runSeed() {
     result.textContent = '生成失败：' + (e.message || '未知错误');
   } finally {
     btn.disabled = false; btn.textContent = '生成测试数据';
+  }
+}
+
+async function runAuditLogBackup() {
+  const el = document.getElementById('opsBackupResult');
+  el.style.color = '#059669';
+  el.textContent = '日志备份执行中…';
+  try {
+    const res = await api('/admin/ops/audit-log-backup', { method: 'POST', body: {} });
+    if (res.code !== 0) {
+      el.style.color = '#B91C1C';
+      el.textContent = res.message || '失败';
+      return;
+    }
+    const d = res.data || {};
+    el.style.color = '#059669';
+    el.textContent = JSON.stringify(d, null, 2);
+  } catch (e) {
+    el.style.color = '#B91C1C';
+    el.textContent = '请求失败：' + (e.message || '未知错误');
+  }
+}
+
+async function runDbBackup() {
+  const el = document.getElementById('opsBackupResult');
+  el.style.color = '#059669';
+  el.textContent = 'db备份执行中（大库可能需数分钟）…';
+  try {
+    const res = await api('/admin/ops/db-backup', { method: 'POST', body: {} });
+    if (res.code !== 0) {
+      el.style.color = '#B91C1C';
+      el.textContent = res.message || '失败';
+      return;
+    }
+    const d = res.data || {};
+    el.style.color = '#059669';
+    el.textContent = JSON.stringify(d, null, 2);
+  } catch (e) {
+    el.style.color = '#B91C1C';
+    el.textContent = '请求失败：' + (e.message || '未知错误');
   }
 }
 

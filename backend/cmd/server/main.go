@@ -6,10 +6,12 @@ import (
 	"os"
 	"path/filepath"
 
+	"vino/backend/internal/audit"
 	"vino/backend/internal/bootstrap"
 	"vino/backend/internal/config"
 	"vino/backend/internal/db"
 	"vino/backend/internal/handlers"
+	"vino/backend/internal/middleware"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -24,6 +26,13 @@ func main() {
 		// 与已有 MySQL 表结构不完全一致时仅告警，避免进程退出（可手工对齐外键/列类型）
 		log.Printf("[Vino] AutoMigrate: %v", err)
 	}
+	if err := audit.Init(cfg.Log.BackendDir); err != nil {
+		log.Printf("[Vino] audit log dir: %v", err)
+	}
+	if !cfg.COSConfigured() {
+		log.Printf("[Vino] COS 密钥未就绪: 审计日志仅写本地目录 %s；配置 COS_SECRET_ID/COS_SECRET_KEY 并重启后可自动上云", cfg.Log.BackendDir)
+	}
+	audit.StartUploader(cfg)
 	if err := bootstrap.Run(); err != nil {
 		log.Fatalf("[Vino] bootstrap: %v", err)
 	}
@@ -34,6 +43,7 @@ func main() {
 
 	engine := gin.New()
 	engine.Use(gin.Recovery())
+	engine.Use(middleware.HTTPAuditLog())
 	engine.Use(gin.Logger())
 	engine.Use(cors.Default())
 	engine.MaxMultipartMemory = 10 << 20

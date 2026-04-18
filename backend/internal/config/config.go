@@ -9,6 +9,9 @@ import (
 type Config struct {
 	Port    int
 	NodeEnv string
+	Log     struct {
+		BackendDir string
+	}
 	JWT     struct {
 		Secret    string
 		ExpiresIn string
@@ -97,5 +100,11 @@ func Load() *Config {
 	c.SMS.TemplateID = getenv("TENCENT_SMS_TEMPLATE_ID", "")
 	c.SMS.CodeExpireMinutes = atoi(getenv("SMS_CODE_EXPIRE_MINUTES", "5"), 5)
 	c.FrontendURL = getenv("FRONTEND_URL", "http://106.54.50.88:5201")
+	c.Log.BackendDir = getenv("LOG_BACKEND_DIR", "data/logs/backend")
 	return c
+}
+
+// COSConfigured is true when Tencent COS credentials are present (same as business uploads).
+func (c *Config) COSConfigured() bool {
+	return getenv("COS_SECRET_ID", "") != "" && getenv("COS_SECRET_KEY", "") != ""
 }

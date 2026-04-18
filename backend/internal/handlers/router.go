@@ -194,6 +194,12 @@ func RegisterRoutes(engine *gin.Engine, cfg *config.Config) {
 		out.POST("/admin/messages/:userId/reply", middleware.Auth(cfg), middleware.Admin(), outletMsgAdminReply)
 	}
 
+	adminOps := api.Group("/admin/ops", middleware.Auth(cfg), middleware.Admin())
+	{
+		adminOps.POST("/audit-log-backup", func(c *gin.Context) { adminPostAuditLogBackup(c, cfg) })
+		adminOps.POST("/db-backup", func(c *gin.Context) { adminPostDbBackup(c, cfg) })
+	}
+
 	api.POST("/admin/generate-thumbs", middleware.Auth(cfg), middleware.Admin(), func(c *gin.Context) { AdminGenerateThumbs(c, cfg) })
 	api.POST("/admin/seed", middleware.Auth(cfg), middleware.Admin(), SeedData)
 

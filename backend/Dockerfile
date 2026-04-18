@@ -9,7 +9,7 @@ COPY . .
 RUN go mod tidy && CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /vino-server ./cmd/server
 
 FROM alpine:3.19
-RUN apk add --no-cache ca-certificates tzdata
+RUN apk add --no-cache ca-certificates tzdata mariadb-client
 WORKDIR /app
 COPY --from=build /vino-server /app/vino-server
 COPY static ./static

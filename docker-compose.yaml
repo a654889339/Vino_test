@@ -27,6 +27,8 @@ services:
     ports:
       - "5202:5202"
     environment:
+      TZ: Asia/Shanghai
+      LOG_BACKEND_DIR: /app/data/logs/backend
       NODE_ENV: production
       PORT: 5202
       DB_HOST: vino-mysql
@@ -59,6 +61,8 @@ services:
     depends_on:
       vino-mysql:
         condition: service_healthy
+    volumes:
+      - vino-backend-logs:/app/data/logs/backend
 
   vino-frontend:
     build: ./frontend
@@ -80,3 +84,4 @@ services:
 
 volumes:
   vino-mysql-data:
+  vino-backend-logs:
