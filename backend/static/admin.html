@@ -259,7 +259,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         </div>
         <p style="font-size:13px;color:#666;margin-bottom:10px">
           审计日志上传至腾讯云 COS（<code style="font-size:12px">log/backend/</code>）。db 备份按钮导出<strong>当前主库</strong>（上方显示），通过 docker exec 到 vino-mysql 容器执行 mysqldump 并上传 <code style="font-size:12px">db_save/</code>（兼容 <code style="font-size:12px">db_save/YYYY-MM/DD.sql.gz</code> 与 <code style="font-size:12px">db_save/YYYY-MM-DD/HH.sql.gz</code>）。
-          恢复时粘贴完整 HTTPS URL（path 须以 <code style="font-size:12px">/db_save/</code> 开头），后端会解压并导入到新库 <code style="font-size:12px">restore_YYYY_MM_DD_HH</code>（冲突自动 _2/_3…），随后可一键切换主库。
+          恢复时粘贴完整 HTTPS URL（path 须以 <code style="font-size:12px">/db_save/</code> 开头），后端会解压并导入到<strong>新库</strong> <code style="font-size:12px">restore_YYYY_MM_DD_HH</code>（冲突自动 _2/_3…），<strong>不会删除</strong>原库（如 <code style="font-size:12px">vino_db</code>）。若切库后发现数据变少，多半是备份较旧；可在下方输入原库名 <code style="font-size:12px">vino_db</code> 点「备份恢复」切回。
         </p>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
           <button type="button" class="refresh-btn" style="background:#0f766e;padding:8px 20px" onclick="runAuditLogBackup()">日志备份</button>
@@ -290,37 +290,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
             <div id="dbRestoreNote" style="font-size:12px;color:#6b7280;margin-bottom:10px"></div>
             <div id="dbRestoreResult" style="font-size:13px;color:#B91C1C;white-space:pre-wrap;word-break:break-all"></div>
           </div>
-          <div id="dbRestorePreviewView" style="display:none">
-            <div style="font-size:14px;margin-bottom:10px">新库名 <code id="dbRestoreNewName" style="background:#ecfdf5;color:#065f46;padding:2px 8px;border-radius:6px"></code></div>
-            <div id="dbRestorePreviewBody" style="font-size:12px"></div>
-          </div>
-        </div>
-        <div class="modal-footer" style="display:flex;gap:8px;justify-content:flex-end">
-          <button type="button" class="btn" onclick="closeDbRestoreModal()" style="background:#e5e7eb">关闭</button>
-          <button type="button" id="btnDbRestoreSubmit" class="btn" onclick="submitDbRestore()" style="background:var(--primary);color:#fff">开始恢复</button>
-          <button type="button" id="btnDbRestoreSwitch" class="btn" onclick="runDbSwitchFromPreview()" style="background:#b45309;color:#fff;display:none">开始恢复</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- DB 恢复 Modal：输入态 / 预览态 -->
-    <div class="modal-overlay" id="dbRestoreModal" style="display:none" onclick="if(event.target===this)closeDbRestoreModal()">
-      <div class="modal-content" style="max-width:820px;max-height:85vh;display:flex;flex-direction:column">
-        <div class="modal-header">
-          <h3 id="dbRestoreTitle">数据库恢复</h3>
-          <span class="modal-close" onclick="closeDbRestoreModal()">&times;</span>
-        </div>
-        <div class="modal-body" id="dbRestoreBody" style="overflow:auto">
-          <!-- 输入态 -->
-          <div id="dbRestoreInputView">
-            <div style="font-size:13px;color:#666;margin-bottom:6px">已有数据库（当前实例）：</div>
-            <div id="dbRestoreList" style="font-size:13px;background:#f9fafb;border:1px solid #eee;border-radius:8px;padding:10px;margin-bottom:14px;max-height:140px;overflow:auto">—</div>
-            <div style="font-size:13px;color:#666;margin-bottom:6px">备份文件 URL（完整 HTTPS，path 以 <code>/db_save/</code> 开头；同桶私有对象后端会用 COS 密钥下载）：</div>
-            <input type="text" id="dbRestoreUrl" class="form-input" placeholder="https://itsyourturnmy-1256887166.cos.ap-singapore.myqcloud.com/db_save/2026-04/19.sql.gz" style="width:100%;padding:8px 12px;margin-bottom:10px" />
-            <div id="dbRestoreNote" style="font-size:12px;color:#6b7280;margin-bottom:10px"></div>
-            <div id="dbRestoreResult" style="font-size:13px;color:#B91C1C;white-space:pre-wrap;word-break:break-all"></div>
-          </div>
-          <!-- 预览态 -->
           <div id="dbRestorePreviewView" style="display:none">
             <div style="font-size:14px;margin-bottom:10px">新库名 <code id="dbRestoreNewName" style="background:#ecfdf5;color:#065f46;padding:2px 8px;border-radius:6px"></code></div>
             <div id="dbRestorePreviewBody" style="font-size:12px"></div>
@@ -2273,9 +2242,12 @@ async function loadUsers() {
           <button type="button" class="page-btn" onclick="jumpUserPageGo()">跳转</button>
         </span>
         <button class="page-btn" onclick="userPage++;loadUsers()" ${page >= totalPages ? 'disabled' : ''}>下一页</button>` : `<span class="page-info">共 ${total} 条</span>`;
+    } else {
+      tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:30px;color:#B91C1C">' + escapeHtml(res.message || ('请求失败 code=' + res.code)) + '</td></tr>';
+      if (empty) empty.style.display = 'none';
     }
-  } catch {
-    tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:30px;color:#B91C1C">加载失败</td></tr>';
+  } catch (e) {
+    tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:30px;color:#B91C1C">加载失败：' + escapeHtml(e.message || '') + '</td></tr>';
   }
 }
 

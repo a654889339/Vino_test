@@ -81,11 +81,13 @@ Vino_test 的主用户表 `users` 支持三种角色：
 
 ## 4. JWT 缓存的 role
 
-`services.SignJWT` 把 `role` 写进 Claims，浏览器缓存的 token 依旧保留老角色：
+`services.SignJWT` 把 `role` 写进 Claims，浏览器缓存的 token 依旧保留老角色。
 
-- **普通管理员校验**（`middleware.Admin()`）仍以 JWT 内 `role` 为准（`admin` / `super_admin`）。
-- **超级管理员校验**（`middleware.SuperAdmin()`）以 **数据库当前 `users.role` 为准**（按 token 内用户 ID 查库），避免「Profile 已是超级管理员、调试窗口接口仍 403」的 JWT 与 DB 不一致问题。
-- 前端展示角色实时（`GET /auth/profile` 走 DB）。若仅依赖 JWT 的接口与 DB 不一致，优先以 DB 行为为准或重新登录刷新 token。
+**中间件一律以数据库为准（主站）：**
+
+- **`middleware.Admin()`**：按 token 内用户 ID 查 `users`，仅当 `role` 为 `admin` 或 `super_admin` 且 `status=active` 时放行，并 **用库中 role 覆盖上下文**。避免 JWT 仍为 `user` 而库中已升为管理员时，整页管理接口 403、前端长期卡在「加载中」。
+- **`middleware.SuperAdmin()`**：同上，仅放行 `role=super_admin`。
+- 前端展示角色实时（`GET /auth/profile` 走 DB）。重新登录可刷新 JWT，但**非必须**。
 
 ---
 

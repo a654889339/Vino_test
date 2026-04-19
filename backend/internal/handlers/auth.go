@@ -613,7 +613,7 @@ func authAdminGetUsers(c *gin.Context) {
 	}
 	var totalUsers, adminCount, totalAddresses int64
 	db.DB.Model(&models.User{}).Count(&totalUsers)
-	db.DB.Model(&models.User{}).Where("role = ?", "admin").Count(&adminCount)
+	db.DB.Model(&models.User{}).Where("role IN ?", []string{"admin", "super_admin"}).Count(&adminCount)
 	db.DB.Model(&models.Address{}).Count(&totalAddresses)
 	resp.OK(c, gin.H{
 		"list": list, "total": total, "page": page, "pageSize": pageSize,

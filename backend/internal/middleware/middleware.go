@@ -38,20 +38,44 @@ func Auth(cfg *config.Config) gin.HandlerFunc {
 	}
 }
 
+// Admin 放行主站管理员（admin / super_admin）。**以数据库当前 role 为准**，与 JWT 解耦，
+// 避免库中已升为管理员而 token 仍为普通用户时，整页管理接口 403、前端长期「加载中」。
 func Admin() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		u, ok := c.Get("user")
+		u, ok := GetUser(c)
 		if !ok {
 			c.JSON(401, gin.H{"code": 401, "message": "未登录"})
 			c.Abort()
 			return
 		}
-		if cu, ok := u.(CtxUser); ok && (cu.Role == "admin" || cu.Role == "super_admin") {
-			c.Next()
+		if u.Realm != "" {
+			c.JSON(403, gin.H{"code": 403, "message": "无管理员权限"})
+			c.Abort()
 			return
 		}
-		c.JSON(403, gin.H{"code": 403, "message": "无管理员权限"})
-		c.Abort()
+		if db.DB == nil {
+			c.JSON(503, gin.H{"code": 503, "message": "数据库未就绪"})
+			c.Abort()
+			return
+		}
+		var row models.User
+		if err := db.DB.Select("id", "role", "status").Where("id = ?", u.ID).First(&row).Error; err != nil {
+			c.JSON(403, gin.H{"code": 403, "message": "无管理员权限"})
+			c.Abort()
+			return
+		}
+		if row.Status != "active" {
+			c.JSON(403, gin.H{"code": 403, "message": "账号已禁用"})
+			c.Abort()
+			return
+		}
+		if row.Role != "admin" && row.Role != "super_admin" {
+			c.JSON(403, gin.H{"code": 403, "message": "无管理员权限"})
+			c.Abort()
+			return
+		}
+		c.Set("user", CtxUser{ID: u.ID, Username: u.Username, Role: row.Role, Realm: u.Realm})
+		c.Next()
 	}
 }
 
