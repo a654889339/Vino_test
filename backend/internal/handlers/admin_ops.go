@@ -38,37 +38,65 @@ func adminPostAuditLogBackup(c *gin.Context, cfg *config.Config) {
 	})
 }
 
-// POST /api/admin/ops/db-backup — 容器内 mysqldump | gzip 后上传至 COS db_save/（与宿主机脚本对象键一致）
+// POST /api/admin/ops/db-backup — 优先在 MySQL 官方容器内 mysqldump（兼容 caching_sha2_password），
+// 回退到 backend 容器内本机 mysqldump（Alpine mysql-client 实为 MariaDB，仅作兜底）。gzip 后上传至 COS db_save/。
 func adminPostDbBackup(c *gin.Context, cfg *config.Config) {
 	if !cfg.COSConfigured() {
 		resp.Err(c, 503, 503, "COS 未配置，无法上传数据库备份")
 		return
 	}
-	if _, err := exec.LookPath("mysqldump"); err != nil {
-		resp.Err(c, 503, 503, "容器内未找到 mysqldump，请在 backend 镜像中安装 mysql-client（与 MySQL 8 认证插件兼容）")
-		return
-	}
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 25*time.Minute)
 	defer cancel()
-	args := []string{
-		"-h" + cfg.DB.Host,
-		"-P" + fmt.Sprintf("%d", cfg.DB.Port),
+
+	dumpArgs := []string{
 		"-u" + cfg.DB.User,
 		"--single-transaction",
 		"--routines",
 		"--events",
+		"--set-gtid-purged=OFF",
 		"--databases",
 		cfg.DB.Name,
 	}
-	cmd := exec.CommandContext(ctx, "mysqldump", args...)
-	var env []string
-	for _, e := range os.Environ() {
-		if strings.HasPrefix(e, "MYSQL_PWD=") {
-			continue
+
+	useDocker := false
+	if _, statErr := os.Stat("/var/run/docker.sock"); statErr == nil {
+		if _, lookErr := exec.LookPath("docker"); lookErr == nil {
+			useDocker = true
 		}
-		env = append(env, e)
 	}
-	cmd.Env = append(env, "MYSQL_PWD="+cfg.DB.Password)
+
+	var cmd *exec.Cmd
+	if useDocker {
+		container := strings.TrimSpace(os.Getenv("MYSQL_DUMP_CONTAINER"))
+		if container == "" {
+			container = "vino-mysql"
+		}
+		args := append([]string{
+			"exec",
+			"-e", "MYSQL_PWD=" + cfg.DB.Password,
+			container,
+			"mysqldump",
+		}, dumpArgs...)
+		cmd = exec.CommandContext(ctx, "docker", args...)
+	} else {
+		if _, err := exec.LookPath("mysqldump"); err != nil {
+			resp.Err(c, 503, 503, "未挂载 /var/run/docker.sock 且容器内未找到 mysqldump；请挂载 docker.sock（推荐，走 mysql:8.0 容器）或在镜像中安装兼容 caching_sha2 的 mysql-client")
+			return
+		}
+		args := append([]string{
+			"-h" + cfg.DB.Host,
+			"-P" + fmt.Sprintf("%d", cfg.DB.Port),
+		}, dumpArgs...)
+		cmd = exec.CommandContext(ctx, "mysqldump", args...)
+		var env []string
+		for _, e := range os.Environ() {
+			if strings.HasPrefix(e, "MYSQL_PWD=") {
+				continue
+			}
+			env = append(env, e)
+		}
+		cmd.Env = append(env, "MYSQL_PWD="+cfg.DB.Password)
+	}
 
 	var sqlOut, sqlErr bytes.Buffer
 	cmd.Stdout = &sqlOut
@@ -81,7 +109,11 @@ func adminPostDbBackup(c *gin.Context, cfg *config.Config) {
 		if msg == "" {
 			msg = err.Error()
 		}
-		resp.Err(c, 500, 500, "mysqldump 失败: "+msg)
+		if useDocker {
+			resp.Err(c, 500, 500, "mysqldump(docker exec) 失败: "+msg)
+		} else {
+			resp.Err(c, 500, 500, "mysqldump 失败: "+msg)
+		}
 		return
 	}
 	if sqlOut.Len() == 0 {

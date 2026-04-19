@@ -58,11 +58,13 @@ services:
       ALIPAY_PUBLIC_KEY: ${ALIPAY_PUBLIC_KEY:-}
       COS_SECRET_ID: ${COS_SECRET_ID:-}
       COS_SECRET_KEY: ${COS_SECRET_KEY:-}
+      MYSQL_DUMP_CONTAINER: ${MYSQL_DUMP_CONTAINER:-vino-mysql}
     depends_on:
       vino-mysql:
         condition: service_healthy
     volumes:
       - vino-backend-logs:/app/data/logs/backend
+      - /var/run/docker.sock:/var/run/docker.sock
 
   vino-frontend:
     build: ./frontend

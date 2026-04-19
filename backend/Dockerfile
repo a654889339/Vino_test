@@ -8,10 +8,15 @@ ENV GOSUMDB=sum.golang.google.cn
 COPY . .
 RUN go mod tidy && CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /vino-server ./cmd/server
 
+# docker CLI：用于在 backend 容器内 exec 到 mysql:8.0 官方镜像执行 mysqldump（与 caching_sha2_password 兼容）
+FROM docker:24-cli AS dockercli
+
 FROM alpine:3.19
-# mysql-client（community）：与 mysql:8.0 的 caching_sha2_password 兼容；mariadb-client 缺插件会 1045
+# Alpine 的 mysql-client 实际为 MariaDB 客户端，缺 caching_sha2_password 插件；
+# 因此以 docker exec 到 vino-mysql 官方客户端为主路径，mysql-client 仅作兜底。
 RUN apk add --no-cache ca-certificates tzdata \
   && apk add --no-cache mysql-client --repository=https://dl-cdn.alpinelinux.org/alpine/v3.19/community
+COPY --from=dockercli /usr/local/bin/docker /usr/local/bin/docker
 WORKDIR /app
 COPY --from=build /vino-server /app/vino-server
 COPY static ./static
