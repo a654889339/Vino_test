@@ -30,6 +30,17 @@ func Connect(cfg *config.Config) error {
 	return nil
 }
 
+// Reopen 关闭当前连接并基于 cfg 重新打开（用于主库切换）。调用方须确保在 dbgate 写锁内。
+func Reopen(cfg *config.Config) error {
+	if DB != nil {
+		if sqlDB, err := DB.DB(); err == nil && sqlDB != nil {
+			_ = sqlDB.Close()
+		}
+		DB = nil
+	}
+	return Connect(cfg)
+}
+
 func AutoMigrate() error {
 	return DB.AutoMigrate(
 		&models.User{},

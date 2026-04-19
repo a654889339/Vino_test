@@ -440,3 +440,33 @@ func GetObjectBuffer(ctx context.Context, key string) ([]byte, error) {
 	defer resp.Body.Close()
 	return io.ReadAll(resp.Body)
 }
+
+// CosGetObjectBytes 使用已配置的 COS 凭证下载对象，限制最大字节数（含溢出探测），用于 DB 恢复等可能的私有桶场景。
+// 若 maxBytes<=0 视为 2GiB；对象大于 maxBytes 时返回错误，避免一次性读入过大文件。
+func CosGetObjectBytes(ctx context.Context, key string, maxBytes int64) ([]byte, error) {
+	if maxBytes <= 0 {
+		maxBytes = 2 << 30
+	}
+	key = strings.TrimLeft(strings.TrimSpace(key), "/")
+	if key == "" || strings.Contains(key, "..") || strings.Contains(key, "\\") {
+		return nil, fmt.Errorf("非法对象键")
+	}
+	c, err := cosClient()
+	if err != nil {
+		return nil, err
+	}
+	resp, err := c.Object.Get(ctx, key, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	lim := io.LimitReader(resp.Body, maxBytes+1)
+	data, err := io.ReadAll(lim)
+	if err != nil {
+		return nil, err
+	}
+	if int64(len(data)) > maxBytes {
+		return nil, fmt.Errorf("对象超过最大允许大小 %d 字节", maxBytes)
+	}
+	return data, nil
+}

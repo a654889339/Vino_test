@@ -45,6 +45,7 @@ func adminPostDbBackup(c *gin.Context, cfg *config.Config) {
 		resp.Err(c, 503, 503, "COS 未配置，无法上传数据库备份")
 		return
 	}
+	start := time.Now()
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 25*time.Minute)
 	defer cancel()
 
@@ -136,11 +137,15 @@ func adminPostDbBackup(c *gin.Context, cfg *config.Config) {
 		resp.Err(c, 500, 500, "上传 COS 失败: "+err.Error())
 		return
 	}
+	elapsed := time.Since(start)
 	resp.OK(c, gin.H{
-		"cosKey":   cosKey,
-		"bytes":    gzBuf.Len(),
-		"sqlBytes": sqlOut.Len(),
-		"bucket":   services.CosBucket(),
-		"message":  "ok",
+		"cosKey":       cosKey,
+		"bytes":        gzBuf.Len(),
+		"sqlBytes":     sqlOut.Len(),
+		"bucket":       services.CosBucket(),
+		"database":     cfg.DB.Name,
+		"elapsedMs":    elapsed.Milliseconds(),
+		"elapsedHuman": elapsed.Truncate(time.Millisecond).String(),
+		"message":      "ok",
 	})
 }

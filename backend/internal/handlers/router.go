@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"vino/backend/internal/config"
+	"vino/backend/internal/dbgate"
 	"vino/backend/internal/middleware"
 
 	"github.com/gin-gonic/gin"
@@ -9,6 +10,9 @@ import (
 
 // RegisterRoutes 注册 /api 下全部路由（Wechat 回调在 main 中单独注册）
 func RegisterRoutes(engine *gin.Engine, cfg *config.Config) {
+	// DB 读写门禁：除 /api/health 与 /api/admin/ops/db/restore|switch 外均持读锁；
+	// 切库/恢复走写锁，阻塞其他请求确保瞬间无并发 DB 调用。
+	engine.Use(dbgate.GinMiddleware())
 	api := engine.Group("/api")
 
 	api.GET("/health", Health)
@@ -199,6 +203,10 @@ func RegisterRoutes(engine *gin.Engine, cfg *config.Config) {
 	{
 		adminOps.POST("/audit-log-backup", func(c *gin.Context) { adminPostAuditLogBackup(c, cfg) })
 		adminOps.POST("/db-backup", func(c *gin.Context) { adminPostDbBackup(c, cfg) })
+		adminOps.GET("/db/status", func(c *gin.Context) { adminGetDbStatus(c, cfg) })
+		adminOps.GET("/db/databases", func(c *gin.Context) { adminGetDbDatabases(c, cfg) })
+		adminOps.POST("/db/restore", func(c *gin.Context) { adminPostDbRestore(c, cfg) })
+		adminOps.POST("/db/switch", func(c *gin.Context) { adminPostDbSwitch(c, cfg) })
 	}
 
 	api.POST("/admin/generate-thumbs", middleware.Auth(cfg), middleware.Admin(), func(c *gin.Context) { AdminGenerateThumbs(c, cfg) })

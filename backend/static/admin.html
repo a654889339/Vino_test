@@ -240,16 +240,89 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       </div>
     </div>
 
-    <!--调试窗口：ToC 数据 -->
+    <!--调试窗口：ToC 数据（已合并「数据管理调试窗口」能力：备份/恢复/切库）-->
     <div class="dash-page" id="page-debugTocData">
       <div class="dash-section">
-        <h3>ToC 数据调试窗口</h3>
-        <p style="font-size:13px;color:#666;margin-bottom:12px">审计日志上传至腾讯云 COS（<code style="font-size:12px">log/backend/</code>）；数据库备份对象键 <code style="font-size:12px">db_save/年-月/日.sql.gz</code>。生产环境建议宿主机配置 cron 执行 <code style="font-size:12px">scripts/db_backup_to_cos.sh</code>。</p>
+        <h3>数据管理调试窗口</h3>
+        <div style="display:flex;align-items:center;gap:8px;margin:4px 0 10px;font-size:13px;color:#444">
+          <span style="color:#666">当前主库</span>
+          <code id="debugCurrentDb" style="background:#f3f4f6;padding:2px 8px;border-radius:6px;color:#1d4ed8;font-size:13px">—</code>
+          <button type="button" class="refresh-btn" style="background:#64748b;padding:4px 12px;font-size:12px" onclick="refreshDebugDbStatus()">刷新</button>
+        </div>
+        <p style="font-size:13px;color:#666;margin-bottom:10px">
+          审计日志上传至腾讯云 COS（<code style="font-size:12px">log/backend/</code>）。db 备份按钮导出<strong>当前主库</strong>（上方显示），通过 docker exec 到 vino-mysql 容器执行 mysqldump 并上传 <code style="font-size:12px">db_save/</code>（兼容 <code style="font-size:12px">db_save/YYYY-MM/DD.sql.gz</code> 与 <code style="font-size:12px">db_save/YYYY-MM-DD/HH.sql.gz</code>）。
+          恢复时粘贴完整 HTTPS URL（path 须以 <code style="font-size:12px">/db_save/</code> 开头），后端会解压并导入到新库 <code style="font-size:12px">restore_YYYY_MM_DD_HH</code>（冲突自动 _2/_3…），随后可一键切换主库。
+        </p>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
           <button type="button" class="refresh-btn" style="background:#0f766e;padding:8px 20px" onclick="runAuditLogBackup()">日志备份</button>
           <button type="button" class="refresh-btn" style="background:#1d4ed8;padding:8px 20px" onclick="runDbBackup()">db备份</button>
+          <button type="button" class="refresh-btn" style="background:#7c3aed;padding:8px 20px" onclick="openDbRestoreModal()">db恢复</button>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:10px">
+          <input type="text" id="debugSwitchDbInput" class="form-input" placeholder="输入要切换的主库名" style="flex:1;max-width:360px;padding:8px 12px" />
+          <button type="button" class="refresh-btn" style="background:#b45309;padding:8px 20px" onclick="runDbSwitch()">备份恢复</button>
         </div>
         <div id="opsBackupResult" style="margin-top:10px;font-size:13px;color:#059669;white-space:pre-wrap;word-break:break-all"></div>
+      </div>
+    </div>
+
+    <!-- DB 恢复 Modal：输入态 / 预览态 -->
+    <div class="modal-overlay" id="dbRestoreModal" style="display:none" onclick="if(event.target===this)closeDbRestoreModal()">
+      <div class="modal-content" style="max-width:820px;max-height:85vh;display:flex;flex-direction:column">
+        <div class="modal-header">
+          <h3 id="dbRestoreTitle">数据库恢复</h3>
+          <span class="modal-close" onclick="closeDbRestoreModal()">&times;</span>
+        </div>
+        <div class="modal-body" id="dbRestoreBody" style="overflow:auto">
+          <div id="dbRestoreInputView">
+            <div style="font-size:13px;color:#666;margin-bottom:6px">已有数据库（当前实例）：</div>
+            <div id="dbRestoreList" style="font-size:13px;background:#f9fafb;border:1px solid #eee;border-radius:8px;padding:10px;margin-bottom:14px;max-height:140px;overflow:auto">—</div>
+            <div style="font-size:13px;color:#666;margin-bottom:6px">备份文件 URL（完整 HTTPS，path 以 <code>/db_save/</code> 开头；同桶私有对象后端会用 COS 密钥下载）：</div>
+            <input type="text" id="dbRestoreUrl" class="form-input" placeholder="https://itsyourturnmy-1256887166.cos.ap-singapore.myqcloud.com/db_save/2026-04/19.sql.gz" style="width:100%;padding:8px 12px;margin-bottom:10px" />
+            <div id="dbRestoreNote" style="font-size:12px;color:#6b7280;margin-bottom:10px"></div>
+            <div id="dbRestoreResult" style="font-size:13px;color:#B91C1C;white-space:pre-wrap;word-break:break-all"></div>
+          </div>
+          <div id="dbRestorePreviewView" style="display:none">
+            <div style="font-size:14px;margin-bottom:10px">新库名 <code id="dbRestoreNewName" style="background:#ecfdf5;color:#065f46;padding:2px 8px;border-radius:6px"></code></div>
+            <div id="dbRestorePreviewBody" style="font-size:12px"></div>
+          </div>
+        </div>
+        <div class="modal-footer" style="display:flex;gap:8px;justify-content:flex-end">
+          <button type="button" class="btn" onclick="closeDbRestoreModal()" style="background:#e5e7eb">关闭</button>
+          <button type="button" id="btnDbRestoreSubmit" class="btn" onclick="submitDbRestore()" style="background:var(--primary);color:#fff">开始恢复</button>
+          <button type="button" id="btnDbRestoreSwitch" class="btn" onclick="runDbSwitchFromPreview()" style="background:#b45309;color:#fff;display:none">开始恢复</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DB 恢复 Modal：输入态 / 预览态 -->
+    <div class="modal-overlay" id="dbRestoreModal" style="display:none" onclick="if(event.target===this)closeDbRestoreModal()">
+      <div class="modal-content" style="max-width:820px;max-height:85vh;display:flex;flex-direction:column">
+        <div class="modal-header">
+          <h3 id="dbRestoreTitle">数据库恢复</h3>
+          <span class="modal-close" onclick="closeDbRestoreModal()">&times;</span>
+        </div>
+        <div class="modal-body" id="dbRestoreBody" style="overflow:auto">
+          <!-- 输入态 -->
+          <div id="dbRestoreInputView">
+            <div style="font-size:13px;color:#666;margin-bottom:6px">已有数据库（当前实例）：</div>
+            <div id="dbRestoreList" style="font-size:13px;background:#f9fafb;border:1px solid #eee;border-radius:8px;padding:10px;margin-bottom:14px;max-height:140px;overflow:auto">—</div>
+            <div style="font-size:13px;color:#666;margin-bottom:6px">备份文件 URL（完整 HTTPS，path 以 <code>/db_save/</code> 开头；同桶私有对象后端会用 COS 密钥下载）：</div>
+            <input type="text" id="dbRestoreUrl" class="form-input" placeholder="https://itsyourturnmy-1256887166.cos.ap-singapore.myqcloud.com/db_save/2026-04/19.sql.gz" style="width:100%;padding:8px 12px;margin-bottom:10px" />
+            <div id="dbRestoreNote" style="font-size:12px;color:#6b7280;margin-bottom:10px"></div>
+            <div id="dbRestoreResult" style="font-size:13px;color:#B91C1C;white-space:pre-wrap;word-break:break-all"></div>
+          </div>
+          <!-- 预览态 -->
+          <div id="dbRestorePreviewView" style="display:none">
+            <div style="font-size:14px;margin-bottom:10px">新库名 <code id="dbRestoreNewName" style="background:#ecfdf5;color:#065f46;padding:2px 8px;border-radius:6px"></code></div>
+            <div id="dbRestorePreviewBody" style="font-size:12px"></div>
+          </div>
+        </div>
+        <div class="modal-footer" style="display:flex;gap:8px;justify-content:flex-end">
+          <button type="button" class="btn" onclick="closeDbRestoreModal()" style="background:#e5e7eb">关闭</button>
+          <button type="button" id="btnDbRestoreSubmit" class="btn" onclick="submitDbRestore()" style="background:var(--primary);color:#fff">开始恢复</button>
+          <button type="button" id="btnDbRestoreSwitch" class="btn" onclick="runDbSwitchFromPreview()" style="background:#b45309;color:#fff;display:none">开始恢复</button>
+        </div>
       </div>
     </div>
 
@@ -1617,6 +1690,7 @@ function switchPage(page) {
   if (page === 'pageThemeConfig') { currentHCPage = 'pageTheme'; loadHomeConfig(); }
   if (page === 'i18nConfig') { loadI18nTexts(); }
   if (page === 'messages') { loadConversations(); startMsgPolling(); }
+  if (page === 'debugTocData') { refreshDebugDbStatus(); }
   if (page === 'overview') { loadOrderStats(); loadPageVisitStats(); }
   if (page === 'outletOverview') { loadOutletStats(); loadPageVisitStats(); }
   if (page === 'outletOrders') { outletOrderPage = 1; loadOutletOrders(); }
@@ -1890,6 +1964,7 @@ async function runDbBackup() {
   const el = document.getElementById('opsBackupResult');
   el.style.color = '#059669';
   el.textContent = 'db备份执行中（大库可能需数分钟）…';
+  const t0 = Date.now();
   try {
     const res = await api('/admin/ops/db-backup', { method: 'POST', body: {} });
     if (res.code !== 0) {
@@ -1898,11 +1973,154 @@ async function runDbBackup() {
       return;
     }
     const d = res.data || {};
+    const elapsed = d.elapsedHuman || ((Date.now() - t0) + 'ms');
     el.style.color = '#059669';
-    el.textContent = JSON.stringify(d, null, 2);
+    el.textContent = '耗时：' + elapsed + '\n' + JSON.stringify(d, null, 2);
   } catch (e) {
     el.style.color = '#B91C1C';
     el.textContent = '请求失败：' + (e.message || '未知错误');
+  }
+}
+
+async function refreshDebugDbStatus() {
+  const el = document.getElementById('debugCurrentDb');
+  if (!el) return;
+  try {
+    const res = await api('/admin/ops/db/status');
+    if (res.code === 0 && res.data) {
+      el.textContent = res.data.database || '—';
+      const note = document.getElementById('dbRestoreNote');
+      if (note && Array.isArray(res.data.restoreUrlExamples) && res.data.restoreUrlExamples.length) {
+        note.textContent = '示例：' + res.data.restoreUrlExamples.join('   |   ') + '\n' + (res.data.restorePathNote || '');
+      }
+    }
+  } catch (e) { /* ignore */ }
+}
+
+let __dbRestoreAbort = null;
+async function openDbRestoreModal() {
+  const modal = document.getElementById('dbRestoreModal');
+  document.getElementById('dbRestoreInputView').style.display = '';
+  document.getElementById('dbRestorePreviewView').style.display = 'none';
+  document.getElementById('btnDbRestoreSubmit').style.display = '';
+  document.getElementById('btnDbRestoreSwitch').style.display = 'none';
+  document.getElementById('dbRestoreResult').textContent = '';
+  document.getElementById('dbRestoreList').textContent = '加载中…';
+  document.getElementById('dbRestoreUrl').value = '';
+  modal.style.display = 'flex';
+  refreshDebugDbStatus();
+  try {
+    const [statusRes, listRes] = await Promise.all([
+      api('/admin/ops/db/status'),
+      api('/admin/ops/db/databases'),
+    ]);
+    const current = (statusRes && statusRes.data && statusRes.data.database) || '';
+    const list = (listRes && listRes.data && listRes.data.list) || [];
+    document.getElementById('dbRestoreList').innerHTML = list.length
+      ? list.map(n => '<div>' + escapeHtml(n) + (n === current ? ' <span style="color:#1d4ed8;font-weight:600">(当前)</span>' : '') + '</div>').join('')
+      : '（无用户库）';
+    const note = document.getElementById('dbRestoreNote');
+    if (note && statusRes && statusRes.data) {
+      const ex = statusRes.data.restoreUrlExamples || [];
+      note.textContent = (ex.length ? '示例：' + ex.join('   |   ') + '\n' : '') + (statusRes.data.restorePathNote || '');
+    }
+  } catch (e) {
+    document.getElementById('dbRestoreList').textContent = '加载失败：' + (e.message || '');
+  }
+}
+
+function closeDbRestoreModal() {
+  if (__dbRestoreAbort) { try { __dbRestoreAbort.abort(); } catch {} __dbRestoreAbort = null; }
+  document.getElementById('dbRestoreModal').style.display = 'none';
+}
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function decodeB64Safe(s) {
+  try { return decodeURIComponent(escape(atob(s || ''))); } catch { try { return atob(s || ''); } catch { return ''; } }
+}
+
+function renderDbPreviewHtml(preview) {
+  if (!Array.isArray(preview) || !preview.length) return '<div style="color:#666">（预览为空）</div>';
+  return preview.map(t => {
+    const cols = t.columns || [];
+    const rows = t.rows || [];
+    const note = t.note ? '<div style="color:#B91C1C;font-size:12px">' + escapeHtml(t.note) + '</div>' : '';
+    const head = '<tr>' + cols.map(c => '<th style="padding:4px 8px;border-bottom:1px solid #e5e7eb;text-align:left;font-weight:600">' + escapeHtml(c) + '</th>').join('') + '</tr>';
+    const body = rows.map(r => '<tr>' + r.map(v => '<td title="' + escapeHtml(decodeB64Safe(v)) + '" style="padding:4px 8px;border-bottom:1px solid #f3f4f6;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeHtml(v) + '</td>').join('') + '</tr>').join('');
+    return '<details open style="margin:8px 0;border:1px solid #eee;border-radius:8px;padding:6px 10px">'
+      + '<summary style="cursor:pointer;font-weight:600">' + escapeHtml(t.table) + ' <span style="color:#6b7280;font-weight:400">(' + rows.length + ' 行)</span></summary>'
+      + note
+      + (rows.length ? '<div style="overflow:auto;margin-top:6px"><table style="border-collapse:collapse;font-size:12px">' + head + body + '</table></div>' : '<div style="color:#6b7280">（空表）</div>')
+      + '</details>';
+  }).join('');
+}
+
+let __lastRestoredDb = '';
+async function submitDbRestore() {
+  const url = (document.getElementById('dbRestoreUrl').value || '').trim();
+  const out = document.getElementById('dbRestoreResult');
+  const btn = document.getElementById('btnDbRestoreSubmit');
+  if (!url) { out.textContent = '请填写 URL'; return; }
+  out.textContent = '执行中：下载 → 解压 → 导入 → 预览…';
+  out.style.color = '#059669';
+  btn.disabled = true;
+  __dbRestoreAbort = new AbortController();
+  try {
+    const res = await api('/admin/ops/db/restore', { method: 'POST', body: { url }, signal: __dbRestoreAbort.signal });
+    if (!res || res.code !== 0) {
+      out.style.color = '#B91C1C';
+      out.textContent = (res && res.message) || '恢复失败';
+      return;
+    }
+    const d = res.data || {};
+    __lastRestoredDb = d.newDatabase || '';
+    document.getElementById('dbRestoreNewName').textContent = __lastRestoredDb;
+    document.getElementById('dbRestorePreviewBody').innerHTML = renderDbPreviewHtml(d.preview);
+    document.getElementById('dbRestoreInputView').style.display = 'none';
+    document.getElementById('dbRestorePreviewView').style.display = '';
+    document.getElementById('btnDbRestoreSubmit').style.display = 'none';
+    document.getElementById('btnDbRestoreSwitch').style.display = '';
+  } catch (e) {
+    out.style.color = '#B91C1C';
+    out.textContent = (e && e.name === 'AbortError') ? '已取消' : '请求失败：' + ((e && e.message) || '未知错误');
+  } finally {
+    btn.disabled = false;
+    __dbRestoreAbort = null;
+  }
+}
+
+async function runDbSwitchFromPreview() {
+  if (!__lastRestoredDb) { alert('无可切换的新库名'); return; }
+  await doDbSwitch(__lastRestoredDb, document.getElementById('dbRestoreResult'));
+}
+
+async function runDbSwitch() {
+  const input = document.getElementById('debugSwitchDbInput');
+  const name = (input.value || '').trim();
+  const out = document.getElementById('opsBackupResult');
+  if (!name) { out.style.color = '#B91C1C'; out.textContent = '请先输入要切换的主库名'; return; }
+  await doDbSwitch(name, out);
+}
+
+async function doDbSwitch(name, out) {
+  if (out) { out.style.color = '#059669'; out.textContent = '切换中：暂停其他操作 → 写入 active_db → 重连 GORM…'; }
+  try {
+    const res = await api('/admin/ops/db/switch', { method: 'POST', body: { database: name } });
+    if (!res || res.code !== 0) {
+      if (out) { out.style.color = '#B91C1C'; out.textContent = (res && res.message) || '切换失败'; }
+      return;
+    }
+    if (out) { out.style.color = '#059669'; out.textContent = '已切换到：' + (res.data && res.data.database) + '（' + (res.data && res.data.message || 'ok') + '）'; }
+    await refreshDebugDbStatus();
+    const modal = document.getElementById('dbRestoreModal');
+    if (modal && modal.style.display !== 'none') closeDbRestoreModal();
+    const swi = document.getElementById('debugSwitchDbInput');
+    if (swi) swi.value = '';
+  } catch (e) {
+    if (out) { out.style.color = '#B91C1C'; out.textContent = '请求失败：' + ((e && e.message) || '未知错误'); }
   }
 }
 

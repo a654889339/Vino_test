@@ -2,9 +2,13 @@ package config
 
 import (
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 )
+
+// dbNameIdent 用于 active_db 文件名合法性校验（与 admin_db_ops 保持一致）
+var dbNameIdent = regexp.MustCompile(`^[A-Za-z0-9_]{1,64}$`)
 
 type Config struct {
 	Port    int
@@ -51,6 +55,10 @@ type Config struct {
 		CodeExpireMinutes int
 	}
 	FrontendURL string
+	// DBActiveNameFile 持久化「当前主库」文件路径；切换主库后写入，重启时读取优先于 DB_NAME。
+	DBActiveNameFile string
+	// DBRestoreMaxBytes 允许从 COS 下载并解压的单次备份最大字节数（gzip 压缩后）。
+	DBRestoreMaxBytes int64
 }
 
 func getenv(key, def string) string {
@@ -101,6 +109,15 @@ func Load() *Config {
 	c.SMS.CodeExpireMinutes = atoi(getenv("SMS_CODE_EXPIRE_MINUTES", "5"), 5)
 	c.FrontendURL = getenv("FRONTEND_URL", "http://106.54.50.88:5201")
 	c.Log.BackendDir = getenv("LOG_BACKEND_DIR", "data/logs/backend")
+	c.DBActiveNameFile = getenv("DB_ACTIVE_NAME_FILE", "data/state/active_db")
+	c.DBRestoreMaxBytes = int64(atoi(getenv("DB_RESTORE_MAX_BYTES", "2147483648"), 2147483648))
+	// 若存在已持久化的「当前主库」文件（切换后写入）则覆盖 DB.Name，重启后仍连切换后的库。
+	if b, err := os.ReadFile(c.DBActiveNameFile); err == nil {
+		name := strings.TrimSpace(string(b))
+		if name != "" && dbNameIdent.MatchString(name) {
+			c.DB.Name = name
+		}
+	}
 	return c
 }
 

@@ -59,11 +59,14 @@ services:
       COS_SECRET_ID: ${COS_SECRET_ID:-}
       COS_SECRET_KEY: ${COS_SECRET_KEY:-}
       MYSQL_DUMP_CONTAINER: ${MYSQL_DUMP_CONTAINER:-vino-mysql}
+      DB_ACTIVE_NAME_FILE: /app/data/state/active_db
+      DB_RESTORE_MAX_BYTES: "2147483648"
     depends_on:
       vino-mysql:
         condition: service_healthy
     volumes:
       - vino-backend-logs:/app/data/logs/backend
+      - vino-backend-state:/app/data/state
       - /var/run/docker.sock:/var/run/docker.sock
 
   vino-frontend:
@@ -87,3 +90,4 @@ services:
 volumes:
   vino-mysql-data:
   vino-backend-logs:
+  vino-backend-state:
