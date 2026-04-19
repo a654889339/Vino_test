@@ -658,9 +658,17 @@ func authAdminDeleteUser(c *gin.Context) {
 	}
 	if target.Role == "admin" {
 		var ac int64
-		db.DB.Model(&models.User{}).Where("role = ?", "admin").Count(&ac)
+		db.DB.Model(&models.User{}).Where("role IN ?", []string{"admin", "super_admin"}).Count(&ac)
 		if ac <= 1 {
 			resp.Err(c, 400, 400, "不能删除最后一个管理员")
+			return
+		}
+	}
+	if target.Role == "super_admin" {
+		var sc int64
+		db.DB.Model(&models.User{}).Where("role = ?", "super_admin").Count(&sc)
+		if sc <= 1 {
+			resp.Err(c, 400, 400, "不能删除最后一个超级管理员")
 			return
 		}
 	}
@@ -681,6 +689,69 @@ func authAdminDeleteUser(c *gin.Context) {
 		return
 	}
 	resp.OKMsg(c, "已删除用户")
+}
+
+// authAdminSetUserRole 由超级管理员修改其他用户的角色。
+// 支持的角色：user / admin / super_admin。
+// 约束：
+//   - 不允许修改自己的角色（防止误操作导致权限收回）；
+//   - 修改目标为当前最后一个 super_admin 时必须保留至少 1 个；
+//   - 修改目标为最后一个管理员级账号时至少保留 1 个 admin/super_admin。
+func authAdminSetUserRole(c *gin.Context) {
+	me, _ := ctxUser(c)
+	userID, ok := parseID(c, "userId")
+	if !ok {
+		resp.Err(c, 400, 400, "参数无效")
+		return
+	}
+	if me.ID == userID {
+		resp.Err(c, 400, 400, "不能修改自己的角色")
+		return
+	}
+	var body struct {
+		Role string `json:"role"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		resp.Err(c, 400, 400, "参数错误")
+		return
+	}
+	newRole := strings.TrimSpace(body.Role)
+	switch newRole {
+	case "user", "admin", "super_admin":
+	default:
+		resp.Err(c, 400, 400, "角色值无效")
+		return
+	}
+	var target models.User
+	if err := db.DB.First(&target, userID).Error; err != nil {
+		resp.Err(c, 404, 404, "用户不存在")
+		return
+	}
+	if target.Role == newRole {
+		resp.OKMsg(c, "角色未变化")
+		return
+	}
+	if target.Role == "super_admin" && newRole != "super_admin" {
+		var sc int64
+		db.DB.Model(&models.User{}).Where("role = ?", "super_admin").Count(&sc)
+		if sc <= 1 {
+			resp.Err(c, 400, 400, "不能下调最后一个超级管理员")
+			return
+		}
+	}
+	if (target.Role == "admin" || target.Role == "super_admin") && newRole == "user" {
+		var ac int64
+		db.DB.Model(&models.User{}).Where("role IN ?", []string{"admin", "super_admin"}).Count(&ac)
+		if ac <= 1 {
+			resp.Err(c, 400, 400, "至少需保留 1 个管理员")
+			return
+		}
+	}
+	if err := db.DB.Model(&models.User{}).Where("id = ?", userID).Update("role", newRole).Error; err != nil {
+		resp.Err(c, 500, 500, "更新失败")
+		return
+	}
+	resp.OK(c, gin.H{"id": userID, "role": newRole})
 }
 
 func authMyProducts(c *gin.Context) {

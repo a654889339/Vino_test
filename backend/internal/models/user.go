@@ -14,7 +14,7 @@ type User struct {
 	Phone       string     `gorm:"size:20" json:"phone"`
 	LastLoginIP *string    `gorm:"column:lastLoginIp;size:100" json:"lastLoginIp"`
 	LastLoginAt *time.Time `gorm:"column:lastLoginAt" json:"lastLoginAt"`
-	Role        string     `gorm:"type:enum('user','admin');default:user" json:"role"`
+	Role        string     `gorm:"type:enum('user','admin','super_admin');default:user" json:"role"`
 	Status      string     `gorm:"type:enum('active','disabled');default:active" json:"status"`
 	CreatedAt   time.Time  `json:"createdAt"`
 	UpdatedAt   time.Time  `json:"updatedAt"`

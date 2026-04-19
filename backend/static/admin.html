@@ -71,7 +71,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .info-row .value{font-weight:500}
 .role-tag{display:inline-block;padding:2px 10px;border-radius:4px;font-size:12px;font-weight:500}
 .role-tag.admin{background:#FEE2E2;color:#B91C1C}
+.role-tag.super-admin{background:#111827;color:#F9FAFB}
 .role-tag.user{background:#DBEAFE;color:#1E40AF}
+.dash-user .dash-user-meta{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--text-secondary)}
+.dash-user .dash-user-meta .dash-user-id{color:var(--text-secondary)}
+.dash-user .dash-user-meta .dash-user-name{color:var(--text);font-weight:600}
 
 .order-filters{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
 .filter-btn{padding:6px 16px;border:1.5px solid var(--border);border-radius:20px;font-size:13px;cursor:pointer;background:var(--card);color:var(--text-secondary);transition:all .2s}
@@ -173,7 +177,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <span class="dash-header-brand">Vino 管理后台</span>
     </div>
     <div class="dash-user">
-      <span id="dashUsername"></span>
+      <span class="dash-user-meta" id="dashUserMeta">
+        <span class="dash-user-id" id="dashUserId"></span>
+        <span class="dash-user-name" id="dashUsername"></span>
+        <span id="dashUserRoleTag"></span>
+      </span>
       <button class="dash-logout" onclick="handleLogout()">退出登录</button>
     </div>
   </div>
@@ -1627,7 +1635,7 @@ const debugNavItems = [
 function renderTopNav(items, activePage) {
   const nav = document.getElementById('dashTopNav');
   const adminOnlyPages = ['guides','serviceConfig','inventory'];
-  const isAdmin = currentUser && currentUser.role === 'admin';
+  const isAdmin = currentUser && isAdminRole(currentUser.role);
   nav.innerHTML = items.map(it => {
     if (adminOnlyPages.includes(it.page) && !isAdmin) return '';
     return `<div class="dash-nav-item${it.page===activePage?' active':''}" data-page="${it.page}" onclick="switchPage('${it.page}')">${it.label}</div>`;
@@ -1742,15 +1750,25 @@ async function handleRegister(e) {
   btn.disabled = false; btn.textContent = '注册';
 }
 
+function isAdminRole(role) { return role === 'admin' || role === 'super_admin'; }
+function isSuperAdminRole(role) { return role === 'super_admin'; }
+function roleTagHtml(role) {
+  if (role === 'super_admin') return '<span class="role-tag super-admin">超级管理员</span>';
+  if (role === 'admin') return '<span class="role-tag admin">管理员</span>';
+  return '<span class="role-tag user">普通用户</span>';
+}
+
 function showDashboard(user) {
   currentUser = user;
   document.getElementById('authPage').style.display = 'none';
   document.getElementById('dashboard').style.display = 'block';
-  document.getElementById('dashUsername').textContent = user.nickname || user.username;
+  document.getElementById('dashUserId').textContent = user.id ? ('#' + user.id) : '';
+  document.getElementById('dashUsername').textContent = user.username || user.nickname || '';
+  document.getElementById('dashUserRoleTag').innerHTML = roleTagHtml(user.role);
   document.getElementById('infoUsername').textContent = user.username;
   document.getElementById('infoEmail').textContent = user.email || '-';
   document.getElementById('infoNickname').textContent = user.nickname || '-';
-  document.getElementById('infoRole').innerHTML = user.role === 'admin' ? '<span class="role-tag admin">管理员</span>' : '<span class="role-tag user">普通用户</span>';
+  document.getElementById('infoRole').innerHTML = roleTagHtml(user.role);
   document.getElementById('infoStatus').textContent = user.status === 'active' ? '正常' : '已禁用';
   document.getElementById('infoCreated').textContent = user.createdAt ? new Date(user.createdAt).toLocaleString('zh-CN') : '-';
   const host = window.location.hostname;
@@ -1759,9 +1777,10 @@ function showDashboard(user) {
   document.getElementById('healthLink').href = 'http://' + host + ':5202/api/health';
   document.getElementById('healthLink').textContent = 'http://' + host + ':5202/api/health';
   const outletSidebar = document.getElementById('sidebarOutlet');
-  if (outletSidebar) outletSidebar.style.display = user.role !== 'admin' ? 'none' : '';
+  if (outletSidebar) outletSidebar.style.display = isAdminRole(user.role) ? '' : 'none';
+  // 调试窗口（日志备份 / db 备份 / db 恢复 / 切库）仅超级管理员可见
   const debugSidebar = document.getElementById('sidebarDebug');
-  if (debugSidebar) debugSidebar.style.display = user.role !== 'admin' ? 'none' : '';
+  if (debugSidebar) debugSidebar.style.display = isSuperAdminRole(user.role) ? '' : 'none';
   currentGroup = 'ToC';
   document.querySelectorAll('.dash-sidebar-item').forEach(s => s.classList.remove('active'));
   document.getElementById('sidebarToC').classList.add('active');
@@ -1780,7 +1799,7 @@ function handleLogout() {
 }
 
 async function loadOrderStats() {
-  const isAdmin = currentUser && currentUser.role === 'admin';
+  const isAdmin = currentUser && isAdminRole(currentUser.role);
   try {
     if (isAdmin) {
       const res = await api('/orders/admin/stats');
@@ -1818,7 +1837,7 @@ function renderPageVisitTable(rows) {
 }
 
 async function loadPageVisitStats() {
-  var isAdmin = currentUser && currentUser.role === 'admin';
+  var isAdmin = currentUser && isAdminRole(currentUser.role);
   var w1 = document.getElementById('pageVisitStatsWrap');
   var w2 = document.getElementById('outletPageVisitStatsWrap');
   var empty = '<p style="color:#666;font-size:13px">需要管理员权限查看访问统计</p>';
@@ -2263,10 +2282,21 @@ function renderUserTable() {
     const addrCount = u.addresses ? u.addresses.length : 0;
     const boundKeys = u.boundProductKeys || [];
     const boundStr = boundKeys.length ? boundKeys.join('、') : '-';
-    const roleTag = u.role === 'admin' ? '<span class="role-tag admin">管理员</span>' : '<span class="role-tag user">用户</span>';
+    const baseRoleTag = roleTagHtml(u.role);
+    const canEditRole = currentUser && isSuperAdminRole(currentUser.role) && u.id !== currentUser.id;
+    const roleCell = canEditRole
+      ? `<div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start">${baseRoleTag}
+          <select onchange="changeUserRole(${u.id}, this.value, this)" style="font-size:12px;padding:2px 6px;border:1px solid var(--border);border-radius:4px;background:#fff">
+            <option value="" ${''===u.role?'selected':''} disabled>改角色…</option>
+            <option value="user" ${u.role==='user'?'selected':''}>普通用户</option>
+            <option value="admin" ${u.role==='admin'?'selected':''}>管理员</option>
+            <option value="super_admin" ${u.role==='super_admin'?'selected':''}>超级管理员</option>
+          </select>
+        </div>`
+      : baseRoleTag;
     const regTime = u.createdAt ? new Date(u.createdAt).toLocaleString('zh-CN', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }) : '-';
     const isExpanded = expandedUsers.has(u.id);
-    const delBtn = u.role === 'admin'
+    const delBtn = (u.role === 'admin' || u.role === 'super_admin')
       ? '<button class="history-btn" style="padding:6px 10px;font-size:12px;background:#e5e7eb;color:#6b7280;cursor:not-allowed" disabled>不可删</button>'
       : `<button class="history-btn" style="padding:6px 10px;font-size:12px;background:#dc2626" onclick="deleteUser(${u.id})">删除</button>`;
     html += `<tr>
@@ -2275,7 +2305,7 @@ function renderUserTable() {
       <td style="font-size:12px">${u.phone || '-'}</td>
       <td style="font-size:12px">${u.email || '-'}</td>
       <td>${u.nickname || '-'}</td>
-      <td>${roleTag}</td>
+      <td>${roleCell}</td>
       <td>${u.orderCount}</td>
       <td>${addrCount}</td>
       <td style="font-size:12px;max-width:180px;word-break:break-all" title="${boundStr}">${boundKeys.length ? boundKeys.length + ' 个' : '-'}</td>
@@ -2352,6 +2382,38 @@ function renderUserTable() {
     }
   });
   tbody.innerHTML = html;
+}
+
+async function changeUserRole(userId, role, selectEl) {
+  if (!userId || !role) return;
+  if (!currentUser || !isSuperAdminRole(currentUser.role)) {
+    alert('仅超级管理员可修改用户角色');
+    return;
+  }
+  const user = (allUsers || []).find(u => u.id === userId);
+  if (user && user.role === role) return;
+  const label = role === 'super_admin' ? '超级管理员' : (role === 'admin' ? '管理员' : '普通用户');
+  const name = user ? (user.nickname || user.username || ('#' + userId)) : ('#' + userId);
+  if (!confirm('确认把用户 ' + name + '（ID ' + userId + '）的角色改为「' + label + '」？')) {
+    if (selectEl && user) selectEl.value = user.role;
+    return;
+  }
+  try {
+    const res = await api('/auth/admin/users/' + userId + '/role', {
+      method: 'PUT',
+      body: { role }
+    });
+    if (res.code === 0) {
+      showMsg && showMsg('已更新角色', 'success');
+      loadUsers();
+    } else {
+      alert(res.message || '更新失败');
+      if (selectEl && user) selectEl.value = user.role;
+    }
+  } catch (e) {
+    alert('网络错误');
+    if (selectEl && user) selectEl.value = user.role;
+  }
 }
 
 async function deleteUser(userId) {

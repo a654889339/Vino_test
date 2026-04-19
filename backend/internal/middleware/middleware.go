@@ -44,11 +44,29 @@ func Admin() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		if cu, ok := u.(CtxUser); ok && cu.Role == "admin" {
+		if cu, ok := u.(CtxUser); ok && (cu.Role == "admin" || cu.Role == "super_admin") {
 			c.Next()
 			return
 		}
 		c.JSON(403, gin.H{"code": 403, "message": "无管理员权限"})
+		c.Abort()
+	}
+}
+
+// SuperAdmin 仅放行 role == super_admin；用于调试窗口与角色管理等高风险操作。
+func SuperAdmin() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		u, ok := c.Get("user")
+		if !ok {
+			c.JSON(401, gin.H{"code": 401, "message": "未登录"})
+			c.Abort()
+			return
+		}
+		if cu, ok := u.(CtxUser); ok && cu.Role == "super_admin" {
+			c.Next()
+			return
+		}
+		c.JSON(403, gin.H{"code": 403, "message": "需要超级管理员权限"})
 		c.Abort()
 	}
 }

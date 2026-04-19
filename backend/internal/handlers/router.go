@@ -36,6 +36,7 @@ func RegisterRoutes(engine *gin.Engine, cfg *config.Config) {
 		auth.GET("/admin/users", middleware.Auth(cfg), middleware.Admin(), authAdminGetUsers)
 		auth.DELETE("/admin/users/:userId", middleware.Auth(cfg), middleware.Admin(), authAdminDeleteUser)
 		auth.DELETE("/admin/users/:userId/products/:productKey", middleware.Auth(cfg), middleware.Admin(), authAdminUnbindProduct)
+		auth.PUT("/admin/users/:userId/role", middleware.Auth(cfg), middleware.SuperAdmin(), authAdminSetUserRole)
 		auth.GET("/my-products", middleware.Auth(cfg), authMyProducts)
 		auth.POST("/bind-product", middleware.Auth(cfg), authBindProduct)
 		auth.POST("/bind-by-qr-image", middleware.Auth(cfg), authBindByQrImage)
@@ -199,7 +200,8 @@ func RegisterRoutes(engine *gin.Engine, cfg *config.Config) {
 		out.POST("/admin/messages/:userId/reply", middleware.Auth(cfg), middleware.Admin(), outletMsgAdminReply)
 	}
 
-	adminOps := api.Group("/admin/ops", middleware.Auth(cfg), middleware.Admin())
+	// 调试窗口下所有 ops 操作（日志备份/db 备份/恢复/切库）均仅允许超级管理员
+	adminOps := api.Group("/admin/ops", middleware.Auth(cfg), middleware.SuperAdmin())
 	{
 		adminOps.POST("/audit-log-backup", func(c *gin.Context) { adminPostAuditLogBackup(c, cfg) })
 		adminOps.POST("/db-backup", func(c *gin.Context) { adminPostDbBackup(c, cfg) })

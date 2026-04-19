@@ -26,6 +26,8 @@ func main() {
 		// 与已有 MySQL 表结构不完全一致时仅告警，避免进程退出（可手工对齐外键/列类型）
 		log.Printf("[Vino] AutoMigrate: %v", err)
 	}
+	// 扩展 users.role enum 并在缺省时自动提升首个管理员为超级管理员
+	db.MigrateSuperAdmin()
 	if err := audit.Init(cfg.Log.BackendDir); err != nil {
 		log.Printf("[Vino] audit log dir: %v", err)
 	}
