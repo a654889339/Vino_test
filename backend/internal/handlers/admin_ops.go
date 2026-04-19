@@ -140,8 +140,16 @@ func adminPostDbBackup(c *gin.Context, cfg *config.Config) {
 		resp.Err(c, 500, 500, "gzip 结束失败: "+err.Error())
 		return
 	}
+	// 对象键按主库名分目录（方案 A）：db_save/{dbname}/YYYY-MM/DD.sql.gz。
+	// 避免切主库后再备份覆盖掉同日期的另一份备份（例如切到 restore_xxx 覆盖 vino_db）。
+	// 不兼容历史扁平路径 db_save/YYYY-MM/DD.sql.gz：恢复侧仅要求 /db_save/ 前缀，依旧可读到旧对象。
+	dbSeg := cfg.DB.Name
+	if !dbNameIdent.MatchString(dbSeg) {
+		resp.Err(c, 500, 500, "当前主库名不合法，拒绝写入 COS："+dbSeg)
+		return
+	}
 	now := time.Now().In(time.Local)
-	cosKey := fmt.Sprintf("db_save/%s/%s.sql.gz", now.Format("2006-01"), now.Format("02"))
+	cosKey := fmt.Sprintf("db_save/%s/%s/%s.sql.gz", dbSeg, now.Format("2006-01"), now.Format("02"))
 	if err := services.PutBackupObject(ctx, cosKey, gzBuf.Bytes(), "application/gzip"); err != nil {
 		resp.Err(c, 500, 500, "上传 COS 失败: "+err.Error())
 		return

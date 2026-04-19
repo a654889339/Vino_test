@@ -61,9 +61,9 @@ type previewTable struct {
 func adminGetDbStatus(c *gin.Context, cfg *config.Config) {
 	now := time.Now().In(shanghaiLoc)
 	base := services.CosBase()
+	// 方案 A：路径按主库名分目录。示例优先用当前主库名（`cfg.DB.Name`），便于直接复制使用。
 	examples := []string{
-		fmt.Sprintf("%s/db_save/%s/%s.sql.gz", base, now.Format("2006-01"), now.Format("02")),
-		fmt.Sprintf("%s/db_save/%s/%s.sql.gz", base, now.Format("2006-01-02"), now.Format("15")),
+		fmt.Sprintf("%s/db_save/%s/%s/%s.sql.gz", base, cfg.DB.Name, now.Format("2006-01"), now.Format("02")),
 	}
 	resp.OK(c, gin.H{
 		"database":           cfg.DB.Name,
@@ -74,7 +74,7 @@ func adminGetDbStatus(c *gin.Context, cfg *config.Config) {
 		"cosBaseUrl":         base,
 		"restoreMaxBytes":    cfg.DBRestoreMaxBytes,
 		"restoreUrlExamples": examples,
-		"restorePathNote":    "进程内整点备份多为 db_save/YYYY-MM-DD/HH.sql.gz；宿主机 cron 为 db_save/YYYY-MM/DD.sql.gz。填写完整 HTTPS URL，path 须以 /db_save/ 开头。",
+		"restorePathNote":    "当前对象键规则：db_save/{主库名}/YYYY-MM/DD.sql.gz（管理端按钮与宿主机 cron 统一）。填写完整 HTTPS URL，path 须以 /db_save/ 开头；历史扁平路径 db_save/YYYY-MM/DD.sql.gz 亦可用于恢复，但不再产生新对象。",
 	})
 }
 

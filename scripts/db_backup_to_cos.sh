@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Vino MySQL 逻辑全量备份：docker exec mysqldump -> gzip -> 腾讯云 COS（对象键 db_save/YYYY-MM/DD.sql.gz）
+# Vino MySQL 逻辑全量备份：docker exec mysqldump -> gzip -> 腾讯云 COS
+# 对象键规则（方案 A，按主库名分目录）：db_save/${DB_NAME}/YYYY-MM/DD.sql.gz
 # 依赖：宿主机 docker；腾讯云 coscli（https://cloud.tencent.com/document/product/436/63144）
 # 用法：
 #   ./scripts/db_backup_to_cos.sh
@@ -53,7 +54,12 @@ fi
 
 ym="$(date +%Y-%m)"
 dd="$(date +%d)"
-cos_key="db_save/${ym}/${dd}.sql.gz"
+# 方案 A：按主库名分目录，避免与管理端按钮在其他主库状态下触发的备份互相覆盖
+if [[ ! "$DB_NAME" =~ ^[A-Za-z0-9_]{1,64}$ ]]; then
+  echo "[db-backup] DB_NAME 非法（需 1-64 个字母/数字/下划线）: $DB_NAME" >&2
+  exit 1
+fi
+cos_key="db_save/${DB_NAME}/${ym}/${dd}.sql.gz"
 tmp="$(mktemp "${TMPDIR:-/tmp}/vino_dump.XXXXXX.sql.gz")"
 
 cleanup() { rm -f "$tmp" 2>/dev/null || true; }
