@@ -45,7 +45,7 @@ func adminPostDbBackup(c *gin.Context, cfg *config.Config) {
 		return
 	}
 	if _, err := exec.LookPath("mysqldump"); err != nil {
-		resp.Err(c, 503, 503, "容器内未找到 mysqldump，请在 backend 镜像中安装 mariadb-client（Alpine: apk add mariadb-client）")
+		resp.Err(c, 503, 503, "容器内未找到 mysqldump，请在 backend 镜像中安装 mysql-client（与 MySQL 8 认证插件兼容）")
 		return
 	}
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 25*time.Minute)
