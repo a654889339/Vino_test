@@ -352,21 +352,25 @@ func listUserDatabases(ctx context.Context, cfg *config.Config) ([]string, error
 		return nil, err
 	}
 	defer d.Close()
-	rows, err := d.QueryContext(ctx, "SHOW DATABASES")
+	if err := d.PingContext(ctx); err != nil {
+		return nil, fmt.Errorf("连接 MySQL %s:%d 失败: %w", cfg.DB.Host, cfg.DB.Port, err)
+	}
+	// 用 information_schema 列库名，与 SHOW DATABASES 等价且对多数账号权限更一致
+	q := `SELECT schema_name FROM information_schema.schemata
+		WHERE LOWER(schema_name) NOT IN ('information_schema','mysql','performance_schema','sys')
+		ORDER BY schema_name`
+	rows, err := d.QueryContext(ctx, q)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	sys := map[string]bool{"information_schema": true, "mysql": true, "performance_schema": true, "sys": true}
 	var out []string
 	for rows.Next() {
 		var s string
 		if err := rows.Scan(&s); err != nil {
 			return nil, err
 		}
-		if !sys[strings.ToLower(s)] {
-			out = append(out, s)
-		}
+		out = append(out, s)
 	}
 	return out, rows.Err()
 }

@@ -2034,10 +2034,14 @@ async function openDbRestoreModal() {
       api('/admin/ops/db/databases'),
     ]);
     const current = (statusRes && statusRes.data && statusRes.data.database) || '';
-    const list = (listRes && listRes.data && listRes.data.list) || [];
-    document.getElementById('dbRestoreList').innerHTML = list.length
-      ? list.map(n => '<div>' + escapeHtml(n) + (n === current ? ' <span style="color:#1d4ed8;font-weight:600">(当前)</span>' : '') + '</div>').join('')
-      : '（无用户库）';
+    if (listRes && listRes.code !== 0 && listRes.code !== undefined) {
+      document.getElementById('dbRestoreList').innerHTML = '<span style="color:#B91C1C">加载失败：' + escapeHtml(listRes.message || ('code ' + listRes.code)) + '</span>';
+    } else {
+      const list = (listRes && listRes.data && listRes.data.list) || [];
+      document.getElementById('dbRestoreList').innerHTML = list.length
+        ? list.map(n => '<div>' + escapeHtml(n) + (n === current ? ' <span style="color:#1d4ed8;font-weight:600">(当前)</span>' : '') + '</div>').join('')
+        : '（无用户库）';
+    }
     const note = document.getElementById('dbRestoreNote');
     if (note && statusRes && statusRes.data) {
       const ex = statusRes.data.restoreUrlExamples || [];
