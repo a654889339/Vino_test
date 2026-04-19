@@ -4,9 +4,11 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/url"
 	"path"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -20,15 +22,111 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func homeConfigContentPrefix(section string) string {
-	section = strings.TrimSpace(section)
-	if section == "tabbar" {
-		return "vino/main_page"
+var homeConfigSectionOrRoleRe = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9_-]{0,63}$`)
+
+var (
+	errHCNoMultipart    = errors.New("解析上传表单失败")
+	errHCInvalidSection = errors.New("无效的 section")
+	errHCNoFile         = errors.New("请选择图片文件")
+	errHCInvalidRole    = errors.New("无效的 role")
+)
+
+func resolveHomeConfigUpload(section string) (prefix string, flatLayout bool, err error) {
+	s := strings.TrimSpace(section)
+	if s == "" {
+		// 兼容未传 section 的上传（如门店服务图标），与历史行为一致：vino/uploads + 随机名 + thumb 子目录
+		return "vino/uploads", false, nil
 	}
-	if section == "splash" || section == "headerLogo" || section == "homeBg" {
-		return "vino/main_animation"
+	switch s {
+	case "tabbar":
+		return "vino/main_page", false, nil
+	case "splash", "headerLogo", "homeBg":
+		return "vino/main_animation", false, nil
+	default:
+		if !homeConfigSectionOrRoleRe.MatchString(s) {
+			return "", false, errHCInvalidSection
+		}
+		return "vino/main_page/" + s, true, nil
 	}
-	return "vino/uploads"
+}
+
+func multipartFormString(c *gin.Context, key string) string {
+	if c.Request.MultipartForm == nil || c.Request.MultipartForm.Value == nil {
+		return ""
+	}
+	if v := c.Request.MultipartForm.Value[key]; len(v) > 0 {
+		return strings.TrimSpace(v[0])
+	}
+	return ""
+}
+
+// homeConfigImageUpload randomPrefix：tabbar/动画区为 homeconfig- 或 outlet-homeconfig-；其余板块为 vino/main_page/{section}/{role}.*
+func homeConfigImageUpload(c *gin.Context, randomPrefix string) (urlu, thumb string, err error) {
+	if err := c.Request.ParseMultipartForm(32 << 20); err != nil {
+		return "", "", errHCNoMultipart
+	}
+	sec := multipartFormString(c, "section")
+	role := multipartFormString(c, "role")
+	prefix, flat, err := resolveHomeConfigUpload(sec)
+	if err != nil {
+		return "", "", err
+	}
+	fh, err := c.FormFile("file")
+	if err != nil {
+		return "", "", errHCNoFile
+	}
+	f, err := fh.Open()
+	if err != nil {
+		return "", "", err
+	}
+	defer f.Close()
+	buf, err := io.ReadAll(f)
+	if err != nil {
+		return "", "", err
+	}
+	ext := path.Ext(fh.Filename)
+	ct := fh.Header.Get("Content-Type")
+	if ct == "" {
+		ct = "image/png"
+	}
+	ctx := c.Request.Context()
+	if !flat {
+		if ext == "" {
+			ext = ".png"
+		}
+		b := make([]byte, 4)
+		_, _ = rand.Read(b)
+		filename := randomPrefix + strconv.FormatInt(time.Now().UnixMilli(), 10) + "-" + hex.EncodeToString(b) + ext
+		return services.UploadWithThumbWithContentPrefix(ctx, buf, filename, ct, 0, prefix)
+	}
+	if role == "" {
+		role = "image"
+	}
+	if !homeConfigSectionOrRoleRe.MatchString(role) {
+		return "", "", errHCInvalidRole
+	}
+	switch role {
+	case "image", "image_en":
+		thumbStem := "cover_thumbnail"
+		if role == "image_en" {
+			thumbStem = "cover_thumbnail_en"
+		}
+		return services.UploadOriginalAndFlatCoverThumb(ctx, buf, role, ext, ct, thumbStem, 0, prefix)
+	case "cover_thumbnail", "cover_thumbnail_en":
+		if ext == "" {
+			ext = ".png"
+		}
+		filename := role + ext
+		urlu, err = services.UploadCOSWithContentPrefix(ctx, buf, filename, ct, prefix)
+		return urlu, "", err
+	default:
+		if ext == "" {
+			ext = ".png"
+		}
+		filename := role + ext
+		urlu, err = services.UploadCOSWithContentPrefix(ctx, buf, filename, ct, prefix)
+		return urlu, "", err
+	}
 }
 
 func fixHomeProxyURL(u string) string {
@@ -119,46 +217,12 @@ func hcRemove(c *gin.Context) {
 
 func hcUploadImage(c *gin.Context, cfg *config.Config) {
 	_ = cfg
-	if err := c.Request.ParseMultipartForm(32 << 20); err != nil {
-		resp.Err(c, 400, 1, "解析上传表单失败")
-		return
-	}
-	sec := ""
-	if c.Request.MultipartForm != nil && c.Request.MultipartForm.Value != nil {
-		if v := c.Request.MultipartForm.Value["section"]; len(v) > 0 {
-			sec = strings.TrimSpace(v[0])
+	urlu, thumb, err := homeConfigImageUpload(c, "homeconfig-")
+	if err != nil {
+		if errors.Is(err, errHCNoMultipart) || errors.Is(err, errHCInvalidSection) || errors.Is(err, errHCNoFile) || errors.Is(err, errHCInvalidRole) {
+			resp.Err(c, 400, 1, err.Error())
+			return
 		}
-	}
-	prefix := homeConfigContentPrefix(sec)
-	fh, err := c.FormFile("file")
-	if err != nil {
-		resp.Err(c, 400, 1, "请选择图片文件")
-		return
-	}
-	f, err := fh.Open()
-	if err != nil {
-		resp.Err(c, 500, 1, err.Error())
-		return
-	}
-	defer f.Close()
-	buf, err := io.ReadAll(f)
-	if err != nil {
-		resp.Err(c, 500, 1, err.Error())
-		return
-	}
-	ext := path.Ext(fh.Filename)
-	if ext == "" {
-		ext = ".png"
-	}
-	b := make([]byte, 4)
-	_, _ = rand.Read(b)
-	filename := "homeconfig-" + strconv.FormatInt(time.Now().UnixMilli(), 10) + "-" + hex.EncodeToString(b) + ext
-	ct := fh.Header.Get("Content-Type")
-	if ct == "" {
-		ct = "image/png"
-	}
-	urlu, thumb, err := services.UploadWithThumbWithContentPrefix(c.Request.Context(), buf, filename, ct, 0, prefix)
-	if err != nil {
 		resp.Err(c, 500, 1, err.Error())
 		return
 	}

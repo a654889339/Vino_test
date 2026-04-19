@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/disintegration/imaging"
@@ -80,6 +81,14 @@ func cosClient() (*cos.Client, error) {
 
 func CosBase() string { return cosBaseURL }
 
+var (
+	thumbKeyGoodsOrTypeLarge     = regexp.MustCompile(`^(vino/items/(?:goods|type)/\d+)/large_image(\.[^/.]+)$`)
+	thumbKeyGoodsOrTypeLargeEn   = regexp.MustCompile(`^(vino/items/(?:goods|type)/\d+)/large_image_en(\.[^/.]+)$`)
+	thumbKeyMainPageImage        = regexp.MustCompile(`^(vino/main_page/[^/]+)/image(\.[^/.]+)$`)
+	thumbKeyMainPageImageEn      = regexp.MustCompile(`^(vino/main_page/[^/]+)/image_en(\.[^/.]+)$`)
+	thumbKeyNoDeriveBasePrefixes = regexp.MustCompile(`^(?:icon|icon_en|scan|cover_thumbnail|cover_thumbnail_en)(?:\.|$)`)
+)
+
 // ThumbKeyFromOriginalKey 由原图 object key 推导缩略图 key（任意 vino/* 内容目录，与 Node 一致）
 func ThumbKeyFromOriginalKey(key string) string {
 	key = strings.TrimSpace(key)
@@ -98,7 +107,71 @@ func ThumbKeyFromOriginalKey(key string) string {
 	if base == "" {
 		return ""
 	}
+	if thumbKeyNoDeriveBasePrefixes.MatchString(base) {
+		return ""
+	}
+	if m := thumbKeyGoodsOrTypeLarge.FindStringSubmatch(key); len(m) == 3 {
+		return m[1] + "/cover_thumbnail" + m[2]
+	}
+	if m := thumbKeyGoodsOrTypeLargeEn.FindStringSubmatch(key); len(m) == 3 {
+		return m[1] + "/cover_thumbnail_en" + m[2]
+	}
+	if m := thumbKeyMainPageImage.FindStringSubmatch(key); len(m) == 3 {
+		return m[1] + "/cover_thumbnail" + m[2]
+	}
+	if m := thumbKeyMainPageImageEn.FindStringSubmatch(key); len(m) == 3 {
+		return m[1] + "/cover_thumbnail_en" + m[2]
+	}
 	return parent + "/thumb/" + base
+}
+
+// UploadOriginalAndFlatCoverThumb 原图与缩略图同目录：如 large_image.* + cover_thumbnail.*（缩略图扩展名按编码结果）
+func UploadOriginalAndFlatCoverThumb(ctx context.Context, buf []byte, origStem, ext, contentType, thumbStem string, maxWidth int, contentPrefix string) (url string, thumbURL string, err error) {
+	ext = strings.TrimSpace(ext)
+	if ext != "" && !strings.HasPrefix(ext, ".") {
+		ext = "." + ext
+	}
+	if ext == "" || ext == ".bin" {
+		ext = ".png"
+		lower := strings.ToLower(contentType)
+		switch {
+		case strings.Contains(lower, "jpeg"), strings.Contains(lower, "jpg"):
+			ext = ".jpg"
+		case strings.Contains(lower, "png"):
+			ext = ".png"
+		case strings.Contains(lower, "webp"):
+			ext = ".webp"
+		case strings.Contains(lower, "gif"):
+			ext = ".gif"
+		}
+	}
+	if strings.TrimSpace(contentPrefix) == "" {
+		contentPrefix = defaultContentPrefix
+	}
+	contentPrefix = strings.Trim(contentPrefix, "/")
+	origFile := origStem + ext
+	url, err = UploadCOSWithContentPrefix(ctx, buf, origFile, contentType, contentPrefix)
+	if err != nil {
+		return "", "", err
+	}
+	mw := thumbMaxWidth
+	if maxWidth > 0 {
+		mw = maxWidth
+	}
+	tb, tct := generateThumbBufferMax(buf, contentType, mw)
+	if len(tb) == 0 {
+		return url, "", nil
+	}
+	thumbExt := ".jpg"
+	if strings.Contains(strings.ToLower(tct), "png") {
+		thumbExt = ".png"
+	}
+	thumbFile := thumbStem + thumbExt
+	tu, err := UploadCOSWithContentPrefix(ctx, tb, thumbFile, tct, contentPrefix)
+	if err != nil {
+		return url, "", nil
+	}
+	return url, tu, nil
 }
 
 // ContentPrefixAndFileFromKey 从原图 key 拆出内容前缀与文件名（用于补传缩略图等）

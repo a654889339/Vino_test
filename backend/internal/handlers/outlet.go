@@ -4,6 +4,7 @@ import (
 	crand "crypto/rand"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -777,26 +778,12 @@ func outletHCRemove(c *gin.Context) {
 
 func outletHCUpload(c *gin.Context, cfg *config.Config) {
 	_ = cfg
-	fh, err := c.FormFile("file")
+	url, thumb, err := homeConfigImageUpload(c, "outlet-homeconfig-")
 	if err != nil {
-		resp.Err(c, 400, 1, "请选择图片文件")
-		return
-	}
-	f, err := fh.Open()
-	if err != nil {
-		return
-	}
-	defer f.Close()
-	buf, _ := io.ReadAll(f)
-	ext := path.Ext(fh.Filename)
-	if ext == "" {
-		ext = ".png"
-	}
-	filename := "outlet-homeconfig-" + strconv.FormatInt(time.Now().UnixMilli(), 10) + "-" + randomHex6() + ext
-	ct := fh.Header.Get("Content-Type")
-	prefix := homeConfigContentPrefix(c.PostForm("section"))
-	url, thumb, err := services.UploadWithThumbWithContentPrefix(c.Request.Context(), buf, filename, ct, 0, prefix)
-	if err != nil {
+		if errors.Is(err, errHCNoMultipart) || errors.Is(err, errHCInvalidSection) || errors.Is(err, errHCNoFile) || errors.Is(err, errHCInvalidRole) {
+			resp.Err(c, 400, 1, err.Error())
+			return
+		}
 		resp.Err(c, 500, 1, err.Error())
 		return
 	}

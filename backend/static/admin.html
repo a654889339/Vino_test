@@ -2746,13 +2746,20 @@ async function uploadGuideFile(input, targetId) {
     if (!ok) { alert('请选择 PDF 文件'); input.value = ''; return; }
   }
   const el = document.getElementById(targetId);
-  const assetKind = targetId === 'gIconUrl' ? 'icon' : targetId === 'gIconUrlEn' ? 'icon_en' : '';
+  const assetKind = targetId === 'gIconUrl' ? 'icon'
+    : targetId === 'gIconUrlEn' ? 'icon_en'
+    : targetId === 'gCoverImage' ? 'cover'
+    : targetId === 'gCoverImageEn' ? 'cover_en'
+    : targetId === 'gCoverImageThumb' ? 'cover_thumb'
+    : targetId === 'gCoverImageThumbEn' ? 'cover_thumb_en'
+    : '';
   await runWithUploadOverlay(file.name, async () => {
     try {
       const res = await doUpload(file, assetKind);
       if (res.code === 0) {
         el.value = res.data.url;
         if (targetId === 'gCoverImage') { const p = document.getElementById('gCoverPreview'); if(p){p.src=res.data.url;p.style.display='block';} if(res.data.thumbUrl){ const t=document.getElementById('gCoverImageThumb'); if(t)t.value=res.data.thumbUrl; } }
+        if (targetId === 'gCoverImageEn') { if(res.data.thumbUrl){ const t=document.getElementById('gCoverImageThumbEn'); if(t)t.value=res.data.thumbUrl; } }
         if (targetId === 'gIconUrl') { const p = document.getElementById('gIconPreview'); if(p){p.src=res.data.url;p.style.display='block';} }
       } else { el.value = ''; alert(res.message||'上传失败'); }
     } catch { el.value = ''; alert('上传失败'); }
@@ -3419,6 +3426,7 @@ async function uploadExploreVinoBg(input) {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('section', 'exploreVino');
+      formData.append('role', 'image');
       const res = await fetch(API + '/home-config/upload', {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + token },
@@ -3449,6 +3457,7 @@ async function uploadExploreVinoBgEn(input) {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('section', 'exploreVino');
+      formData.append('role', 'image_en');
       const res = await fetch(API + '/home-config/upload', {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + token },
@@ -4059,6 +4068,7 @@ async function uploadHCImage(input) {
       formData.append('file', file);
       const hcSec = document.getElementById('hcSection');
       if (hcSec && hcSec.value) formData.append('section', hcSec.value);
+      formData.append('role', 'image');
       const res = await fetch(API + '/home-config/upload', {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + token },
@@ -4095,6 +4105,7 @@ async function uploadHCImageThumb(input) {
       const formData = new FormData(); formData.append('file', file);
       const hcSec2 = document.getElementById('hcSection');
       if (hcSec2 && hcSec2.value) formData.append('section', hcSec2.value);
+      formData.append('role', 'cover_thumbnail');
       const res = await fetch(API + '/home-config/upload', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: formData }).then(r => r.json());
       if (res.code === 0 && res.data?.url) {
         const tb = document.getElementById('hcImageUrlThumb'); if (tb) tb.value = res.data.url;
@@ -4114,6 +4125,7 @@ async function uploadHCImageEn(input) {
       const fd = new FormData(); fd.append('file', file);
       const hcSec3 = document.getElementById('hcSection');
       if (hcSec3 && hcSec3.value) fd.append('section', hcSec3.value);
+      fd.append('role', 'image_en');
       const res = await fetch(API + '/home-config/upload', { method:'POST', headers:{'Authorization':'Bearer '+token}, body:fd }).then(r=>r.json());
       if (res.code === 0 && res.data?.url) {
         document.getElementById('hcImageUrlEn').value = res.data.url;
@@ -4134,6 +4146,7 @@ async function uploadHCImageThumbEn(input) {
       const fd = new FormData(); fd.append('file', file);
       const hcSec4 = document.getElementById('hcSection');
       if (hcSec4 && hcSec4.value) fd.append('section', hcSec4.value);
+      fd.append('role', 'cover_thumbnail_en');
       const res = await fetch(API + '/home-config/upload', { method:'POST', headers:{'Authorization':'Bearer '+token}, body:fd }).then(r=>r.json());
       if (res.code === 0 && res.data?.url) {
         var tb = document.getElementById('hcImageUrlThumbEn'); if (tb) tb.value = res.data.url;
@@ -4871,6 +4884,7 @@ async function saveOutletHC(id, type) {
     const fd = new FormData(); fd.append('file', file);
     const ohs = document.getElementById('ohcSection');
     if (ohs && ohs.value) fd.append('section', ohs.value);
+    fd.append('role', 'image');
     await runWithUploadOverlay(file.name, async () => {
       const ur = await fetch(API + '/outlet/home-config/upload', { method: 'POST', headers: { Authorization: 'Bearer ' + token }, body: fd }).then(r => r.json());
       if (ur.code === 0) { body.imageUrl = ur.data.url; if (ur.data.thumbUrl) body.imageUrlThumb = ur.data.thumbUrl; }

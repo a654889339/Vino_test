@@ -216,6 +216,8 @@ func guideUploadFile(c *gin.Context, cfg *config.Config) {
 	}
 	isGoodsPrefix := strings.HasPrefix(contentPrefix, "vino/items/goods/")
 	isIconUpload := isGoodsPrefix && strings.HasPrefix(ct, "image/") && (assetKind == "icon" || assetKind == "icon_en")
+	isCoverPair := isGoodsPrefix && strings.HasPrefix(ct, "image/") && (assetKind == "cover" || assetKind == "cover_en")
+	isCoverThumbOnly := isGoodsPrefix && strings.HasPrefix(ct, "image/") && (assetKind == "cover_thumb" || assetKind == "cover_thumb_en")
 	if isIconUpload {
 		if ext == ".bin" {
 			ext = ".png"
@@ -230,6 +232,38 @@ func guideUploadFile(c *gin.Context, cfg *config.Config) {
 	if strings.HasPrefix(ct, "image/") {
 		if isIconUpload {
 			url, err := services.UploadCOSWithContentPrefix(ctx, buf, filename, ct, contentPrefix)
+			if err != nil {
+				resp.Err(c, 500, 500, "上传失败: "+err.Error())
+				return
+			}
+			resp.OK(c, gin.H{"url": url, "thumbUrl": nil})
+			return
+		}
+		if isCoverPair {
+			origStem := "large_image"
+			thumbStem := "cover_thumbnail"
+			if assetKind == "cover_en" {
+				origStem = "large_image_en"
+				thumbStem = "cover_thumbnail_en"
+			}
+			url, thumb, err := services.UploadOriginalAndFlatCoverThumb(ctx, buf, origStem, ext, ct, thumbStem, 0, contentPrefix)
+			if err != nil {
+				resp.Err(c, 500, 500, "上传失败: "+err.Error())
+				return
+			}
+			resp.OK(c, gin.H{"url": url, "thumbUrl": thumb})
+			return
+		}
+		if isCoverThumbOnly {
+			stem := "cover_thumbnail"
+			if assetKind == "cover_thumb_en" {
+				stem = "cover_thumbnail_en"
+			}
+			if ext == "" || ext == ".bin" {
+				ext = ".png"
+			}
+			fn := stem + ext
+			url, err := services.UploadCOSWithContentPrefix(ctx, buf, fn, ct, contentPrefix)
 			if err != nil {
 				resp.Err(c, 500, 500, "上传失败: "+err.Error())
 				return
@@ -292,9 +326,9 @@ func guideGenerateQR(c *gin.Context, cfg *config.Config) {
 		resp.Err(c, 500, 1, "生成失败: "+err.Error())
 		return
 	}
-	filename := "qrcode_guide_" + strconv.Itoa(guide.ID) + "_" + strconv.FormatInt(time.Now().UnixMilli(), 10) + ".png"
+	filename := "scan.png"
 	goodsPrefix := fmt.Sprintf("vino/items/goods/%d", guide.ID)
-	url, _, err := services.UploadWithThumbWithContentPrefix(c.Request.Context(), png, filename, "image/png", 120, goodsPrefix)
+	url, err := services.UploadCOSWithContentPrefix(c.Request.Context(), png, filename, "image/png", goodsPrefix)
 	if err != nil {
 		resp.Err(c, 500, 1, "生成失败: "+err.Error())
 		return

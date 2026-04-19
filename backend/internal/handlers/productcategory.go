@@ -1,14 +1,11 @@
 package handlers
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"path"
 	"strconv"
 	"strings"
-	"time"
 
 	"vino/backend/internal/config"
 	"vino/backend/internal/db"
@@ -125,15 +122,12 @@ func pcUploadImage(c *gin.Context, cfg *config.Config) {
 	if ext == "" {
 		ext = ".png"
 	}
-	b := make([]byte, 4)
-	_, _ = rand.Read(b)
-	filename := "cat-" + strconv.Itoa(cid) + "-" + strconv.FormatInt(time.Now().UnixMilli(), 10) + "-" + hex.EncodeToString(b) + ext
 	ct := fh.Header.Get("Content-Type")
 	if ct == "" {
 		ct = "image/png"
 	}
 	prefix := fmt.Sprintf("vino/items/type/%d", cid)
-	urlu, thumb, err := services.UploadWithThumbWithContentPrefix(c.Request.Context(), buf, filename, ct, 0, prefix)
+	urlu, thumb, err := services.UploadOriginalAndFlatCoverThumb(c.Request.Context(), buf, "large_image", ext, ct, "cover_thumbnail", 0, prefix)
 	if err != nil {
 		resp.Err(c, 500, 500, "上传失败: "+err.Error())
 		return
