@@ -115,17 +115,14 @@ Page({
         const sorted = sortGuidesByDisplayOrder(raw, cat.name);
         const list = sorted.map(g => {
           const rawIcon = pick(g, 'iconUrl') || '';
-          const rawThumb = pick(g, 'iconUrlThumb') || '';
           const iconUrl = rawIcon ? (rawIcon.startsWith('http') ? rawIcon : base + rawIcon) : '';
-          const iconUrlThumb = rawThumb ? (rawThumb.startsWith('http') ? rawThumb : base + rawThumb) : '';
           return {
             id: g.id,
             name: pick(g, 'name'),
             slug: g.slug || '',
             icon: g.icon || '',
             iconUrl,
-            iconUrlThumb,
-            displayIconUrl: (iconUrlThumb || iconUrl || '').trim(),
+            displayIconUrl: (iconUrl || '').trim(),
           };
         });
         this.setData({ deviceGuides: list, listLoading: false }, () => {
@@ -133,17 +130,6 @@ Page({
         });
       })
       .catch(() => this.setData({ listLoading: false }));
-  },
-
-  /** 缩略图加载失败（如 COS 无 thumb 对象）时回退原图 */
-  onGridIconError(e) {
-    const id = e.currentTarget.dataset.id;
-    const deviceGuides = (this.data.deviceGuides || []).map((g) => {
-      if (g.id !== id || !g.iconUrl) return g;
-      if (g.displayIconUrl === g.iconUrl) return g;
-      return { ...g, displayIconUrl: g.iconUrl };
-    });
-    this.setData({ deviceGuides }, () => this.applyFilter());
   },
 
   selectProduct(e) {

@@ -87,6 +87,7 @@ func RegisterRoutes(engine *gin.Engine, cfg *config.Config) {
 	{
 		pc.GET("/", middleware.Auth(cfg), middleware.Admin(), pcList)
 		pc.POST("/", middleware.Auth(cfg), middleware.Admin(), pcCreate)
+		pc.POST("/upload", middleware.Auth(cfg), middleware.Admin(), func(c *gin.Context) { pcUploadImage(c, cfg) })
 		pc.PUT("/:id", middleware.Auth(cfg), middleware.Admin(), pcUpdate)
 		pc.DELETE("/:id", middleware.Auth(cfg), middleware.Admin(), pcRemove)
 	}

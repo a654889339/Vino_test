@@ -20,6 +20,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func homeConfigContentPrefix(section string) string {
+	section = strings.TrimSpace(section)
+	if section == "tabbar" {
+		return "vino/main_page"
+	}
+	if section == "splash" || section == "headerLogo" || section == "homeBg" {
+		return "vino/main_animation"
+	}
+	return "vino/uploads"
+}
+
 func fixHomeProxyURL(u string) string {
 	if u == "" {
 		return u
@@ -108,6 +119,17 @@ func hcRemove(c *gin.Context) {
 
 func hcUploadImage(c *gin.Context, cfg *config.Config) {
 	_ = cfg
+	if err := c.Request.ParseMultipartForm(32 << 20); err != nil {
+		resp.Err(c, 400, 1, "解析上传表单失败")
+		return
+	}
+	sec := ""
+	if c.Request.MultipartForm != nil && c.Request.MultipartForm.Value != nil {
+		if v := c.Request.MultipartForm.Value["section"]; len(v) > 0 {
+			sec = strings.TrimSpace(v[0])
+		}
+	}
+	prefix := homeConfigContentPrefix(sec)
 	fh, err := c.FormFile("file")
 	if err != nil {
 		resp.Err(c, 400, 1, "请选择图片文件")
@@ -135,7 +157,7 @@ func hcUploadImage(c *gin.Context, cfg *config.Config) {
 	if ct == "" {
 		ct = "image/png"
 	}
-	urlu, thumb, err := services.UploadWithThumb(c.Request.Context(), buf, filename, ct, 0)
+	urlu, thumb, err := services.UploadWithThumbWithContentPrefix(c.Request.Context(), buf, filename, ct, 0, prefix)
 	if err != nil {
 		resp.Err(c, 500, 1, err.Error())
 		return

@@ -53,7 +53,6 @@
                 <LodImg
                   v-if="d.iconUrl"
                   :src="fullUrl(d.iconUrl)"
-                  :thumb="d.iconUrlThumb ? fullUrl(d.iconUrlThumb) : ''"
                   class="grid-card-icon-img"
                 />
                 <van-icon v-else :name="d.icon || 'photo-o'" size="28" color="#6b7280" />

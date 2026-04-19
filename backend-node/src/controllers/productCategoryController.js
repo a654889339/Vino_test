@@ -1,4 +1,6 @@
+const path = require('path');
 const { ProductCategory } = require('../models');
+const cosUpload = require('../utils/cosUpload');
 
 exports.list = async (req, res) => {
   try {
@@ -63,5 +65,25 @@ exports.remove = async (req, res) => {
   } catch (err) {
     console.error('[ProductCategory] remove error:', err.message);
     res.status(500).json({ code: 500, message: '删除失败' });
+  }
+};
+
+exports.uploadImage = async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ code: 1, message: '请选择图片文件' });
+    const cid = parseInt(req.body.categoryId, 10);
+    if (!cid) return res.status(400).json({ code: 1, message: '请提供 categoryId（请先保存种类）' });
+    const cat = await ProductCategory.findByPk(cid);
+    if (!cat) return res.status(404).json({ code: 1, message: '种类不存在' });
+    const ext = path.extname(req.file.originalname) || '.png';
+    const filename = `cat-${cid}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`;
+    const prefix = `vino/items/type/${cid}`;
+    const { url, thumbUrl } = await cosUpload.uploadWithThumb(req.file.buffer, filename, req.file.mimetype, {
+      keyPrefix: prefix,
+    });
+    res.json({ code: 0, data: { url, thumbUrl: thumbUrl || null } });
+  } catch (err) {
+    console.error('[ProductCategory] uploadImage error:', err.message);
+    res.status(500).json({ code: 1, message: err.message || '上传失败' });
   }
 };

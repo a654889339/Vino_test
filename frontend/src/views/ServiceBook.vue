@@ -122,7 +122,7 @@
                     </div>
                     <div class="saved-addr-detail" style="font-family:monospace;font-size:12px">{{ p.productKey }}</div>
                   </div>
-                  <img v-if="p.iconUrl || p.iconUrlThumb" :src="p.iconUrlThumb || p.iconUrl" class="my-product-icon" alt="" />
+                  <img v-if="p.iconUrl" :src="p.iconUrl" class="my-product-icon" alt="" />
                 </div>
               </div>
             </div>

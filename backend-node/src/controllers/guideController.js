@@ -7,7 +7,7 @@ function attachGuideThumbUrls(guide) {
   const g = guide.get ? guide.get({ plain: true }) : guide;
   return {
     ...g,
-    iconUrlThumb: (g.iconUrlThumb && g.iconUrlThumb.trim()) ? g.iconUrlThumb.trim() : (cosUpload.getThumbUrl(g.iconUrl) || null),
+    iconUrlThumb: (g.iconUrlThumb && g.iconUrlThumb.trim()) ? g.iconUrlThumb.trim() : null,
     coverImageThumb: (g.coverImageThumb && g.coverImageThumb.trim()) ? g.coverImageThumb.trim() : (cosUpload.getThumbUrl(g.coverImage) || null),
     qrcodeUrlThumb: cosUpload.getThumbUrl(g.qrcodeUrl) || null,
   };
@@ -54,7 +54,6 @@ exports.list = async (req, res) => {
     const cosUrls = [];
     data.forEach(g => {
       if (g.iconUrl && cosUpload.isCosUploadUrl(g.iconUrl)) cosUrls.push(g.iconUrl);
-      if (g.iconUrlThumb && cosUpload.isCosUploadUrl(g.iconUrlThumb)) cosUrls.push(g.iconUrlThumb);
       if (g.coverImage && cosUpload.isCosUploadUrl(g.coverImage)) cosUrls.push(g.coverImage);
       if (g.coverImageThumb && cosUpload.isCosUploadUrl(g.coverImageThumb)) cosUrls.push(g.coverImageThumb);
     });
@@ -76,7 +75,6 @@ exports.detail = async (req, res) => {
     res.json({ code: 0, data });
     const cosUrls = [];
     if (data.iconUrl && cosUpload.isCosUploadUrl(data.iconUrl)) cosUrls.push(data.iconUrl);
-    if (data.iconUrlThumb && cosUpload.isCosUploadUrl(data.iconUrlThumb)) cosUrls.push(data.iconUrlThumb);
     if (data.coverImage && cosUpload.isCosUploadUrl(data.coverImage)) cosUrls.push(data.coverImage);
     if (data.coverImageThumb && cosUpload.isCosUploadUrl(data.coverImageThumb)) cosUrls.push(data.coverImageThumb);
     if (cosUrls.length) cosUpload.ensurePublicRead(cosUrls).catch(() => {});
@@ -169,12 +167,34 @@ exports.remove = async (req, res) => {
 exports.uploadFile = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ code: 400, message: '未选择文件' });
-    const ext = path.extname(req.file.originalname) || '.bin';
-    const filename = `guide-${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`;
+    let keyPrefix = cosUpload.DEFAULT_CONTENT_PREFIX;
+    const gidRaw =
+      req.body && req.body.guideId != null
+        ? String(req.body.guideId).trim()
+        : req.body && req.body['guideId'] != null
+          ? String(req.body['guideId']).trim()
+          : '';
+    const assetKind = (req.body && String(req.body.assetKind || '').trim()) || '';
+    if (gidRaw) {
+      const gid = parseInt(gidRaw, 10);
+      if (!Number.isNaN(gid) && gid > 0) {
+        const g = await DeviceGuide.findByPk(gid, { attributes: ['id'] });
+        if (g) keyPrefix = `vino/items/goods/${gid}`;
+      }
+    }
+    let ext = path.extname(req.file.originalname) || '.bin';
+    let filename = `guide-${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`;
     const isImage = (req.file.mimetype || '').startsWith('image/');
+    const isGoodsPrefix = keyPrefix.startsWith('vino/items/goods/');
+    if (isImage && isGoodsPrefix && (assetKind === 'icon' || assetKind === 'icon_en')) {
+      if (!ext || ext === '.bin') ext = '.png';
+      filename = assetKind === 'icon_en' ? `icon_en${ext}` : `icon${ext}`;
+      const url = await cosUpload.upload(req.file.buffer, filename, req.file.mimetype, keyPrefix);
+      return res.json({ code: 0, data: { url, thumbUrl: null } });
+    }
     const result = isImage
-      ? await cosUpload.uploadWithThumb(req.file.buffer, filename, req.file.mimetype)
-      : { url: await cosUpload.upload(req.file.buffer, filename, req.file.mimetype), thumbUrl: null };
+      ? await cosUpload.uploadWithThumb(req.file.buffer, filename, req.file.mimetype, { keyPrefix })
+      : { url: await cosUpload.upload(req.file.buffer, filename, req.file.mimetype, keyPrefix), thumbUrl: null };
     res.json({ code: 0, data: { url: result.url, thumbUrl: result.thumbUrl || null } });
   } catch (err) {
     console.error('[Guide] uploadFile error:', err.message);
@@ -193,7 +213,10 @@ exports.generateQRCode = async (req, res) => {
     const pageUrl = frontendBase + '/guide/' + (guide.slug || guide.id);
     const buffer = await QRCode.toBuffer(pageUrl, { width: 400, margin: 2, type: 'png' });
     const filename = `qrcode_guide_${guide.id}_${Date.now()}.png`;
-    const { url: cosUrl } = await cosUpload.uploadWithThumb(buffer, filename, 'image/png', { maxWidth: 120 });
+    const { url: cosUrl } = await cosUpload.uploadWithThumb(buffer, filename, 'image/png', {
+      maxWidth: 120,
+      keyPrefix: `vino/items/goods/${guide.id}`,
+    });
     guide.qrcodeUrl = cosUrl;
     await guide.save();
     res.json({ code: 0, data: { url: cosUrl } });

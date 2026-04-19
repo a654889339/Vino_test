@@ -66,7 +66,6 @@ docker exec -e MYSQL_PWD="$DB_PASSWORD" "$MYSQL_CONTAINER" \
   --single-transaction \
   --routines \
   --events \
-  --set-gtid-purged=OFF \
   --databases "$DB_NAME" \
   | gzip -c >"$tmp"
 

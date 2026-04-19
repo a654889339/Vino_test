@@ -106,13 +106,11 @@ Page({
         };
         const myProducts = list.map(item => {
           const full = item.iconUrl ? toFull(item.iconUrl) : '';
-          const thumb = item.iconUrlThumb ? toFull(item.iconUrlThumb) : '';
           return {
             ...item,
             categoryName: i18n.pick(item, 'categoryName') || item.categoryName || '',
             iconUrl: full,
-            iconUrlThumb: thumb,
-            displayIconUrl: (thumb || full || '').trim(),
+            displayIconUrl: (full || '').trim(),
           };
         });
         this.setData({ myProducts });
@@ -260,23 +258,18 @@ Page({
           const g = path ? (guidesBySlug[path] || guidesBySlug[path.toLowerCase()]) : null;
           let title = row.title || '';
           let iconUrl = '';
-          let iconUrlThumb = '';
           if (g) {
             title = i18n.pick(g, 'name') || title;
             iconUrl = i18n.pick(g, 'iconUrl') || '';
-            iconUrlThumb = i18n.pick(g, 'iconUrlThumb') || '';
           }
           if (!iconUrl && row.imageUrl) iconUrl = row.imageUrl;
-          if (!iconUrlThumb && row.imageUrlThumb) iconUrlThumb = row.imageUrlThumb;
           const fullIcon = iconUrl ? toFull(iconUrl) : '';
-          const thumbIcon = iconUrlThumb ? toFull(iconUrlThumb) : '';
           return {
             id: row.id,
             title,
             path,
             iconUrl: fullIcon,
-            iconUrlThumb: thumbIcon,
-            displayIconUrl: (thumbIcon || fullIcon || '').trim(),
+            displayIconUrl: (fullIcon || '').trim(),
           };
         });
 

@@ -62,7 +62,7 @@
       <view class="vino-grid">
         <view class="vino-cell" wx:for="{{vinoItems}}" wx:key="id" bindtap="goVinoGuide" data-slug="{{item.path}}">
           <view class="vino-icon-wrap">
-            <image wx:if="{{item.iconUrlThumb || item.iconUrl}}" src="{{item.displayIconUrl}}" class="vino-icon-img" mode="aspectFit" data-idx="{{index}}" binderror="onVinoIconError" />
+            <image wx:if="{{item.iconUrl}}" src="{{item.displayIconUrl}}" class="vino-icon-img" mode="aspectFit" data-idx="{{index}}" binderror="onVinoIconError" />
             <text wx:else class="vino-emoji">📦</text>
           </view>
           <text class="vino-name">{{item.title}}</text>
@@ -100,7 +100,7 @@
       <view class="my-product-item {{item.guideSlug || item.guide ? 'my-product-item--clickable' : ''}}" wx:for="{{myProducts}}" wx:key="productKey" bindtap="goMyProductGuide" data-slug="{{item.guideSlug || item.guide}}">
         <text class="my-product-category">{{item.categoryName || '-'}}</text>
         <view class="my-product-icon-wrap">
-          <image wx:if="{{item.iconUrlThumb || item.iconUrl}}" src="{{item.displayIconUrl}}" class="my-product-icon" mode="aspectFit" data-idx="{{index}}" binderror="onMyProductIconError" />
+          <image wx:if="{{item.iconUrl}}" src="{{item.displayIconUrl}}" class="my-product-icon" mode="aspectFit" data-idx="{{index}}" binderror="onMyProductIconError" />
           <text wx:else class="my-product-icon-placeholder">📦</text>
         </view>
         <text class="my-product-name">{{item.productName || item.productKey}}</text>

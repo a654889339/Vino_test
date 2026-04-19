@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"path"
@@ -51,10 +52,8 @@ func attachGuideThumbs(g *models.DeviceGuide) gin.H {
 	raw, _ := json.Marshal(g)
 	var h gin.H
 	_ = json.Unmarshal(raw, &h)
+	// 商品图标不再使用/推导 iconUrlThumb，仅返回库中已有值（管理端保存时清空）
 	iconThumb := strings.TrimSpace(g.IconURLThumb)
-	if iconThumb == "" && g.IconURL != "" {
-		iconThumb = services.GetThumbURL(g.IconURL)
-	}
 	coverThumb := strings.TrimSpace(g.CoverImageThumb)
 	if coverThumb == "" && g.CoverImage != "" {
 		coverThumb = services.GetThumbURL(g.CoverImage)
@@ -166,6 +165,30 @@ func guideRemove(c *gin.Context) {
 
 func guideUploadFile(c *gin.Context, cfg *config.Config) {
 	_ = cfg
+	// 必须先完整解析 multipart，再从 MultipartForm 取 guideId；若先取 file 再 PostForm，部分环境下 guideId 为空，导致始终落到 vino/uploads
+	if err := c.Request.ParseMultipartForm(64 << 20); err != nil {
+		resp.Err(c, 400, 400, "解析上传表单失败")
+		return
+	}
+	gidStr := ""
+	assetKind := ""
+	if c.Request.MultipartForm != nil && c.Request.MultipartForm.Value != nil {
+		if v := c.Request.MultipartForm.Value["guideId"]; len(v) > 0 {
+			gidStr = strings.TrimSpace(v[0])
+		}
+		if v := c.Request.MultipartForm.Value["assetKind"]; len(v) > 0 {
+			assetKind = strings.TrimSpace(v[0])
+		}
+	}
+	contentPrefix := "vino/uploads"
+	if gidStr != "" {
+		if gid, err := strconv.Atoi(gidStr); err == nil && gid > 0 {
+			var g models.DeviceGuide
+			if err := db.DB.Select("id").First(&g, gid).Error; err == nil {
+				contentPrefix = fmt.Sprintf("vino/items/goods/%d", gid)
+			}
+		}
+	}
 	fh, err := c.FormFile("file")
 	if err != nil {
 		resp.Err(c, 400, 400, "未选择文件")
@@ -191,9 +214,30 @@ func guideUploadFile(c *gin.Context, cfg *config.Config) {
 	if ct == "" {
 		ct = "application/octet-stream"
 	}
+	isGoodsPrefix := strings.HasPrefix(contentPrefix, "vino/items/goods/")
+	isIconUpload := isGoodsPrefix && strings.HasPrefix(ct, "image/") && (assetKind == "icon" || assetKind == "icon_en")
+	if isIconUpload {
+		if ext == ".bin" {
+			ext = ".png"
+		}
+		if assetKind == "icon_en" {
+			filename = "icon_en" + ext
+		} else {
+			filename = "icon" + ext
+		}
+	}
 	ctx := c.Request.Context()
 	if strings.HasPrefix(ct, "image/") {
-		url, thumb, err := services.UploadWithThumb(ctx, buf, filename, ct, 0)
+		if isIconUpload {
+			url, err := services.UploadCOSWithContentPrefix(ctx, buf, filename, ct, contentPrefix)
+			if err != nil {
+				resp.Err(c, 500, 500, "上传失败: "+err.Error())
+				return
+			}
+			resp.OK(c, gin.H{"url": url, "thumbUrl": nil})
+			return
+		}
+		url, thumb, err := services.UploadWithThumbWithContentPrefix(ctx, buf, filename, ct, 0, contentPrefix)
 		if err != nil {
 			resp.Err(c, 500, 500, "上传失败: "+err.Error())
 			return
@@ -201,7 +245,7 @@ func guideUploadFile(c *gin.Context, cfg *config.Config) {
 		resp.OK(c, gin.H{"url": url, "thumbUrl": thumb})
 		return
 	}
-	url, err := services.UploadCOS(ctx, buf, filename, ct)
+	url, err := services.UploadCOSWithContentPrefix(ctx, buf, filename, ct, contentPrefix)
 	if err != nil {
 		resp.Err(c, 500, 500, "上传失败: "+err.Error())
 		return
@@ -249,7 +293,8 @@ func guideGenerateQR(c *gin.Context, cfg *config.Config) {
 		return
 	}
 	filename := "qrcode_guide_" + strconv.Itoa(guide.ID) + "_" + strconv.FormatInt(time.Now().UnixMilli(), 10) + ".png"
-	url, _, err := services.UploadWithThumb(c.Request.Context(), png, filename, "image/png", 120)
+	goodsPrefix := fmt.Sprintf("vino/items/goods/%d", guide.ID)
+	url, _, err := services.UploadWithThumbWithContentPrefix(c.Request.Context(), png, filename, "image/png", 120, goodsPrefix)
 	if err != nil {
 		resp.Err(c, 500, 1, "生成失败: "+err.Error())
 		return

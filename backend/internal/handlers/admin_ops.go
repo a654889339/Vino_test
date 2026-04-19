@@ -57,7 +57,6 @@ func adminPostDbBackup(c *gin.Context, cfg *config.Config) {
 		"--single-transaction",
 		"--routines",
 		"--events",
-		"--set-gtid-purged=OFF",
 		"--databases",
 		cfg.DB.Name,
 	}

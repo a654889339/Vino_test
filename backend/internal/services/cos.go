@@ -80,6 +80,39 @@ func cosClient() (*cos.Client, error) {
 
 func CosBase() string { return cosBaseURL }
 
+// ThumbKeyFromOriginalKey 由原图 object key 推导缩略图 key（任意 vino/* 内容目录，与 Node 一致）
+func ThumbKeyFromOriginalKey(key string) string {
+	key = strings.TrimSpace(key)
+	if key == "" || strings.Contains(key, "..") {
+		return ""
+	}
+	if strings.Contains(key, "/thumb/") {
+		return ""
+	}
+	last := strings.LastIndex(key, "/")
+	if last < 0 {
+		return ""
+	}
+	parent := key[:last]
+	base := key[last+1:]
+	if base == "" {
+		return ""
+	}
+	return parent + "/thumb/" + base
+}
+
+// ContentPrefixAndFileFromKey 从原图 key 拆出内容前缀与文件名（用于补传缩略图等）
+func ContentPrefixAndFileFromKey(key string) (contentPrefix string, file string) {
+	if key == "" || strings.Contains(key, "/thumb/") {
+		return "", ""
+	}
+	last := strings.LastIndex(key, "/")
+	if last < 0 {
+		return "", key
+	}
+	return key[:last], key[last+1:]
+}
+
 // URLToKey 从完整 COS URL 解析 object key（与 Node urlToKey 一致）
 func URLToKey(fullURL string) string {
 	if fullURL == "" {
@@ -100,32 +133,47 @@ func URLToKey(fullURL string) string {
 	return key
 }
 
-// GetThumbURL 由原图 URL 推导缩略图 URL（仅本站 COS 直链）
-// IsCosUploadURL 与 Node isCosUploadUrl 一致：本桶 vino/uploads 原图（非 thumb 子目录）
+// IsCosUploadURL 与 Node isCosUploadUrl 一致：本桶可带缩略图的原图地址（非 thumb 路径下的对象）
 func IsCosUploadURL(u string) bool {
 	if u == "" {
 		return false
 	}
-	base := cosBaseURL + "/vino/uploads/"
-	if !strings.HasPrefix(u, base) {
+	k := URLToKey(u)
+	return k != "" && isCosOriginalObjectKey(k)
+}
+
+func isCosOriginalObjectKey(key string) bool {
+	if key == "" || strings.Contains(key, "..") || strings.Contains(key, "\\") {
 		return false
 	}
-	return !strings.Contains(u, "/vino/uploads/thumb/")
+	if strings.Contains(key, "/thumb/") {
+		return false
+	}
+	if strings.HasPrefix(key, "vino/uploads/") {
+		return true
+	}
+	if strings.HasPrefix(key, "vino/main_page/") || strings.HasPrefix(key, "vino/main_animation/") {
+		return true
+	}
+	if strings.HasPrefix(key, "vino/items/") {
+		return true
+	}
+	return false
 }
 
 func GetThumbURL(originalURL string) string {
 	if originalURL == "" {
 		return ""
 	}
-	base := cosBaseURL + "/vino/uploads/"
-	if !strings.HasPrefix(originalURL, base) {
+	k := URLToKey(originalURL)
+	if k == "" {
 		return ""
 	}
-	suffix := strings.TrimPrefix(originalURL, base)
-	if suffix == "" || strings.Contains(suffix, "thumb/") {
+	tk := ThumbKeyFromOriginalKey(k)
+	if tk == "" {
 		return ""
 	}
-	return cosBaseURL + "/vino/uploads/thumb/" + suffix
+	return cosBaseURL + "/" + tk
 }
 
 const thumbMaxWidth = 400
@@ -161,13 +209,21 @@ func generateThumbBufferMax(buf []byte, contentType string, maxW int) ([]byte, s
 	}
 }
 
-// UploadThumb 上传到 vino/uploads/thumb/
+const defaultContentPrefix = "vino/uploads"
+
+// UploadThumb 上传到 {contentPrefix}/thumb/
 func UploadThumb(ctx context.Context, buf []byte, filename, contentType string) (string, error) {
+	return UploadThumbWithContentPrefix(ctx, buf, filename, contentType, defaultContentPrefix)
+}
+
+// UploadThumbWithContentPrefix 在指定内容目录下写入缩略图
+func UploadThumbWithContentPrefix(ctx context.Context, buf []byte, filename, contentType, contentPrefix string) (string, error) {
+	contentPrefix = strings.Trim(contentPrefix, "/")
+	key := contentPrefix + "/thumb/" + filename
 	c, err := cosClient()
 	if err != nil {
 		return "", err
 	}
-	key := "vino/uploads/thumb/" + filename
 	_, err = c.Object.Put(ctx, key, bytes.NewReader(buf), &cos.ObjectPutOptions{
 		ACLHeaderOptions: &cos.ACLHeaderOptions{
 			XCosACL: "public-read",
@@ -184,7 +240,16 @@ func UploadThumb(ctx context.Context, buf []byte, filename, contentType string) 
 
 // UploadWithThumb 上传原图并生成缩略图（maxWidth 0 使用默认 400）
 func UploadWithThumb(ctx context.Context, buf []byte, filename, contentType string, maxWidth int) (url string, thumbURL string, err error) {
-	url, err = UploadCOS(ctx, buf, filename, contentType)
+	return UploadWithThumbWithContentPrefix(ctx, buf, filename, contentType, maxWidth, defaultContentPrefix)
+}
+
+// UploadWithThumbWithContentPrefix 指定内容目录前缀（如 vino/main_page、vino/items/goods/12）
+func UploadWithThumbWithContentPrefix(ctx context.Context, buf []byte, filename, contentType string, maxWidth int, contentPrefix string) (url string, thumbURL string, err error) {
+	if strings.TrimSpace(contentPrefix) == "" {
+		contentPrefix = defaultContentPrefix
+	}
+	contentPrefix = strings.Trim(contentPrefix, "/")
+	url, err = UploadCOSWithContentPrefix(ctx, buf, filename, contentType, contentPrefix)
 	if err != nil {
 		return "", "", err
 	}
@@ -196,7 +261,7 @@ func UploadWithThumb(ctx context.Context, buf []byte, filename, contentType stri
 	if len(tb) == 0 {
 		return url, "", nil
 	}
-	tu, err := UploadThumb(ctx, tb, filename, tct)
+	tu, err := UploadThumbWithContentPrefix(ctx, tb, filename, tct, contentPrefix)
 	if err != nil {
 		return url, "", nil
 	}
@@ -204,11 +269,17 @@ func UploadWithThumb(ctx context.Context, buf []byte, filename, contentType stri
 }
 
 func UploadCOS(ctx context.Context, buf []byte, filename, contentType string) (string, error) {
+	return UploadCOSWithContentPrefix(ctx, buf, filename, contentType, defaultContentPrefix)
+}
+
+// UploadCOSWithContentPrefix 原图写入 {contentPrefix}/{filename}
+func UploadCOSWithContentPrefix(ctx context.Context, buf []byte, filename, contentType, contentPrefix string) (string, error) {
+	contentPrefix = strings.Trim(contentPrefix, "/")
+	key := contentPrefix + "/" + filename
 	c, err := cosClient()
 	if err != nil {
 		return "", err
 	}
-	key := "vino/uploads/" + filename
 	_, err = c.Object.Put(ctx, key, bytes.NewReader(buf), &cos.ObjectPutOptions{
 		ACLHeaderOptions: &cos.ACLHeaderOptions{
 			XCosACL: "public-read",
@@ -224,11 +295,17 @@ func UploadCOS(ctx context.Context, buf []byte, filename, contentType string) (s
 }
 
 func UploadCOSReader(ctx context.Context, r io.Reader, filename, contentType string) (string, error) {
+	return UploadCOSReaderWithContentPrefix(ctx, r, filename, contentType, defaultContentPrefix)
+}
+
+// UploadCOSReaderWithContentPrefix 流式上传原图
+func UploadCOSReaderWithContentPrefix(ctx context.Context, r io.Reader, filename, contentType, contentPrefix string) (string, error) {
+	contentPrefix = strings.Trim(contentPrefix, "/")
+	key := contentPrefix + "/" + filename
 	c, err := cosClient()
 	if err != nil {
 		return "", err
 	}
-	key := "vino/uploads/" + filename
 	_, err = c.Object.Put(ctx, key, r, &cos.ObjectPutOptions{
 		ACLHeaderOptions: &cos.ACLHeaderOptions{
 			XCosACL: "public-read",
@@ -247,7 +324,13 @@ func IsKeyAllowedForProxy(key string) bool {
 	if key == "" || strings.Contains(key, "..") || strings.Contains(key, "\\") {
 		return false
 	}
-	return strings.HasPrefix(key, "vino/uploads/")
+	if strings.HasPrefix(key, "vino/uploads/") ||
+		strings.HasPrefix(key, "vino/main_page/") ||
+		strings.HasPrefix(key, "vino/main_animation/") ||
+		strings.HasPrefix(key, "vino/items/") {
+		return true
+	}
+	return false
 }
 
 func StreamCosObjectToResponse(ctx context.Context, key string, w http.ResponseWriter) error {

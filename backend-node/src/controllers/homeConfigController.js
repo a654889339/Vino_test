@@ -4,6 +4,13 @@ const path = require('path');
 
 const FIELDS = ['section','title','desc','icon','color','path','price','sortOrder','status','imageUrl','imageUrlThumb','titleEn','descEn','iconEn','imageUrlEn','imageUrlThumbEn'];
 
+function homeConfigContentPrefix(section) {
+  const s = String(section || '').trim();
+  if (s === 'tabbar') return 'vino/main_page';
+  if (s === 'splash' || s === 'headerLogo' || s === 'homeBg') return 'vino/main_animation';
+  return 'vino/uploads';
+}
+
 /** 将旧的 /api/media/cos?key=... 代理 URL 还原为直链 COS URL */
 function fixProxyUrl(url) {
   if (!url || typeof url !== 'string') return url;
@@ -82,7 +89,10 @@ exports.uploadImage = async (req, res) => {
     }
     const ext = path.extname(req.file.originalname) || '.png';
     const filename = `homeconfig-${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`;
-    const { url, thumbUrl } = await cosUpload.uploadWithThumb(req.file.buffer, filename, req.file.mimetype);
+    const prefix = homeConfigContentPrefix(req.body && req.body.section);
+    const { url, thumbUrl } = await cosUpload.uploadWithThumb(req.file.buffer, filename, req.file.mimetype, {
+      keyPrefix: prefix,
+    });
     res.json({ code: 0, data: { url, thumbUrl: thumbUrl || null } });
   } catch (e) {
     res.status(500).json({ code: 1, message: e.message });

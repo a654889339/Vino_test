@@ -253,7 +253,7 @@ const myProductImgFailed = reactive({});
 const featuredImgFailed = reactive({});
 
 function productIconUrl(item) {
-  const u = (item && (item.iconUrlThumb || item.iconUrl)) || '';
+  const u = (item && item.iconUrl) || '';
   if (!u) return '';
   return resolvePublicUrl(u);
 }
@@ -465,11 +465,9 @@ const myProductsDisplay = computed(() => {
       return { ...item };
     }
     const iconUrl = (g.iconUrl != null && String(g.iconUrl).trim()) ? String(g.iconUrl).trim() : (item.iconUrl || '');
-    const iconUrlThumb = (g.iconUrlThumb != null && String(g.iconUrlThumb).trim()) ? String(g.iconUrlThumb).trim() : (item.iconUrlThumb || '');
     return {
       ...item,
       iconUrl,
-      iconUrlThumb,
       productName: (g.name != null && String(g.name).trim()) ? String(g.name).trim() : (item.productName || item.productKey),
       guideIcon: (g.icon != null ? String(g.icon) : '') || (item.guideIcon || ''),
     };
@@ -539,18 +537,17 @@ const vinoProductItems = computed(() => {
         path,
         icon: i.icon || '',
         imageUrl: i.imageUrl || '',
-        imageUrlThumb: i.imageUrlThumb || '',
+        imageUrlThumb: '',
       };
     }
     const iconUrl = (g.iconUrl != null && String(g.iconUrl).trim()) ? String(g.iconUrl).trim() : '';
-    const iconUrlThumb = (g.iconUrlThumb != null && String(g.iconUrlThumb).trim()) ? String(g.iconUrlThumb).trim() : '';
     return {
       id: i.id,
       title: (g.name != null && String(g.name).trim()) ? String(g.name).trim() : (i.title || ''),
       path,
       icon: g.icon != null ? String(g.icon) : (i.icon || ''),
       imageUrl: iconUrl || (i.imageUrl || ''),
-      imageUrlThumb: iconUrlThumb || (i.imageUrlThumb || ''),
+      imageUrlThumb: '',
     };
   });
 });
@@ -566,7 +563,7 @@ function vinoIconFieldLooksLikeUrl(s) {
 }
 
 function vinoImgResolved(item) {
-  const u = item.imageUrlThumb || item.imageUrl;
+  const u = item.imageUrl;
   if (u) return resolvePublicUrl(u);
   const ic = (item.icon || '').trim();
   if (vinoIconFieldLooksLikeUrl(ic)) return resolvePublicUrl(ic);
@@ -574,7 +571,7 @@ function vinoImgResolved(item) {
 }
 
 function vinoUseImg(item) {
-  const u = (item.imageUrlThumb || item.imageUrl || '').trim();
+  const u = (item.imageUrl || '').trim();
   if (u) return true;
   return vinoIconFieldLooksLikeUrl(item.icon);
 }

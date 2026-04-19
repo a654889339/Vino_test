@@ -256,7 +256,7 @@ const myProductImgFailed = reactive({});
 const featuredImgFailed = reactive({});
 
 function productIconUrl(item) {
-  const u = (item && (item.iconUrlThumb || item.iconUrl)) || '';
+  const u = (item && item.iconUrl) || '';
   if (!u) return '';
   return resolvePublicUrl(u);
 }
@@ -471,11 +471,9 @@ const myProductsDisplay = computed(() => {
       return { ...item };
     }
     const iconUrl = pick(g, 'iconUrl') || (item.iconUrl || '');
-    const iconUrlThumb = pick(g, 'iconUrlThumb') || (item.iconUrlThumb || '');
     return {
       ...item,
       iconUrl,
-      iconUrlThumb,
       productName: pick(g, 'name') || (item.productName || item.productKey),
       guideIcon: (g.icon != null ? String(g.icon) : '') || (item.guideIcon || ''),
     };
@@ -545,18 +543,17 @@ const vinoProductItems = computed(() => {
         path,
         icon: i.icon || '',
         imageUrl: i.imageUrl || '',
-        imageUrlThumb: i.imageUrlThumb || '',
+        imageUrlThumb: '',
       };
     }
     const iconUrl = pick(g, 'iconUrl') || '';
-    const iconUrlThumb = pick(g, 'iconUrlThumb') || '';
     return {
       id: i.id,
       title: pick(g, 'name') || (i.title || ''),
       path,
       icon: g.icon != null ? String(g.icon) : (i.icon || ''),
       imageUrl: iconUrl || (i.imageUrl || ''),
-      imageUrlThumb: iconUrlThumb || (i.imageUrlThumb || ''),
+      imageUrlThumb: '',
     };
   });
 });
@@ -572,7 +569,7 @@ function vinoIconFieldLooksLikeUrl(s) {
 }
 
 function vinoImgResolved(item) {
-  const u = item.imageUrlThumb || item.imageUrl;
+  const u = item.imageUrl;
   if (u) return resolvePublicUrl(u);
   const ic = (item.icon || '').trim();
   if (vinoIconFieldLooksLikeUrl(ic)) return resolvePublicUrl(ic);
@@ -580,7 +577,7 @@ function vinoImgResolved(item) {
 }
 
 function vinoUseImg(item) {
-  const u = (item.imageUrlThumb || item.imageUrl || '').trim();
+  const u = (item.imageUrl || '').trim();
   if (u) return true;
   return vinoIconFieldLooksLikeUrl(item.icon);
 }

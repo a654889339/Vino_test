@@ -218,7 +218,12 @@ func AdminGenerateThumbs(c *gin.Context, cfg *config.Config) {
 			skipped++
 			continue
 		}
-		if _, err := services.UploadThumb(ctx, tb, fname, tct); err != nil {
+		prefix, _ := services.ContentPrefixAndFileFromKey(services.URLToKey(u))
+		if prefix == "" {
+			skipped++
+			continue
+		}
+		if _, err := services.UploadThumbWithContentPrefix(ctx, tb, fname, tct, prefix); err != nil {
 			failed++
 			continue
 		}
@@ -252,15 +257,8 @@ func fetchImageBuffer(ctx context.Context, u string) ([]byte, error) {
 }
 
 func filenameFromCosURL(u string) string {
-	base := services.CosBase() + "/vino/uploads/"
-	if !strings.HasPrefix(u, base) {
-		return ""
-	}
-	path := strings.TrimPrefix(u, base)
-	if path == "" || strings.Contains(path, "thumb/") {
-		return ""
-	}
-	return path
+	_, f := services.ContentPrefixAndFileFromKey(services.URLToKey(u))
+	return f
 }
 
 func I18nList(c *gin.Context) {

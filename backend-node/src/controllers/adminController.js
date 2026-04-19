@@ -20,12 +20,20 @@ async function fetchImageBuffer(url) {
   return Buffer.from(arr);
 }
 
-/** 从 COS 原图 URL 提取 object key 中的文件名（vino/uploads/xxx => xxx） */
+/** 从 COS 原图 URL 提取文件名（任意 vino/* 内容目录） */
 function filenameFromCosUrl(url) {
-  if (!url || !url.startsWith(cosUpload.CosBaseUrl + '/vino/uploads/')) return null;
-  const path = url.slice((cosUpload.CosBaseUrl + '/vino/uploads/').length);
-  if (!path || path.includes('thumb/')) return null;
-  return path;
+  const key = cosUpload.urlToKey(url);
+  if (!key || key.includes('/thumb/')) return null;
+  const last = key.lastIndexOf('/');
+  return last >= 0 ? key.slice(last + 1) : key;
+}
+
+function contentPrefixFromCosUrl(url) {
+  const key = cosUpload.urlToKey(url);
+  if (!key || key.includes('/thumb/')) return null;
+  const last = key.lastIndexOf('/');
+  if (last < 0) return null;
+  return key.slice(0, last);
 }
 
 /** 为已有图片批量生成缩略图并上传到 COS（仅处理本 COS 桶内的图片） */
@@ -53,7 +61,8 @@ exports.generateThumbs = async (req, res) => {
 
     for (const url of urlsToProcess) {
       const filename = filenameFromCosUrl(url);
-      if (!filename) {
+      const prefix = contentPrefixFromCosUrl(url);
+      if (!filename || !prefix) {
         results.skipped++;
         continue;
       }
@@ -74,7 +83,7 @@ exports.generateThumbs = async (req, res) => {
           results.skipped++;
           continue;
         }
-        await cosUpload.uploadThumb(thumbResult.buffer, filename, thumbResult.contentType);
+        await cosUpload.uploadThumb(thumbResult.buffer, filename, thumbResult.contentType, prefix);
         results.processed++;
       } catch (e) {
         console.warn('[Admin] generateThumb failed for', url, e.message);

@@ -182,6 +182,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   <div class="dash-sidebar" id="dashSidebar">
     <div class="dash-sidebar-item active" id="sidebarToC" onclick="switchGroup('ToC')">To C管理</div>
     <div class="dash-sidebar-item" id="sidebarOutlet" onclick="switchGroup('Outlet')">服务商/分销商管理</div>
+    <div class="dash-sidebar-item" id="sidebarDebug" onclick="switchGroup('Debug')">调试窗口</div>
   </div>
   <div class="dash-main">
   <div class="dash-topnav" id="dashTopNav">
@@ -236,6 +237,33 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <button class="refresh-btn" style="background:#7C3AED;padding:8px 20px" id="seedBtn" onclick="runSeed()">生成测试数据</button>
         </div>
         <div id="seedResult" style="margin-top:8px;font-size:13px;color:#059669"></div>
+      </div>
+    </div>
+
+    <!--调试窗口：ToC 数据 -->
+    <div class="dash-page" id="page-debugTocData">
+      <div class="dash-section">
+        <h3>ToC 数据调试窗口</h3>
+        <p style="font-size:13px;color:#666;margin-bottom:12px">审计日志上传至腾讯云 COS（<code style="font-size:12px">log/backend/</code>）；数据库备份对象键 <code style="font-size:12px">db_save/年-月/日.sql.gz</code>。生产环境建议宿主机配置 cron 执行 <code style="font-size:12px">scripts/db_backup_to_cos.sh</code>。</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <button type="button" class="refresh-btn" style="background:#0f766e;padding:8px 20px" onclick="runAuditLogBackup()">日志备份</button>
+          <button type="button" class="refresh-btn" style="background:#1d4ed8;padding:8px 20px" onclick="runDbBackup()">db备份</button>
+        </div>
+        <div id="opsBackupResult" style="margin-top:10px;font-size:13px;color:#059669;white-space:pre-wrap;word-break:break-all"></div>
+      </div>
+    </div>
+
+    <!-- 调试窗口：To C 页面配置 -->
+    <div class="dash-page" id="page-debugTocPage">
+      <div class="dash-section">
+        <h3>To C页面配置调试窗口</h3>
+        <p style="font-size:13px;color:#666;margin-bottom:16px">以下入口与「To C 管理」顶栏一致，便于从此处集中跳转调试前台页面与文案。</p>
+        <div style="display:flex;flex-wrap:wrap;gap:10px">
+          <button type="button" class="refresh-btn" onclick="switchGroup('ToC'); switchPage('homeConfig')">首页配置</button>
+          <button type="button" class="refresh-btn" onclick="switchGroup('ToC'); switchPage('homeAnimConfig')">首页动画配置</button>
+          <button type="button" class="refresh-btn" onclick="switchGroup('ToC'); switchPage('pageThemeConfig')">页面基础配置</button>
+          <button type="button" class="refresh-btn" onclick="switchGroup('ToC'); switchPage('i18nConfig')">语言翻译</button>
+        </div>
       </div>
     </div>
 
@@ -929,7 +957,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
                   <input class="form-input" id="gIconUrl" placeholder="上传自定义图标图片" style="flex:1" onchange="var p=document.getElementById('gIconPreview');if(this.value){p.src=this.value;p.style.display='block'}else{p.style.display='none'}" />
                   <label style="padding:8px 14px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">上传图标<input type="file" accept="image/*" style="display:none" onchange="uploadGuideFile(this,'gIconUrl')" /></label>
                 </div>
-                <div class="form-group" style="margin-top:6px"><label>图标缩略图 URL <span style="font-weight:normal;color:#999;font-size:12px">（可选，优先加载）</span></label><div style="display:flex;gap:8px;align-items:center"><input class="form-input" id="gIconUrlThumb" placeholder="留空则直接使用原图" style="flex:1" /><label style="padding:8px 14px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">上传图片<input type="file" accept="image/*" style="display:none" onchange="uploadGuideFile(this,'gIconUrlThumb')" /></label></div></div>
               </div>
               <div class="form-group"><label>备用Vant图标 <span style="font-weight:normal;color:#999;font-size:12px">（无自定义图标时使用）</span></label><input class="form-input" id="gIcon" placeholder="cluster-o" /></div>
               <div class="form-group"><label>Emoji</label><input class="form-input" id="gEmoji" placeholder="❄️" /></div>
@@ -953,7 +980,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
                 <input class="form-input" id="gIconUrlEn" placeholder="English icon image URL" style="flex:1" />
                 <label style="padding:8px 14px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">Upload<input type="file" accept="image/*" style="display:none" onchange="uploadGuideFile(this,'gIconUrlEn')" /></label>
               </div>
-              <div class="form-group" style="margin-top:6px"><label>Icon Thumb (EN)</label><div style="display:flex;gap:8px;align-items:center"><input class="form-input" id="gIconUrlThumbEn" placeholder="Optional" style="flex:1" /><label style="padding:8px 14px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">Upload<input type="file" accept="image/*" style="display:none" onchange="uploadGuideFile(this,'gIconUrlThumbEn')" /></label></div></div>
             </div>
             <div class="form-group"><label>Cover Image (EN)</label>
               <div style="display:flex;gap:8px;align-items:center">
@@ -1507,6 +1533,7 @@ let currentGroup = 'ToC';
 
 const tocPages = ['overview','orders','users','guides','serviceConfig','inventory','homeConfig','homeAnimConfig','pageThemeConfig','i18nConfig','messages'];
 const outletPages = ['outletOverview','outletOrders','outletUsers','outletHomeConfig','outletHomeAnimConfig','outletMineConfig','outletMessages'];
+const debugPages = ['debugTocData','debugTocPage'];
 
 const tocNavItems = [
   {page:'overview',label:'概览'},{page:'orders',label:'订单管理'},{page:'users',label:'用户管理'},
@@ -1518,6 +1545,10 @@ const outletNavItems = [
   {page:'outletOverview',label:'概览'},{page:'outletOrders',label:'订单管理'},{page:'outletUsers',label:'用户管理'},
   {page:'outletServiceConfig',label:'服务配置'},{page:'outletHomeConfig',label:'首页配置'},{page:'outletHomeAnimConfig',label:'首页动画配置'},
   {page:'outletMineConfig',label:'个人中心配置'},{page:'outletMessages',label:'留言板'}
+];
+const debugNavItems = [
+  {page:'debugTocData',label:'ToC 数据调试窗口'},
+  {page:'debugTocPage',label:'To C页面配置调试窗口'}
 ];
 
 function renderTopNav(items, activePage) {
@@ -1534,8 +1565,17 @@ function switchGroup(group) {
   currentGroup = group;
   document.querySelectorAll('.dash-sidebar-item').forEach(s => s.classList.remove('active'));
   document.getElementById('sidebar' + group).classList.add('active');
-  const firstPage = group === 'ToC' ? 'overview' : 'outletOverview';
-  const items = group === 'ToC' ? tocNavItems : outletNavItems;
+  let firstPage, items;
+  if (group === 'ToC') {
+    firstPage = 'overview';
+    items = tocNavItems;
+  } else if (group === 'Outlet') {
+    firstPage = 'outletOverview';
+    items = outletNavItems;
+  } else {
+    firstPage = 'debugTocData';
+    items = debugNavItems;
+  }
   renderTopNav(items, firstPage);
   switchPage(firstPage);
 }
@@ -1550,10 +1590,20 @@ function switchPage(page) {
   if (tocPages.includes(page)) {
     document.getElementById('sidebarToC').classList.add('active');
     document.getElementById('sidebarOutlet').classList.remove('active');
+    const sd = document.getElementById('sidebarDebug');
+    if (sd) sd.classList.remove('active');
   }
   if (outletPages.includes(page)) {
     document.getElementById('sidebarOutlet').classList.add('active');
     document.getElementById('sidebarToC').classList.remove('active');
+    const sd = document.getElementById('sidebarDebug');
+    if (sd) sd.classList.remove('active');
+  }
+  if (debugPages.includes(page)) {
+    const sd = document.getElementById('sidebarDebug');
+    if (sd) sd.classList.add('active');
+    document.getElementById('sidebarToC').classList.remove('active');
+    document.getElementById('sidebarOutlet').classList.remove('active');
   }
   if (page !== 'messages') { stopMsgPolling(); currentChatUserId = null; }
   if (page !== 'outletMessages') { stopOutletMsgPolling(); outletCurrentChatUserId = null; }
@@ -1636,6 +1686,11 @@ function showDashboard(user) {
   document.getElementById('healthLink').textContent = 'http://' + host + ':5202/api/health';
   const outletSidebar = document.getElementById('sidebarOutlet');
   if (outletSidebar) outletSidebar.style.display = user.role !== 'admin' ? 'none' : '';
+  const debugSidebar = document.getElementById('sidebarDebug');
+  if (debugSidebar) debugSidebar.style.display = user.role !== 'admin' ? 'none' : '';
+  currentGroup = 'ToC';
+  document.querySelectorAll('.dash-sidebar-item').forEach(s => s.classList.remove('active'));
+  document.getElementById('sidebarToC').classList.add('active');
   renderTopNav(tocNavItems, 'overview');
   loadOrderStats();
   loadPageVisitStats();
@@ -1808,6 +1863,46 @@ async function runSeed() {
     result.textContent = '生成失败：' + (e.message || '未知错误');
   } finally {
     btn.disabled = false; btn.textContent = '生成测试数据';
+  }
+}
+
+async function runAuditLogBackup() {
+  const el = document.getElementById('opsBackupResult');
+  el.style.color = '#059669';
+  el.textContent = '日志备份执行中…';
+  try {
+    const res = await api('/admin/ops/audit-log-backup', { method: 'POST', body: {} });
+    if (res.code !== 0) {
+      el.style.color = '#B91C1C';
+      el.textContent = res.message || '失败';
+      return;
+    }
+    const d = res.data || {};
+    el.style.color = '#059669';
+    el.textContent = JSON.stringify(d, null, 2);
+  } catch (e) {
+    el.style.color = '#B91C1C';
+    el.textContent = '请求失败：' + (e.message || '未知错误');
+  }
+}
+
+async function runDbBackup() {
+  const el = document.getElementById('opsBackupResult');
+  el.style.color = '#059669';
+  el.textContent = 'db备份执行中（大库可能需数分钟）…';
+  try {
+    const res = await api('/admin/ops/db-backup', { method: 'POST', body: {} });
+    if (res.code !== 0) {
+      el.style.color = '#B91C1C';
+      el.textContent = res.message || '失败';
+      return;
+    }
+    const d = res.data || {};
+    el.style.color = '#059669';
+    el.textContent = JSON.stringify(d, null, 2);
+  } catch (e) {
+    el.style.color = '#B91C1C';
+    el.textContent = '请求失败：' + (e.message || '未知错误');
   }
 }
 
@@ -2107,7 +2202,7 @@ async function loadGuides() {
       <td><strong>${g.name}</strong></td>
       <td style="font-size:12px;color:#6366F1;font-family:monospace">${g.slug || '<span style="color:#ccc">-</span>'}</td>
       <td style="font-size:12px;color:#666">${g.subtitle || '-'}</td>
-      <td>${g.iconUrl ? '<img src="'+(g.iconUrlThumb||g.iconUrl)+'" data-full-src="'+(g.iconUrlThumb?g.iconUrl:'')+'" style="width:36px;height:36px;object-fit:contain;border-radius:8px;background:#f5f5f5;padding:2px" class="lod-img">' : (g.icon || '-')}</td>
+      <td>${g.iconUrl ? '<img src="'+g.iconUrl+'" style="width:36px;height:36px;object-fit:contain;border-radius:8px;background:#f5f5f5;padding:2px" class="lod-img">' : (g.icon || '-')}</td>
       <td><span style="display:inline-block;padding:4px 14px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:500;transition:all .2s;${g.status==='active'?'background:#D1FAE5;color:#059669':'background:#F3F4F6;color:#999'}" onclick="toggleGuideStatus(${g.id},'${g.status}')">${g.status==='active'?'启用':'禁用'}</span></td>
       <td>${g.qrcodeUrl
         ? '<img src="'+(g.qrcodeUrlThumb||g.qrcodeUrl)+'" data-full-src="'+(g.qrcodeUrlThumb?g.qrcodeUrl:'')+'" style="width:48px;height:48px;cursor:pointer;border:1px solid #eee;border-radius:6px" onclick="showGuideQR('+g.id+',\''+escapeHtml(g.name)+'\',\''+g.qrcodeUrl+'\')" title="点击查看大图" class="lod-img" />'
@@ -2220,7 +2315,7 @@ async function uploadCategoryThumbnail(input) {
   if (!file.type.startsWith('image/')) { alert('请选择图片文件'); input.value = ''; return; }
   await runWithUploadOverlay(file.name, async () => {
     try {
-      const res = await doUpload(file);
+      const res = await doCategoryUpload(file);
       const url = res && res.data && (res.data.url || res.data.thumbUrl);
       if (res.code === 0 && url) {
         document.getElementById('categoryThumbnailUrl').value = String(url);
@@ -2244,7 +2339,7 @@ async function uploadCategoryThumbnailEn(input) {
   if (!file.type.startsWith('image/')) { alert('Please select an image'); input.value = ''; return; }
   await runWithUploadOverlay(file.name, async () => {
     try {
-      const res = await doUpload(file);
+      const res = await doCategoryUpload(file);
       const url = res && res.data && (res.data.url || res.data.thumbUrl);
       if (res.code === 0 && url) {
         document.getElementById('categoryThumbnailUrlEn').value = String(url);
@@ -2620,9 +2715,25 @@ async function runWithUploadOverlay(label, fn, options) {
   }
 }
 
-async function doUpload(file) {
-  const fd = new FormData(); fd.append('file', file);
+async function doUpload(file, assetKind) {
+  const fd = new FormData();
+  const gidEl = document.getElementById('guideEditId');
+  if (gidEl && gidEl.value) fd.append('guideId', String(gidEl.value));
+  if (assetKind) fd.append('assetKind', assetKind);
+  fd.append('file', file);
   const r = await fetch('/api/guides/admin/upload', { method:'POST', headers:{'Authorization':'Bearer '+token}, body:fd });
+  return await r.json();
+}
+
+async function doCategoryUpload(file) {
+  const token = localStorage.getItem('vino_admin_token');
+  if (!token) return { code: 1, message: '未登录或登录已过期' };
+  const cid = document.getElementById('categoryEditId').value;
+  if (!cid) return { code: 1, message: '请先保存种类后再上传图片' };
+  const fd = new FormData();
+  fd.append('categoryId', String(cid));
+  fd.append('file', file);
+  const r = await fetch(API + '/product-categories/upload', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: fd });
   return await r.json();
 }
 
@@ -2635,13 +2746,14 @@ async function uploadGuideFile(input, targetId) {
     if (!ok) { alert('请选择 PDF 文件'); input.value = ''; return; }
   }
   const el = document.getElementById(targetId);
+  const assetKind = targetId === 'gIconUrl' ? 'icon' : targetId === 'gIconUrlEn' ? 'icon_en' : '';
   await runWithUploadOverlay(file.name, async () => {
     try {
-      const res = await doUpload(file);
+      const res = await doUpload(file, assetKind);
       if (res.code === 0) {
         el.value = res.data.url;
         if (targetId === 'gCoverImage') { const p = document.getElementById('gCoverPreview'); if(p){p.src=res.data.url;p.style.display='block';} if(res.data.thumbUrl){ const t=document.getElementById('gCoverImageThumb'); if(t)t.value=res.data.thumbUrl; } }
-        if (targetId === 'gIconUrl') { const p = document.getElementById('gIconPreview'); if(p){p.src=res.data.url;p.style.display='block';} if(res.data.thumbUrl){ const t=document.getElementById('gIconUrlThumb'); if(t)t.value=res.data.thumbUrl; } }
+        if (targetId === 'gIconUrl') { const p = document.getElementById('gIconPreview'); if(p){p.src=res.data.url;p.style.display='block';} }
       } else { el.value = ''; alert(res.message||'上传失败'); }
     } catch { el.value = ''; alert('上传失败'); }
   });
@@ -2716,7 +2828,6 @@ function openGuideEditor(guide) {
   document.getElementById('gSubtitle').value = guide ? (guide.subtitle||'') : '';
   document.getElementById('gIcon').value = guide ? guide.icon : 'setting-o';
   document.getElementById('gIconUrl').value = guide ? (guide.iconUrl||'') : '';
-  document.getElementById('gIconUrlThumb').value = guide ? (guide.iconUrlThumb||'') : '';
   const iconPrev = document.getElementById('gIconPreview');
   if (guide && guide.iconUrl) { iconPrev.src = guide.iconUrl; iconPrev.style.display = 'block'; } else { iconPrev.style.display = 'none'; }
   document.getElementById('gEmoji').value = guide ? (guide.emoji||'') : '';
@@ -2739,7 +2850,6 @@ function openGuideEditor(guide) {
   document.getElementById('gBadgeEn').value = guide ? (guide.badgeEn || '') : '';
   document.getElementById('gDescriptionEn').value = guide ? (guide.descriptionEn || '') : '';
   document.getElementById('gIconUrlEn').value = guide ? (guide.iconUrlEn || '') : '';
-  document.getElementById('gIconUrlThumbEn').value = guide ? (guide.iconUrlThumbEn || '') : '';
   document.getElementById('gCoverImageEn').value = guide ? (guide.coverImageEn || '') : '';
   document.getElementById('gCoverImageThumbEn').value = guide ? (guide.coverImageThumbEn || '') : '';
   document.getElementById('gEmojiEn').value = guide ? (guide.emojiEn || '') : '';
@@ -2783,7 +2893,7 @@ async function saveGuide() {
     subtitle: document.getElementById('gSubtitle').value,
     icon: document.getElementById('gIcon').value,
     iconUrl: document.getElementById('gIconUrl').value,
-    iconUrlThumb: document.getElementById('gIconUrlThumb').value,
+    iconUrlThumb: '',
     emoji: document.getElementById('gEmoji').value,
     badge: document.getElementById('gBadge').value,
     sortOrder: parseInt(document.getElementById('gSort').value) || 0,
@@ -2801,7 +2911,7 @@ async function saveGuide() {
     badgeEn: (document.getElementById('gBadgeEn').value || '').trim(),
     descriptionEn: (document.getElementById('gDescriptionEn').value || '').trim(),
     iconUrlEn: (document.getElementById('gIconUrlEn').value || '').trim(),
-    iconUrlThumbEn: (document.getElementById('gIconUrlThumbEn').value || '').trim(),
+    iconUrlThumbEn: '',
     coverImageEn: (document.getElementById('gCoverImageEn').value || '').trim(),
     coverImageThumbEn: (document.getElementById('gCoverImageThumbEn').value || '').trim(),
     emojiEn: (document.getElementById('gEmojiEn').value || '').trim(),
@@ -3308,6 +3418,7 @@ async function uploadExploreVinoBg(input) {
     try {
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('section', 'exploreVino');
       const res = await fetch(API + '/home-config/upload', {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + token },
@@ -3337,6 +3448,7 @@ async function uploadExploreVinoBgEn(input) {
     try {
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('section', 'exploreVino');
       const res = await fetch(API + '/home-config/upload', {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + token },
@@ -3675,7 +3787,7 @@ async function saveVinoHomeProduct() {
         } else {
           body.icon = g.icon || '';
           body.imageUrl = g.iconUrl || '';
-          body.imageUrlThumb = g.iconUrlThumb || '';
+          body.imageUrlThumb = '';
           body.title = (g.name && String(g.name).trim()) || body.title;
         }
       }
@@ -3714,7 +3826,7 @@ async function saveVinoHomeProduct() {
       desc: '',
       icon: g.icon || '',
       imageUrl: g.iconUrl || '',
-      imageUrlThumb: g.iconUrlThumb || '',
+      imageUrlThumb: '',
       color: '',
       price: '',
       sortOrder: sortOrder,
@@ -3945,6 +4057,8 @@ async function uploadHCImage(input) {
     try {
       const formData = new FormData();
       formData.append('file', file);
+      const hcSec = document.getElementById('hcSection');
+      if (hcSec && hcSec.value) formData.append('section', hcSec.value);
       const res = await fetch(API + '/home-config/upload', {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + token },
@@ -3979,6 +4093,8 @@ async function uploadHCImageThumb(input) {
   await runWithUploadOverlay(file.name, async () => {
     try {
       const formData = new FormData(); formData.append('file', file);
+      const hcSec2 = document.getElementById('hcSection');
+      if (hcSec2 && hcSec2.value) formData.append('section', hcSec2.value);
       const res = await fetch(API + '/home-config/upload', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: formData }).then(r => r.json());
       if (res.code === 0 && res.data?.url) {
         const tb = document.getElementById('hcImageUrlThumb'); if (tb) tb.value = res.data.url;
@@ -3996,6 +4112,8 @@ async function uploadHCImageEn(input) {
   await runWithUploadOverlay(file.name, async () => {
     try {
       const fd = new FormData(); fd.append('file', file);
+      const hcSec3 = document.getElementById('hcSection');
+      if (hcSec3 && hcSec3.value) fd.append('section', hcSec3.value);
       const res = await fetch(API + '/home-config/upload', { method:'POST', headers:{'Authorization':'Bearer '+token}, body:fd }).then(r=>r.json());
       if (res.code === 0 && res.data?.url) {
         document.getElementById('hcImageUrlEn').value = res.data.url;
@@ -4014,6 +4132,8 @@ async function uploadHCImageThumbEn(input) {
   await runWithUploadOverlay(file.name, async () => {
     try {
       const fd = new FormData(); fd.append('file', file);
+      const hcSec4 = document.getElementById('hcSection');
+      if (hcSec4 && hcSec4.value) fd.append('section', hcSec4.value);
       const res = await fetch(API + '/home-config/upload', { method:'POST', headers:{'Authorization':'Bearer '+token}, body:fd }).then(r=>r.json());
       if (res.code === 0 && res.data?.url) {
         var tb = document.getElementById('hcImageUrlThumbEn'); if (tb) tb.value = res.data.url;
@@ -4749,6 +4869,8 @@ async function saveOutletHC(id, type) {
   const file = document.getElementById('ohcFile').files[0];
   if (file) {
     const fd = new FormData(); fd.append('file', file);
+    const ohs = document.getElementById('ohcSection');
+    if (ohs && ohs.value) fd.append('section', ohs.value);
     await runWithUploadOverlay(file.name, async () => {
       const ur = await fetch(API + '/outlet/home-config/upload', { method: 'POST', headers: { Authorization: 'Bearer ' + token }, body: fd }).then(r => r.json());
       if (ur.code === 0) { body.imageUrl = ur.data.url; if (ur.data.thumbUrl) body.imageUrlThumb = ur.data.thumbUrl; }

@@ -11,7 +11,7 @@
           <div v-if="guide.showcaseVideo" class="hero-video-wrap" @click="playVideo(fullUrl(guide.showcaseVideo))">
             <LodImg v-if="guide.coverImage" :src="fullUrl(guide.coverImage)" :thumb="guide.coverImageThumb ? fullUrl(guide.coverImageThumb) : ''" class="hero-img" />
             <div v-else class="hero-placeholder" :style="{ background: guide.gradient }">
-              <LodImg v-if="guide.iconUrl" :src="guide.iconUrl" :thumb="guide.iconUrlThumb" style="width:64px;height:64px;object-fit:contain" />
+              <LodImg v-if="guide.iconUrl" :src="guide.iconUrl" style="width:64px;height:64px;object-fit:contain" />
               <van-icon v-else :name="guide.icon" size="64" color="#fff" />
             </div>
             <div class="hero-play-btn"><van-icon name="play-circle" size="48" color="#fff" /></div>
@@ -20,7 +20,7 @@
             <LodImg :src="fullUrl(guide.coverImage)" :thumb="guide.coverImageThumb ? fullUrl(guide.coverImageThumb) : ''" class="hero-img" />
           </div>
           <div v-else class="hero-gradient" :style="{ background: guide.gradient }">
-            <LodImg v-if="guide.iconUrl" :src="guide.iconUrl" :thumb="guide.iconUrlThumb" style="width:64px;height:64px;object-fit:contain" />
+            <LodImg v-if="guide.iconUrl" :src="guide.iconUrl" style="width:64px;height:64px;object-fit:contain" />
             <van-icon v-else :name="guide.icon" size="64" color="#fff" />
             <h2>{{ guide.name }}</h2>
           </div>

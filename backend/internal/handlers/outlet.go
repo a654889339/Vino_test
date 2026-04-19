@@ -794,7 +794,8 @@ func outletHCUpload(c *gin.Context, cfg *config.Config) {
 	}
 	filename := "outlet-homeconfig-" + strconv.FormatInt(time.Now().UnixMilli(), 10) + "-" + randomHex6() + ext
 	ct := fh.Header.Get("Content-Type")
-	url, thumb, err := services.UploadWithThumb(c.Request.Context(), buf, filename, ct, 0)
+	prefix := homeConfigContentPrefix(c.PostForm("section"))
+	url, thumb, err := services.UploadWithThumbWithContentPrefix(c.Request.Context(), buf, filename, ct, 0, prefix)
 	if err != nil {
 		resp.Err(c, 500, 1, err.Error())
 		return

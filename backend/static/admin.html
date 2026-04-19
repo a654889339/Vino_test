@@ -957,7 +957,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
                   <input class="form-input" id="gIconUrl" placeholder="上传自定义图标图片" style="flex:1" onchange="var p=document.getElementById('gIconPreview');if(this.value){p.src=this.value;p.style.display='block'}else{p.style.display='none'}" />
                   <label style="padding:8px 14px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">上传图标<input type="file" accept="image/*" style="display:none" onchange="uploadGuideFile(this,'gIconUrl')" /></label>
                 </div>
-                <div class="form-group" style="margin-top:6px"><label>图标缩略图 URL <span style="font-weight:normal;color:#999;font-size:12px">（可选，优先加载）</span></label><div style="display:flex;gap:8px;align-items:center"><input class="form-input" id="gIconUrlThumb" placeholder="留空则直接使用原图" style="flex:1" /><label style="padding:8px 14px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">上传图片<input type="file" accept="image/*" style="display:none" onchange="uploadGuideFile(this,'gIconUrlThumb')" /></label></div></div>
               </div>
               <div class="form-group"><label>备用Vant图标 <span style="font-weight:normal;color:#999;font-size:12px">（无自定义图标时使用）</span></label><input class="form-input" id="gIcon" placeholder="cluster-o" /></div>
               <div class="form-group"><label>Emoji</label><input class="form-input" id="gEmoji" placeholder="❄️" /></div>
@@ -981,7 +980,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
                 <input class="form-input" id="gIconUrlEn" placeholder="English icon image URL" style="flex:1" />
                 <label style="padding:8px 14px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">Upload<input type="file" accept="image/*" style="display:none" onchange="uploadGuideFile(this,'gIconUrlEn')" /></label>
               </div>
-              <div class="form-group" style="margin-top:6px"><label>Icon Thumb (EN)</label><div style="display:flex;gap:8px;align-items:center"><input class="form-input" id="gIconUrlThumbEn" placeholder="Optional" style="flex:1" /><label style="padding:8px 14px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">Upload<input type="file" accept="image/*" style="display:none" onchange="uploadGuideFile(this,'gIconUrlThumbEn')" /></label></div></div>
             </div>
             <div class="form-group"><label>Cover Image (EN)</label>
               <div style="display:flex;gap:8px;align-items:center">
@@ -2204,7 +2202,7 @@ async function loadGuides() {
       <td><strong>${g.name}</strong></td>
       <td style="font-size:12px;color:#6366F1;font-family:monospace">${g.slug || '<span style="color:#ccc">-</span>'}</td>
       <td style="font-size:12px;color:#666">${g.subtitle || '-'}</td>
-      <td>${g.iconUrl ? '<img src="'+(g.iconUrlThumb||g.iconUrl)+'" data-full-src="'+(g.iconUrlThumb?g.iconUrl:'')+'" style="width:36px;height:36px;object-fit:contain;border-radius:8px;background:#f5f5f5;padding:2px" class="lod-img">' : (g.icon || '-')}</td>
+      <td>${g.iconUrl ? '<img src="'+g.iconUrl+'" style="width:36px;height:36px;object-fit:contain;border-radius:8px;background:#f5f5f5;padding:2px" class="lod-img">' : (g.icon || '-')}</td>
       <td><span style="display:inline-block;padding:4px 14px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:500;transition:all .2s;${g.status==='active'?'background:#D1FAE5;color:#059669':'background:#F3F4F6;color:#999'}" onclick="toggleGuideStatus(${g.id},'${g.status}')">${g.status==='active'?'启用':'禁用'}</span></td>
       <td>${g.qrcodeUrl
         ? '<img src="'+(g.qrcodeUrlThumb||g.qrcodeUrl)+'" data-full-src="'+(g.qrcodeUrlThumb?g.qrcodeUrl:'')+'" style="width:48px;height:48px;cursor:pointer;border:1px solid #eee;border-radius:6px" onclick="showGuideQR('+g.id+',\''+escapeHtml(g.name)+'\',\''+g.qrcodeUrl+'\')" title="点击查看大图" class="lod-img" />'
@@ -2317,7 +2315,7 @@ async function uploadCategoryThumbnail(input) {
   if (!file.type.startsWith('image/')) { alert('请选择图片文件'); input.value = ''; return; }
   await runWithUploadOverlay(file.name, async () => {
     try {
-      const res = await doUpload(file);
+      const res = await doCategoryUpload(file);
       const url = res && res.data && (res.data.url || res.data.thumbUrl);
       if (res.code === 0 && url) {
         document.getElementById('categoryThumbnailUrl').value = String(url);
@@ -2341,7 +2339,7 @@ async function uploadCategoryThumbnailEn(input) {
   if (!file.type.startsWith('image/')) { alert('Please select an image'); input.value = ''; return; }
   await runWithUploadOverlay(file.name, async () => {
     try {
-      const res = await doUpload(file);
+      const res = await doCategoryUpload(file);
       const url = res && res.data && (res.data.url || res.data.thumbUrl);
       if (res.code === 0 && url) {
         document.getElementById('categoryThumbnailUrlEn').value = String(url);
@@ -2717,9 +2715,25 @@ async function runWithUploadOverlay(label, fn, options) {
   }
 }
 
-async function doUpload(file) {
-  const fd = new FormData(); fd.append('file', file);
+async function doUpload(file, assetKind) {
+  const fd = new FormData();
+  const gidEl = document.getElementById('guideEditId');
+  if (gidEl && gidEl.value) fd.append('guideId', String(gidEl.value));
+  if (assetKind) fd.append('assetKind', assetKind);
+  fd.append('file', file);
   const r = await fetch('/api/guides/admin/upload', { method:'POST', headers:{'Authorization':'Bearer '+token}, body:fd });
+  return await r.json();
+}
+
+async function doCategoryUpload(file) {
+  const token = localStorage.getItem('vino_admin_token');
+  if (!token) return { code: 1, message: '未登录或登录已过期' };
+  const cid = document.getElementById('categoryEditId').value;
+  if (!cid) return { code: 1, message: '请先保存种类后再上传图片' };
+  const fd = new FormData();
+  fd.append('categoryId', String(cid));
+  fd.append('file', file);
+  const r = await fetch(API + '/product-categories/upload', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: fd });
   return await r.json();
 }
 
@@ -2732,13 +2746,14 @@ async function uploadGuideFile(input, targetId) {
     if (!ok) { alert('请选择 PDF 文件'); input.value = ''; return; }
   }
   const el = document.getElementById(targetId);
+  const assetKind = targetId === 'gIconUrl' ? 'icon' : targetId === 'gIconUrlEn' ? 'icon_en' : '';
   await runWithUploadOverlay(file.name, async () => {
     try {
-      const res = await doUpload(file);
+      const res = await doUpload(file, assetKind);
       if (res.code === 0) {
         el.value = res.data.url;
         if (targetId === 'gCoverImage') { const p = document.getElementById('gCoverPreview'); if(p){p.src=res.data.url;p.style.display='block';} if(res.data.thumbUrl){ const t=document.getElementById('gCoverImageThumb'); if(t)t.value=res.data.thumbUrl; } }
-        if (targetId === 'gIconUrl') { const p = document.getElementById('gIconPreview'); if(p){p.src=res.data.url;p.style.display='block';} if(res.data.thumbUrl){ const t=document.getElementById('gIconUrlThumb'); if(t)t.value=res.data.thumbUrl; } }
+        if (targetId === 'gIconUrl') { const p = document.getElementById('gIconPreview'); if(p){p.src=res.data.url;p.style.display='block';} }
       } else { el.value = ''; alert(res.message||'上传失败'); }
     } catch { el.value = ''; alert('上传失败'); }
   });
@@ -2813,7 +2828,6 @@ function openGuideEditor(guide) {
   document.getElementById('gSubtitle').value = guide ? (guide.subtitle||'') : '';
   document.getElementById('gIcon').value = guide ? guide.icon : 'setting-o';
   document.getElementById('gIconUrl').value = guide ? (guide.iconUrl||'') : '';
-  document.getElementById('gIconUrlThumb').value = guide ? (guide.iconUrlThumb||'') : '';
   const iconPrev = document.getElementById('gIconPreview');
   if (guide && guide.iconUrl) { iconPrev.src = guide.iconUrl; iconPrev.style.display = 'block'; } else { iconPrev.style.display = 'none'; }
   document.getElementById('gEmoji').value = guide ? (guide.emoji||'') : '';
@@ -2836,7 +2850,6 @@ function openGuideEditor(guide) {
   document.getElementById('gBadgeEn').value = guide ? (guide.badgeEn || '') : '';
   document.getElementById('gDescriptionEn').value = guide ? (guide.descriptionEn || '') : '';
   document.getElementById('gIconUrlEn').value = guide ? (guide.iconUrlEn || '') : '';
-  document.getElementById('gIconUrlThumbEn').value = guide ? (guide.iconUrlThumbEn || '') : '';
   document.getElementById('gCoverImageEn').value = guide ? (guide.coverImageEn || '') : '';
   document.getElementById('gCoverImageThumbEn').value = guide ? (guide.coverImageThumbEn || '') : '';
   document.getElementById('gEmojiEn').value = guide ? (guide.emojiEn || '') : '';
@@ -2880,7 +2893,7 @@ async function saveGuide() {
     subtitle: document.getElementById('gSubtitle').value,
     icon: document.getElementById('gIcon').value,
     iconUrl: document.getElementById('gIconUrl').value,
-    iconUrlThumb: document.getElementById('gIconUrlThumb').value,
+    iconUrlThumb: '',
     emoji: document.getElementById('gEmoji').value,
     badge: document.getElementById('gBadge').value,
     sortOrder: parseInt(document.getElementById('gSort').value) || 0,
@@ -2898,7 +2911,7 @@ async function saveGuide() {
     badgeEn: (document.getElementById('gBadgeEn').value || '').trim(),
     descriptionEn: (document.getElementById('gDescriptionEn').value || '').trim(),
     iconUrlEn: (document.getElementById('gIconUrlEn').value || '').trim(),
-    iconUrlThumbEn: (document.getElementById('gIconUrlThumbEn').value || '').trim(),
+    iconUrlThumbEn: '',
     coverImageEn: (document.getElementById('gCoverImageEn').value || '').trim(),
     coverImageThumbEn: (document.getElementById('gCoverImageThumbEn').value || '').trim(),
     emojiEn: (document.getElementById('gEmojiEn').value || '').trim(),
@@ -3405,6 +3418,7 @@ async function uploadExploreVinoBg(input) {
     try {
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('section', 'exploreVino');
       const res = await fetch(API + '/home-config/upload', {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + token },
@@ -3434,6 +3448,7 @@ async function uploadExploreVinoBgEn(input) {
     try {
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('section', 'exploreVino');
       const res = await fetch(API + '/home-config/upload', {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + token },
@@ -3772,7 +3787,7 @@ async function saveVinoHomeProduct() {
         } else {
           body.icon = g.icon || '';
           body.imageUrl = g.iconUrl || '';
-          body.imageUrlThumb = g.iconUrlThumb || '';
+          body.imageUrlThumb = '';
           body.title = (g.name && String(g.name).trim()) || body.title;
         }
       }
@@ -3811,7 +3826,7 @@ async function saveVinoHomeProduct() {
       desc: '',
       icon: g.icon || '',
       imageUrl: g.iconUrl || '',
-      imageUrlThumb: g.iconUrlThumb || '',
+      imageUrlThumb: '',
       color: '',
       price: '',
       sortOrder: sortOrder,
@@ -4042,6 +4057,8 @@ async function uploadHCImage(input) {
     try {
       const formData = new FormData();
       formData.append('file', file);
+      const hcSec = document.getElementById('hcSection');
+      if (hcSec && hcSec.value) formData.append('section', hcSec.value);
       const res = await fetch(API + '/home-config/upload', {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + token },
@@ -4076,6 +4093,8 @@ async function uploadHCImageThumb(input) {
   await runWithUploadOverlay(file.name, async () => {
     try {
       const formData = new FormData(); formData.append('file', file);
+      const hcSec2 = document.getElementById('hcSection');
+      if (hcSec2 && hcSec2.value) formData.append('section', hcSec2.value);
       const res = await fetch(API + '/home-config/upload', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: formData }).then(r => r.json());
       if (res.code === 0 && res.data?.url) {
         const tb = document.getElementById('hcImageUrlThumb'); if (tb) tb.value = res.data.url;
@@ -4093,6 +4112,8 @@ async function uploadHCImageEn(input) {
   await runWithUploadOverlay(file.name, async () => {
     try {
       const fd = new FormData(); fd.append('file', file);
+      const hcSec3 = document.getElementById('hcSection');
+      if (hcSec3 && hcSec3.value) fd.append('section', hcSec3.value);
       const res = await fetch(API + '/home-config/upload', { method:'POST', headers:{'Authorization':'Bearer '+token}, body:fd }).then(r=>r.json());
       if (res.code === 0 && res.data?.url) {
         document.getElementById('hcImageUrlEn').value = res.data.url;
@@ -4111,6 +4132,8 @@ async function uploadHCImageThumbEn(input) {
   await runWithUploadOverlay(file.name, async () => {
     try {
       const fd = new FormData(); fd.append('file', file);
+      const hcSec4 = document.getElementById('hcSection');
+      if (hcSec4 && hcSec4.value) fd.append('section', hcSec4.value);
       const res = await fetch(API + '/home-config/upload', { method:'POST', headers:{'Authorization':'Bearer '+token}, body:fd }).then(r=>r.json());
       if (res.code === 0 && res.data?.url) {
         var tb = document.getElementById('hcImageUrlThumbEn'); if (tb) tb.value = res.data.url;
@@ -4846,6 +4869,8 @@ async function saveOutletHC(id, type) {
   const file = document.getElementById('ohcFile').files[0];
   if (file) {
     const fd = new FormData(); fd.append('file', file);
+    const ohs = document.getElementById('ohcSection');
+    if (ohs && ohs.value) fd.append('section', ohs.value);
     await runWithUploadOverlay(file.name, async () => {
       const ur = await fetch(API + '/outlet/home-config/upload', { method: 'POST', headers: { Authorization: 'Bearer ' + token }, body: fd }).then(r => r.json());
       if (ur.code === 0) { body.imageUrl = ur.data.url; if (ur.data.thumbUrl) body.imageUrlThumb = ur.data.thumbUrl; }

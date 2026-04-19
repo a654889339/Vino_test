@@ -47,7 +47,6 @@ Page({
         const myProducts = list.map(item => ({
           ...item,
           iconUrl: item.iconUrl ? toFull(item.iconUrl) : '',
-          iconUrlThumb: item.iconUrlThumb ? toFull(item.iconUrlThumb) : '',
         }));
         this.setData({ myProducts });
       })
@@ -168,20 +167,16 @@ Page({
           const g = path ? (guidesBySlug[path] || guidesBySlug[path.toLowerCase()]) : null;
           let title = row.title || '';
           let iconUrl = '';
-          let iconUrlThumb = '';
           if (g) {
             title = (g.name && String(g.name).trim()) || title;
             iconUrl = (g.iconUrl && String(g.iconUrl).trim()) || '';
-            iconUrlThumb = (g.iconUrlThumb && String(g.iconUrlThumb).trim()) || '';
           }
           if (!iconUrl && row.imageUrl) iconUrl = row.imageUrl;
-          if (!iconUrlThumb && row.imageUrlThumb) iconUrlThumb = row.imageUrlThumb;
           return {
             id: row.id,
             title,
             path,
             iconUrl: iconUrl ? toFull(iconUrl) : '',
-            iconUrlThumb: iconUrlThumb ? toFull(iconUrlThumb) : '',
           };
         });
 

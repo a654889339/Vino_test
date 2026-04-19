@@ -7,6 +7,11 @@ const CosBaseUrl = `https://${Bucket}.cos.${Region}.myqcloud.com`;
 const THUMB_MAX_WIDTH = 400;
 const THUMB_JPEG_QUALITY = 82;
 const SIGN_EXPIRES_SEC = parseInt(process.env.COS_SIGN_EXPIRES_SEC || '3600', 10);
+const DEFAULT_CONTENT_PREFIX = 'vino/uploads';
+
+function normPrefix(p) {
+  return String(p || DEFAULT_CONTENT_PREFIX).replace(/^\/+|\/+$/g, '');
+}
 
 let cosClient = null;
 
@@ -46,14 +51,35 @@ function isAlreadySignedCosUrl(url) {
   );
 }
 
+function thumbKeyFromOriginalKey(key) {
+  if (!key || typeof key !== 'string' || key.includes('..') || key.includes('/thumb/')) return null;
+  const last = key.lastIndexOf('/');
+  if (last < 0) return null;
+  const parent = key.slice(0, last);
+  const base = key.slice(last + 1);
+  if (!base) return null;
+  return `${parent}/thumb/${base}`;
+}
+
 /** 根据原图 URL 推导缩略图 URL（仅对本站 COS 地址有效，不含签名） */
 function getThumbUrl(originalUrl) {
   if (!originalUrl || typeof originalUrl !== 'string') return null;
-  const base = `${CosBaseUrl}/vino/uploads/`;
-  if (!originalUrl.startsWith(base)) return null;
-  const suffix = originalUrl.slice(base.length);
-  if (!suffix || suffix.includes('thumb/')) return null;
-  return `${CosBaseUrl}/vino/uploads/thumb/${suffix}`;
+  const k = urlToKey(originalUrl);
+  if (!k) return null;
+  const tk = thumbKeyFromOriginalKey(k);
+  if (!tk) return null;
+  return `${CosBaseUrl}/${tk}`;
+}
+
+function isCosOriginalObjectKey(key) {
+  if (!key || typeof key !== 'string' || key.includes('..') || key.includes('\\')) return false;
+  if (key.includes('/thumb/')) return false;
+  return (
+    key.startsWith('vino/uploads/') ||
+    key.startsWith('vino/main_page/') ||
+    key.startsWith('vino/main_animation/') ||
+    key.startsWith('vino/items/')
+  );
 }
 
 /** 判断 URL 是否为本 COS 桶的上传地址（可用于决定是否生成缩略图） */
@@ -61,9 +87,11 @@ function isCosUploadUrl(url) {
   if (!url || typeof url !== 'string') return false;
   if (isAlreadySignedCosUrl(url)) {
     const k = urlToKey(url);
-    return !!(k && k.startsWith('vino/uploads/') && !k.includes('/vino/uploads/thumb/'));
+    return !!(k && isCosOriginalObjectKey(k));
   }
-  return url.startsWith(CosBaseUrl + '/vino/uploads/') && !url.includes('/vino/uploads/thumb/');
+  if (!url.startsWith(CosBaseUrl + '/')) return false;
+  const k = urlToKey(url);
+  return !!(k && isCosOriginalObjectKey(k));
 }
 
 /** 使用 sharp 生成缩略图 buffer（最大宽 maxWidth，保持比例） */
@@ -146,7 +174,12 @@ async function signCosUrlsDeepAsync(val, seen = new WeakSet()) {
 function isKeyAllowedForProxy(key) {
   if (!key || typeof key !== 'string') return false;
   if (key.includes('..') || key.includes('\\')) return false;
-  return key.startsWith('vino/uploads/');
+  return (
+    key.startsWith('vino/uploads/') ||
+    key.startsWith('vino/main_page/') ||
+    key.startsWith('vino/main_animation/') ||
+    key.startsWith('vino/items/')
+  );
 }
 
 /** 已是本服务 COS 代理地址（避免重复替换） */
@@ -236,11 +269,12 @@ function getObjectBuffer(key) {
   });
 }
 
-function upload(buffer, filename, contentType) {
+function upload(buffer, filename, contentType, contentPrefix = DEFAULT_CONTENT_PREFIX) {
   return new Promise((resolve, reject) => {
     const client = getClient();
     if (!client) return reject(new Error('COS not configured'));
-    const key = `vino/uploads/${filename}`;
+    const cp = normPrefix(contentPrefix);
+    const key = `${cp}/${filename}`;
     client.putObject(
       {
         Bucket,
@@ -258,12 +292,13 @@ function upload(buffer, filename, contentType) {
   });
 }
 
-/** 上传到缩略图目录 vino/uploads/thumb/ */
-function uploadThumb(buffer, filename, contentType) {
+/** 上传到 {contentPrefix}/thumb/ */
+function uploadThumb(buffer, filename, contentType, contentPrefix = DEFAULT_CONTENT_PREFIX) {
   return new Promise((resolve, reject) => {
     const client = getClient();
     if (!client) return reject(new Error('COS not configured'));
-    const key = `vino/uploads/thumb/${filename}`;
+    const cp = normPrefix(contentPrefix);
+    const key = `${cp}/thumb/${filename}`;
     client.putObject(
       {
         Bucket,
@@ -281,14 +316,15 @@ function uploadThumb(buffer, filename, contentType) {
   });
 }
 
-/** 上传原图并生成并上传缩略图，返回 { url, thumbUrl }；缩略图失败时 thumbUrl 为 null。opts.maxWidth 可指定缩略图最大宽（默认 400） */
+/** 上传原图并生成并上传缩略图，返回 { url, thumbUrl }；opts.keyPrefix / opts.contentPrefix 指定目录前缀；opts.maxWidth 缩略图最大宽（默认 400） */
 async function uploadWithThumb(buffer, filename, contentType, opts = {}) {
-  const url = await upload(buffer, filename, contentType);
+  const cp = opts.keyPrefix || opts.contentPrefix || DEFAULT_CONTENT_PREFIX;
+  const url = await upload(buffer, filename, contentType, cp);
   const thumbResult = await generateThumbBuffer(buffer, contentType, opts.maxWidth);
   let thumbUrl = null;
   if (thumbResult && thumbResult.buffer) {
     try {
-      thumbUrl = await uploadThumb(thumbResult.buffer, filename, thumbResult.contentType);
+      thumbUrl = await uploadThumb(thumbResult.buffer, filename, thumbResult.contentType, cp);
     } catch (e) {
       console.warn('[COS] uploadThumb error:', e.message);
     }
@@ -327,6 +363,7 @@ module.exports = {
   generateThumbBuffer,
   CosBaseUrl,
   urlToKey,
+  thumbKeyFromOriginalKey,
   getObjectBuffer,
   signCosUrlsDeepAsync,
   proxyCosUrlsDeepAsync,
@@ -335,4 +372,5 @@ module.exports = {
   isSigningEnabled,
   setObjectPublicRead,
   ensurePublicRead,
+  DEFAULT_CONTENT_PREFIX,
 };

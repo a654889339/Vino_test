@@ -4,6 +4,13 @@ const path = require('path');
 
 const FIELDS = ['section','title','desc','icon','color','path','price','sortOrder','status','imageUrl','imageUrlThumb'];
 
+function outletHomeConfigContentPrefix(section) {
+  const s = String(section || '').trim();
+  if (s === 'tabbar') return 'vino/main_page';
+  if (s === 'splash' || s === 'headerLogo' || s === 'homeBg') return 'vino/main_animation';
+  return 'vino/uploads';
+}
+
 exports.list = async (req, res) => {
   try {
     const where = {};
@@ -53,7 +60,10 @@ exports.uploadImage = async (req, res) => {
     if (!req.file) return res.status(400).json({ code: 1, message: '请选择图片文件' });
     const ext = path.extname(req.file.originalname) || '.png';
     const filename = `outlet-homeconfig-${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`;
-    const { url, thumbUrl } = await cosUpload.uploadWithThumb(req.file.buffer, filename, req.file.mimetype);
+    const prefix = outletHomeConfigContentPrefix(req.body && req.body.section);
+    const { url, thumbUrl } = await cosUpload.uploadWithThumb(req.file.buffer, filename, req.file.mimetype, {
+      keyPrefix: prefix,
+    });
     res.json({ code: 0, data: { url, thumbUrl: thumbUrl || null } });
   } catch (e) { res.status(500).json({ code: 1, message: e.message }); }
 };
