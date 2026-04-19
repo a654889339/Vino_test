@@ -25,8 +25,13 @@ description: >-
 |------|----------|----------|----------------|
 | **管理端「db备份」** | `vino-backend` 容器内 | `PutBackupObject`（SDK，`services/cos.go`） | `db_save/{主库名}/YYYY-MM/DD.sql.gz`（`cfg.DB.Name` + `time.Local`） |
 | **宿主机定时备份（推荐生产）** | 宿主机 shell + `docker exec` | **coscli** 命令行 | 同上：`db_save/${DB_NAME}/YYYY-MM/DD.sql.gz`（`TZ=Asia/Shanghai`） |
+| **进程内整点备份（新）** | `vino-backend` goroutine | `PutBackupObject`（同 SDK） | `db_save/{主库名}/YYYY-MM-DD/HH.sql.gz`（两位 HH，`Asia/Shanghai`） |
 
-> 对象键规则（方案 A，当前仓库规则）：**按主库名分目录**。管理端按钮跟随 `cfg.DB.Name` → 切主库后备份不会覆盖其他库的同日对象；宿主机脚本读 `.env` 的 `DB_NAME`。**不再产生扁平历史路径 `db_save/YYYY-MM/DD.sql.gz`**，但恢复侧仅要求 `/db_save/` 前缀，历史对象仍可用于恢复。
+> 对象键规则（方案 A）：**按主库名分目录**。
+> - 日/手动路径：`db_save/{db}/YYYY-MM/DD.sql.gz`
+> - 小时/进程内路径：`db_save/{db}/YYYY-MM-DD/HH.sql.gz`
+>
+> 两种路径**不会互相覆盖**；管理端按钮跟随 `cfg.DB.Name`（切主库后跟随切换），宿主机脚本固定读 `.env` 的 `DB_NAME`。**不再产生扁平历史路径 `db_save/YYYY-MM/DD.sql.gz`**，但恢复侧仅要求 `/db_save/` 前缀，历史对象仍可用于恢复。
 
 **设计原则（吸收自跨项目实践）**
 
@@ -71,6 +76,34 @@ description: >-
 
 ---
 
+## 路径三：进程内整点备份（`StartHourlyDbBackup`）
+
+### 入口与实现
+
+- 注册位置：`backend/cmd/server/main.go`，在 `audit.StartUploader(cfg)` 之后调用 `handlers.StartHourlyDbBackup(cfg)`。
+- 实现：`backend/internal/handlers/db_backup_scheduler.go`
+  - `time.Ticker` 每 60s 一次 tick；
+  - 上海时区 `time.Now().In(shanghaiLoc).Hour()` 与上次记录值不同即触发一次备份；
+  - 对象键 `db_save/{cfg.DB.Name}/YYYY-MM-DD/HH.sql.gz`（`%02d` HH）；
+  - 复用 `runDbBackupCore(ctx, cfg, cosKey)`，与管理端按钮走同一份 mysqldump/gzip/上传逻辑；
+  - 失败只 `log.Printf`，`recover()` 兜底；
+  - 首次启动**不立刻备份**，以启动时刻的小时为基准，下一个整点才触发。
+
+### 何时会漏备份 / 何时会补跑
+
+- 进程刚启动到第一个整点之间：**漏**（按设计）。
+- 容器被 `docker compose up -d --build` Recreate：若跨越整点，Recreate 完成后的下一次 tick 会检测到 Hour 不同，**触发一次**（最终也能落一份；但不会"补"已错过的小时）。
+- 业务繁忙导致 mysqldump 超过 60s：下一次 tick 只是再次比较 Hour，不会重复入队；即使单次备份耗时数分钟，也不会并发执行。
+- `cfg.DB.Name` 不合法（正则 `^[A-Za-z0-9_]{1,64}$`）：跳过这一小时，写日志。
+
+### 失败不影响业务
+
+- 调度器独立 goroutine；业务请求不等它。
+- `runDbBackupCore` 内部对 mysqldump / gzip / PutBackupObject 的错误都是 `return nil, err`，不会写坏数据也不会使 DB 进入异常状态。
+- 行数统计失败时 `tablesNote` 会记错因，但对象仍已上传。
+
+---
+
 ## 路径二：宿主机脚本 `scripts/db_backup_to_cos.sh`
 
 ### 依赖
@@ -93,8 +126,9 @@ description: >-
 
 ## COS 与对象键
 
-- **键名**：`db_save/{主库名}/{年-月}/{日}.sql.gz`，例如 `db_save/vino_db/2026-04/19.sql.gz`。
-- **主库名段**：`adminPostDbBackup` 用 `cfg.DB.Name`（跟随 `active_db` 文件）；脚本用 `.env` 的 `DB_NAME`。均需匹配 `^[A-Za-z0-9_]{1,64}$`，否则拒绝上传。
+- **键名（手动 / cron 日路径）**：`db_save/{主库名}/{年-月}/{日}.sql.gz`，例如 `db_save/vino_db/2026-04/19.sql.gz`。
+- **键名（进程内小时路径）**：`db_save/{主库名}/{年-月-日}/{时}.sql.gz`，例如 `db_save/vino_db/2026-04-19/17.sql.gz`。
+- **主库名段**：`adminPostDbBackup` / `StartHourlyDbBackup` 均用 `cfg.DB.Name`（跟随 `active_db` 文件）；脚本用 `.env` 的 `DB_NAME`。均需匹配 `^[A-Za-z0-9_]{1,64}$`，否则拒绝上传。
 - **校验**：`PutBackupObject` / `validateBackupKey` 允许前缀 `db_save/`（及 `log/backend/` 等），见 `backend/internal/services/cos.go`。
 - **桶**：默认与业务上传共用（环境变量 `COS_*`），新加坡地域等以实际 `.env` 为准。
 - **历史路径**：扁平路径 `db_save/YYYY-MM/DD.sql.gz` 不再生成，但恢复接口按 `/db_save/` 前缀校验，老对象仍可恢复。
@@ -161,5 +195,7 @@ description: >-
 | COS 备份上传 / key 校验 | `backend/internal/services/cos.go`（`PutBackupObject`、`validateBackupKey`） |
 | 后端镜像 mysqldump 依赖 | `backend/Dockerfile`（`mysql-client`） |
 | 宿主机备份脚本 | `scripts/db_backup_to_cos.sh` |
+| 进程内整点调度器 | `backend/internal/handlers/db_backup_scheduler.go`（`StartHourlyDbBackup`） |
+| 调度器启动入口 | `backend/cmd/server/main.go` |
 | 部署与 DB 服务名 | 根目录 `docker-compose.yaml`（`vino-mysql`、`vino-backend`） |
 | 管理端「db备份」按钮 | `backend/static/admin.html`（`runDbBackup`） |

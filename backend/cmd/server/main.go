@@ -35,6 +35,8 @@ func main() {
 		log.Printf("[Vino] COS 密钥未就绪: 审计日志仅写本地目录 %s；配置 COS_SECRET_ID/COS_SECRET_KEY 并重启后可自动上云", cfg.Log.BackendDir)
 	}
 	audit.StartUploader(cfg)
+	// 进程内整点 db 备份（60s tick，跨整点触发一次，键 db_save/{db}/YYYY-MM-DD/HH.sql.gz，TZ=Asia/Shanghai）
+	handlers.StartHourlyDbBackup(cfg)
 	if err := bootstrap.Run(); err != nil {
 		log.Fatalf("[Vino] bootstrap: %v", err)
 	}

@@ -47,16 +47,33 @@ func adminPostAuditLogBackup(c *gin.Context, cfg *config.Config) {
 	})
 }
 
-// POST /api/admin/ops/db-backup — 优先在 MySQL 官方容器内 mysqldump（兼容 caching_sha2_password），
-// 回退到 backend 容器内本机 mysqldump（Alpine mysql-client 实为 MariaDB，仅作兜底）。gzip 后上传至 COS db_save/。
-func adminPostDbBackup(c *gin.Context, cfg *config.Config) {
+// dbBackupResult 一次 db 备份的产物与计量信息；既用于 HTTP 响应，也用于后台调度器日志。
+type dbBackupResult struct {
+	CosKey       string
+	Bytes        int
+	SqlBytes     int
+	Database     string
+	Bucket       string
+	ElapsedMs    int64
+	ElapsedHuman string
+	Tables       []dbTableCount
+	TableCount   int
+	TotalRows    int64
+	TablesNote   string
+}
+
+// runDbBackupCore 执行一次「mysqldump → gzip → PutBackupObject → COUNT(*)」。
+// cosKey 为空时使用默认「日路径」db_save/{dbname}/YYYY-MM/DD.sql.gz（手动触发）；
+// 传入时原样使用（例如调度器的 db_save/{dbname}/YYYY-MM-DD/HH.sql.gz）。
+func runDbBackupCore(ctx context.Context, cfg *config.Config, cosKey string) (*dbBackupResult, error) {
 	if !cfg.COSConfigured() {
-		resp.Err(c, 503, 503, "COS 未配置，无法上传数据库备份")
-		return
+		return nil, fmt.Errorf("COS 未配置，无法上传数据库备份")
 	}
 	start := time.Now()
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 25*time.Minute)
-	defer cancel()
+	dbSeg := cfg.DB.Name
+	if !dbNameIdent.MatchString(dbSeg) {
+		return nil, fmt.Errorf("当前主库名不合法，拒绝写入 COS：%s", dbSeg)
+	}
 
 	dumpArgs := []string{
 		"-u" + cfg.DB.User,
@@ -65,7 +82,7 @@ func adminPostDbBackup(c *gin.Context, cfg *config.Config) {
 		"--events",
 		"--set-gtid-purged=OFF",
 		"--databases",
-		cfg.DB.Name,
+		dbSeg,
 	}
 
 	useDocker := false
@@ -90,8 +107,7 @@ func adminPostDbBackup(c *gin.Context, cfg *config.Config) {
 		cmd = exec.CommandContext(ctx, "docker", args...)
 	} else {
 		if _, err := exec.LookPath("mysqldump"); err != nil {
-			resp.Err(c, 503, 503, "未挂载 /var/run/docker.sock 且容器内未找到 mysqldump；请挂载 docker.sock（推荐，走 mysql:8.0 容器）或在镜像中安装兼容 caching_sha2 的 mysql-client")
-			return
+			return nil, fmt.Errorf("未挂载 /var/run/docker.sock 且容器内未找到 mysqldump；请挂载 docker.sock（推荐，走 mysql:8.0 容器）或在镜像中安装兼容 caching_sha2 的 mysql-client")
 		}
 		args := append([]string{
 			"-h" + cfg.DB.Host,
@@ -120,57 +136,80 @@ func adminPostDbBackup(c *gin.Context, cfg *config.Config) {
 			msg = err.Error()
 		}
 		if useDocker {
-			resp.Err(c, 500, 500, "mysqldump(docker exec) 失败: "+msg)
-		} else {
-			resp.Err(c, 500, 500, "mysqldump 失败: "+msg)
+			return nil, fmt.Errorf("mysqldump(docker exec) 失败: %s", msg)
 		}
-		return
+		return nil, fmt.Errorf("mysqldump 失败: %s", msg)
 	}
 	if sqlOut.Len() == 0 {
-		resp.Err(c, 500, 500, "mysqldump 输出为空")
-		return
+		return nil, fmt.Errorf("mysqldump 输出为空")
 	}
+
 	var gzBuf bytes.Buffer
 	gw := gzip.NewWriter(&gzBuf)
 	if _, err := gw.Write(sqlOut.Bytes()); err != nil {
-		resp.Err(c, 500, 500, "gzip 压缩失败: "+err.Error())
-		return
+		return nil, fmt.Errorf("gzip 压缩失败: %w", err)
 	}
 	if err := gw.Close(); err != nil {
-		resp.Err(c, 500, 500, "gzip 结束失败: "+err.Error())
-		return
+		return nil, fmt.Errorf("gzip 结束失败: %w", err)
 	}
-	// 对象键按主库名分目录（方案 A）：db_save/{dbname}/YYYY-MM/DD.sql.gz。
-	// 避免切主库后再备份覆盖掉同日期的另一份备份（例如切到 restore_xxx 覆盖 vino_db）。
-	// 不兼容历史扁平路径 db_save/YYYY-MM/DD.sql.gz：恢复侧仅要求 /db_save/ 前缀，依旧可读到旧对象。
-	dbSeg := cfg.DB.Name
-	if !dbNameIdent.MatchString(dbSeg) {
-		resp.Err(c, 500, 500, "当前主库名不合法，拒绝写入 COS："+dbSeg)
-		return
+
+	// 默认「日路径」由 handler 使用；调度器会传入「小时路径」。
+	if cosKey == "" {
+		now := time.Now().In(time.Local)
+		cosKey = fmt.Sprintf("db_save/%s/%s/%s.sql.gz", dbSeg, now.Format("2006-01"), now.Format("02"))
 	}
-	now := time.Now().In(time.Local)
-	cosKey := fmt.Sprintf("db_save/%s/%s/%s.sql.gz", dbSeg, now.Format("2006-01"), now.Format("02"))
 	if err := services.PutBackupObject(ctx, cosKey, gzBuf.Bytes(), "application/gzip"); err != nil {
-		resp.Err(c, 500, 500, "上传 COS 失败: "+err.Error())
-		return
+		return nil, fmt.Errorf("上传 COS 失败: %w", err)
 	}
-	// 统计各表精确行数（在 mysqldump + 上传 COS 成功后进行，失败不影响主流程）。
-	// 与 dump 略有「时间差」：备份瞬时用 --single-transaction 冻结一致性快照，
-	// 此处 COUNT(*) 是当前在线库，二者极端场景可能相差极少量写入，作参考即可。
+
+	// 行数统计非关键路径；失败只写 note 不返回 error。
 	tables, totalRows, tablesNote := collectTableRowCounts(ctx, cfg)
 	elapsed := time.Since(start)
+	return &dbBackupResult{
+		CosKey:       cosKey,
+		Bytes:        gzBuf.Len(),
+		SqlBytes:     sqlOut.Len(),
+		Database:     dbSeg,
+		Bucket:       services.CosBucket(),
+		ElapsedMs:    elapsed.Milliseconds(),
+		ElapsedHuman: elapsed.Truncate(time.Millisecond).String(),
+		Tables:       tables,
+		TableCount:   len(tables),
+		TotalRows:    totalRows,
+		TablesNote:   tablesNote,
+	}, nil
+}
+
+// POST /api/admin/ops/db-backup — 优先在 MySQL 官方容器内 mysqldump（兼容 caching_sha2_password），
+// 回退到 backend 容器内本机 mysqldump（Alpine mysql-client 实为 MariaDB，仅作兜底）。gzip 后上传至 COS db_save/。
+func adminPostDbBackup(c *gin.Context, cfg *config.Config) {
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 25*time.Minute)
+	defer cancel()
+	res, err := runDbBackupCore(ctx, cfg, "")
+	if err != nil {
+		// 503 vs 500 由错误内容里的关键字区分，保持与重构前对外行为一致
+		msg := err.Error()
+		if strings.Contains(msg, "COS 未配置") ||
+			strings.Contains(msg, "未找到 mysqldump") ||
+			strings.Contains(msg, "docker.sock") {
+			resp.Err(c, 503, 503, msg)
+			return
+		}
+		resp.Err(c, 500, 500, msg)
+		return
+	}
 	resp.OK(c, gin.H{
-		"cosKey":       cosKey,
-		"bytes":        gzBuf.Len(),
-		"sqlBytes":     sqlOut.Len(),
-		"bucket":       services.CosBucket(),
-		"database":     cfg.DB.Name,
-		"elapsedMs":    elapsed.Milliseconds(),
-		"elapsedHuman": elapsed.Truncate(time.Millisecond).String(),
-		"tables":       tables,
-		"tableCount":   len(tables),
-		"totalRows":    totalRows,
-		"tablesNote":   tablesNote,
+		"cosKey":       res.CosKey,
+		"bytes":        res.Bytes,
+		"sqlBytes":     res.SqlBytes,
+		"bucket":       res.Bucket,
+		"database":     res.Database,
+		"elapsedMs":    res.ElapsedMs,
+		"elapsedHuman": res.ElapsedHuman,
+		"tables":       res.Tables,
+		"tableCount":   res.TableCount,
+		"totalRows":    res.TotalRows,
+		"tablesNote":   res.TablesNote,
 		"message":      "ok",
 	})
 }
