@@ -28,9 +28,17 @@ import (
 )
 
 var (
-	dbNameIdent         = regexp.MustCompile(`^[A-Za-z0-9_]{1,64}$`)
-	createDatabaseNameRe = regexp.MustCompile("(?is)CREATE\\s+DATABASE(?:\\s+IF\\s+NOT\\s+EXISTS)?\\s+`([^`]+)`")
-	createDatabaseBareRe = regexp.MustCompile(`(?is)CREATE\s+DATABASE(?:\s+IF\s+NOT\s+EXISTS)?\s+([A-Za-z0-9_]+)\s*(?:;|/\*|$)`)
+	dbNameIdent = regexp.MustCompile(`^[A-Za-z0-9_]{1,64}$`)
+	// mysqldump 在 MySQL 8 里会输出：`CREATE DATABASE /*!32312 IF NOT EXISTS*/ `vino_db` /*!40100 ... */;`
+	// 因此正则里要能跳过任意 `/*!... */` 版本化注释块，否则抓不到库名，导致后续 rewrite 失效、
+	// 整份 dump 被原样注入、`USE ` 把建表/灌数切到了旧主库（restore_* 壳库因而 0 张表）。
+	createDatabaseNameRe = regexp.MustCompile("(?is)CREATE\\s+DATABASE(?:\\s+/\\*![^*]+\\*/)*(?:\\s+IF\\s+NOT\\s+EXISTS)?(?:\\s+/\\*![^*]+\\*/)*\\s+`([^`]+)`")
+	createDatabaseBareRe = regexp.MustCompile(`(?is)CREATE\s+DATABASE(?:\s+/\*![^*]+\*/)*(?:\s+IF\s+NOT\s+EXISTS)?(?:\s+/\*![^*]+\*/)*\s+([A-Za-z0-9_]+)\s*(?:;|/\*|$)`)
+	// 用于「在导入前彻底删除 dump 里的 CREATE DATABASE / USE 语句」，最稳妥：
+	// 我们已在 importToDatabase 里预建新库并通过 `mysql -D newDb` 提供默认上下文，
+	// 不需要 dump 自带的建库/切库；留着反而会在解析失败时把数据落到错的库。
+	stripCreateDatabaseRe = regexp.MustCompile(`(?im)^\s*CREATE\s+DATABASE\b[^;]*;\s*\r?\n?`)
+	stripUseRe            = regexp.MustCompile(`(?im)^\s*USE\s+[^;]*;\s*\r?\n?`)
 )
 
 // 上海时区（用于生成 restore_YYYY_MM_DD_HH 与示例 URL）
@@ -127,9 +135,15 @@ func adminPostDbRestore(c *gin.Context, cfg *config.Config) {
 		if perr != nil {
 			return perr
 		}
+		// 双保险：先尝试把 dump 里的库名替换成新库名（兼容老行为），
+		// 再**彻底剥离** `CREATE DATABASE ...;` 和 `USE \`xxx\`;` 两种顶层语句。
+		// 我们已在 importToDatabase 中预建目标库并用 `mysql -D newDb` 指定默认库，
+		// 一旦 dump 里的 USE 语句未被正确改写，就会把 CREATE TABLE/INSERT 落回**原主库**，
+		// restore_* 壳库反而保持空——这是 2026-04-20 版本确诊的真实事故。
 		oldName := extractDumpDBName(sqlText, "")
 		sqlRewrite := rewriteDumpDBName(sqlText, oldName, name)
-		if ierr := importToDatabase(ctx, cfg, name, sqlRewrite); ierr != nil {
+		sqlSafe := stripCreateDatabaseAndUse(sqlRewrite)
+		if ierr := importToDatabase(ctx, cfg, name, sqlSafe); ierr != nil {
 			return fmt.Errorf("导入到 %s 失败: %w", name, ierr)
 		}
 		newDatabase = name
@@ -282,6 +296,15 @@ func extractDumpDBName(sqlText, fallback string) string {
 		}
 	}
 	return fallback
+}
+
+// stripCreateDatabaseAndUse 把 dump 顶层的 `CREATE DATABASE ...;` / `USE ...;` 直接删除。
+// 这是 restore 流程的"最后一道防线"：无论库名能否被正则识别，都不让 dump 把 mysql 客户端的默认库切走。
+// 表级别的 `CREATE TABLE ... ;` / `INSERT INTO ...` 不以 `CREATE DATABASE` 或 `USE ` 开头，不会被误删。
+func stripCreateDatabaseAndUse(sqlText string) string {
+	out := stripCreateDatabaseRe.ReplaceAllString(sqlText, "")
+	out = stripUseRe.ReplaceAllString(out, "")
+	return out
 }
 
 // rewriteDumpDBName：把反引号形式的库名全局替换；无反引号时仅替换首个 CREATE DATABASE 后的库名。
