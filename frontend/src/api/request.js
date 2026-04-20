@@ -1,8 +1,10 @@
 import axios from 'axios';
 import router from '@/router';
 
+// baseURL 唯一入口：默认走 nginx 反代的 /api；部署差异可通过 VITE_API_BASE 覆盖。
+// 禁止在业务代码里出现具体 host 字面量。
 const request = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_API_BASE || '/api',
   timeout: 10000,
 });
 

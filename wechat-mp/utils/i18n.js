@@ -1,5 +1,5 @@
+const { BASE_URL: DEFAULT_BASE_URL } = require('../config.js');
 const STORAGE_KEY = 'vino_lang';
-const DEFAULT_BASE_URL = 'http://106.54.50.88:5202/api';
 
 let _lang = '';
 try { _lang = wx.getStorageSync(STORAGE_KEY) || ''; } catch (e) {}

@@ -20,10 +20,12 @@ function getJwtExpMs(token) {
 
 const currencyUtil = require('./utils/currency.js');
 const i18n = require('./utils/i18n.js');
+const { BASE_URL } = require('./config.js');
 
 App({
   globalData: {
-    baseUrl: 'http://106.54.50.88:5202/api',
+    // 唯一主源：config.js。禁止在其它地方硬编码后端地址兜底。
+    baseUrl: BASE_URL,
     userInfo: null,
     token: '',
     currencySymbol: currencyUtil.DEFAULT_CURRENCY,

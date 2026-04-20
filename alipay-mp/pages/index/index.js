@@ -37,7 +37,7 @@ Page({
     app.request({ url: '/auth/my-products' })
       .then(res => {
         const list = res.data || [];
-        const base = (app.globalData.baseUrl || '').replace(/\/api\/?$/, '') || 'http://106.54.50.88:5202';
+        const base = (app.globalData.baseUrl || '').replace(/\/api\/?$/, '');
         const toFull = (u) => {
           if (!u || typeof u !== 'string') return u || '';
           const t = String(u).trim();
@@ -117,7 +117,7 @@ Page({
   },
 
   loadHomeConfig() {
-    const base = (app.globalData.baseUrl || '').replace(/\/api\/?$/, '') || 'http://106.54.50.88:5202';
+    const base = (app.globalData.baseUrl || '').replace(/\/api\/?$/, '');
     const toFull = (u) => {
       if (!u || typeof u !== 'string') return u || '';
       const t = u.trim();
