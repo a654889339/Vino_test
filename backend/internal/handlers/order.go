@@ -44,12 +44,10 @@ func orderCreate(c *gin.Context) {
 	if !ok {
 		return
 	}
+	// 请求体中 price/serviceTitle/serviceTitleEn/serviceIcon 仅作前端展示用途，
+	// 后端**一律以 services 表为准**，避免抓包改价（例如 149→0.01）绕过付款金额校验。
 	var body struct {
 		ServiceID       *int     `json:"serviceId"`
-		ServiceTitle    string   `json:"serviceTitle"`
-		ServiceTitleEn  string   `json:"serviceTitleEn"`
-		ServiceIcon     string   `json:"serviceIcon"`
-		Price           float64  `json:"price"`
 		ContactName     string   `json:"contactName"`
 		ContactPhone    string   `json:"contactPhone"`
 		Address         string   `json:"address"`
@@ -58,8 +56,26 @@ func orderCreate(c *gin.Context) {
 		ProductSerial   string   `json:"productSerial"`
 		GuideID         *float64 `json:"guideId"`
 	}
-	if err := c.ShouldBindJSON(&body); err != nil || strings.TrimSpace(body.ServiceTitle) == "" || body.Price == 0 {
-		resp.Err(c, 400, 400, "服务信息不完整")
+	if err := c.ShouldBindJSON(&body); err != nil {
+		resp.Err(c, 400, 400, "请求参数有误")
+		return
+	}
+	if body.ServiceID == nil || *body.ServiceID <= 0 {
+		resp.Err(c, 400, 400, "缺少服务 ID")
+		return
+	}
+	// 以 DB 真值为权威：查出对应 service，校验上架状态，拿其 price/title/icon。
+	var svc models.Service
+	if err := db.DB.First(&svc, *body.ServiceID).Error; err != nil {
+		resp.Err(c, 404, 404, "服务不存在")
+		return
+	}
+	if svc.Status != "active" {
+		resp.Err(c, 400, 400, "服务已下架")
+		return
+	}
+	if svc.Price <= 0 || math.IsNaN(svc.Price) {
+		resp.Err(c, 400, 400, "服务价格未正确配置")
 		return
 	}
 	serial := strings.TrimSpace(body.ProductSerial)
@@ -80,14 +96,15 @@ func orderCreate(c *gin.Context) {
 			appt = &t
 		}
 	}
+	svcID := svc.ID
 	o := models.Order{
 		OrderNo:         genOrderNo(),
 		UserID:          u.ID,
-		ServiceID:       body.ServiceID,
-		ServiceTitle:    body.ServiceTitle,
-		ServiceTitleEn:  body.ServiceTitleEn,
-		ServiceIcon:     firstNonEmptyStr(body.ServiceIcon, "setting-o"),
-		Price:           body.Price,
+		ServiceID:       &svcID,
+		ServiceTitle:    svc.Title,
+		ServiceTitleEn:  svc.TitleEn,
+		ServiceIcon:     firstNonEmptyStr(svc.Icon, "setting-o"),
+		Price:           svc.Price,
 		ContactName:     body.ContactName,
 		ContactPhone:    body.ContactPhone,
 		Address:         body.Address,
