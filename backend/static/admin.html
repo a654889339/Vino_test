@@ -2062,21 +2062,25 @@ async function submitDbRestore() {
   out.style.color = '#059669';
   btn.disabled = true;
   __dbRestoreAbort = new AbortController();
+  // 全屏转圈遮罩（复用上传用的 uploadOverlay，z-index:9999）：
+  // 恢复期间拦截所有点击，禁止任何其他后台操作，避免半导入状态被别的写动作踩到。
   try {
-    const res = await api('/admin/ops/db/restore', { method: 'POST', body: { url }, signal: __dbRestoreAbort.signal });
-    if (!res || res.code !== 0) {
-      out.style.color = '#B91C1C';
-      out.textContent = (res && res.message) || '恢复失败';
-      return;
-    }
-    const d = res.data || {};
-    __lastRestoredDb = d.newDatabase || '';
-    document.getElementById('dbRestoreNewName').textContent = __lastRestoredDb;
-    document.getElementById('dbRestorePreviewBody').innerHTML = renderDbPreviewHtml(d.preview);
-    document.getElementById('dbRestoreInputView').style.display = 'none';
-    document.getElementById('dbRestorePreviewView').style.display = '';
-    document.getElementById('btnDbRestoreSubmit').style.display = 'none';
-    document.getElementById('btnDbRestoreSwitch').style.display = '';
+    await runWithUploadOverlay(null, async () => {
+      const res = await api('/admin/ops/db/restore', { method: 'POST', body: { url }, signal: __dbRestoreAbort.signal });
+      if (!res || res.code !== 0) {
+        out.style.color = '#B91C1C';
+        out.textContent = (res && res.message) || '恢复失败';
+        return;
+      }
+      const d = res.data || {};
+      __lastRestoredDb = d.newDatabase || '';
+      document.getElementById('dbRestoreNewName').textContent = __lastRestoredDb;
+      document.getElementById('dbRestorePreviewBody').innerHTML = renderDbPreviewHtml(d.preview);
+      document.getElementById('dbRestoreInputView').style.display = 'none';
+      document.getElementById('dbRestorePreviewView').style.display = '';
+      document.getElementById('btnDbRestoreSubmit').style.display = 'none';
+      document.getElementById('btnDbRestoreSwitch').style.display = '';
+    }, { message: '数据库恢复中：下载 → 解压 → 导入 → 预览… 请勿关闭窗口' });
   } catch (e) {
     out.style.color = '#B91C1C';
     out.textContent = (e && e.name === 'AbortError') ? '已取消' : '请求失败：' + ((e && e.message) || '未知错误');
@@ -2101,18 +2105,22 @@ async function runDbSwitch() {
 
 async function doDbSwitch(name, out) {
   if (out) { out.style.color = '#059669'; out.textContent = '切换中：暂停其他操作 → 写入 active_db → 重连 GORM…'; }
+  // 切库会重连 GORM，期间任何其他管理操作都会读到「旧连接/新连接」混乱的半态，
+  // 用全屏遮罩强制阻断并发操作，与 db 恢复保持一致。
   try {
-    const res = await api('/admin/ops/db/switch', { method: 'POST', body: { database: name } });
-    if (!res || res.code !== 0) {
-      if (out) { out.style.color = '#B91C1C'; out.textContent = (res && res.message) || '切换失败'; }
-      return;
-    }
-    if (out) { out.style.color = '#059669'; out.textContent = '已切换到：' + (res.data && res.data.database) + '（' + (res.data && res.data.message || 'ok') + '）'; }
-    await refreshDebugDbStatus();
-    const modal = document.getElementById('dbRestoreModal');
-    if (modal && modal.style.display !== 'none') closeDbRestoreModal();
-    const swi = document.getElementById('debugSwitchDbInput');
-    if (swi) swi.value = '';
+    await runWithUploadOverlay(null, async () => {
+      const res = await api('/admin/ops/db/switch', { method: 'POST', body: { database: name } });
+      if (!res || res.code !== 0) {
+        if (out) { out.style.color = '#B91C1C'; out.textContent = (res && res.message) || '切换失败'; }
+        return;
+      }
+      if (out) { out.style.color = '#059669'; out.textContent = '已切换到：' + (res.data && res.data.database) + '（' + (res.data && res.data.message || 'ok') + '）'; }
+      await refreshDebugDbStatus();
+      const modal = document.getElementById('dbRestoreModal');
+      if (modal && modal.style.display !== 'none') closeDbRestoreModal();
+      const swi = document.getElementById('debugSwitchDbInput');
+      if (swi) swi.value = '';
+    }, { message: '数据库切换中：暂停其他操作 → 写入 active_db → 重连 GORM… 请勿关闭窗口' });
   } catch (e) {
     if (out) { out.style.color = '#B91C1C'; out.textContent = '请求失败：' + ((e && e.message) || '未知错误'); }
   }
