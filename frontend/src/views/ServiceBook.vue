@@ -4,6 +4,11 @@
 
     <van-loading v-if="loading" class="page-loading" size="36" vertical>{{ t('common.loading') }}</van-loading>
 
+    <div v-else-if="loadFailed" class="book-failed">
+      <van-empty :description="t('服务信息加载失败，请稍后再试', 'Failed to load service info, please try again later.')" />
+      <van-button plain type="primary" color="#B91C1C" round @click="goBack">{{ t('返回', 'Back') }}</van-button>
+    </div>
+
     <template v-else>
       <div class="book-body">
         <div class="order-service-info">
@@ -394,22 +399,13 @@ const loadProductCategoriesAndGuides = async () => {
   }
 };
 
-const fallbackServices = {
-  1: { title: t('services.deviceRepair'), description: t('services.deviceRepairDesc'), price: '99', originPrice: '159', icon: 'setting-o', bg: 'linear-gradient(135deg, #B91C1C, #991B1B)' },
-  2: { title: t('services.onSiteRepair'), description: t('services.onSiteRepairDesc'), price: '149', originPrice: '199', icon: 'location-o', bg: 'linear-gradient(135deg, #DC2626, #B91C1C)' },
-  3: { title: t('services.remoteSupport'), description: t('services.remoteSupportDesc'), price: '29', originPrice: '49', icon: 'phone-o', bg: 'linear-gradient(135deg, #EF4444, #DC2626)' },
-  4: { title: t('services.deepClean'), description: t('services.deepCleanDesc'), price: '149', originPrice: '199', icon: 'brush-o', bg: 'linear-gradient(135deg, #2563EB, #1D4ED8)' },
-  5: { title: t('services.dailyClean'), description: t('services.dailyCleanDesc'), price: '69', originPrice: '89', icon: 'smile-o', bg: 'linear-gradient(135deg, #3B82F6, #2563EB)' },
-  6: { title: t('services.fullInspect'), description: t('services.fullInspectDesc'), price: '49', originPrice: '79', icon: 'scan', bg: 'linear-gradient(135deg, #059669, #047857)' },
-  7: { title: t('services.optimize'), description: t('services.optimizeDesc'), price: '79', originPrice: '129', icon: 'fire-o', bg: 'linear-gradient(135deg, #10B981, #059669)' },
-  8: { title: t('services.dataRecovery'), description: t('services.dataRecoveryDesc'), price: '199', originPrice: '299', icon: 'replay', bg: 'linear-gradient(135deg, #7C3AED, #6D28D9)' },
-  9: { title: t('services.dataBackup'), description: t('services.dataBackupDesc'), price: '59', originPrice: '89', icon: 'description', bg: 'linear-gradient(135deg, #8B5CF6, #7C3AED)' },
-};
-
+// 禁止在前端维护任何 fallback 价格：后端已将 services 表作为订单金额的**唯一真值**，
+// 若前端拿不到最新详情就让用户看到加载失败提示并返回，避免下单时展示价与实际不一致。
 const serviceData = ref({ title: '', description: '', price: '0' });
 const serviceIcon = ref('setting-o');
 const serviceIconUrl = ref('');
 const coverBg = ref('linear-gradient(135deg, #B91C1C, #7F1D1D)');
+const loadFailed = ref(false);
 
 const servicePriceCurrencyOverride = computed(() => {
   const c = pick(serviceData.value, 'currency');
@@ -445,17 +441,17 @@ onMounted(async () => {
 
   try {
     const res = await serviceApi.detail(id);
-    const d = res.data;
+    const d = res.data || {};
+    if (!d.id || !(Number(d.price) > 0) || d.status === 'inactive') {
+      loadFailed.value = true;
+      return;
+    }
     serviceData.value = { ...d };
     serviceIcon.value = d.icon || 'setting-o';
     serviceIconUrl.value = d.iconUrl || '';
     coverBg.value = d.bg || 'linear-gradient(135deg, #B91C1C, #7F1D1D)';
   } catch {
-    const fb = fallbackServices[id] || fallbackServices[1];
-    serviceData.value = { title: fb.title, description: fb.description, price: fb.price, originPrice: fb.originPrice };
-    serviceIcon.value = fb.icon;
-    serviceIconUrl.value = '';
-    coverBg.value = fb.bg;
+    loadFailed.value = true;
   } finally {
     loading.value = false;
   }
@@ -474,12 +470,15 @@ const submitOrder = async () => {
   const fullAddress = buildFullAddress();
   submitting.value = true;
   try {
+    // 注意：serviceTitle / price / serviceIcon 由后端按 serviceId 查 services 表强制赋值，
+    // 前端不再上送这些字段，避免任何错觉。
+    const svcId = Number(route.params.id);
+    if (!svcId || svcId <= 0) {
+      showToast(t('服务信息异常，请返回重试', 'Invalid service, please go back.'));
+      return;
+    }
     await orderApi.create({
-      serviceId: Number(route.params.id) || null,
-      serviceTitle: serviceData.value.title || '',
-      serviceTitleEn: serviceData.value.titleEn || '',
-      serviceIcon: serviceIcon.value,
-      price: serviceData.value.price || 0,
+      serviceId: svcId,
       contactName: orderForm.contactName.trim(),
       contactPhone: orderForm.contactPhone.trim(),
       address: fullAddress,
@@ -509,6 +508,15 @@ const submitOrder = async () => {
   padding-top: 120px;
   text-align: center;
 }
+
+.book-failed {
+  padding-top: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.book-failed .van-button { min-width: 120px; }
 
 .book-body {
   padding: 12px 0 0;
