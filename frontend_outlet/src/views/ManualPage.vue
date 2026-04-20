@@ -41,7 +41,7 @@
           <span class="chapter-num">{{ i + 1 }}</span>
           <h2 class="chapter-title">{{ ch.title }}</h2>
         </div>
-        <div class="chapter-content" v-html="ch.content"></div>
+        <div class="chapter-content" v-html="safeHtml(ch.content)"></div>
       </div>
 
       <div v-if="manualWebUrl" class="manual-pdf-bar">
@@ -59,9 +59,33 @@
 <script setup>
 import { ref, computed, onMounted, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
+import DOMPurify from 'dompurify';
 import { guideApi } from '@/api';
 import { resolvePublicUrl } from '@/utils/mediaUrl';
 import { showToast } from 'vant';
+
+/**
+ * 章节内容来自后台管理员编辑，走 v-html 渲染前必须清洗。
+ * 白名单保留常见排版标签 + 图片/链接的安全属性；脚本/事件属性/危险标签一律剥离。
+ */
+function safeHtml(raw) {
+  if (raw == null) return '';
+  return DOMPurify.sanitize(String(raw), {
+    ALLOWED_TAGS: [
+      'p', 'br', 'strong', 'b', 'em', 'i', 'u', 'span', 'div',
+      'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+      'ul', 'ol', 'li',
+      'a', 'img',
+      'blockquote', 'code', 'pre',
+      'table', 'thead', 'tbody', 'tr', 'td', 'th',
+      'hr',
+    ],
+    ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'target', 'rel', 'class', 'style'],
+    ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
+    FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form', 'input', 'textarea', 'style', 'link', 'meta'],
+    FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur', 'onchange', 'onsubmit'],
+  });
+}
 
 const route = useRoute();
 const loading = ref(true);
