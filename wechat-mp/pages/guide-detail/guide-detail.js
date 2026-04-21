@@ -23,6 +23,9 @@ Page({
 
   onLoad(options) {
     const self = this;
+    // 同步立即按当前语言设置标题，避免英文下闪现 JSON 默认的「设备指南」。
+    // 服务端回包后 applyNavBarTitle 会再以 guide.name/subtitle 覆盖本次占位。
+    i18n.setNavTitle('guideDetail.title', '设备指南', 'Device Guide');
     const doRefresh = () => {
       self.refreshI18n();
       if (options.id) self.loadGuide(options.id);

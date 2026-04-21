@@ -9,7 +9,7 @@
         <view a:else class="hero-fallback">
           <image a:if="{{guide.iconUrl}}" src="{{guide.displayIconUrl}}" class="hero-icon-img" onLoad="onIconLoad" />
           <text a:else class="hero-emoji">{{guide.emoji}}</text>
-          <text class="hero-name">{{guide.name}}</text>
+          <text class="hero-name">{{guide.displayName || guide.name}}</text>
         </view>
         <view a:if="{{guide.showcaseVideo}}" class="play-btn" onTap="playShowcase">▶</view>
       </view>

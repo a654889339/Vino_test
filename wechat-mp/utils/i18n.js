@@ -129,9 +129,17 @@ function pick(obj, field) {
  * - 否则当作裸文案回退。
  * 注意：tabBar 页切语言后需主动调，不会自动刷新。
  */
-function setNavTitle(keyOrText) {
+function setNavTitle(keyOrText, zhFallback, enFallback) {
   try {
-    const title = t(keyOrText);
+    let title = '';
+    if (_texts[keyOrText]) {
+      const entry = _texts[keyOrText];
+      title = isEn() ? (entry.en || entry.zh || '') : (entry.zh || '');
+    } else if (zhFallback || enFallback) {
+      title = isEn() ? (enFallback || zhFallback || '') : (zhFallback || '');
+    } else {
+      title = t(keyOrText);
+    }
     if (title) wx.setNavigationBarTitle({ title });
   } catch (e) {}
 }

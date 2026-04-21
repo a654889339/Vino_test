@@ -118,9 +118,17 @@ function pick(obj, field) {
 }
 
 /** 支付宝导航栏标题：传入 i18n_texts 的 key 即按语言取值，否则当裸文案。 */
-function setNavTitle(keyOrText) {
+function setNavTitle(keyOrText, zhFallback, enFallback) {
   try {
-    const title = t(keyOrText);
+    let title = '';
+    if (_texts[keyOrText]) {
+      const entry = _texts[keyOrText];
+      title = isEn() ? (entry.en || entry.zh || '') : (entry.zh || '');
+    } else if (zhFallback || enFallback) {
+      title = isEn() ? (enFallback || zhFallback || '') : (zhFallback || '');
+    } else {
+      title = t(keyOrText);
+    }
     if (title && typeof my.setNavigationBar === 'function') {
       my.setNavigationBar({ title });
     }

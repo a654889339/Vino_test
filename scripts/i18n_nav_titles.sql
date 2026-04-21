@@ -10,7 +10,7 @@ SET NAMES utf8mb4;
 DELETE FROM i18n_texts WHERE `key` IN (
   'serviceDetail.stepsTitle','serviceDetail.step1','serviceDetail.step2','serviceDetail.step3','serviceDetail.step4','serviceDetail.step5',
   'mine.title','orders.title','products.title','index.title','service.title',
-  'address.title','addressEdit.title','home.appTitle'
+  'address.title','addressEdit.title','home.appTitle','guideDetail.title'
 ) AND zh LIKE '%?%';
 
 INSERT INTO i18n_texts (`key`, zh, en, createdAt, updatedAt) VALUES
@@ -27,17 +27,18 @@ INSERT INTO i18n_texts (`key`, zh, en, createdAt, updatedAt) VALUES
   ('service.title',            '服务',          'Services',                  NOW(), NOW()),
   ('address.title',            '地址管理',      'Addresses',                 NOW(), NOW()),
   ('addressEdit.title',        '编辑地址',      'Edit Address',              NOW(), NOW()),
-  ('home.appTitle',            'VINO 服务',     'VINO Services',             NOW(), NOW())
+  ('home.appTitle',            'VINO 服务',     'VINO Services',             NOW(), NOW()),
+  ('guideDetail.title',        '设备指南',      'Device Guide',              NOW(), NOW())
 ON DUPLICATE KEY UPDATE
   zh = IF(TRIM(IFNULL(zh, '')) = '', VALUES(zh), zh),
   en = IF(TRIM(IFNULL(en, '')) = '', VALUES(en), en),
   updatedAt = NOW();
 
--- 核对：14 条 key 全部存在且 zh/en 非空
+-- 核对：15 条 key 全部存在且 zh/en 非空
 SELECT `key`, zh, en FROM i18n_texts
 WHERE `key` IN (
   'serviceDetail.stepsTitle','serviceDetail.step1','serviceDetail.step2','serviceDetail.step3','serviceDetail.step4','serviceDetail.step5',
   'mine.title','orders.title','products.title','index.title','service.title',
-  'address.title','addressEdit.title','home.appTitle'
+  'address.title','addressEdit.title','home.appTitle','guideDetail.title'
 )
 ORDER BY `key`;

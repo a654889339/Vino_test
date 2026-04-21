@@ -98,4 +98,26 @@ const router = createRouter({
   routes,
 });
 
+// Vite 每次构建会重命名 assets/*.js 的哈希文件名。
+// 老标签页仍引用旧文件名，部署后点击跳转会 404 并抛出：
+//   "Failed to fetch dynamically imported module: .../assets/Xxx-<hash>.js"
+// 这里捕获该错误并用硬刷新加载最新 index.html + 新哈希资源。
+const RELOAD_FLAG_KEY = '__vino_chunk_reload_ts__';
+router.onError((error, to) => {
+  const msg = (error && error.message) || '';
+  const isChunkLoadErr =
+    /Failed to fetch dynamically imported module/i.test(msg) ||
+    /Importing a module script failed/i.test(msg) ||
+    /Loading chunk [\w\-]+ failed/i.test(msg);
+  if (!isChunkLoadErr) return;
+  // 防止死循环：短时间内只强制刷新一次。
+  let last = 0;
+  try { last = Number(sessionStorage.getItem(RELOAD_FLAG_KEY) || 0); } catch (e) {}
+  const now = Date.now();
+  if (now - last < 10000) return;
+  try { sessionStorage.setItem(RELOAD_FLAG_KEY, String(now)); } catch (e) {}
+  const target = (to && to.fullPath) || window.location.pathname + window.location.search;
+  window.location.replace(target);
+});
+
 export default router;
