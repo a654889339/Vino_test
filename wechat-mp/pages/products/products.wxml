@@ -22,7 +22,7 @@
         wx:key="id"
         data-id="{{item.id}}"
         bindtap="selectCategory"
-      >{{item.name}}</view>
+      >{{item.displayName}}</view>
     </view>
     <view class="product-main">
       <view wx:if="{{categoryBannerUrl}}" class="category-banner">
@@ -45,7 +45,7 @@
               <text wx:else class="grid-card-placeholder">📦</text>
             </view>
           </view>
-          <text class="grid-card-name">{{item.name}}</text>
+          <text class="grid-card-name">{{item.displayName}}</text>
         </view>
       </view>
       <view wx:elif="{{selectedCategoryId && !listLoading && deviceGuides.length && !filteredDeviceGuides.length}}" class="main-empty">{{noMatchText}}</view>

@@ -12,9 +12,27 @@ const _pendingCallbacks = [];
 function getLang() { return _lang || 'zh'; }
 function isEn() { return _lang === 'en'; }
 
+/** 任意页面调用 setLang 后刷新自定义 tabBar，避免仍显示上一语言的 label */
+function notifyTabBarLang() {
+  try {
+    const pages = getCurrentPages();
+    for (let i = pages.length - 1; i >= 0; i--) {
+      const page = pages[i];
+      if (page && typeof page.getTabBar === 'function') {
+        const tab = page.getTabBar();
+        if (tab && typeof tab.refreshLabels === 'function') {
+          tab.refreshLabels();
+          return;
+        }
+      }
+    }
+  } catch (e) {}
+}
+
 function setLang(lang) {
   _lang = lang;
   try { wx.setStorageSync(STORAGE_KEY, lang); } catch (e) {}
+  notifyTabBarLang();
 }
 
 function _getBaseUrl() {
