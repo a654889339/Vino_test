@@ -10,9 +10,7 @@ Page({
   },
 
   onShow() {
-    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
-      this.getTabBar().setData({ selected: 2 });
-    }
+    i18n.syncCustomTabBar(this, 2);
     const self = this;
     const doRefresh = () => {
       self.refreshI18n();

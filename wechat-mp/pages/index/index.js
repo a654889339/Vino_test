@@ -31,9 +31,7 @@ Page({
   },
 
   onShow() {
-    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
-      this.getTabBar().setData({ selected: 0 });
-    }
+    i18n.syncCustomTabBar(this, 0);
     const self = this;
     const doRefresh = () => {
       self.refreshI18n();
@@ -82,9 +80,7 @@ Page({
         i18n.setLang(lang);
         this.refreshI18n();
         this.loadHomeConfig();
-        if (typeof this.getTabBar === 'function' && this.getTabBar()) {
-          this.getTabBar().refreshLabels();
-        }
+        i18n.syncCustomTabBar(this, 0);
       },
     });
   },

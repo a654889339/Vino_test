@@ -29,10 +29,31 @@ function notifyTabBarLang() {
   } catch (e) {}
 }
 
+/**
+ * 在 tab 页 onShow 里调用：同步选中角标 + 按当前语言重算文案。
+ * 仅 set selected 不重算 label 时，从首页切语言再进「产品」会仍显示英文底栏。
+ */
+function syncCustomTabBar(page, selectedIndex) {
+  try {
+    if (!page || typeof page.getTabBar !== 'function') return;
+    const tab = page.getTabBar();
+    if (!tab) return;
+    if (typeof selectedIndex === 'number') {
+      tab.setData({ selected: selectedIndex });
+    }
+    if (typeof tab.refreshLabels === 'function') {
+      tab.refreshLabels();
+    }
+  } catch (e) {}
+}
+
 function setLang(lang) {
   _lang = lang;
   try { wx.setStorageSync(STORAGE_KEY, lang); } catch (e) {}
   notifyTabBarLang();
+  // 部分基础库下 setLang 与 tabBar 完成挂载的时序不同步，延迟再刷一次
+  setTimeout(notifyTabBarLang, 0);
+  setTimeout(notifyTabBarLang, 50);
 }
 
 function _getBaseUrl() {
@@ -102,4 +123,14 @@ function pick(obj, field) {
   return obj[field] || '';
 }
 
-module.exports = { getLang, isEn, setLang, detectLangByIp, loadI18nTexts, isLoaded, t, pick };
+module.exports = {
+  getLang,
+  isEn,
+  setLang,
+  detectLangByIp,
+  loadI18nTexts,
+  isLoaded,
+  t,
+  pick,
+  syncCustomTabBar,
+};
