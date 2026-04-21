@@ -21,6 +21,22 @@ function getJwtExpMs(token) {
 const currencyUtil = require('./utils/currency.js');
 const { BASE_URL } = require('./config.js');
 
+function warnIfBadApiBase(baseUrl) {
+  if (!baseUrl || typeof baseUrl !== 'string') return;
+  const u = baseUrl.toLowerCase();
+  const bad =
+    /\.example\.(com|net|org)\b/.test(u) ||
+    (u.includes('localhost') && u.includes(':5502'));
+  if (!bad) return;
+  try {
+    my.alert({
+      title: 'API 地址配置异常',
+      content:
+        '当前 baseUrl 指向无效或易错地址。请打开 config.js，将 BASE_URL 改为真实后端，例如：http://106.54.50.88:5202/api',
+    });
+  } catch (e) {}
+}
+
 App({
   globalData: {
     // 唯一主源：config.js。禁止在其它地方硬编码后端地址兜底。
@@ -48,6 +64,7 @@ App({
   },
 
   onLaunch() {
+    warnIfBadApiBase(this.globalData.baseUrl);
     this.loadCurrencySymbol();
     try {
       const res = my.getStorageSync({ key: 'vino_token' });

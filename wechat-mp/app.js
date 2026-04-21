@@ -22,6 +22,24 @@ const currencyUtil = require('./utils/currency.js');
 const i18n = require('./utils/i18n.js');
 const { BASE_URL } = require('./config.js');
 
+/** 检测明显错误的 API 根地址，避免只看到「连接被拒绝 / 域名无法解析」 */
+function warnIfBadApiBase(baseUrl) {
+  if (!baseUrl || typeof baseUrl !== 'string') return;
+  const u = baseUrl.toLowerCase();
+  const bad =
+    /\.example\.(com|net|org)\b/.test(u) ||
+    (u.includes('localhost') && u.includes(':5502'));
+  if (!bad) return;
+  try {
+    wx.showModal({
+      title: 'API 地址配置异常',
+      content:
+        '当前 baseUrl 指向无效或易错地址（如 example.com、错误端口）。请打开项目根目录下的 config.js，将 BASE_URL 改为真实后端，例如：http://106.54.50.88:5202/api',
+      showCancel: false,
+    });
+  } catch (e) {}
+}
+
 App({
   globalData: {
     // 唯一主源：config.js。禁止在其它地方硬编码后端地址兜底。
@@ -48,6 +66,7 @@ App({
   },
 
   onLaunch() {
+    warnIfBadApiBase(this.globalData.baseUrl);
     this.loadCurrencySymbol();
     i18n.loadI18nTexts();
     const token = wx.getStorageSync('vino_token');
