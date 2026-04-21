@@ -42,6 +42,7 @@ Page({
   },
 
   refreshI18n() {
+    i18n.setNavTitle('profileEdit.title');
     this.setData({
       labelAvatar: i18n.t('profileEdit.changeAvatar'),
       labelNickname: i18n.t('profileEdit.changeNickname'),

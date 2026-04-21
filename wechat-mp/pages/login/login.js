@@ -43,6 +43,7 @@ Page({
   },
 
   refreshI18n() {
+    i18n.setNavTitle('login.title');
     this.setData({
       welcomeText: 'Vino ' + i18n.t('login.welcome'),
       sloganText: i18n.t('login.slogan'),

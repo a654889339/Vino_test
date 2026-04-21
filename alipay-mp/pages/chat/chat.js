@@ -1,4 +1,5 @@
 const app = getApp();
+const i18n = require('../../utils/i18n.js');
 
 Page({
   data: {
@@ -18,6 +19,8 @@ Page({
   },
 
   onShow() {
+    const setTitle = () => i18n.setNavTitle('chat.title');
+    if (i18n.isLoaded()) setTitle(); else i18n.loadI18nTexts(setTitle);
     const loggedIn = app.isLoggedIn();
     const info = app.globalData.userInfo || {};
     const initial = (info.nickname || info.username || '我')[0];

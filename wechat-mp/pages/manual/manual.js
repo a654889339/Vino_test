@@ -31,6 +31,7 @@ Page({
   },
 
   refreshI18n() {
+    i18n.setNavTitle('manual.title');
     this.setData({
       loadingText: i18n.t('common.loading'),
       manualSuffix: i18n.t('manual.suffix'),

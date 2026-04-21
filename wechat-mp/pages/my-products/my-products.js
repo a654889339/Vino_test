@@ -28,6 +28,7 @@ Page({
   },
 
   refreshI18n() {
+    i18n.setNavTitle('myProducts.title');
     this.setData({
       i18n: {
         addBtn: i18n.t('myProducts.addBtn'),

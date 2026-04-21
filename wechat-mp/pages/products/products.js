@@ -42,6 +42,7 @@ Page({
   },
 
   refreshI18n() {
+    i18n.setNavTitle('products.title');
     this.setData({
       searchPlaceholder: i18n.t('products.searchPlaceholder'),
       loadingText: i18n.t('common.loading'),

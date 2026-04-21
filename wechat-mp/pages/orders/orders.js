@@ -36,6 +36,7 @@ Page({
   },
 
   refreshI18n() {
+    i18n.setNavTitle('orders.title');
     this.setData({
       i18n: {
         loading: i18n.t('orders.loading'),

@@ -24,6 +24,7 @@ Page({
   },
 
   refreshI18n() {
+    i18n.setNavTitle('service.title');
     this.setData({ loadingText: i18n.t('common.loading') });
   },
 

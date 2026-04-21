@@ -6,11 +6,14 @@ function enrichServiceData(s) {
   const sym = app.globalData.currencySymbol || '¥';
   const op = s.originPrice;
   const showOrigin = op != null && op !== '' && Number(op) > 0;
+  // 英文模式优先取 *En 字段，未填写则回退中文；避免英文环境下显示为中文标题/描述
+  const localTitle = i18n.pick(s, 'title') || s.title || i18n.t('tabbar.services');
+  const localDesc = i18n.pick(s, 'description') || s.description || i18n.t('serviceDetail.defaultDesc');
   return {
     id: s.id,
-    title: s.title || i18n.t('tabbar.services'),
+    title: localTitle,
     titleEn: s.titleEn || '',
-    description: s.description || i18n.t('serviceDetail.defaultDesc'),
+    description: localDesc,
     descriptionEn: s.descriptionEn || '',
     price: s.price,
     originPrice: s.originPrice,
@@ -115,6 +118,7 @@ Page({
   },
 
   refreshI18n() {
+    i18n.setNavTitle('serviceDetail.title');
     const cl = buildCountryList();
     this.setData({
       countryList: cl,
@@ -170,13 +174,14 @@ Page({
     app.request({ url: `/services/${id}` })
       .then(res => {
         const s = res.data || {};
+        // 透传原始 title/titleEn/description/descriptionEn，让 enrichServiceData 自己按语言 pick
         this.setData({
           loading: false,
           serviceData: enrichServiceData({
             id: s.id,
-            title: s.title || i18n.t('tabbar.services'),
+            title: s.title || '',
             titleEn: s.titleEn || '',
-            description: s.description || i18n.t('serviceDetail.defaultDesc'),
+            description: s.description || '',
             descriptionEn: s.descriptionEn || '',
             price: s.price || 0,
             originPrice: s.originPrice,

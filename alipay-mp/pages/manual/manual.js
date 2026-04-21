@@ -1,5 +1,6 @@
 const app = getApp();
 const { openManual } = require('../../utils/openManual.js');
+const i18n = require('../../utils/i18n.js');
 
 Page({
   data: {
@@ -10,6 +11,8 @@ Page({
   },
 
   onLoad(options) {
+    const setTitle = () => i18n.setNavTitle('manual.title');
+    if (i18n.isLoaded()) setTitle(); else i18n.loadI18nTexts(setTitle);
     if (options.id) this.loadGuide(options.id);
     else this.setData({ loading: false });
   },

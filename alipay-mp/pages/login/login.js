@@ -1,4 +1,5 @@
 const app = getApp();
+const i18n = require('../../utils/i18n.js');
 
 Page({
   data: {
@@ -12,6 +13,8 @@ Page({
   },
 
   onLoad() {
+    const setTitle = () => i18n.setNavTitle('login.title');
+    if (i18n.isLoaded()) setTitle(); else i18n.loadI18nTexts(setTitle);
     app.request({ url: '/home-config' }).then(res => {
       const list = res.data || [];
       const headerLogo = list.find(i => i.section === 'headerLogo' && i.status === 'active');

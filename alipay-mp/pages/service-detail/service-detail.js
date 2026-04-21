@@ -1,14 +1,20 @@
 const app = getApp();
 const { formatPriceDisplay } = require('../../utils/currency.js');
+const i18n = require('../../utils/i18n.js');
 
 function enrichServiceData(s) {
   const sym = app.globalData.currencySymbol || '¥';
   const op = s.originPrice;
   const showOrigin = op != null && op !== '' && Number(op) > 0;
+  // 英文模式优先取 *En 字段，避免显示中文标题/描述
+  const localTitle = i18n.pick(s, 'title') || s.title || i18n.t('tabbar.services');
+  const localDesc = i18n.pick(s, 'description') || s.description || i18n.t('serviceDetail.defaultDesc');
   return {
     id: s.id,
-    title: s.title || '服务',
-    description: s.description || '专业服务，品质保障',
+    title: localTitle,
+    titleEn: s.titleEn || '',
+    description: localDesc,
+    descriptionEn: s.descriptionEn || '',
     price: s.price,
     originPrice: s.originPrice,
     priceDisplay: formatPriceDisplay(s.price, sym),
@@ -43,6 +49,8 @@ Page({
 
   onLoad(query) {
     const id = query.id;
+    const setTitle = () => i18n.setNavTitle('serviceDetail.title');
+    if (i18n.isLoaded()) setTitle(); else i18n.loadI18nTexts(setTitle);
     this.setData({ serviceId: id });
     this.loadService(id);
   },
@@ -55,12 +63,15 @@ Page({
     app.request({ url: `/services/${id}` })
       .then(res => {
         const s = res.data || {};
+        // 透传 *En 字段，让 enrichServiceData 按当前语言 pick，避免英文下看到中文标题
         this.setData({
           loading: false,
           serviceData: enrichServiceData({
             id: s.id,
-            title: s.title || '服务',
-            description: s.description || '专业服务，品质保障',
+            title: s.title || '',
+            titleEn: s.titleEn || '',
+            description: s.description || '',
+            descriptionEn: s.descriptionEn || '',
             price: s.price || 0,
             originPrice: s.originPrice,
           }),

@@ -56,6 +56,7 @@ Page({
   },
 
   refreshI18n() {
+    i18n.setNavTitle('addressEdit.title');
     const countries = buildCountries();
     this.setData({
       countries,
@@ -78,6 +79,7 @@ Page({
   },
 
   loadAddress(id) {
+    if (!app.isLoggedIn()) return;
     app.request({ url: '/addresses' })
       .then(res => {
         const addr = (res.data || []).find(a => String(a.id) === String(id));

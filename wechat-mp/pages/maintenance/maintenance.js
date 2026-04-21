@@ -28,6 +28,7 @@ Page({
   },
 
   refreshI18n() {
+    i18n.setNavTitle('maintenance.title');
     this.setData({
       loadingText: i18n.t('common.loading'),
       maintenanceSuffix: i18n.t('maintenance.suffix'),

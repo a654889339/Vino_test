@@ -37,6 +37,7 @@ Page({
   },
 
   refreshI18n() {
+    i18n.setNavTitle('chat.title');
     this.setData({
       i18n: {
         emptyHint: i18n.t('chat.emptyHint'),

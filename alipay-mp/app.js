@@ -20,6 +20,7 @@ function getJwtExpMs(token) {
 
 const currencyUtil = require('./utils/currency.js');
 const { BASE_URL } = require('./config.js');
+const i18n = require('./utils/i18n.js');
 
 function warnIfBadApiBase(baseUrl) {
   if (!baseUrl || typeof baseUrl !== 'string') return;
@@ -66,6 +67,17 @@ App({
   onLaunch() {
     warnIfBadApiBase(this.globalData.baseUrl);
     this.loadCurrencySymbol();
+    // 1) 若本地已保存语言偏好：直接加载文案并刷新 tabBar
+    // 2) 若未保存：按 IP 自动判定（CN/HK/MO/TW→zh，其它→en），失败回退 zh
+    if (i18n.getLang() && (i18n.getLang() === 'zh' || i18n.getLang() === 'en')) {
+      i18n.applyTabBarLabels();
+      i18n.loadI18nTexts();
+    } else {
+      i18n.detectLangByIp(() => {
+        i18n.applyTabBarLabels();
+        i18n.loadI18nTexts();
+      });
+    }
     try {
       const res = my.getStorageSync({ key: 'vino_token' });
       const token = res && res.data ? res.data : '';

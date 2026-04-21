@@ -28,6 +28,7 @@ Page({
   },
 
   refreshI18n() {
+    i18n.setNavTitle('address.title');
     this.setData({
       emptyText: i18n.t('addressList.empty'),
       defaultTag: i18n.t('addressList.default'),
@@ -40,6 +41,11 @@ Page({
   },
 
   loadAddresses() {
+    // 未登录直接清空并提示登录，避免触发 /addresses 的 401。
+    if (!app.isLoggedIn()) {
+      this.setData({ addresses: [], loading: false });
+      return;
+    }
     this.setData({ loading: true });
     app.request({ url: '/addresses' })
       .then(res => {

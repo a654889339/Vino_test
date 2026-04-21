@@ -1,59 +1,52 @@
+/**
+ * 支付宝小程序 i18n 工具：与 wechat-mp/utils/i18n.js 功能对齐。
+ * 主要差异：
+ *  - 存储 API 是 my.getStorageSync/setStorageSync，接收对象参数。
+ *  - 网络 API 是 my.request，success 回包字段名与 wx 略不同。
+ *  - 原生 tabBar 文案通过 my.setTabBarItem({ index, name }) 动态更新。
+ */
 const { BASE_URL: DEFAULT_BASE_URL } = require('../config.js');
 const STORAGE_KEY = 'vino_lang';
 
 let _lang = '';
-try { _lang = wx.getStorageSync(STORAGE_KEY) || ''; } catch (e) {}
+try {
+  const r = my.getStorageSync({ key: STORAGE_KEY });
+  _lang = (r && r.data) ? r.data : '';
+} catch (e) {}
 
 const _texts = {};
 let _loaded = false;
 let _loading = false;
 const _pendingCallbacks = [];
 
+/** 原生 tabBar 文案：中英文对照，必须与 app.json 里 tabBar.items 顺序一致 */
+const TABBAR_ITEMS = [
+  { zh: '首页', en: 'Home' },
+  { zh: '产品', en: 'Products' },
+  { zh: '服务', en: 'Services' },
+  { zh: '订单', en: 'Orders' },
+  { zh: '我的', en: 'Mine' },
+];
+
 function getLang() { return _lang || 'zh'; }
 function isEn() { return _lang === 'en'; }
 
-/** 任意页面调用 setLang 后刷新自定义 tabBar，避免仍显示上一语言的 label */
-function notifyTabBarLang() {
+function applyTabBarLabels() {
   try {
-    const pages = getCurrentPages();
-    for (let i = pages.length - 1; i >= 0; i--) {
-      const page = pages[i];
-      if (page && typeof page.getTabBar === 'function') {
-        const tab = page.getTabBar();
-        if (tab && typeof tab.refreshLabels === 'function') {
-          tab.refreshLabels();
-          return;
-        }
-      }
-    }
-  } catch (e) {}
-}
-
-/**
- * 在 tab 页 onShow 里调用：同步选中角标 + 按当前语言重算文案。
- * 仅 set selected 不重算 label 时，从首页切语言再进「产品」会仍显示英文底栏。
- */
-function syncCustomTabBar(page, selectedIndex) {
-  try {
-    if (!page || typeof page.getTabBar !== 'function') return;
-    const tab = page.getTabBar();
-    if (!tab) return;
-    if (typeof selectedIndex === 'number') {
-      tab.setData({ selected: selectedIndex });
-    }
-    if (typeof tab.refreshLabels === 'function') {
-      tab.refreshLabels();
-    }
+    TABBAR_ITEMS.forEach((it, index) => {
+      if (typeof my.setTabBarItem !== 'function') return;
+      my.setTabBarItem({ index, name: isEn() ? it.en : it.zh });
+    });
   } catch (e) {}
 }
 
 function setLang(lang) {
   _lang = lang;
-  try { wx.setStorageSync(STORAGE_KEY, lang); } catch (e) {}
-  notifyTabBarLang();
-  // 部分基础库下 setLang 与 tabBar 完成挂载的时序不同步，延迟再刷一次
-  setTimeout(notifyTabBarLang, 0);
-  setTimeout(notifyTabBarLang, 50);
+  try { my.setStorageSync({ key: STORAGE_KEY, data: lang }); } catch (e) {}
+  applyTabBarLabels();
+  // 部分基础库下 tabBar 完成挂载晚于 setLang，延迟再刷一次
+  setTimeout(applyTabBarLabels, 0);
+  setTimeout(applyTabBarLabels, 50);
 }
 
 function _getBaseUrl() {
@@ -66,7 +59,7 @@ function _getBaseUrl() {
 
 function detectLangByIp(cb) {
   if (_lang) { if (cb) cb(_lang); return; }
-  wx.request({
+  my.request({
     url: 'https://ipapi.co/json/',
     timeout: 3000,
     success(res) {
@@ -87,7 +80,7 @@ function loadI18nTexts(cb) {
   if (cb) _pendingCallbacks.push(cb);
   if (_loading) return;
   _loading = true;
-  wx.request({
+  my.request({
     url: _getBaseUrl() + '/i18n',
     success(res) {
       const data = (res.data && res.data.data) || [];
@@ -99,7 +92,7 @@ function loadI18nTexts(cb) {
     complete() {
       _loading = false;
       const cbs = _pendingCallbacks.splice(0);
-      cbs.forEach(function(fn) { fn(); });
+      cbs.forEach(function (fn) { fn(); });
     },
   });
 }
@@ -114,6 +107,7 @@ function t(keyOrZh, enFallback) {
   return isEn() ? (enFallback || keyOrZh || '') : (keyOrZh || '');
 }
 
+/** 从 DB 对象里按当前语言取字段：英文下优先 fieldEn，其次 field；中文下只取 field。 */
 function pick(obj, field) {
   if (!obj) return '';
   if (isEn()) {
@@ -123,16 +117,13 @@ function pick(obj, field) {
   return obj[field] || '';
 }
 
-/**
- * 统一设置当前页顶部导航栏标题。
- * - 若传入的是 i18n_texts 的 key（形如 'mine.title'）就按语言取值；
- * - 否则当作裸文案回退。
- * 注意：tabBar 页切语言后需主动调，不会自动刷新。
- */
+/** 支付宝导航栏标题：传入 i18n_texts 的 key 即按语言取值，否则当裸文案。 */
 function setNavTitle(keyOrText) {
   try {
     const title = t(keyOrText);
-    if (title) wx.setNavigationBarTitle({ title });
+    if (title && typeof my.setNavigationBar === 'function') {
+      my.setNavigationBar({ title });
+    }
   } catch (e) {}
 }
 
@@ -145,6 +136,6 @@ module.exports = {
   isLoaded,
   t,
   pick,
-  syncCustomTabBar,
+  applyTabBarLabels,
   setNavTitle,
 };

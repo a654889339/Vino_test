@@ -52,6 +52,7 @@ Page({
   },
 
   refreshI18n() {
+    i18n.setNavTitle('index.title');
     this.setData({
       currentLang: i18n.getLang(),
       langLabel: i18n.isEn() ? 'EN' : i18n.t('lang.zhLabel'),

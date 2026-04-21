@@ -30,6 +30,7 @@ Page({
   },
 
   refreshI18n() {
+    i18n.setNavTitle('mine.title');
     const vals = this.data.stats.map(s => s.value);
     this.setData({
       i18n: {

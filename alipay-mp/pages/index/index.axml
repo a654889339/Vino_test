@@ -16,6 +16,12 @@
       <view class="hero-header">
         <image a:if="{{headerLogoUrl}}" src="{{headerLogoUrl}}" class="hero-logo" mode="aspectFit" />
         <text a:else class="hero-logo-text">VINO</text>
+        <view class="hero-actions">
+          <view class="lang-switcher" onTap="onLangTap">
+            <text class="lang-label">{{langLabel || '中/EN'}}</text>
+            <text class="lang-arrow">▾</text>
+          </view>
+        </view>
       </view>
     </view>
   </view>
@@ -24,7 +30,7 @@
   <view class="card-section" a:if="{{navLgItems.length || navSmItems.length}}" style="{{homeScrollStyle}}">
     <view class="section-header">
       <text class="section-title">{{navSectionTitle}}</text>
-      <text class="section-more" onTap="goService">进度查询 ›</text>
+      <text class="section-more" onTap="goService">{{progressQueryText}} ›</text>
     </view>
     <scroll-view scroll-x class="nav-lg-row" a:if="{{navLgItems.length}}">
       <view class="nav-lg-item" a:for="{{navLgItems}}" a:key="id" onTap="goPath" data-path="{{item.path}}">
@@ -50,8 +56,8 @@
   <view a:if="{{vinoItems.length}}" class="vino-section" style="{{vinoSectionStyle}}">
     <view class="vino-inner">
       <view class="vino-head">
-        <text class="vino-title">Vino产品</text>
-        <text class="vino-more" onTap="goProducts">全部 ›</text>
+        <text class="vino-title">{{vinoProductsText}}</text>
+        <text class="vino-more" onTap="goProducts">{{viewAllText}} ›</text>
       </view>
       <view class="vino-grid">
         <view class="vino-cell" a:for="{{vinoItems}}" a:key="id" onTap="goVinoGuide" data-slug="{{item.path}}">
@@ -68,7 +74,7 @@
   <!-- 甄选推荐 -->
   <view a:if="{{featuredItems.length}}" class="fr-section" style="{{frSectionStyle}}">
     <view class="fr-head">
-      <text class="fr-title">甄选推荐</text>
+      <text class="fr-title">{{featuredText}}</text>
     </view>
     <scroll-view scroll-x class="fr-scroll" show-scrollbar="{{false}}" enable-flex="{{false}}">
       <view class="fr-card" a:for="{{featuredItems}}" a:key="id" onTap="goFeaturedGuide" data-slug="{{item.path}}">
@@ -88,7 +94,7 @@
   <view a:if="{{myProducts.length}}" class="card-section" style="{{myProductsSectionStyle}}">
     <view class="section-header">
       <text class="section-title">{{myProductsTitle}}</text>
-      <text class="section-more" onTap="goMyProducts">查看全部 ›</text>
+      <text class="section-more" onTap="goMyProducts">{{viewMoreText}} ›</text>
     </view>
     <view class="my-products-list">
       <view class="my-product-item {{item.guideSlug || item.guide ? 'my-product-item--clickable' : ''}}" a:for="{{myProducts}}" a:key="productKey" onTap="goMyProductGuide" data-slug="{{item.guideSlug || item.guide}}">

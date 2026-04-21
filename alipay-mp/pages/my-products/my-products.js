@@ -1,4 +1,5 @@
 const app = getApp();
+const i18n = require('../../utils/i18n.js');
 
 function formatTime(t) {
   if (!t) return '-';
@@ -13,6 +14,8 @@ Page({
   },
 
   onShow() {
+    const setTitle = () => i18n.setNavTitle('myProducts.title');
+    if (i18n.isLoaded()) setTitle(); else i18n.loadI18nTexts(setTitle);
     this.loadList();
   },
 

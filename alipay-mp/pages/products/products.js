@@ -1,5 +1,6 @@
 const app = getApp();
 const { openManualFromGuide } = require('../../utils/openManual.js');
+const i18n = require('../../utils/i18n.js');
 
 Page({
   data: {
@@ -18,6 +19,9 @@ Page({
   },
 
   onShow() {
+    i18n.applyTabBarLabels();
+    const setTitle = () => i18n.setNavTitle('products.title');
+    if (i18n.isLoaded()) setTitle(); else i18n.loadI18nTexts(setTitle);
     if (!this.data.categories.length) this.loadCategories();
   },
 

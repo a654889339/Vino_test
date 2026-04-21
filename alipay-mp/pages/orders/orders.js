@@ -1,5 +1,6 @@
 const app = getApp();
 const { formatPriceDisplay } = require('../../utils/currency.js');
+const i18n = require('../../utils/i18n.js');
 
 const statusMap = {
   pending: { text: '待支付', type: 'warning' },
@@ -24,6 +25,9 @@ Page({
   },
 
   onShow() {
+    i18n.applyTabBarLabels();
+    const setTitle = () => i18n.setNavTitle('orders.title');
+    if (i18n.isLoaded()) setTitle(); else i18n.loadI18nTexts(setTitle);
     this.loadOrders();
   },
 

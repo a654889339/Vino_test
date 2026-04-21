@@ -1,4 +1,5 @@
 const app = getApp();
+const i18n = require('../../utils/i18n.js');
 
 Page({
   data: {
@@ -18,6 +19,8 @@ Page({
       my.navigateTo({ url: '/pages/login/login' });
       return;
     }
+    const setTitle = () => i18n.setNavTitle('profileEdit.title');
+    if (i18n.isLoaded()) setTitle(); else i18n.loadI18nTexts(setTitle);
     this.loadUser();
   },
 

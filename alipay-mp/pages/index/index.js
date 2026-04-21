@@ -1,5 +1,6 @@
 const app = getApp();
 const { buildSectionSkinContainerStyle } = require('../../utils/sectionSkin.js');
+const i18n = require('../../utils/i18n.js');
 
 function getToken() {
   return app.globalData.token || (my.getStorageSync({ key: 'vino_token' }) || {}).data;
@@ -7,11 +8,18 @@ function getToken() {
 
 Page({
   data: {
+    currentLang: '',
+    langLabel: '',
     headerLogoUrl: '',
     heroBgUrl: '',
     heroBgList: [],
-    navSectionTitle: '自助预约',
-    myProductsTitle: '我的商品',
+    navSectionTitle: '',
+    myProductsTitle: '',
+    progressQueryText: '',
+    vinoProductsText: '',
+    viewAllText: '',
+    featuredText: '',
+    viewMoreText: '',
     navLgItems: [],
     navSmItems: [],
     myProducts: [],
@@ -25,8 +33,47 @@ Page({
   },
 
   onShow() {
-    this.loadHomeConfig();
-    this.loadMyProducts();
+    i18n.applyTabBarLabels();
+    const self = this;
+    const doRefresh = () => {
+      self.refreshI18n();
+      self.loadHomeConfig();
+      self.loadMyProducts();
+    };
+    if (i18n.isLoaded()) {
+      doRefresh();
+    } else {
+      i18n.loadI18nTexts(doRefresh);
+    }
+  },
+
+  refreshI18n() {
+    i18n.setNavTitle('index.title');
+    this.setData({
+      currentLang: i18n.getLang(),
+      langLabel: i18n.isEn() ? 'EN' : i18n.t('lang.zhLabel'),
+      navSectionTitle: i18n.t('home.selfBook'),
+      myProductsTitle: i18n.t('home.myProducts'),
+      progressQueryText: i18n.t('home.progressQuery'),
+      vinoProductsText: i18n.t('home.vinoProducts'),
+      viewAllText: i18n.t('home.viewAll'),
+      featuredText: i18n.t('home.featured'),
+      viewMoreText: i18n.t('home.viewMore'),
+    });
+  },
+
+  onLangTap() {
+    const items = [i18n.t('lang.zhName'), 'English'];
+    my.showActionSheet({
+      items,
+      success: (res) => {
+        if (res.index == null || res.index < 0) return;
+        const lang = res.index === 1 ? 'en' : 'zh';
+        i18n.setLang(lang);
+        this.refreshI18n();
+        this.loadHomeConfig();
+      },
+    });
   },
 
   loadMyProducts() {
@@ -46,6 +93,8 @@ Page({
         };
         const myProducts = list.map(item => ({
           ...item,
+          categoryName: i18n.pick(item, 'categoryName') || item.categoryName || '',
+          productName: i18n.pick(item, 'productName') || item.productName || '',
           iconUrl: item.iconUrl ? toFull(item.iconUrl) : '',
         }));
         this.setData({ myProducts });
@@ -155,21 +204,21 @@ Page({
         const myProductsTitleItem = items.find(i => i.section === 'myProducts' && i.status === 'active');
         const navLg = items.filter(i => i.section === 'navLg' && i.status === 'active')
           .sort((a, b) => a.sortOrder - b.sortOrder)
-          .map(i => ({ id: i.id, title: i.title, imageUrl: i.imageUrl, imageUrlThumb: i.imageUrlThumb || '', icon: i.icon, path: i.path || '/pages/service/service', color: i.color }));
+          .map(i => ({ id: i.id, title: i18n.pick(i, 'title') || i.title || '', imageUrl: i.imageUrl, imageUrlThumb: i.imageUrlThumb || '', icon: i.icon, path: i.path || '/pages/service/service', color: i.color }));
         const navSm = items.filter(i => i.section === 'navSm' && i.status === 'active')
           .sort((a, b) => a.sortOrder - b.sortOrder)
-          .map(i => ({ id: i.id, title: i.title, imageUrl: i.imageUrl, imageUrlThumb: i.imageUrlThumb || '', icon: i.icon, path: i.path || '/pages/service/service', color: i.color }));
+          .map(i => ({ id: i.id, title: i18n.pick(i, 'title') || i.title || '', imageUrl: i.imageUrl, imageUrlThumb: i.imageUrlThumb || '', icon: i.icon, path: i.path || '/pages/service/service', color: i.color }));
 
         const vinoRows = items.filter(i => i.section === 'vinoProduct' && i.status === 'active')
           .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
         const vinoItems = vinoRows.map((row) => {
           const path = (row.path || '').trim();
           const g = path ? (guidesBySlug[path] || guidesBySlug[path.toLowerCase()]) : null;
-          let title = row.title || '';
+          let title = i18n.pick(row, 'title') || row.title || '';
           let iconUrl = '';
           if (g) {
-            title = (g.name && String(g.name).trim()) || title;
-            iconUrl = (g.iconUrl && String(g.iconUrl).trim()) || '';
+            title = i18n.pick(g, 'name') || title;
+            iconUrl = i18n.pick(g, 'iconUrl') || '';
           }
           if (!iconUrl && row.imageUrl) iconUrl = row.imageUrl;
           return {
@@ -185,15 +234,15 @@ Page({
         const featuredItems = frRows.map((row) => {
           const path = (row.path || '').trim();
           const g = path ? (guidesBySlug[path] || guidesBySlug[path.toLowerCase()]) : null;
-          let title = row.title || '';
-          let subtitle = (row.desc || '').trim();
+          let title = i18n.pick(row, 'title') || row.title || '';
+          let subtitle = (i18n.pick(row, 'desc') || row.desc || '').trim();
           let coverImage = '';
           let coverThumb = '';
           if (g) {
-            title = (g.name && String(g.name).trim()) || title;
-            subtitle = (g.subtitle && String(g.subtitle).trim()) || subtitle;
-            coverImage = (g.coverImage && String(g.coverImage).trim()) || '';
-            coverThumb = (g.coverImageThumb && String(g.coverImageThumb).trim()) || '';
+            title = i18n.pick(g, 'name') || title;
+            subtitle = i18n.pick(g, 'subtitle') || subtitle;
+            coverImage = i18n.pick(g, 'coverImage') || '';
+            coverThumb = i18n.pick(g, 'coverImageThumb') || '';
           }
           if (!coverImage && row.imageUrl) coverImage = row.imageUrl;
           if (!coverThumb && row.imageUrlThumb) coverThumb = row.imageUrlThumb;
@@ -210,21 +259,30 @@ Page({
             const thumb = (evRow.imageUrlThumb || '').trim();
             const displayBg = thumb ? toFull(thumb) : (img ? toFull(evRow.imageUrl) : '');
             exploreVino = {
-              barTitle: (evRow.title && String(evRow.title).trim()) || '探索VINO',
+              barTitle: (i18n.pick(evRow, 'title') || evRow.title || '').trim() || i18n.t('home.exploreVino'),
               mainTitle: (evRow.icon && String(evRow.icon).trim()) || 'VINO',
-              subTitle: (evRow.desc || '').trim(),
+              subTitle: (i18n.pick(evRow, 'desc') || evRow.desc || '').trim(),
               path: pathEv,
               displayBg,
             };
           }
         }
 
+        const navSectionTitle = (() => {
+          const v = navSectionTitleItem ? (i18n.pick(navSectionTitleItem, 'title') || navSectionTitleItem.title || '').trim() : '';
+          return v || i18n.t('home.selfBook');
+        })();
+        const myProductsTitle = (() => {
+          const v = myProductsTitleItem ? (i18n.pick(myProductsTitleItem, 'title') || myProductsTitleItem.title || '').trim() : '';
+          return v || i18n.t('home.myProducts');
+        })();
+
         this.setData({
-          headerLogoUrl: headerLogo ? toFull(headerLogo.imageUrl) : '',
+          headerLogoUrl: headerLogo ? toFull(i18n.pick(headerLogo, 'imageUrl') || headerLogo.imageUrl) : '',
           heroBgUrl: singleBg,
           heroBgList: homeBgList,
-          navSectionTitle: (navSectionTitleItem && navSectionTitleItem.title) ? navSectionTitleItem.title.trim() : '自助预约',
-          myProductsTitle: (myProductsTitleItem && myProductsTitleItem.title) ? myProductsTitleItem.title.trim() : '我的商品',
+          navSectionTitle,
+          myProductsTitle,
           navLgItems: navLg,
           navSmItems: navSm,
           vinoItems,

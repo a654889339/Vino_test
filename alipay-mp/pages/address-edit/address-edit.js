@@ -1,4 +1,5 @@
 const app = getApp();
+const i18n = require('../../utils/i18n.js');
 
 Page({
   data: {
@@ -18,6 +19,8 @@ Page({
   },
 
   onLoad(opts) {
+    const setTitle = () => i18n.setNavTitle('addressEdit.title');
+    if (i18n.isLoaded()) setTitle(); else i18n.loadI18nTexts(setTitle);
     if (opts.id) {
       this.setData({ editId: opts.id });
       this.loadAddress(opts.id);
@@ -25,7 +28,9 @@ Page({
   },
 
   loadAddress(id) {
-    app.request({ url: '/address' })
+    // 未登录不发起请求
+    if (!app.isLoggedIn()) return;
+    app.request({ url: '/addresses' })
       .then(res => {
         const addr = (res.data || []).find(a => String(a.id) === String(id));
         if (addr) {
@@ -62,7 +67,7 @@ Page({
     if (!detailAddress.trim()) return my.showToast({ content: '请输入详细地址' });
 
     const body = { contactName, contactPhone, country, customCountry, province, city, district, detailAddress, isDefault };
-    app.request({ url: editId ? '/address/' + editId : '/address', method: editId ? 'PUT' : 'POST', data: body })
+    app.request({ url: editId ? '/addresses/' + editId : '/addresses', method: editId ? 'PUT' : 'POST', data: body })
       .then(() => { my.showToast({ content: '保存成功' }); setTimeout(() => my.navigateBack(), 500); })
       .catch(() => my.showToast({ content: '保存失败' }));
   },
