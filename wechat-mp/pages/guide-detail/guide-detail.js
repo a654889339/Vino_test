@@ -36,11 +36,17 @@ Page({
   },
 
   onShow() {
-    // 处理「跨页切换语言后回到本页」的场景：已加载 guide 时按当前语言重新设置导航栏标题。
+    // 处理「跨页切换语言后回到本页」的场景：已加载 guide 时按当前语言重新设置导航栏标题与 hero 文案。
     const g = this.data.guide;
     if (g && g.id) {
       this.refreshI18n();
+      this.applyLocalizedGuideFields(g);
       this.applyNavBarTitle(g);
+      const mediaItems = this.data.mediaItems || [];
+      this.setData({
+        guide: g,
+        firstMediaTitle: mediaItems.length ? (mediaItems[0].title || g.displayName || g.name) : (g.displayName || g.name),
+      });
     }
   },
 
@@ -67,10 +73,19 @@ Page({
     wx.setNavigationBarTitle({ title });
   },
 
+  /** 按当前语言重算 guide 上随语言变化的派生字段 */
+  applyLocalizedGuideFields(g) {
+    if (!g) return g;
+    g.displayName = i18n.pick(g, 'name');
+    g.displaySubtitle = i18n.pick(g, 'subtitle');
+    return g;
+  },
+
   loadGuide(id) {
     app.request({ url: `/guides/${id}` })
       .then(res => {
         const g = res.data || {};
+        this.applyLocalizedGuideFields(g);
         this.applyNavBarTitle(g);
         const parse = v => { try { return Array.isArray(v) ? v : JSON.parse(v || '[]'); } catch { return []; } };
         const base = app.globalData.baseUrl.replace('/api', '');
@@ -92,7 +107,7 @@ Page({
           sections,
           mediaItems,
           helpItems,
-          firstMediaTitle: mediaItems.length ? (mediaItems[0].title || g.name) : g.name,
+          firstMediaTitle: mediaItems.length ? (mediaItems[0].title || g.displayName || g.name) : (g.displayName || g.name),
           loading: false,
         });
       })

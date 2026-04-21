@@ -9,7 +9,7 @@
         <view wx:else class="hero-fallback">
           <image wx:if="{{guide.iconUrl}}" src="{{guide.displayIconUrl}}" class="hero-icon-img" bindload="onIconLoad" />
           <text wx:else class="hero-emoji">{{guide.emoji}}</text>
-          <text class="hero-name">{{guide.name}}</text>
+          <text class="hero-name">{{guide.displayName || guide.name}}</text>
         </view>
         <view wx:if="{{guide.showcaseVideo}}" class="play-btn" bindtap="playShowcase">▶</view>
       </view>

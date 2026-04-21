@@ -221,7 +221,7 @@ Page({
             const imageUrlThumb = i.imageUrlThumb ? toFull(i.imageUrlThumb) : '';
             return {
               id: i.id,
-              title: i.title,
+              title: i18n.pick(i, 'title') || i.title || '',
               imageUrl,
               imageUrlThumb,
               displayImageUrl: (imageUrlThumb || imageUrl || '').trim(),
@@ -237,7 +237,7 @@ Page({
             const imageUrlThumb = i.imageUrlThumb ? toFull(i.imageUrlThumb) : '';
             return {
               id: i.id,
-              title: i.title,
+              title: i18n.pick(i, 'title') || i.title || '',
               imageUrl,
               imageUrlThumb,
               displayImageUrl: (imageUrlThumb || imageUrl || '').trim(),
@@ -252,7 +252,7 @@ Page({
         const vinoItems = vinoRows.map((row) => {
           const path = (row.path || '').trim();
           const g = path ? (guidesBySlug[path] || guidesBySlug[path.toLowerCase()]) : null;
-          let title = row.title || '';
+          let title = i18n.pick(row, 'title') || row.title || '';
           let iconUrl = '';
           if (g) {
             title = i18n.pick(g, 'name') || title;
@@ -274,8 +274,8 @@ Page({
         const featuredItems = frRows.map((row) => {
           const path = (row.path || '').trim();
           const g = path ? (guidesBySlug[path] || guidesBySlug[path.toLowerCase()]) : null;
-          let title = row.title || '';
-          let subtitle = (row.desc || '').trim();
+          let title = i18n.pick(row, 'title') || row.title || '';
+          let subtitle = (i18n.pick(row, 'desc') || row.desc || '').trim();
           let coverImage = '';
           let coverThumb = '';
           if (g) {
@@ -309,19 +309,28 @@ Page({
         const recommends = recRows.length
           ? recRows.map((i, idx) => ({
             id: i.id,
-            title: i.title || '',
-            desc: i.desc || '',
+            title: i18n.pick(i, 'title') || i.title || '',
+            desc: i18n.pick(i, 'desc') || i.desc || '',
             emoji: ['🏅', '🛡️', '🎁', '👥', '⭐', '📌'][idx % 6],
             bg: i.color && String(i.color).trim() ? i.color : 'linear-gradient(135deg, #6366F1, #4F46E5)',
           }))
           : this.data.recommends;
 
+        const navSectionTitle = (() => {
+          const v = navSectionTitleItem ? (i18n.pick(navSectionTitleItem, 'title') || navSectionTitleItem.title || '').trim() : '';
+          return v || i18n.t('home.selfBook');
+        })();
+        const myProductsTitle = (() => {
+          const v = myProductsTitleItem ? (i18n.pick(myProductsTitleItem, 'title') || myProductsTitleItem.title || '').trim() : '';
+          return v || i18n.t('home.myProducts');
+        })();
+
         this.setData({
           headerLogoUrl: headerLogo ? toFull(i18n.pick(headerLogo, 'imageUrl')) : '',
           heroBgUrl: singleBg,
           heroBgList: homeBgList,
-          navSectionTitle: (navSectionTitleItem && navSectionTitleItem.title) ? navSectionTitleItem.title.trim() : i18n.t('home.selfBook'),
-          myProductsTitle: (myProductsTitleItem && myProductsTitleItem.title) ? myProductsTitleItem.title.trim() : i18n.t('home.myProducts'),
+          navSectionTitle,
+          myProductsTitle,
           navLgItems: navLg,
           navSmItems: navSm,
           vinoItems,

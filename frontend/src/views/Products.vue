@@ -121,7 +121,10 @@ const filteredDeviceGuides = computed(() => {
   const list = sortedDeviceGuides.value;
   const kw = searchKeyword.value.trim().toLowerCase();
   if (!kw) return list;
-  return list.filter((d) => (d.name || '').toLowerCase().includes(kw));
+  return list.filter((d) => {
+    const hay = [d.name, d.nameEn, d.slug].filter(Boolean).join(' ').toLowerCase();
+    return hay.includes(kw);
+  });
 });
 
 const currentCategory = computed(() =>
