@@ -20,8 +20,8 @@ type Order struct {
 	AdminRemark     string     `gorm:"column:adminRemark;type:text" json:"adminRemark"`
 	ProductSerial   string     `gorm:"column:productSerial;size:128" json:"productSerial"`
 	GuideID         *int       `gorm:"column:guideId" json:"guideId"`
-	CreatedAt       time.Time  `json:"createdAt"`
-	UpdatedAt       time.Time  `json:"updatedAt"`
+	CreatedAt       time.Time  `gorm:"column:createdAt" json:"createdAt"`
+	UpdatedAt       time.Time  `gorm:"column:updatedAt" json:"updatedAt"`
 	User            *User      `gorm:"foreignKey:UserID" json:"user,omitempty"`
 	Guide           *DeviceGuide `gorm:"foreignKey:GuideID" json:"guide,omitempty"`
 }
@@ -55,8 +55,8 @@ type OutletOrder struct {
 	Address         string     `gorm:"size:500" json:"address"`
 	AppointmentTime *time.Time `gorm:"column:appointmentTime" json:"appointmentTime"`
 	AdminRemark     string     `gorm:"column:adminRemark;type:text" json:"adminRemark"`
-	CreatedAt       time.Time  `json:"createdAt"`
-	UpdatedAt       time.Time  `json:"updatedAt"`
+	CreatedAt       time.Time  `gorm:"column:createdAt" json:"createdAt"`
+	UpdatedAt       time.Time  `gorm:"column:updatedAt" json:"updatedAt"`
 	User            *OutletUser `gorm:"foreignKey:UserID" json:"user,omitempty"`
 }
 

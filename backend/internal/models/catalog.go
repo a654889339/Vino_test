@@ -11,8 +11,8 @@ type ServiceCategory struct {
 	NameEn    string    `gorm:"column:nameEn;size:100" json:"nameEn"`
 	SortOrder int       `gorm:"column:sortOrder" json:"sortOrder"`
 	Status    string    `gorm:"type:enum('active','inactive');default:active" json:"status"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	CreatedAt time.Time `gorm:"column:createdAt" json:"createdAt"`
+	UpdatedAt time.Time `gorm:"column:updatedAt" json:"updatedAt"`
 	Services  []Service `gorm:"foreignKey:CategoryID" json:"services,omitempty"`
 }
 
@@ -38,8 +38,8 @@ type Service struct {
 	CurrencyEn     string   `gorm:"column:currencyEn;size:10" json:"currencyEn"`
 	Status         string   `gorm:"type:enum('active','inactive');default:active" json:"status"`
 	SortOrder      int      `gorm:"column:sortOrder" json:"sortOrder"`
-	CreatedAt      time.Time `json:"createdAt"`
-	UpdatedAt      time.Time `json:"updatedAt"`
+	CreatedAt      time.Time `gorm:"column:createdAt" json:"createdAt"`
+	UpdatedAt      time.Time `gorm:"column:updatedAt" json:"updatedAt"`
 	ServiceCategory *ServiceCategory `gorm:"foreignKey:CategoryID" json:"serviceCategory,omitempty"`
 }
 
@@ -53,8 +53,8 @@ type ProductCategory struct {
 	ThumbnailURLEn  *string   `gorm:"column:thumbnailUrlEn;size:1024" json:"thumbnailUrlEn"`
 	SortOrder       int       `gorm:"column:sortOrder" json:"sortOrder"`
 	Status          string    `gorm:"type:enum('active','inactive');default:active" json:"status"`
-	CreatedAt       time.Time `json:"createdAt"`
-	UpdatedAt       time.Time `json:"updatedAt"`
+	CreatedAt       time.Time `gorm:"column:createdAt" json:"createdAt"`
+	UpdatedAt       time.Time `gorm:"column:updatedAt" json:"updatedAt"`
 }
 
 func (ProductCategory) TableName() string { return "product_categories" }
@@ -77,8 +77,8 @@ type HomeConfig struct {
 	ImageURLThumbEn  string    `gorm:"column:imageUrlThumbEn;size:500" json:"imageUrlThumbEn"`
 	SortOrder        int       `gorm:"column:sortOrder" json:"sortOrder"`
 	Status           string    `gorm:"type:enum('active','inactive');default:active" json:"status"`
-	CreatedAt        time.Time `json:"createdAt"`
-	UpdatedAt        time.Time `json:"updatedAt"`
+	CreatedAt        time.Time `gorm:"column:createdAt" json:"createdAt"`
+	UpdatedAt        time.Time `gorm:"column:updatedAt" json:"updatedAt"`
 }
 
 func (HomeConfig) TableName() string { return "home_configs" }
@@ -91,8 +91,8 @@ type OutletServiceCategory struct {
 	Key       *string   `gorm:"size:50" json:"key"`
 	SortOrder int       `gorm:"column:sortOrder" json:"sortOrder"`
 	Status    string    `gorm:"type:enum('active','inactive');default:active" json:"status"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	CreatedAt time.Time `gorm:"column:createdAt" json:"createdAt"`
+	UpdatedAt time.Time `gorm:"column:updatedAt" json:"updatedAt"`
 	Services  []OutletService `gorm:"foreignKey:CategoryID" json:"services,omitempty"`
 }
 
@@ -113,8 +113,8 @@ type OutletService struct {
 	BgOpacity   *float64 `gorm:"column:bgOpacity;type:decimal(5,2)" json:"bgOpacity"`
 	Status      string   `gorm:"type:enum('active','inactive');default:active" json:"status"`
 	SortOrder   int      `gorm:"column:sortOrder" json:"sortOrder"`
-	CreatedAt   time.Time `json:"createdAt"`
-	UpdatedAt   time.Time `json:"updatedAt"`
+	CreatedAt   time.Time `gorm:"column:createdAt" json:"createdAt"`
+	UpdatedAt   time.Time `gorm:"column:updatedAt" json:"updatedAt"`
 	ServiceCategory *OutletServiceCategory `gorm:"foreignKey:CategoryID" json:"serviceCategory,omitempty"`
 }
 
@@ -133,8 +133,8 @@ type OutletHomeConfig struct {
 	Price         string    `gorm:"size:20" json:"price"`
 	SortOrder     int       `gorm:"column:sortOrder" json:"sortOrder"`
 	Status        string    `gorm:"type:enum('active','inactive');default:active" json:"status"`
-	CreatedAt     time.Time `json:"createdAt"`
-	UpdatedAt     time.Time `json:"updatedAt"`
+	CreatedAt     time.Time `gorm:"column:createdAt" json:"createdAt"`
+	UpdatedAt     time.Time `gorm:"column:updatedAt" json:"updatedAt"`
 }
 
 func (OutletHomeConfig) TableName() string { return "outlet_home_configs" }

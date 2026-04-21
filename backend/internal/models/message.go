@@ -9,8 +9,8 @@ type Message struct {
 	Content   string    `gorm:"type:text;not null" json:"content"`
 	Type      string    `gorm:"size:10;default:text" json:"type"`
 	Read      bool      `gorm:"column:read" json:"read"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	CreatedAt time.Time `gorm:"column:createdAt" json:"createdAt"`
+	UpdatedAt time.Time `gorm:"column:updatedAt" json:"updatedAt"`
 }
 
 func (Message) TableName() string { return "messages" }
@@ -22,8 +22,8 @@ type OutletMessage struct {
 	Content   string    `gorm:"type:text;not null" json:"content"`
 	Type      string    `gorm:"size:10;default:text" json:"type"`
 	Read      bool      `gorm:"column:read" json:"read"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	CreatedAt time.Time `gorm:"column:createdAt" json:"createdAt"`
+	UpdatedAt time.Time `gorm:"column:updatedAt" json:"updatedAt"`
 }
 
 func (OutletMessage) TableName() string { return "outlet_messages" }

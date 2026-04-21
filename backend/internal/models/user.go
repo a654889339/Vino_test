@@ -16,8 +16,8 @@ type User struct {
 	LastLoginAt *time.Time `gorm:"column:lastLoginAt" json:"lastLoginAt"`
 	Role        string     `gorm:"type:enum('user','admin','super_admin');default:user" json:"role"`
 	Status      string     `gorm:"type:enum('active','disabled');default:active" json:"status"`
-	CreatedAt   time.Time  `json:"createdAt"`
-	UpdatedAt   time.Time  `json:"updatedAt"`
+	CreatedAt   time.Time  `gorm:"column:createdAt" json:"createdAt"`
+	UpdatedAt   time.Time  `gorm:"column:updatedAt" json:"updatedAt"`
 	Messages    []Message  `gorm:"foreignKey:UserID" json:"messages,omitempty"`
 	Addresses   []Address  `gorm:"foreignKey:UserID" json:"addresses,omitempty"`
 }
@@ -36,8 +36,8 @@ type OutletUser struct {
 	Phone     string    `gorm:"size:20" json:"phone"`
 	Role      string    `gorm:"type:enum('outlet','admin');default:outlet" json:"role"`
 	Status    string    `gorm:"type:enum('active','disabled');default:active" json:"status"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	CreatedAt time.Time `gorm:"column:createdAt" json:"createdAt"`
+	UpdatedAt time.Time `gorm:"column:updatedAt" json:"updatedAt"`
 	Messages  []OutletMessage `gorm:"foreignKey:UserID" json:"messages,omitempty"`
 	Addresses []OutletAddress `gorm:"foreignKey:UserID" json:"addresses,omitempty"`
 }
