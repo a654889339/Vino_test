@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"strconv"
 	"strings"
 
@@ -65,8 +66,31 @@ func svcCreate(c *gin.Context) {
 		resp.Err(c, 400, 400, "请选择服务种类")
 		return
 	}
+	// 校验 categoryId 对应的种类必须存在，避免撞到 services_ibfk_1 外键约束导致的 MySQL 1452，
+	// 并把 Category 冗余字段同步为种类的 key/Name，便于旧前端（按 category 字符串过滤）继续工作。
+	if s.CategoryID != nil {
+		var cat models.ServiceCategory
+		if err := db.DB.First(&cat, *s.CategoryID).Error; err != nil {
+			resp.Err(c, 400, 400, "所选服务种类不存在或已删除")
+			return
+		}
+		if s.Category == nil || strings.TrimSpace(*s.Category) == "" {
+			if cat.Key != nil && strings.TrimSpace(*cat.Key) != "" {
+				k := *cat.Key
+				s.Category = &k
+			} else if cat.Name != "" {
+				n := cat.Name
+				s.Category = &n
+			}
+		}
+	}
+	if s.Status == "" {
+		s.Status = "active"
+	}
 	if err := db.DB.Create(&s).Error; err != nil {
-		resp.Err(c, 500, 500, "创建服务失败")
+		// 把底层错误打进后端日志，便于现场排障；对外仍返回可读 message。
+		log.Printf("[svcCreate] db.Create failed: body=%s err=%v", string(raw), err)
+		resp.Err(c, 500, 500, "创建服务失败: "+err.Error())
 		return
 	}
 	db.DB.Preload("ServiceCategory").First(&s, s.ID)
@@ -91,8 +115,16 @@ func svcUpdate(c *gin.Context) {
 	}
 	raw, _ := json.Marshal(body)
 	_ = json.Unmarshal(raw, &s)
+	if s.CategoryID != nil {
+		var cat models.ServiceCategory
+		if err := db.DB.First(&cat, *s.CategoryID).Error; err != nil {
+			resp.Err(c, 400, 400, "所选服务种类不存在或已删除")
+			return
+		}
+	}
 	if err := db.DB.Save(&s).Error; err != nil {
-		resp.Err(c, 500, 500, "更新服务失败")
+		log.Printf("[svcUpdate] db.Save failed: id=%d body=%s err=%v", id, string(raw), err)
+		resp.Err(c, 500, 500, "更新服务失败: "+err.Error())
 		return
 	}
 	db.DB.Preload("ServiceCategory").First(&s, s.ID)
