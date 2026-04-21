@@ -47,8 +47,9 @@ const fallbackCategories = [
     { id: 5, title: t('services.dailyClean'), desc: '', icon: 'smile-o', iconUrl: '', bg: '#3B82F6' },
   ]},
   { key: 'inspect', name: t('services.inspect'), items: [
-    { id: 6, title: t('services.fullInspect'), desc: '', icon: 'scan', iconUrl: '', bg: '#059669' },
-    { id: 7, title: t('services.optimize'), desc: '', icon: 'fire-o', iconUrl: '', bg: '#10B981' },
+    // 与 i18n_texts / Node 种子一致：fullInspection、performanceOpt（勿用 fullInspect / optimize）
+    { id: 6, title: t('services.fullInspection'), desc: '', icon: 'scan', iconUrl: '', bg: '#059669' },
+    { id: 7, title: t('services.performanceOpt'), desc: '', icon: 'fire-o', iconUrl: '', bg: '#10B981' },
   ]},
   { key: 'data', name: t('services.data'), items: [
     { id: 8, title: t('services.dataRecovery'), desc: '', icon: 'replay', iconUrl: '', bg: '#7C3AED' },

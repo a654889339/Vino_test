@@ -86,8 +86,8 @@ Page({
         { id: 5, title: i18n.t('services.dailyClean'), emoji: '🧹', icon: '', iconUrl: '' },
       ]},
       { key: 'inspect', name: i18n.t('services.catInspect'), items: [
-        { id: 6, title: i18n.t('services.fullInspect'), emoji: '🔍', icon: '', iconUrl: '' },
-        { id: 7, title: i18n.t('services.perfOptimize'), emoji: '🚀', icon: '', iconUrl: '' },
+        { id: 6, title: i18n.t('services.fullInspection'), emoji: '🔍', icon: '', iconUrl: '' },
+        { id: 7, title: i18n.t('services.performanceOpt'), emoji: '🚀', icon: '', iconUrl: '' },
       ]},
       { key: 'data', name: i18n.t('services.catData'), items: [
         { id: 8, title: i18n.t('services.dataRecovery'), emoji: '💾', icon: '', iconUrl: '' },

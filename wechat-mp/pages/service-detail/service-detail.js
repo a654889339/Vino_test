@@ -195,8 +195,8 @@ Page({
       3: { title: i18n.t('services.remoteSupport'), description: i18n.t('serviceDetail.fallbackDesc3'), price: '29', originPrice: '49' },
       4: { title: i18n.t('services.deepClean'), description: i18n.t('serviceDetail.fallbackDesc4'), price: '149', originPrice: '199' },
       5: { title: i18n.t('services.dailyClean'), description: i18n.t('serviceDetail.fallbackDesc5'), price: '69', originPrice: '89' },
-      6: { title: i18n.t('services.fullInspect'), description: i18n.t('serviceDetail.fallbackDesc6'), price: '49', originPrice: '79' },
-      7: { title: i18n.t('services.perfOptimize'), description: i18n.t('serviceDetail.fallbackDesc7'), price: '79', originPrice: '129' },
+      6: { title: i18n.t('services.fullInspection'), description: i18n.t('serviceDetail.fallbackDesc6'), price: '49', originPrice: '79' },
+      7: { title: i18n.t('services.performanceOpt'), description: i18n.t('serviceDetail.fallbackDesc7'), price: '79', originPrice: '129' },
       8: { title: i18n.t('services.dataRecovery'), description: i18n.t('serviceDetail.fallbackDesc8'), price: '199', originPrice: '299' },
       9: { title: i18n.t('services.dataBackup'), description: i18n.t('serviceDetail.fallbackDesc9'), price: '59', originPrice: '89' },
     };

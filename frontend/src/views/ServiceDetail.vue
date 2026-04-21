@@ -105,8 +105,8 @@ const fallbackServices = {
   3: { title: t('services.remoteSupport'), description: t('services.remoteSupportDesc'), price: '29', originPrice: '49', icon: 'phone-o', bg: 'linear-gradient(135deg, #EF4444, #DC2626)' },
   4: { title: t('services.deepClean'), description: t('services.deepCleanDesc'), price: '149', originPrice: '199', icon: 'brush-o', bg: 'linear-gradient(135deg, #2563EB, #1D4ED8)' },
   5: { title: t('services.dailyClean'), description: t('services.dailyCleanDesc'), price: '69', originPrice: '89', icon: 'smile-o', bg: 'linear-gradient(135deg, #3B82F6, #2563EB)' },
-  6: { title: t('services.fullInspect'), description: t('services.fullInspectDesc'), price: '49', originPrice: '79', icon: 'scan', bg: 'linear-gradient(135deg, #059669, #047857)' },
-  7: { title: t('services.optimize'), description: t('services.optimizeDesc'), price: '79', originPrice: '129', icon: 'fire-o', bg: 'linear-gradient(135deg, #10B981, #059669)' },
+  6: { title: t('services.fullInspection'), description: t('services.fullInspectionDesc'), price: '49', originPrice: '79', icon: 'scan', bg: 'linear-gradient(135deg, #059669, #047857)' },
+  7: { title: t('services.performanceOpt'), description: t('services.performanceOptDesc'), price: '79', originPrice: '129', icon: 'fire-o', bg: 'linear-gradient(135deg, #10B981, #059669)' },
   8: { title: t('services.dataRecovery'), description: t('services.dataRecoveryDesc'), price: '199', originPrice: '299', icon: 'replay', bg: 'linear-gradient(135deg, #7C3AED, #6D28D9)' },
   9: { title: t('services.dataBackup'), description: t('services.dataBackupDesc'), price: '59', originPrice: '89', icon: 'description', bg: 'linear-gradient(135deg, #8B5CF6, #7C3AED)' },
 };
