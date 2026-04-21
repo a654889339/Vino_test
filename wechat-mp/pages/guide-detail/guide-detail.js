@@ -35,6 +35,15 @@ Page({
     }
   },
 
+  onShow() {
+    // 处理「跨页切换语言后回到本页」的场景：已加载 guide 时按当前语言重新设置导航栏标题。
+    const g = this.data.guide;
+    if (g && g.id) {
+      this.refreshI18n();
+      this.applyNavBarTitle(g);
+    }
+  },
+
   refreshI18n() {
     this.setData({
       loadingText: i18n.t('common.loading'),
@@ -49,11 +58,20 @@ Page({
     });
   },
 
+  applyNavBarTitle(g) {
+    if (!g) return;
+    const title =
+      i18n.pick(g, 'subtitle') ||
+      i18n.pick(g, 'name') ||
+      i18n.t('guideDetail.title');
+    wx.setNavigationBarTitle({ title });
+  },
+
   loadGuide(id) {
     app.request({ url: `/guides/${id}` })
       .then(res => {
         const g = res.data || {};
-        wx.setNavigationBarTitle({ title: g.name || i18n.t('guideDetail.title') });
+        this.applyNavBarTitle(g);
         const parse = v => { try { return Array.isArray(v) ? v : JSON.parse(v || '[]'); } catch { return []; } };
         const base = app.globalData.baseUrl.replace('/api', '');
         const fix = u => (u && !u.startsWith('http') ? base + u : u);
