@@ -2,33 +2,54 @@ const app = getApp();
 const { formatPriceDisplay } = require('../../utils/currency.js');
 const i18n = require('../../utils/i18n.js');
 
-const statusMap = {
-  pending: { text: '待支付', type: 'warning' },
-  processing: { text: '进行中', type: 'primary' },
-  completed: { text: '已完成', type: 'success' },
-  cancelled: { text: '已取消', type: 'default' },
-};
+function getStatusMap() {
+  return {
+    pending: { text: i18n.t('orders.pendingPay'), type: 'warning' },
+    paid: { text: i18n.t('orders.paid'), type: 'primary' },
+    processing: { text: i18n.t('orders.processing'), type: 'primary' },
+    completed: { text: i18n.t('orders.completed'), type: 'success' },
+    cancelled: { text: i18n.t('orders.cancelled'), type: 'default' },
+  };
+}
 
 Page({
   data: {
     isLoggedIn: false,
     activeTab: 0,
-    tabs: [
-      { key: 'all', name: '全部' },
-      { key: 'pending', name: '待支付' },
-      { key: 'processing', name: '进行中' },
-      { key: 'completed', name: '已完成' },
-    ],
+    tabs: [],
     orders: [],
     loading: true,
-    statusMap,
+    i18n: {},
   },
 
   onShow() {
     i18n.applyTabBarLabels();
-    const setTitle = () => i18n.setNavTitle('orders.title');
-    if (i18n.isLoaded()) setTitle(); else i18n.loadI18nTexts(setTitle);
-    this.loadOrders();
+    const self = this;
+    const doRefresh = () => {
+      self.refreshI18n();
+      self.loadOrders();
+    };
+    if (i18n.isLoaded()) doRefresh();
+    else i18n.loadI18nTexts(doRefresh);
+  },
+
+  refreshI18n() {
+    i18n.setNavTitle('orders.title', '我的订单', 'My Orders');
+    this.setData({
+      i18n: {
+        loading: i18n.t('orders.loading'),
+        empty: i18n.t('orders.empty'),
+        cancelOrder: i18n.t('orders.cancelOrder'),
+        loginTip: i18n.t('orders.loginTip'),
+        goLogin: i18n.t('orders.goLogin'),
+      },
+      tabs: [
+        { key: 'all', name: i18n.t('orders.all') },
+        { key: 'pending', name: i18n.t('orders.pendingPay') },
+        { key: 'processing', name: i18n.t('orders.processing') },
+        { key: 'completed', name: i18n.t('orders.completed') },
+      ],
+    });
   },
 
   onPullDownRefresh() {
@@ -44,9 +65,10 @@ Page({
       this.setData({ orders: [], loading: false });
       return Promise.resolve();
     }
-    const status = this.data.tabs[this.data.activeTab].key;
+    const status = (this.data.tabs[this.data.activeTab] || { key: 'all' }).key;
     const url = status === 'all' ? '/orders/mine' : `/orders/mine?status=${status}`;
     this.setData({ loading: true });
+    const statusMap = getStatusMap();
     return app
       .request({ url })
       .then(res => {
@@ -55,6 +77,7 @@ Page({
         const sym = app.globalData.currencySymbol || '¥';
         const data = (Array.isArray(arr) ? arr : []).map(o => ({
           ...o,
+          serviceTitle: i18n.pick(o, 'serviceTitle') || o.serviceTitle || '',
           priceDisplay: formatPriceDisplay(o.price, sym),
           statusText: (statusMap[o.status] || {}).text || o.status,
           statusType: (statusMap[o.status] || {}).type || 'default',
@@ -64,8 +87,8 @@ Page({
       })
       .catch(err => {
         this.setData({ loading: false, orders: [] });
-        if (err.message === '请先登录') {
-          my.showToast({ content: '请先登录', type: 'none' });
+        if (err.message === '请先登录' || err.message === 'Please log in first') {
+          my.showToast({ content: i18n.t('orders.loginRequired'), type: 'none' });
         }
       });
   },
@@ -85,18 +108,18 @@ Page({
   cancelOrder(e) {
     const id = e.currentTarget.dataset.id;
     my.confirm({
-      title: '取消订单',
-      content: '确定要取消该订单吗？',
+      title: i18n.t('orders.cancelTitle'),
+      content: i18n.t('orders.cancelConfirm'),
       success: res => {
         if (res.confirm) {
           app
             .request({ method: 'PUT', url: `/orders/${id}/cancel` })
             .then(() => {
-              my.showToast({ content: '订单已取消', type: 'success' });
+              my.showToast({ content: i18n.t('orders.orderCancelled'), type: 'success' });
               this.loadOrders();
             })
             .catch(err => {
-              my.showToast({ content: err.message || '取消失败', type: 'none' });
+              my.showToast({ content: err.message || i18n.t('orders.cancelFailed'), type: 'none' });
             });
         }
       },

@@ -140,6 +140,28 @@ func orderMyOrders(c *gin.Context) {
 	qb.Count(&total)
 	var rows []models.Order
 	qb.Order("createdAt DESC").Limit(pageSize).Offset((page - 1) * pageSize).Find(&rows)
+
+	// 历史订单在 orders.serviceTitleEn 空字段时，回读 services.titleEn 补全，
+	// 避免英文端显示中文的 serviceTitle。仅补齐响应字段，不回写 DB。
+	enBySvcID := map[int]string{}
+	svcIDs := make([]int, 0)
+	seen := map[int]bool{}
+	for _, o := range rows {
+		if o.ServiceTitleEn == "" && o.ServiceID != nil && *o.ServiceID > 0 && !seen[*o.ServiceID] {
+			seen[*o.ServiceID] = true
+			svcIDs = append(svcIDs, *o.ServiceID)
+		}
+	}
+	if len(svcIDs) > 0 {
+		var svcs []models.Service
+		_ = db.DB.Select("id", "titleEn").Where("id IN ?", svcIDs).Find(&svcs).Error
+		for _, s := range svcs {
+			if s.TitleEn != "" {
+				enBySvcID[s.ID] = s.TitleEn
+			}
+		}
+	}
+
 	list := make([]gin.H, 0, len(rows))
 	for _, o := range rows {
 		s := orderStatusMap[o.Status]
@@ -152,6 +174,11 @@ func orderMyOrders(c *gin.Context) {
 		h["statusText"] = s.Text
 		h["statusTextEn"] = s.TextEn
 		h["statusType"] = s.Type
+		if (h["serviceTitleEn"] == nil || h["serviceTitleEn"] == "") && o.ServiceID != nil {
+			if en, ok := enBySvcID[*o.ServiceID]; ok {
+				h["serviceTitleEn"] = en
+			}
+		}
 		list = append(list, h)
 	}
 	resp.OK(c, gin.H{"list": list, "total": total, "page": page, "pageSize": pageSize})
@@ -246,6 +273,12 @@ func orderDetail(c *gin.Context) {
 	h["statusText"] = s.Text
 	h["statusTextEn"] = s.TextEn
 	h["statusType"] = s.Type
+	if (h["serviceTitleEn"] == nil || h["serviceTitleEn"] == "") && o.ServiceID != nil && *o.ServiceID > 0 {
+		var svc models.Service
+		if err := db.DB.Select("titleEn").First(&svc, *o.ServiceID).Error; err == nil && svc.TitleEn != "" {
+			h["serviceTitleEn"] = svc.TitleEn
+		}
+	}
 	resp.OK(c, h)
 }
 

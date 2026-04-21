@@ -12,10 +12,10 @@
   </view>
 
   <view class="loading-wrap" a:if="{{loading}}">
-    <text>加载中...</text>
+    <text>{{i18n.loading}}</text>
   </view>
   <view class="empty-wrap" a:elif="{{isLoggedIn && !orders.length}}">
-    <text>暂无订单</text>
+    <text>{{i18n.empty}}</text>
   </view>
   <view class="order-list" a:else>
     <view class="order-card" a:for="{{orders}}" a:key="id">
@@ -33,14 +33,14 @@
         <text a:if="{{item.priceDisplay}}" class="order-price">{{item.priceDisplay}}</text>
       </view>
       <view class="order-actions" a:if="{{item.status === 'pending'}}">
-        <button class="btn-cancel" size="mini" onTap="cancelOrder" data-id="{{item.id}}">取消订单</button>
+        <button class="btn-cancel" size="mini" onTap="cancelOrder" data-id="{{item.id}}">{{i18n.cancelOrder}}</button>
       </view>
     </view>
   </view>
 
   <view class="login-tip" a:if="{{!isLoggedIn && !loading}}">
-    <text>请先登录查看订单</text>
-    <navigator url="/pages/login/login" class="link-login">去登录</navigator>
+    <text>{{i18n.loginTip}}</text>
+    <navigator url="/pages/login/login" class="link-login">{{i18n.goLogin}}</navigator>
   </view>
 
   <view class="tab-bar-placeholder"></view>

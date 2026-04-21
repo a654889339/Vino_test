@@ -1,6 +1,6 @@
 <template>
   <div class="guide-detail-page">
-    <van-nav-bar :title="guide.name || t('guideDetail.title')" left-arrow @click-left="$router.back()" />
+    <van-nav-bar :title="displayGuideTitle" left-arrow @click-left="$router.back()" />
 
     <van-loading v-if="loading" size="36" style="text-align:center;padding:80px 0" />
 
@@ -22,11 +22,11 @@
           <div v-else class="hero-gradient" :style="{ background: guide.gradient }">
             <LodImg v-if="guide.iconUrl" :src="guide.iconUrl" style="width:64px;height:64px;object-fit:contain" />
             <van-icon v-else :name="guide.icon" size="64" color="#fff" />
-            <h2>{{ guide.name }}</h2>
+            <h2>{{ displayGuideName }}</h2>
           </div>
         </div>
         <div v-if="mediaItems.length" class="hero-media">
-          <h3 class="hero-media-title">{{ mediaItems[0]?.title || guide.name }}</h3>
+          <h3 class="hero-media-title">{{ mediaItems[0]?.title || displayGuideName }}</h3>
           <div class="media-scroll">
             <div v-for="(m, i) in mediaItems" :key="i" class="media-card" @click="openMedia(m)">
               <div class="media-thumb">
@@ -94,7 +94,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { showImagePreview } from 'vant';
 import { guideApi } from '@/api';
-import { t } from '@/utils/i18n';
+import { t, pick } from '@/utils/i18n';
 import LodImg from '@/components/LodImg.vue';
 
 const route = useRoute();
@@ -102,6 +102,15 @@ const loading = ref(true);
 const guide = ref({});
 const playShowcase = ref(false);
 const currentVideoUrl = ref('');
+
+// 按当前语言显示产品名 / 顶部标题，英文缺 nameEn 时回退到中文 name。
+const displayGuideName = computed(() => pick(guide.value, 'name') || guide.value.name || '');
+const displayGuideTitle = computed(() => {
+  return pick(guide.value, 'subtitle')
+    || pick(guide.value, 'name')
+    || guide.value.name
+    || t('guideDetail.title');
+});
 
 const sections = computed(() => {
   const s = guide.value.sections;
