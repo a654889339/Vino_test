@@ -9,6 +9,10 @@
 .hero-emoji { font-size: 56px; }
 .hero-name { font-size: 22px; color: #fff; font-weight: 600; margin-top: 8px; }
 .play-btn { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 50px; height: 50px; background: rgba(0,0,0,0.5); border-radius: 50%; color: #fff; font-size: 22px; display: flex; align-items: center; justify-content: center; line-height: 50px; text-align: center; }
+.hero-3d-btn { position: absolute; right: 12px; bottom: 12px; display: inline-flex; align-items: center; gap: 4px; padding: 6px 14px; background: rgba(15,15,20,0.72); color: #fff; border-radius: 999px; font-size: 12px; font-weight: 500; z-index: 2; }
+.hero-3d-btn:active { background: rgba(15,15,20,0.9); }
+.hero-3d-icon { font-size: 12px; color: #fff; margin-right: 2px; }
+.hero-3d-text { font-size: 12px; color: #fff; }
 
 .hero-media { padding: 16px; }
 .hero-media-title { display: block; font-size: 16px; font-weight: 600; color: #1a1a1a; margin-bottom: 12px; }

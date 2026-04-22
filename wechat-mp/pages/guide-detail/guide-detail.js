@@ -19,6 +19,9 @@ Page({
     servicePointLabel: '',
     afterSalesLabel: '',
     repairQuoteLabel: '',
+    show3DViewer: false,
+    preview3DLabel: '',
+    preview3DTip: '',
   },
 
   onLoad(options) {
@@ -64,6 +67,8 @@ Page({
       servicePointLabel: i18n.t('guideDetail.servicePoint'),
       afterSalesLabel: i18n.t('guideDetail.afterSales'),
       repairQuoteLabel: i18n.t('guideDetail.repairQuote'),
+      preview3DLabel: i18n.t('guideDetail.preview3D'),
+      preview3DTip: i18n.t('guideDetail.preview3DTip'),
     });
   },
 
@@ -173,4 +178,39 @@ Page({
   goServices() {
     wx.switchTab({ url: '/pages/service/service' });
   },
+
+  open3DViewer() {
+    const g = this.data.guide || {};
+    if (!g.model3dEnabled || !g.model3dUrl) return;
+    this.setData({ show3DViewer: true });
+    setTimeout(() => {
+      const viewer = this.selectComponent('#modelViewer');
+      if (!viewer) return;
+      if (g.model3dSkyboxUrl && viewer.setSkybox) {
+        viewer.setSkybox(g.model3dSkyboxUrl);
+      }
+      viewer.loadModel(g.model3dUrl)
+        .then(() => {
+          if (g.model3dDecalUrl) {
+            return viewer.applyDecal(g.model3dDecalUrl, {
+              angle: 0,
+              height: 0,
+              arcWidth: Math.PI / 3,
+              heightRange: 1.0,
+              opacity: 1.0,
+            });
+          }
+        })
+        .catch((err) => {
+          console.error('[guide-detail] 3D load error:', err);
+          wx.showToast({ title: (err && err.message) || '加载失败', icon: 'none' });
+        });
+    }, 300);
+  },
+
+  close3DViewer() {
+    this.setData({ show3DViewer: false });
+  },
+
+  noop() {},
 });

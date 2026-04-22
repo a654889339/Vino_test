@@ -34,3 +34,15 @@
 .entry-item { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .entry-icon { width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
 .entry-item text:last-child { font-size: 12px; color: #666; }
+
+.hero-3d-btn { position: absolute; right: 12px; bottom: 12px; display: inline-flex; align-items: center; gap: 4px; padding: 6px 14px; background: rgba(15,15,20,0.72); color: #fff; border-radius: 999px; font-size: 12px; font-weight: 500; z-index: 2; }
+.hero-3d-btn:active { background: rgba(15,15,20,0.9); }
+.hero-3d-icon { font-size: 12px; margin-right: 2px; }
+.hero-3d-text { font-size: 12px; color: #fff; }
+
+.viewer3d-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 220; display: flex; align-items: center; justify-content: center; }
+.viewer3d-overlay { position: relative; width: 94vw; height: 82vh; max-width: 900rpx; background: #0f0f14; border-radius: 14px; overflow: hidden; }
+.viewer3d-overlay model-viewer { display: block; width: 100%; height: 100%; }
+.viewer3d-close { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; line-height: 32px; text-align: center; border-radius: 50%; background: rgba(255,255,255,0.15); color: #fff; font-size: 26px; z-index: 3; }
+.viewer3d-close:active { background: rgba(255,255,255,0.3); }
+.viewer3d-tip { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); font-size: 12px; color: rgba(255,255,255,0.72); padding: 4px 10px; border-radius: 999px; background: rgba(0,0,0,0.35); }

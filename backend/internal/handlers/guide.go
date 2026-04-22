@@ -218,6 +218,7 @@ func guideUploadFile(c *gin.Context, cfg *config.Config) {
 	isIconUpload := isGoodsPrefix && strings.HasPrefix(ct, "image/") && (assetKind == "icon" || assetKind == "icon_en")
 	isCoverPair := isGoodsPrefix && strings.HasPrefix(ct, "image/") && (assetKind == "cover" || assetKind == "cover_en")
 	isCoverThumbOnly := isGoodsPrefix && strings.HasPrefix(ct, "image/") && (assetKind == "cover_thumb" || assetKind == "cover_thumb_en")
+	isModel3D := isGoodsPrefix && (assetKind == "model3d" || assetKind == "model3d_decal" || assetKind == "model3d_skybox")
 	if isIconUpload {
 		if ext == ".bin" {
 			ext = ".png"
@@ -229,6 +230,33 @@ func guideUploadFile(c *gin.Context, cfg *config.Config) {
 		}
 	}
 	ctx := c.Request.Context()
+	// 3D 预览资源：GLB + 贴花图 + 环境图；文件名固定以便去重覆盖，走无缩略图直传。
+	if isModel3D {
+		switch assetKind {
+		case "model3d":
+			filename = "model3d.glb"
+			if ct == "" || ct == "application/octet-stream" {
+				ct = "model/gltf-binary"
+			}
+		case "model3d_decal":
+			if ext == "" || ext == ".bin" {
+				ext = ".png"
+			}
+			filename = "model3d_decal" + ext
+		case "model3d_skybox":
+			if ext == "" || ext == ".bin" {
+				ext = ".png"
+			}
+			filename = "model3d_skybox" + ext
+		}
+		url, err := services.UploadCOSWithContentPrefix(ctx, buf, filename, ct, contentPrefix)
+		if err != nil {
+			resp.Err(c, 500, 500, "上传失败: "+err.Error())
+			return
+		}
+		resp.OK(c, gin.H{"url": url, "thumbUrl": nil})
+		return
+	}
 	if strings.HasPrefix(ct, "image/") {
 		if isIconUpload {
 			url, err := services.UploadCOSWithContentPrefix(ctx, buf, filename, ct, contentPrefix)

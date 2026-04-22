@@ -1,5 +1,7 @@
 {
   "navigationBarTitleText": "",
-  "usingComponents": {},
+  "usingComponents": {
+    "model-viewer": "/components/model-viewer/index"
+  },
   "behaviors": ["../../behaviors/pageTrack"]
 }

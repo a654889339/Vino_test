@@ -128,4 +128,16 @@ Page({
   goServices() {
     my.switchTab({ url: '/pages/service/service' });
   },
+
+  open3DViewer() {
+    const g = this.data.guide || {};
+    if (!g.model3dEnabled || !g.model3dUrl) return;
+    const title = i18n.t('guideDetail.preview3D') || '3D 预览';
+    const content = i18n.t('guideDetail.preview3DUnsupported') || '请在微信小程序或网页端查看商品 3D 预览';
+    if (typeof my.alert === 'function') {
+      my.alert({ title, content });
+    } else {
+      my.showToast({ content, type: 'none', duration: 2500 });
+    }
+  },
 });

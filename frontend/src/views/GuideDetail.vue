@@ -24,6 +24,10 @@
             <van-icon v-else :name="guide.icon" size="64" color="#fff" />
             <h2>{{ displayGuideName }}</h2>
           </div>
+          <div v-if="model3DEnabled" class="hero-3d-btn" @click="open3DViewer">
+            <van-icon name="cube-o" size="16" color="#fff" />
+            <span>{{ t('guideDetail.preview3D') }}</span>
+          </div>
         </div>
         <div v-if="mediaItems.length" class="hero-media">
           <h3 class="hero-media-title">{{ mediaItems[0]?.title || displayGuideName }}</h3>
@@ -75,6 +79,19 @@
       <div style="height:24px"></div>
     </template>
 
+    <!-- 3D Preview Overlay -->
+    <div v-if="show3DViewer" class="viewer3d-backdrop" @click.self="close3DViewer()">
+      <div class="viewer3d-overlay">
+        <ProductModelViewer
+          :model-url="model3DModelURL"
+          :decal-url="model3DDecalURL"
+          :skybox-url="model3DSkyboxURL"
+        />
+        <div class="viewer3d-close" @click="close3DViewer()"><van-icon name="cross" size="24" color="#fff" /></div>
+        <div class="viewer3d-tip">{{ t('guideDetail.preview3DTip') }}</div>
+      </div>
+    </div>
+
     <!-- Video Player Overlay -->
     <div v-if="playShowcase" class="video-backdrop" @click.self="closeVideo()">
       <div class="video-overlay">
@@ -90,18 +107,31 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, defineAsyncComponent } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { showImagePreview } from 'vant';
 import { guideApi } from '@/api';
 import { t, pick } from '@/utils/i18n';
 import LodImg from '@/components/LodImg.vue';
 
+const ProductModelViewer = defineAsyncComponent(() =>
+  import('@/components/ProductModelViewer.vue')
+);
+
 const route = useRoute();
 const loading = ref(true);
 const guide = ref({});
 const playShowcase = ref(false);
 const currentVideoUrl = ref('');
+const show3DViewer = ref(false);
+
+const model3DEnabled = computed(() => !!(guide.value && guide.value.model3dEnabled && guide.value.model3dUrl));
+const model3DModelURL = computed(() => fullUrl(guide.value.model3dUrl || ''));
+const model3DDecalURL = computed(() => fullUrl(guide.value.model3dDecalUrl || ''));
+const model3DSkyboxURL = computed(() => fullUrl(guide.value.model3dSkyboxUrl || ''));
+
+const open3DViewer = () => { show3DViewer.value = true; };
+const close3DViewer = () => { show3DViewer.value = false; };
 
 // 按当前语言显示产品名 / 顶部标题，英文缺 nameEn 时回退到中文 name。
 const displayGuideName = computed(() => pick(guide.value, 'name') || guide.value.name || '');
@@ -508,5 +538,84 @@ onMounted(async () => {
 
 .video-close:active {
   background: rgba(255, 255, 255, 0.25);
+}
+
+.hero-3d-btn {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: rgba(15, 15, 20, 0.72);
+  color: #fff;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: transform 0.15s ease, background 0.15s ease;
+  z-index: 2;
+}
+
+.hero-3d-btn:active {
+  transform: scale(0.96);
+  background: rgba(15, 15, 20, 0.85);
+}
+
+.viewer3d-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.92);
+  z-index: 220;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease both;
+}
+
+.viewer3d-overlay {
+  position: relative;
+  width: 96vw;
+  height: 82vh;
+  max-width: 900px;
+  background: #0f0f14;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.viewer3d-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 3;
+  transition: background 0.2s;
+}
+
+.viewer3d-close:active {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.viewer3d-tip {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.72);
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.35);
+  pointer-events: none;
 }
 </style>

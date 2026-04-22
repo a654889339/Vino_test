@@ -12,6 +12,10 @@
           <text class="hero-name">{{guide.displayName || guide.name}}</text>
         </view>
         <view a:if="{{guide.showcaseVideo}}" class="play-btn" onTap="playShowcase">▶</view>
+        <view a:if="{{guide.model3dEnabled && guide.model3dUrl}}" class="hero-3d-btn" onTap="open3DViewer">
+          <text class="hero-3d-icon">◼</text>
+          <text class="hero-3d-text">3D</text>
+        </view>
       </view>
       <view a:if="{{mediaItems.length}}" class="hero-media">
         <text class="hero-media-title">{{firstMediaTitle}}</text>

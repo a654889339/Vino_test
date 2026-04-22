@@ -12,6 +12,10 @@
           <text class="hero-name">{{guide.displayName || guide.name}}</text>
         </view>
         <view wx:if="{{guide.showcaseVideo}}" class="play-btn" bindtap="playShowcase">▶</view>
+        <view wx:if="{{guide.model3dEnabled && guide.model3dUrl}}" class="hero-3d-btn" bindtap="open3DViewer">
+          <text class="hero-3d-icon">◼</text>
+          <text class="hero-3d-text">{{preview3DLabel}}</text>
+        </view>
       </view>
       <view wx:if="{{mediaItems.length}}" class="hero-media">
         <text class="hero-media-title">{{firstMediaTitle}}</text>
@@ -66,4 +70,12 @@
       </view>
     </view>
   </block>
+
+  <view wx:if="{{show3DViewer}}" class="viewer3d-backdrop" catchtap="close3DViewer">
+    <view class="viewer3d-overlay" catchtap="noop">
+      <model-viewer id="modelViewer" canvas-id="product-model-canvas" bg-color="#1a1a2e" />
+      <view class="viewer3d-close" catchtap="close3DViewer">×</view>
+      <view wx:if="{{preview3DTip}}" class="viewer3d-tip">{{preview3DTip}}</view>
+    </view>
+  </view>
 </view>

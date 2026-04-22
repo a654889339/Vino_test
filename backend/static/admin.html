@@ -1081,6 +1081,37 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
             </div>
           </div>
 
+          <h4 style="margin:20px 0 12px;color:var(--primary)">3D 预览 <span style="font-weight:normal;color:#999;font-size:12px">（开启后，前端/微信小程序会在商品详情页展示 3D 预览入口）</span></h4>
+          <div class="form-group" style="margin-bottom:8px">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="checkbox" id="gModel3DEnabled" onchange="onModel3DToggle()" style="width:16px;height:16px" />
+              <span>开启 3D 预览</span>
+            </label>
+          </div>
+          <div id="model3dFields" style="display:none;border:1px dashed #ddd;border-radius:8px;padding:12px;background:#fafafa">
+            <div class="form-group">
+              <label>GLB 模型 <span style="font-weight:normal;color:#999;font-size:12px">（主模型文件，后缀 .glb / .gltf）</span></label>
+              <div style="display:flex;gap:8px;align-items:center">
+                <input class="form-input" id="gModel3DUrl" placeholder="上传 GLB 后自动填充 URL" style="flex:1" />
+                <label style="padding:8px 14px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">上传模型<input type="file" accept=".glb,.gltf,model/gltf-binary,application/octet-stream" style="display:none" onchange="uploadGuideFile(this,'gModel3DUrl')" /></label>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>贴花图 <span style="font-weight:normal;color:#999;font-size:12px">（圆柱投影贴花纹理，建议 RGBA PNG）</span></label>
+              <div style="display:flex;gap:8px;align-items:center">
+                <input class="form-input" id="gModel3DDecalUrl" placeholder="上传贴花图后自动填充 URL" style="flex:1" />
+                <label style="padding:8px 14px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">上传贴花<input type="file" accept="image/*" style="display:none" onchange="uploadGuideFile(this,'gModel3DDecalUrl')" /></label>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>环境图 <span style="font-weight:normal;color:#999;font-size:12px">（等距柱状 / 全景环境图，同时作为可见背景）</span></label>
+              <div style="display:flex;gap:8px;align-items:center">
+                <input class="form-input" id="gModel3DSkyboxUrl" placeholder="上传环境图后自动填充 URL" style="flex:1" />
+                <label style="padding:8px 14px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">上传环境图<input type="file" accept="image/*" style="display:none" onchange="uploadGuideFile(this,'gModel3DSkyboxUrl')" /></label>
+              </div>
+            </div>
+          </div>
+
           <h4 style="margin:20px 0 12px;color:var(--primary)">维护说明段落</h4>
           <textarea class="form-input" id="gSections" rows="4" style="resize:vertical;font-family:monospace;font-size:12px" placeholder='[{"title":"常见故障","icon":"warning-o","tips":["不制冷","漏水"]}]'></textarea>
 
@@ -3018,6 +3049,9 @@ async function uploadGuideFile(input, targetId) {
     : targetId === 'gCoverImageEn' ? 'cover_en'
     : targetId === 'gCoverImageThumb' ? 'cover_thumb'
     : targetId === 'gCoverImageThumbEn' ? 'cover_thumb_en'
+    : targetId === 'gModel3DUrl' ? 'model3d'
+    : targetId === 'gModel3DDecalUrl' ? 'model3d_decal'
+    : targetId === 'gModel3DSkyboxUrl' ? 'model3d_skybox'
     : '';
   await runWithUploadOverlay(file.name, async () => {
     try {
@@ -3127,6 +3161,11 @@ function openGuideEditor(guide) {
   document.getElementById('gCoverImageThumbEn').value = guide ? (guide.coverImageThumbEn || '') : '';
   document.getElementById('gEmojiEn').value = guide ? (guide.emojiEn || '') : '';
   document.getElementById('gGradientEn').value = guide ? (guide.gradientEn || '') : '';
+  document.getElementById('gModel3DEnabled').checked = !!(guide && guide.model3dEnabled);
+  document.getElementById('gModel3DUrl').value = guide ? (guide.model3dUrl || '') : '';
+  document.getElementById('gModel3DDecalUrl').value = guide ? (guide.model3dDecalUrl || '') : '';
+  document.getElementById('gModel3DSkyboxUrl').value = guide ? (guide.model3dSkyboxUrl || '') : '';
+  onModel3DToggle();
   document.getElementById('gLang').value = 'zh';
   onGuideLangChange();
   document.getElementById('guideModal').style.display = 'flex';
@@ -3135,6 +3174,10 @@ function onGuideLangChange() {
   var lang = document.getElementById('gLang').value;
   document.getElementById('guideLangZh').style.display = lang === 'zh' ? '' : 'none';
   document.getElementById('guideLangEn').style.display = lang === 'en' ? '' : 'none';
+}
+function onModel3DToggle() {
+  var on = document.getElementById('gModel3DEnabled').checked;
+  document.getElementById('model3dFields').style.display = on ? '' : 'none';
 }
 
 function closeGuideEditor() { document.getElementById('guideModal').style.display = 'none'; }
@@ -3189,6 +3232,10 @@ async function saveGuide() {
     coverImageThumbEn: (document.getElementById('gCoverImageThumbEn').value || '').trim(),
     emojiEn: (document.getElementById('gEmojiEn').value || '').trim(),
     gradientEn: (document.getElementById('gGradientEn').value || '').trim(),
+    model3dEnabled: !!document.getElementById('gModel3DEnabled').checked,
+    model3dUrl: (document.getElementById('gModel3DUrl').value || '').trim(),
+    model3dDecalUrl: (document.getElementById('gModel3DDecalUrl').value || '').trim(),
+    model3dSkyboxUrl: (document.getElementById('gModel3DSkyboxUrl').value || '').trim(),
   };
   try {
     const res = id

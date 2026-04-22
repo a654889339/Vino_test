@@ -40,6 +40,11 @@ type DeviceGuide struct {
 	CoverImageThumbEn  string         `gorm:"column:coverImageThumbEn;size:500" json:"coverImageThumbEn"`
 	EmojiEn            string         `gorm:"column:emojiEn;size:20" json:"emojiEn"`
 	GradientEn         string         `gorm:"column:gradientEn;size:300" json:"gradientEn"`
+	// 3D 预览：开关 + GLB 模型 URL + 贴花图 URL + 环境图 URL（均为 COS 绝对 URL）
+	Model3DEnabled     bool           `gorm:"column:model3dEnabled;default:0" json:"model3dEnabled"`
+	Model3DURL         string         `gorm:"column:model3dUrl;size:500" json:"model3dUrl"`
+	Model3DDecalURL    string         `gorm:"column:model3dDecalUrl;size:500" json:"model3dDecalUrl"`
+	Model3DSkyboxURL   string         `gorm:"column:model3dSkyboxUrl;size:500" json:"model3dSkyboxUrl"`
 	Status             string         `gorm:"type:enum('active','inactive');default:active" json:"status"`
 	CreatedAt          time.Time      `gorm:"column:createdAt" json:"createdAt"`
 	UpdatedAt          time.Time      `gorm:"column:updatedAt" json:"updatedAt"`
