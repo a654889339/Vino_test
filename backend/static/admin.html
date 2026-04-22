@@ -143,6 +143,77 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .addr-card .addr-full{color:#333;line-height:1.5}
 .addr-card .addr-default-tag{position:absolute;top:8px;right:10px;font-size:10px;background:#B91C1C;color:#fff;padding:1px 6px;border-radius:3px}
 .no-addr{font-size:13px;color:#999;padding:8px 0}
+
+.dash-menu-btn{display:none;background:transparent;color:#fff;border:none;font-size:22px;line-height:1;cursor:pointer;padding:4px 10px;margin-right:6px;border-radius:6px}
+.dash-menu-btn:hover{background:rgba(255,255,255,.1)}
+.dash-sidebar-mask{display:none;position:fixed;left:0;right:0;top:60px;bottom:0;background:rgba(0,0,0,.45);z-index:110}
+.dash-sidebar-mask.show{display:block}
+
+@media (max-width:1024px){
+  .dash-body{padding:16px}
+  .dash-section{padding:16px}
+  .dash-header{padding:10px 16px}
+  .dash-topnav{padding:0 12px}
+  .dash-sidebar{width:160px;min-width:160px}
+}
+
+@media (max-width:768px){
+  .dash-header{padding:10px 14px;z-index:130}
+  .dash-header .dash-header-brand{font-size:14px}
+  .dash-user{gap:8px}
+  .dash-user .dash-user-meta .dash-user-id,
+  .dash-user .dash-user-meta .dash-user-name{display:none}
+  .dash-menu-btn{display:inline-flex;align-items:center;justify-content:center}
+
+  .dash-layout{display:block;min-height:calc(100vh - 60px)}
+  .dash-main{width:100%;min-width:0}
+  .dash-sidebar{position:fixed;left:0;top:60px;bottom:0;width:240px;min-width:240px;max-width:80vw;z-index:120;transform:translateX(-100%);transition:transform .25s ease;box-shadow:2px 0 12px rgba(0,0,0,.3)}
+  .dash-sidebar.open{transform:translateX(0)}
+
+  .dash-topnav{padding:0 10px;top:60px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .dash-topnav::-webkit-scrollbar{display:none}
+  .dash-nav-item{padding:12px 12px;font-size:13px;min-height:40px}
+
+  .dash-body{padding:12px}
+  .dash-section{padding:14px;overflow-x:auto}
+  .dash-section .order-table{min-width:720px}
+
+  .section-header{flex-direction:column;align-items:flex-start;gap:10px}
+  .section-header > *{width:100%}
+  .order-filters{flex-wrap:wrap;gap:8px}
+  .order-filters > *{flex:0 0 auto}
+
+  .dash-section .form-input[style*="width"]{width:100% !important;max-width:100% !important}
+
+  .modal-content,
+  .modal-content[style*="width"],
+  .modal-content[style*="max-width"]{width:94vw !important;max-width:94vw !important;max-height:92vh !important}
+  .modal-body{padding:14px}
+  .modal-header{padding:12px 14px}
+  .modal-header h3{font-size:15px}
+
+  .dash-stats{grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+  .stat-card{padding:14px}
+  .stat-card .val{font-size:22px}
+
+  .addr-grid{grid-template-columns:1fr}
+}
+
+@media (max-width:480px){
+  .auth-card{padding:28px 20px}
+  .auth-card .form-input{font-size:16px}
+  .dash-header{padding:8px 10px}
+  .dash-header .dash-header-brand{font-size:13px}
+  .dash-logout{padding:6px 10px;font-size:12px}
+  .dash-stats{grid-template-columns:1fr 1fr;gap:8px}
+  .stat-card{padding:12px}
+  .stat-card .val{font-size:20px}
+  .stat-card h3{font-size:12px}
+  .dash-nav-item{padding:10px 10px;font-size:12px}
+  .dash-section{padding:12px}
+  .dash-section h3{font-size:15px;margin-bottom:12px;padding-bottom:10px}
+  .modal-body{padding:12px}
+}
 </style>
 </head>
 <body>
@@ -175,8 +246,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 <div class="dashboard" id="dashboard">
   <div class="dash-header">
-    <div class="dash-header-logo" id="dashHeaderLogoWrap">
-      <span class="dash-header-brand">Vino 管理后台</span>
+    <div style="display:flex;align-items:center;min-width:0;flex:1;gap:8px">
+      <button type="button" class="dash-menu-btn" id="dashMenuBtn" onclick="toggleSidebar()" aria-label="菜单">☰</button>
+      <div class="dash-header-logo" id="dashHeaderLogoWrap">
+        <span class="dash-header-brand">Vino 管理后台</span>
+      </div>
     </div>
     <div class="dash-user">
       <span class="dash-user-meta" id="dashUserMeta">
@@ -189,6 +263,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   </div>
 
   <div class="dash-layout">
+  <div class="dash-sidebar-mask" id="dashSidebarMask" onclick="closeSidebarIfMobile()"></div>
   <div class="dash-sidebar" id="dashSidebar">
     <div class="dash-sidebar-item active" id="sidebarToC" onclick="switchGroup('ToC')">To C管理</div>
     <div class="dash-sidebar-item" id="sidebarOutlet" onclick="switchGroup('Outlet')">服务商/分销商管理</div>
@@ -1708,6 +1783,33 @@ function renderTopNav(items, activePage) {
   }).join('');
 }
 
+function toggleSidebar() {
+  const sb = document.getElementById('dashSidebar');
+  const mask = document.getElementById('dashSidebarMask');
+  if (!sb) return;
+  const willOpen = !sb.classList.contains('open');
+  sb.classList.toggle('open', willOpen);
+  if (mask) mask.classList.toggle('show', willOpen);
+}
+
+function closeSidebarIfMobile() {
+  if (window.innerWidth <= 768) {
+    const sb = document.getElementById('dashSidebar');
+    const mask = document.getElementById('dashSidebarMask');
+    if (sb) sb.classList.remove('open');
+    if (mask) mask.classList.remove('show');
+  }
+}
+
+window.addEventListener('resize', function() {
+  if (window.innerWidth > 768) {
+    const sb = document.getElementById('dashSidebar');
+    const mask = document.getElementById('dashSidebarMask');
+    if (sb) sb.classList.remove('open');
+    if (mask) mask.classList.remove('show');
+  }
+});
+
 function switchGroup(group) {
   currentGroup = group;
   document.querySelectorAll('.dash-sidebar-item').forEach(s => s.classList.remove('active'));
@@ -1725,6 +1827,7 @@ function switchGroup(group) {
   }
   renderTopNav(items, firstPage);
   switchPage(firstPage);
+  closeSidebarIfMobile();
 }
 
 function switchPage(page) {
@@ -1775,6 +1878,7 @@ function switchPage(page) {
   if (page === 'outletMineConfig') loadOutletMineConfig();
   if (page === 'outletMessages') { loadOutletConversations(); startOutletMsgPolling(); }
   if (page === 'debugFeatureFlags') { loadFeatureFlags(); }
+  closeSidebarIfMobile();
 }
 
 async function loadFeatureFlags() {
