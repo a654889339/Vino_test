@@ -126,9 +126,10 @@ const currentVideoUrl = ref('');
 const show3DViewer = ref(false);
 
 const model3DEnabled = computed(() => !!(guide.value && guide.value.model3dEnabled && guide.value.model3dUrl));
-const model3DModelURL = computed(() => fullUrl(guide.value.model3dUrl || ''));
-const model3DDecalURL = computed(() => fullUrl(guide.value.model3dDecalUrl || ''));
-const model3DSkyboxURL = computed(() => fullUrl(guide.value.model3dSkyboxUrl || ''));
+// 3D 资源走后端 COS 代理（同源），避免直接请求腾讯云 COS 触发 CORS（Three.js 贴图/GLB 都需要 crossOrigin）。
+const model3DModelURL = computed(() => cosProxyOrFull(guide.value.model3dUrl || ''));
+const model3DDecalURL = computed(() => cosProxyOrFull(guide.value.model3dDecalUrl || ''));
+const model3DSkyboxURL = computed(() => cosProxyOrFull(guide.value.model3dSkyboxUrl || ''));
 
 const open3DViewer = () => { show3DViewer.value = true; };
 const close3DViewer = () => { show3DViewer.value = false; };
@@ -160,6 +161,18 @@ const fullUrl = (url) => {
   if (!url) return '';
   if (url.startsWith('http')) return url;
   return BASE.replace('/api', '') + url;
+};
+
+// 把腾讯云 COS 绝对 URL 改写成后端同源代理（/api/media/cos?key=...）；
+// 非 COS URL 退回 fullUrl 行为。主要用于 3D 资源，避免 COS 桶未配 CORS 时被浏览器拦截。
+const COS_HOST_RE = /^https?:\/\/[^/]+\.cos\.[^/]+\.myqcloud\.com\//i;
+const cosProxyOrFull = (url) => {
+  if (!url) return '';
+  if (COS_HOST_RE.test(url)) {
+    const key = url.replace(COS_HOST_RE, '');
+    return (BASE || '/api') + '/media/cos?key=' + encodeURIComponent(key);
+  }
+  return fullUrl(url);
 };
 
 const VIDEO_EXTS = /\.(mp4|webm|ogg|mov|avi|mkv)(\?|$)/i;
