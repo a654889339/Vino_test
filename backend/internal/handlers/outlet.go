@@ -97,6 +97,11 @@ func outletSendSmsCode(c *gin.Context, cfg *config.Config) {
 }
 
 func outletRegister(c *gin.Context, cfg *config.Config) {
+	flags := services.GetFeatureFlags()
+	if !flags.EnableRegister {
+		resp.Err(c, 403, 403, "注册功能已关闭")
+		return
+	}
 	var body struct {
 		Username, Password, Email, Code, Nickname, Phone, SmsCode string
 	}
@@ -358,6 +363,11 @@ func outletBindPhone(c *gin.Context, cfg *config.Config) {
 
 // --- outlet orders ---
 func outletOrderCreate(c *gin.Context) {
+	flags := services.GetFeatureFlags()
+	if !flags.EnableCreateOrder {
+		resp.Err(c, 403, 403, "下单功能已关闭")
+		return
+	}
 	u, ok := ctxUser(c)
 	if !ok {
 		return
@@ -626,6 +636,11 @@ func outletAddrList(c *gin.Context) {
 }
 
 func outletAddrCreate(c *gin.Context) {
+	flags := services.GetFeatureFlags()
+	if !flags.EnableCreateAddr {
+		resp.Err(c, 403, 403, "创建地址功能已关闭")
+		return
+	}
 	u, ok := ctxUser(c)
 	if !ok {
 		return

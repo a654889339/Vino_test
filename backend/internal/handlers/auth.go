@@ -91,6 +91,11 @@ func authSendSmsCode(c *gin.Context, cfg *config.Config) {
 }
 
 func authRegister(c *gin.Context, cfg *config.Config) {
+	flags := services.GetFeatureFlags()
+	if !flags.EnableRegister {
+		resp.Err(c, 403, 403, "注册功能已关闭")
+		return
+	}
 	var body struct {
 		Username string `json:"username"`
 		Password string `json:"password"`

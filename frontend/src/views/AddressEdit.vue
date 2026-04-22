@@ -66,7 +66,7 @@
       </div>
 
       <div class="save-btn-wrap">
-        <van-button type="primary" color="#B91C1C" block round :loading="saving" @click="onSave">
+        <van-button type="primary" color="#B91C1C" block round :loading="saving" :disabled="!isEdit && createAddressDisabled" @click="onSave">
           {{ t('addressEdit.save') }}
         </van-button>
       </div>
@@ -75,7 +75,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted, inject } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { addressApi } from '@/api';
 import { showToast } from 'vant';
@@ -89,6 +89,14 @@ const pageLoading = ref(false);
 const saving = ref(false);
 const showCountryList = ref(false);
 const showAreaPicker = ref(false);
+
+const injectedStatus = inject('appStatus', null);
+const createAddressDisabled = computed(() => {
+  const s = injectedStatus && injectedStatus.value ? injectedStatus.value : null;
+  if (!s) return false;
+  return s.enableCreateAddress === false;
+});
+const createAddressDisabledText = computed(() => t('当前已关闭创建地址功能，请稍后再试。', 'Address creation is currently disabled. Please try again later.'));
 
 const countryColumns = computed(() => [
   t('country.cn'), t('country.hk'), t('country.mo'), t('country.tw'),
@@ -135,6 +143,7 @@ const onAreaConfirm = ({ selectedOptions }) => {
 };
 
 const onSave = async () => {
+  if (!isEdit.value && createAddressDisabled.value) { showToast(createAddressDisabledText.value); return; }
   if (!form.contactName.trim()) { showToast(t('addressEdit.contactPh')); return; }
   if (!form.contactPhone.trim()) { showToast(t('addressEdit.phonePh')); return; }
   if (!form.country) { showToast(t('addressEdit.countryPh')); return; }

@@ -22,6 +22,11 @@ func addrList(c *gin.Context) {
 }
 
 func addrCreate(c *gin.Context) {
+	flags := services.GetFeatureFlags()
+	if !flags.EnableCreateAddr {
+		resp.Err(c, 403, 403, "创建地址功能已关闭")
+		return
+	}
 	u, ok := ctxUser(c)
 	if !ok {
 		return

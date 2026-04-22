@@ -190,7 +190,7 @@
             <span>{{ t('serviceBook.total') }}</span>
             <span v-if="shouldShowPrice(pick(serviceData, 'price'))" class="order-total-price">{{ formatPriceDisplay(pick(serviceData, 'price'), servicePriceCurrencyOverride) }}</span>
           </div>
-          <van-button type="primary" color="#B91C1C" block round :loading="submitting" @click="submitOrder">
+          <van-button type="primary" color="#B91C1C" block round :loading="submitting" :disabled="createOrderDisabled" @click="submitOrder">
             {{ t('serviceBook.submit') }}
           </van-button>
         </div>
@@ -200,7 +200,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted, inject } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { serviceApi, orderApi, addressApi, authApi, guideApi } from '@/api';
 import { showToast, showDialog } from 'vant';
@@ -222,6 +222,14 @@ const allGuides = ref([]);
 const showCategoryPicker = ref(false);
 const showGuidePicker = ref(false);
 const productFieldsLocked = ref(false);
+
+const injectedStatus = inject('appStatus', null);
+const createOrderDisabled = computed(() => {
+  const s = injectedStatus && injectedStatus.value ? injectedStatus.value : null;
+  if (!s) return false;
+  return s.enableCreateOrder === false;
+});
+const createOrderDisabledText = computed(() => t('当前已关闭下单功能，请稍后再试。', 'Order creation is currently disabled. Please try again later.'));
 
 const countryColumns = [
   t('country.cn'), t('country.hk'), t('country.mo'), t('country.tw'),
@@ -458,6 +466,7 @@ onMounted(async () => {
 });
 
 const submitOrder = async () => {
+  if (createOrderDisabled.value) { showToast(createOrderDisabledText.value); return; }
   if (!orderForm.categoryId) { showToast(t('serviceBook.productCategoryPh')); return; }
   if (!orderForm.guideId) { showToast(t('serviceBook.productGuidePh')); return; }
   if (!orderForm.contactName.trim()) { showToast(t('serviceBook.contactPh')); return; }

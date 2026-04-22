@@ -14,8 +14,11 @@ func RegisterRoutes(engine *gin.Engine, cfg *config.Config) {
 	// 切库/恢复走写锁，阻塞其他请求确保瞬间无并发 DB 调用。
 	engine.Use(dbgate.GinMiddleware())
 	api := engine.Group("/api")
+	// 功能门禁：维护模式（Web + 小程序）与 allowlist。
+	api.Use(middleware.FeatureGate())
 
 	api.GET("/health", Health)
+	api.GET("/app/status", AppStatus)
 
 	api.GET("/media/cos", MediaCosStream)
 	api.POST("/analytics/page-view", AnalyticsPageView)
@@ -203,6 +206,8 @@ func RegisterRoutes(engine *gin.Engine, cfg *config.Config) {
 	// 调试窗口下所有 ops 操作（日志备份/db 备份/恢复/切库）均仅允许超级管理员
 	adminOps := api.Group("/admin/ops", middleware.Auth(cfg), middleware.SuperAdmin())
 	{
+		adminOps.GET("/feature-flags", AdminGetFeatureFlags)
+		adminOps.PUT("/feature-flags", AdminPutFeatureFlags)
 		adminOps.POST("/audit-log-backup", func(c *gin.Context) { adminPostAuditLogBackup(c, cfg) })
 		adminOps.POST("/db-backup", func(c *gin.Context) { adminPostDbBackup(c, cfg) })
 		adminOps.GET("/db/status", func(c *gin.Context) { adminGetDbStatus(c, cfg) })

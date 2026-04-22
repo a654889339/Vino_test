@@ -1,4 +1,12 @@
 <template>
+  <div v-if="maintenanceMode" class="maintenance-overlay" role="dialog" aria-modal="true">
+    <div class="maintenance-card">
+      <van-loading size="30" style="margin-bottom:12px" />
+      <div class="maintenance-title">{{ maintenanceTitle }}</div>
+      <div class="maintenance-desc">{{ maintenanceDesc }}</div>
+      <div class="maintenance-meta" v-if="maintenanceUpdatedAt">{{ maintenanceUpdatedAt }}</div>
+    </div>
+  </div>
   <SplashScreen v-if="showSplash" />
   <router-view />
   <div v-if="showTabbar && tabbarItems.length" class="app-tabbar-shell">
@@ -19,6 +27,7 @@ import { homeConfigApi } from '@/api';
 import { initFromHomeConfigList } from '@/utils/currency';
 import { buildSectionSkinLayerStyle } from '@/utils/sectionSkin';
 import { loadI18nTexts, t, pick } from '@/utils/i18n';
+import request from '@/api/request';
 
 const route = useRoute();
 
@@ -80,7 +89,7 @@ async function loadCurrencyConfig() {
 }
 
 onMounted(async () => {
-  await Promise.all([loadI18nTexts(), loadTabbarConfig(), loadCurrencyConfig()]);
+  await Promise.all([loadI18nTexts(), loadTabbarConfig(), loadCurrencyConfig(), loadAppStatus()]);
 });
 
 const hiddenTabRoutes = ['/login', '/register', '/service/', '/address', '/guide/'];
@@ -109,6 +118,33 @@ onMounted(() => {
     }, 3500);
   }
 });
+
+// ---- Feature flags / Maintenance mode ----
+const appStatus = ref(null);
+provide('appStatus', appStatus);
+
+const maintenanceMode = computed(() => !!appStatus.value?.maintenanceMode);
+const maintenanceTitle = computed(() => t('系统维护中', 'Maintenance'));
+const maintenanceDesc = computed(() => t('当前系统正在维护，部分功能暂不可用，请稍后再试。', 'The system is under maintenance. Please try again later.'));
+const maintenanceUpdatedAt = computed(() => {
+  const ts = appStatus.value?.updatedAtUnixMs;
+  if (!ts) return '';
+  try {
+    const d = new Date(ts);
+    return t('更新时间：', 'Updated at: ') + d.toLocaleString();
+  } catch {
+    return '';
+  }
+});
+
+async function loadAppStatus() {
+  try {
+    const res = await request.get('/app/status');
+    appStatus.value = res.data || null;
+  } catch {
+    // ignore; keep null
+  }
+}
 </script>
 
 <style scoped>
@@ -158,5 +194,45 @@ onMounted(() => {
 .app-tabbar-shell :deep(.van-tabbar-item__text) {
   font-size: 12px !important;
   line-height: 1.2;
+}
+
+.maintenance-overlay {
+  position: fixed;
+  z-index: 9999;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.maintenance-card {
+  width: 100%;
+  max-width: 420px;
+  background: #fff;
+  border-radius: 14px;
+  padding: 22px 18px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+
+.maintenance-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 8px;
+}
+
+.maintenance-desc {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #6b7280;
+}
+
+.maintenance-meta {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #9ca3af;
 }
 </style>

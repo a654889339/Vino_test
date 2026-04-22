@@ -13,6 +13,8 @@ import (
 
 	"vino/backend/internal/audit"
 	"vino/backend/internal/config"
+	"vino/backend/internal/db"
+	"vino/backend/internal/models"
 	"vino/backend/internal/resp"
 	"vino/backend/internal/services"
 
@@ -212,6 +214,77 @@ func adminPostDbBackup(c *gin.Context, cfg *config.Config) {
 		"tablesNote":   res.TablesNote,
 		"message":      "ok",
 	})
+}
+
+func AdminGetFeatureFlags(c *gin.Context) {
+	// Return current flags (default if not set in DB).
+	flags := services.GetFeatureFlags()
+	resp.OK(c, gin.H{
+		"maintenanceMode":     flags.MaintenanceMode,
+		"enableRegister":      flags.EnableRegister,
+		"enableCreateOrder":   flags.EnableCreateOrder,
+		"enableCreateAddress": flags.EnableCreateAddr,
+		"updatedAtUnixMs":     flags.UpdatedAtUnixMs,
+	})
+}
+
+func AdminPutFeatureFlags(c *gin.Context) {
+	var body struct {
+		MaintenanceMode     *bool `json:"maintenanceMode"`
+		EnableRegister      *bool `json:"enableRegister"`
+		EnableCreateOrder   *bool `json:"enableCreateOrder"`
+		EnableCreateAddress *bool `json:"enableCreateAddress"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		resp.Err(c, 400, 400, "参数错误")
+		return
+	}
+	if db.DB == nil {
+		resp.Err(c, 503, 503, "数据库未就绪")
+		return
+	}
+
+	type kv struct {
+		key   string
+		value *bool
+	}
+	items := []kv{
+		{services.FlagMaintenanceMode, body.MaintenanceMode},
+		{services.FlagEnableRegister, body.EnableRegister},
+		{services.FlagEnableCreateOrder, body.EnableCreateOrder},
+		{services.FlagEnableCreateAddr, body.EnableCreateAddress},
+	}
+
+	for _, it := range items {
+		if it.value == nil {
+			continue
+		}
+		st := "inactive"
+		if *it.value {
+			st = "active"
+		}
+		// Upsert by (section, path) if unique index exists; otherwise do find+update/create.
+		var row models.HomeConfig
+		err := db.DB.Where("section = ? AND path = ?", services.FeatureFlagSection, it.key).First(&row).Error
+		if err == nil {
+			row.Status = st
+			_ = db.DB.Save(&row).Error
+			continue
+		}
+		// Create minimal row
+		_ = db.DB.Create(&models.HomeConfig{
+			Section:   services.FeatureFlagSection,
+			Path:      it.key,
+			Status:    st,
+			SortOrder: 0,
+			Title:     it.key,
+			Desc:      "",
+			Color:     "",
+		}).Error
+	}
+
+	services.InvalidateFeatureFlags()
+	resp.OKMsg(c, "ok")
 }
 
 // collectTableRowCounts 对 cfg.DB.Name 下所有 BASE TABLE 执行精确 COUNT(*)。

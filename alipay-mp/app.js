@@ -45,6 +45,7 @@ App({
     userInfo: null,
     token: '',
     currencySymbol: currencyUtil.DEFAULT_CURRENCY,
+    featureFlags: null,
   },
 
   loadCurrencySymbol() {
@@ -66,6 +67,7 @@ App({
 
   onLaunch() {
     warnIfBadApiBase(this.globalData.baseUrl);
+    this.checkAppStatus();
     this.loadCurrencySymbol();
     // 1) 若本地已保存语言偏好：直接加载文案并刷新 tabBar
     // 2) 若未保存：按 IP 自动判定（CN/HK/MO/TW→zh，其它→en），失败回退 zh
@@ -93,6 +95,28 @@ App({
     } catch (e) {
       // ignore
     }
+  },
+
+  checkAppStatus() {
+    const app = this;
+    const { baseUrl } = app.globalData;
+    my.request({
+      url: baseUrl + '/app/status',
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      success(res) {
+        const status = res.status != null ? res.status : res.statusCode;
+        const body = res.data;
+        if (status !== 200 || !body || body.code !== 0) return;
+        const d = body.data || null;
+        app.globalData.featureFlags = d;
+        if (d && d.maintenanceMode) {
+          try {
+            my.reLaunch({ url: '/pages/maintenance/maintenance' });
+          } catch (e) {}
+        }
+      },
+    });
   },
 
   fetchProfile() {
@@ -133,6 +157,14 @@ App({
           ...(token ? { Authorization: 'Bearer ' + token } : {}),
         },
         success: (res) => {
+          const status = res.status != null ? res.status : res.statusCode;
+          if (status === 503 || (res.data && res.data.code === 503)) {
+            try {
+              my.reLaunch({ url: '/pages/maintenance/maintenance' });
+            } catch (e) {}
+            reject(new Error((res.data && res.data.message) || '系统维护中'));
+            return;
+          }
           if (res.status === 401 || (res.data && res.data.code === 401)) {
             app.clearToken();
             reject(new Error('请先登录'));

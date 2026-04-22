@@ -25,6 +25,18 @@ func Health(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "Vino服务运行中", "timestamp": time.Now().UTC().Format(time.RFC3339)})
 }
 
+func AppStatus(c *gin.Context) {
+	flags := services.GetFeatureFlags()
+	resp.OK(c, gin.H{
+		"maintenanceMode":   flags.MaintenanceMode,
+		"enableRegister":    flags.EnableRegister,
+		"enableCreateOrder": flags.EnableCreateOrder,
+		"enableCreateAddress": flags.EnableCreateAddr,
+		"updatedAtUnixMs":   flags.UpdatedAtUnixMs,
+		"message":           func() string { if flags.MaintenanceMode { return "系统维护中" }; return "ok" }(),
+	})
+}
+
 func AnalyticsPageView(c *gin.Context) {
 	var body struct {
 		App  string `json:"app"`

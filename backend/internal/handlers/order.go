@@ -40,6 +40,11 @@ func genOrderNo() string {
 }
 
 func orderCreate(c *gin.Context) {
+	flags := services.GetFeatureFlags()
+	if !flags.EnableCreateOrder {
+		resp.Err(c, 403, 403, "下单功能已关闭")
+		return
+	}
 	u, ok := ctxUser(c)
 	if !ok {
 		return

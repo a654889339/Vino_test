@@ -47,6 +47,7 @@ App({
     userInfo: null,
     token: '',
     currencySymbol: currencyUtil.DEFAULT_CURRENCY,
+    featureFlags: null,
   },
 
   loadCurrencySymbol() {
@@ -67,6 +68,7 @@ App({
 
   onLaunch() {
     warnIfBadApiBase(this.globalData.baseUrl);
+    this.checkAppStatus();
     this.loadCurrencySymbol();
     i18n.loadI18nTexts();
     const token = wx.getStorageSync('vino_token');
@@ -79,6 +81,26 @@ App({
       this.globalData.token = token;
       this.fetchProfile();
     }
+  },
+
+  checkAppStatus() {
+    const app = this;
+    const { baseUrl } = app.globalData;
+    wx.request({
+      url: baseUrl + '/app/status',
+      method: 'GET',
+      header: { 'Content-Type': 'application/json' },
+      success(res) {
+        if (res.statusCode !== 200 || !res.data || res.data.code !== 0) return;
+        const d = res.data.data || null;
+        app.globalData.featureFlags = d;
+        if (d && d.maintenanceMode) {
+          try {
+            wx.reLaunch({ url: '/pages/maintenance/maintenance' });
+          } catch (e) {}
+        }
+      },
+    });
   },
 
   /** 使用 wx.request，避免无效 token 时 Promise 链报错；401 静默清 token */
@@ -118,6 +140,13 @@ App({
           ...(token ? { Authorization: 'Bearer ' + token } : {}),
         },
         success: (res) => {
+          if (res.statusCode === 503 || (res.data && res.data.code === 503)) {
+            try {
+              wx.reLaunch({ url: '/pages/maintenance/maintenance' });
+            } catch (e) {}
+            reject(new Error((res.data && res.data.message) || '系统维护中'));
+            return;
+          }
           if (res.statusCode === 401) {
             app.clearToken();
             reject(new Error('请先登录'));

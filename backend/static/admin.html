@@ -319,6 +319,69 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       </div>
     </div>
 
+    <!-- 调试窗口：功能开关 -->
+    <div class="dash-page" id="page-debugFeatureFlags">
+      <div class="dash-section">
+        <div class="section-header">
+          <h3>功能开关</h3>
+          <button class="refresh-btn" onclick="loadFeatureFlags()">刷新</button>
+        </div>
+        <p style="font-size:13px;color:#666;margin-bottom:12px">
+          用于临时控制 Web 与小程序的可用性（维护模式），以及注册/下单/创建地址等关键能力。建议仅在紧急场景使用。
+        </p>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid #eee;border-radius:10px;padding:12px 14px;background:#fafafa">
+            <div>
+              <div style="font-weight:600">全局维护模式</div>
+              <div style="font-size:12px;color:#666;margin-top:2px">开启后除登录/验证码/健康检查外，其它 API 将返回 503，并提示“系统维护中”。</div>
+            </div>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#333;white-space:nowrap">
+              <input type="checkbox" id="ffMaintenanceMode" />
+              启用
+            </label>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid #eee;border-radius:10px;padding:12px 14px">
+            <div>
+              <div style="font-weight:600">注册用户</div>
+              <div style="font-size:12px;color:#666;margin-top:2px">关闭后 `/api/auth/register` 与 `/api/outlet/auth/register` 将返回 403。</div>
+            </div>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#333;white-space:nowrap">
+              <input type="checkbox" id="ffEnableRegister" />
+              启用
+            </label>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid #eee;border-radius:10px;padding:12px 14px">
+            <div>
+              <div style="font-weight:600">创建订单</div>
+              <div style="font-size:12px;color:#666;margin-top:2px">关闭后 `/api/orders` 与 `/api/outlet/orders` 创建将返回 403。</div>
+            </div>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#333;white-space:nowrap">
+              <input type="checkbox" id="ffEnableCreateOrder" />
+              启用
+            </label>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid #eee;border-radius:10px;padding:12px 14px">
+            <div>
+              <div style="font-weight:600">创建地址</div>
+              <div style="font-size:12px;color:#666;margin-top:2px">关闭后 `/api/addresses` 与 `/api/outlet/addresses` 创建将返回 403。</div>
+            </div>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#333;white-space:nowrap">
+              <input type="checkbox" id="ffEnableCreateAddress" />
+              启用
+            </label>
+          </div>
+        </div>
+
+        <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <button class="btn" onclick="saveFeatureFlags()" style="background:var(--primary);color:#fff;padding:10px 28px;font-size:14px">保存</button>
+          <span id="ffSaveResult" style="font-size:13px;color:#059669"></span>
+        </div>
+      </div>
+    </div>
+
     <!-- Users Page -->
     <div class="dash-page" id="page-users">
       <div class="dash-stats" id="userStats"></div>
@@ -1616,7 +1679,7 @@ let currentGroup = 'ToC';
 
 const tocPages = ['overview','orders','users','guides','serviceConfig','inventory','homeConfig','homeAnimConfig','pageThemeConfig','i18nConfig','messages'];
 const outletPages = ['outletOverview','outletOrders','outletUsers','outletHomeConfig','outletHomeAnimConfig','outletMineConfig','outletMessages'];
-const debugPages = ['debugTocData','debugTocPage'];
+const debugPages = ['debugTocData','debugTocPage','debugFeatureFlags'];
 
 const tocNavItems = [
   {page:'overview',label:'概览'},{page:'orders',label:'订单管理'},{page:'users',label:'用户管理'},
@@ -1631,7 +1694,8 @@ const outletNavItems = [
 ];
 const debugNavItems = [
   {page:'debugTocData',label:'ToC 数据调试窗口'},
-  {page:'debugTocPage',label:'To C页面配置调试窗口'}
+  {page:'debugTocPage',label:'To C页面配置调试窗口'},
+  {page:'debugFeatureFlags',label:'功能开关'}
 ];
 
 function renderTopNav(items, activePage) {
@@ -1710,6 +1774,43 @@ function switchPage(page) {
   if (page === 'outletHomeAnimConfig') { outletCurrentHCPage = 'homeAnimConfig'; loadOutletHomeAnimConfig(); }
   if (page === 'outletMineConfig') loadOutletMineConfig();
   if (page === 'outletMessages') { loadOutletConversations(); startOutletMsgPolling(); }
+  if (page === 'debugFeatureFlags') { loadFeatureFlags(); }
+}
+
+async function loadFeatureFlags() {
+  const result = document.getElementById('ffSaveResult');
+  if (result) { result.style.color = '#64748b'; result.textContent = '加载中...'; }
+  try {
+    const res = await api('/admin/ops/feature-flags', { method: 'GET' });
+    if (res.code !== 0) throw new Error(res.message || '加载失败');
+    const d = res.data || {};
+    document.getElementById('ffMaintenanceMode').checked = !!d.maintenanceMode;
+    document.getElementById('ffEnableRegister').checked = !!d.enableRegister;
+    document.getElementById('ffEnableCreateOrder').checked = !!d.enableCreateOrder;
+    document.getElementById('ffEnableCreateAddress').checked = !!d.enableCreateAddress;
+    if (result) { result.style.color = '#059669'; result.textContent = '已加载'; }
+  } catch (e) {
+    if (result) { result.style.color = '#B91C1C'; result.textContent = (e && e.message) ? e.message : '加载失败'; }
+  }
+}
+
+async function saveFeatureFlags() {
+  const result = document.getElementById('ffSaveResult');
+  if (result) { result.style.color = '#64748b'; result.textContent = '保存中...'; }
+  const body = {
+    maintenanceMode: !!document.getElementById('ffMaintenanceMode').checked,
+    enableRegister: !!document.getElementById('ffEnableRegister').checked,
+    enableCreateOrder: !!document.getElementById('ffEnableCreateOrder').checked,
+    enableCreateAddress: !!document.getElementById('ffEnableCreateAddress').checked,
+  };
+  try {
+    const res = await api('/admin/ops/feature-flags', { method: 'PUT', body });
+    if (res.code !== 0) throw new Error(res.message || '保存失败');
+    if (result) { result.style.color = '#059669'; result.textContent = '已保存'; }
+    await loadFeatureFlags();
+  } catch (e) {
+    if (result) { result.style.color = '#B91C1C'; result.textContent = (e && e.message) ? e.message : '保存失败'; }
+  }
 }
 
 async function handleLogin(e) {

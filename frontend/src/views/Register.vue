@@ -2,6 +2,15 @@
   <div class="register-page">
     <van-nav-bar :title="t('register.title')" left-arrow @click-left="$router.back()" />
 
+    <van-notice-bar
+      v-if="registerDisabled"
+      color="#B91C1C"
+      background="#FEE2E2"
+      left-icon="warning-o"
+      :text="registerDisabledText"
+      style="margin:12px 16px 0;border-radius:10px"
+    />
+
     <div class="register-header">
       <img
         v-if="headerLogoUrl && !headerLogoError"
@@ -62,6 +71,7 @@
           block
           round
           :loading="loading"
+          :disabled="registerDisabled"
           @click="handleRegister"
         >
           {{ t('register.submit') }}
@@ -75,7 +85,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onBeforeUnmount } from 'vue';
+import { ref, reactive, onMounted, onBeforeUnmount, inject, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { authApi, homeConfigApi } from '@/api';
@@ -120,7 +130,19 @@ const smsCountdown = ref(0);
 const sendingSmsCode = ref(false);
 let smsTimer = null;
 
+const injectedStatus = inject('appStatus', null);
+const registerDisabled = computed(() => {
+  const s = injectedStatus && injectedStatus.value ? injectedStatus.value : null;
+  if (!s) return false;
+  return s.enableRegister === false;
+});
+const registerDisabledText = computed(() => t('当前已关闭注册功能，请稍后再试。', 'Registration is currently disabled. Please try again later.'));
+
 const handleSendCode = async () => {
+  if (registerDisabled.value) {
+    showToast(registerDisabledText.value);
+    return;
+  }
   if (!form.email) {
     showToast(t('请先输入邮箱', 'Please enter your email first'));
     return;
@@ -148,6 +170,10 @@ const handleSendCode = async () => {
 };
 
 const handleSendSmsCode = async () => {
+  if (registerDisabled.value) {
+    showToast(registerDisabledText.value);
+    return;
+  }
   if (!/^1\d{10}$/.test(form.phone)) {
     showToast(t('请输入正确的11位手机号', 'Please enter a valid 11-digit phone number'));
     return;
@@ -170,6 +196,10 @@ const handleSendSmsCode = async () => {
 };
 
 const handleRegister = async () => {
+  if (registerDisabled.value) {
+    showToast(registerDisabledText.value);
+    return;
+  }
   if (registerMode.value === 'phone') {
     if (!form.phone || !form.smsCode || !form.password) {
       showToast(t('请填写手机号、验证码和密码', 'Please fill in phone, code and password'));
