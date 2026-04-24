@@ -5,9 +5,9 @@
     <!-- Hero + Media merged block -->
     <view class="hero-block">
       <view class="hero" style="background:{{guide.gradient || '#333'}}">
-        <image wx:if="{{guide.coverImage}}" src="{{guide.displayCoverUrl}}" class="hero-img" mode="aspectFill" bindtap="previewCover" bindload="onCoverLoad" />
+        <image wx:if="{{guide.coverImage}}" src="{{guide.displayCoverUrl}}" class="hero-img" mode="aspectFill" bindtap="previewCover" bindload="onCoverLoad" binderror="onHeroImgError" />
         <view wx:else class="hero-fallback">
-          <image wx:if="{{guide.iconUrl}}" src="{{guide.displayIconUrl}}" class="hero-icon-img" bindload="onIconLoad" />
+          <image wx:if="{{guide.iconUrl}}" src="{{guide.displayIconUrl}}" class="hero-icon-img" bindload="onIconLoad" binderror="onIconErr" />
           <text wx:else class="hero-emoji">{{guide.emoji}}</text>
           <text class="hero-name">{{guide.displayName || guide.name}}</text>
         </view>
@@ -73,7 +73,7 @@
 
   <view wx:if="{{show3DViewer}}" class="viewer3d-backdrop" catchtap="close3DViewer">
     <view class="viewer3d-overlay" catchtap="noop">
-      <model-viewer id="modelViewer" canvas-id="product-model-canvas" bg-color="#1a1a2e" />
+      <model-viewer id="modelViewer" canvas-id="product-model-canvas" bg-color="{{guide.model3dSkyboxBgColor || '#1a1a2e'}}" />
       <view class="viewer3d-close" catchtap="close3DViewer">×</view>
       <view wx:if="{{preview3DTip}}" class="viewer3d-tip">{{preview3DTip}}</view>
     </view>

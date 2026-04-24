@@ -1,6 +1,7 @@
 const app = getApp();
 const { buildSectionSkinContainerStyle } = require('../../utils/sectionSkin.js');
 const i18n = require('../../utils/i18n.js');
+const { normalizeImageUrl } = require('../../utils/image.js');
 
 Page({
   data: {
@@ -94,13 +95,7 @@ Page({
     getApp().request({ url: '/auth/my-products' })
       .then(res => {
         const list = res.data || [];
-        const base = (getApp().globalData.baseUrl || '').replace(/\/api\/?$/, '');
-        const toFull = (u) => {
-          if (!u || typeof u !== 'string') return u || '';
-          const t = String(u).trim();
-          if (t.startsWith('http')) return t;
-          return base + (t.startsWith('/') ? t : '/' + t);
-        };
+        const toFull = (u) => normalizeImageUrl(u, getApp().globalData.baseUrl);
         const myProducts = list.map(item => {
           const full = item.iconUrl ? toFull(item.iconUrl) : '';
           return {
@@ -179,13 +174,7 @@ Page({
   },
 
   loadHomeConfig() {
-    const base = (app.globalData.baseUrl || '').replace(/\/api\/?$/, '');
-    const toFull = (u) => {
-      if (!u || typeof u !== 'string') return u || '';
-      const t = u.trim();
-      if (t.startsWith('http://') || t.startsWith('https://')) return t;
-      return base + (t.startsWith('/') ? t : '/' + t);
-    };
+    const toFull = (u) => normalizeImageUrl(u, app.globalData.baseUrl);
 
     const pHc = app.request({ url: '/home-config?all=1' }).catch(() => ({ data: [] }));
     const pGuides = app.request({ url: '/guides' }).catch(() => ({ data: [] }));
@@ -352,7 +341,10 @@ Page({
     const id = e.currentTarget.dataset.id;
     const kind = e.currentTarget.dataset.kind;
     const key = kind === 'sm' ? 'navSmItems' : 'navLgItems';
-    const list = (this.data[key] || []).map((item) => {
+    const srcList = this.data[key] || [];
+    const cur = srcList.find((it) => it.id === id);
+    console.error('[img-err] nav', kind, id, cur && cur.displayImageUrl, e && e.detail);
+    const list = srcList.map((item) => {
       if (item.id !== id || !item.imageUrl) return item;
       if (item.displayImageUrl === item.imageUrl) return item;
       return { ...item, displayImageUrl: item.imageUrl };
@@ -365,6 +357,7 @@ Page({
     const idx = e.currentTarget.dataset.idx;
     const list = [...(this.data.vinoItems || [])];
     const it = list[idx];
+    console.error('[img-err] vinoIcon', idx, it && it.displayIconUrl, it && it.iconUrl, e && e.detail);
     if (!it || !it.iconUrl) return;
     if (it.displayIconUrl === it.iconUrl) return;
     list[idx] = { ...it, displayIconUrl: it.iconUrl };
@@ -376,6 +369,7 @@ Page({
     const idx = e.currentTarget.dataset.idx;
     const list = [...(this.data.myProducts || [])];
     const it = list[idx];
+    console.error('[img-err] myProduct', idx, it && it.displayIconUrl, it && it.iconUrl, e && e.detail);
     if (!it || !it.iconUrl) return;
     if (it.displayIconUrl === it.iconUrl) return;
     list[idx] = { ...it, displayIconUrl: it.iconUrl };
@@ -386,6 +380,7 @@ Page({
   onHeroBgError(e) {
     const idx = e.currentTarget.dataset.idx;
     const list = this.data.heroBgList || [];
+    console.error('[img-err] heroBg', idx, list[idx] && list[idx].displayUrl, list[idx] && list[idx].url, e && e.detail);
     if (!list[idx] || !list[idx].url) return;
     if (list[idx].displayUrl === list[idx].url) return;
     list[idx] = { ...list[idx], displayUrl: list[idx].url };

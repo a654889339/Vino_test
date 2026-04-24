@@ -45,6 +45,8 @@ type DeviceGuide struct {
 	Model3DURL         string         `gorm:"column:model3dUrl;size:500" json:"model3dUrl"`
 	Model3DDecalURL    string         `gorm:"column:model3dDecalUrl;size:500" json:"model3dDecalUrl"`
 	Model3DSkyboxURL   string         `gorm:"column:model3dSkyboxUrl;size:500" json:"model3dSkyboxUrl"`
+	// 天空盒未配置或未展示时的背景色（hex，如 #1a1a2e）
+	Model3DSkyboxBgColor string       `gorm:"column:model3dSkyboxBgColor;size:32" json:"model3dSkyboxBgColor"`
 	Status             string         `gorm:"type:enum('active','inactive');default:active" json:"status"`
 	CreatedAt          time.Time      `gorm:"column:createdAt" json:"createdAt"`
 	UpdatedAt          time.Time      `gorm:"column:updatedAt" json:"updatedAt"`

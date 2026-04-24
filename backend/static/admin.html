@@ -1248,6 +1248,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
                 <label style="padding:8px 14px;background:var(--primary);color:#fff;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">上传环境图<input type="file" accept="image/*" style="display:none" onchange="uploadGuideFile(this,'gModel3DSkyboxUrl')" /></label>
               </div>
             </div>
+            <div class="form-group">
+              <label>天空盒 bgColor <span style="font-weight:normal;color:#999;font-size:12px">（纯色背景；hex，如 #1a1a2e）</span></label>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                <input type="color" id="gModel3DSkyboxBgColorPicker" value="#1a1a2e" onchange="onSkyboxBgColorPick(this.value)" style="width:44px;height:38px;padding:0;border:none;background:transparent" />
+                <input class="form-input" id="gModel3DSkyboxBgColor" placeholder="#1a1a2e" style="flex:1;min-width:180px" oninput="onSkyboxBgColorInput(this.value)" />
+              </div>
+            </div>
           </div>
 
           <h4 style="margin:20px 0 12px;color:var(--primary)">维护说明段落</h4>
@@ -3370,6 +3377,12 @@ function openGuideEditor(guide) {
   document.getElementById('gModel3DUrl').value = guide ? (guide.model3dUrl || '') : '';
   document.getElementById('gModel3DDecalUrl').value = guide ? (guide.model3dDecalUrl || '') : '';
   document.getElementById('gModel3DSkyboxUrl').value = guide ? (guide.model3dSkyboxUrl || '') : '';
+  var sbc = (guide && guide.model3dSkyboxBgColor) ? String(guide.model3dSkyboxBgColor).trim() : '';
+  if (!sbc) sbc = '#1a1a2e';
+  var sbcInput = document.getElementById('gModel3DSkyboxBgColor');
+  var sbcPicker = document.getElementById('gModel3DSkyboxBgColorPicker');
+  if (sbcInput) sbcInput.value = sbc;
+  if (sbcPicker) sbcPicker.value = sbc;
   onModel3DToggle();
   document.getElementById('gLang').value = 'zh';
   onGuideLangChange();
@@ -3383,6 +3396,34 @@ function onGuideLangChange() {
 function onModel3DToggle() {
   var on = document.getElementById('gModel3DEnabled').checked;
   document.getElementById('model3dFields').style.display = on ? '' : 'none';
+}
+
+function normalizeHexColor(v) {
+  if (!v) return '';
+  var t = String(v).trim();
+  if (!t) return '';
+  if (t[0] !== '#') t = '#' + t;
+  if (/^#[0-9a-fA-F]{6}$/.test(t)) return t.toLowerCase();
+  if (/^#[0-9a-fA-F]{3}$/.test(t)) {
+    var r = t[1], g = t[2], b = t[3];
+    return ('#' + r + r + g + g + b + b).toLowerCase();
+  }
+  return '';
+}
+
+function onSkyboxBgColorPick(v) {
+  var t = normalizeHexColor(v) || '#1a1a2e';
+  var input = document.getElementById('gModel3DSkyboxBgColor');
+  var picker = document.getElementById('gModel3DSkyboxBgColorPicker');
+  if (input) input.value = t;
+  if (picker) picker.value = t;
+}
+
+function onSkyboxBgColorInput(v) {
+  var t = normalizeHexColor(v);
+  if (!t) return;
+  var picker = document.getElementById('gModel3DSkyboxBgColorPicker');
+  if (picker) picker.value = t;
 }
 
 function closeGuideEditor() { document.getElementById('guideModal').style.display = 'none'; }
@@ -3441,6 +3482,7 @@ async function saveGuide() {
     model3dUrl: (document.getElementById('gModel3DUrl').value || '').trim(),
     model3dDecalUrl: (document.getElementById('gModel3DDecalUrl').value || '').trim(),
     model3dSkyboxUrl: (document.getElementById('gModel3DSkyboxUrl').value || '').trim(),
+    model3dSkyboxBgColor: (normalizeHexColor(document.getElementById('gModel3DSkyboxBgColor').value) || '#1a1a2e'),
   };
   try {
     const res = id

@@ -86,6 +86,7 @@
           :model-url="model3DModelURL"
           :decal-url="model3DDecalURL"
           :skybox-url="model3DSkyboxURL"
+          :bg-color="model3DBGColor"
         />
         <div class="viewer3d-close" @click="close3DViewer()"><van-icon name="cross" size="24" color="#fff" /></div>
         <div class="viewer3d-tip">{{ t('guideDetail.preview3DTip') }}</div>
@@ -130,6 +131,10 @@ const model3DEnabled = computed(() => !!(guide.value && guide.value.model3dEnabl
 const model3DModelURL = computed(() => cosProxyOrFull(guide.value.model3dUrl || ''));
 const model3DDecalURL = computed(() => cosProxyOrFull(guide.value.model3dDecalUrl || ''));
 const model3DSkyboxURL = computed(() => cosProxyOrFull(guide.value.model3dSkyboxUrl || ''));
+const model3DBGColor = computed(() => {
+  const v = (guide.value && guide.value.model3dSkyboxBgColor) ? String(guide.value.model3dSkyboxBgColor).trim() : '';
+  return v || '#1a1a2e';
+});
 
 const open3DViewer = () => { show3DViewer.value = true; };
 const close3DViewer = () => { show3DViewer.value = false; };

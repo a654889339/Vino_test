@@ -1,6 +1,7 @@
 const app = getApp();
 const { openManualFromGuide } = require('../../utils/openManual.js');
 const i18n = require('../../utils/i18n.js');
+const { normalizeImageUrl } = require('../../utils/image.js');
 
 Page({
   data: {
@@ -96,16 +97,15 @@ Page({
         this.applyLocalizedGuideFields(g);
         this.applyNavBarTitle(g);
         const parse = v => { try { return Array.isArray(v) ? v : JSON.parse(v || '[]'); } catch { return []; } };
-        const base = app.globalData.baseUrl.replace('/api', '');
-        const fix = u => (u && !u.startsWith('http') ? base + u : u);
+        const fix = u => normalizeImageUrl(u, app.globalData.baseUrl);
         if (g.coverImage) g.coverImage = fix(g.coverImage);
         if (g.coverImageThumb) g.coverImageThumb = fix(g.coverImageThumb);
         if (g.iconUrl) g.iconUrl = fix(g.iconUrl);
         g.displayCoverUrl = g.coverImageThumb || g.coverImage;
         g.displayIconUrl = g.iconUrl || '';
         const mediaItems = parse(g.mediaItems).map(m => {
-          if (m.thumb && !m.thumb.startsWith('http')) m.thumb = app.globalData.baseUrl.replace('/api', '') + m.thumb;
-          if (m.url && !m.url.startsWith('http')) m.url = app.globalData.baseUrl.replace('/api', '') + m.url;
+          if (m.thumb) m.thumb = fix(m.thumb);
+          if (m.url) m.url = fix(m.url);
           return m;
         });
         const helpItems = parse(g.helpItems);
@@ -129,6 +129,14 @@ Page({
     }
   },
   onIconLoad() {},
+  onHeroImgError(e) {
+    const g = this.data.guide || {};
+    console.error('[img-err] hero', g.displayCoverUrl, g.coverImage, e && e.detail);
+  },
+  onIconErr(e) {
+    const g = this.data.guide || {};
+    console.error('[img-err] guideIcon', g.displayIconUrl, g.iconUrl, e && e.detail);
+  },
   previewCover() {
     const url = this.data.guide.coverImage;
     if (url) wx.previewImage({ current: url, urls: [url] });
