@@ -46,7 +46,7 @@ func goodsOrderCheckout(c *gin.Context) {
 		return
 	}
 	phoneKey := services.NormalizePhone(body.ContactPhone)
-	if !services.ValidChinaMobile(phoneKey) {
+	if len(phoneKey) != 11 || phoneKey[0] != '1' {
 		resp.Err(c, 400, 400, "请输入正确的11位大陆手机号")
 		return
 	}
