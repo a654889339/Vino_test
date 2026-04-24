@@ -577,6 +577,8 @@ func authAdminGetUsers(c *gin.Context) {
 	}
 	orderCounts := map[int]int{}
 	orderIdsByUser := map[int][]int{}
+	goodsOrderCounts := map[int]int{}
+	goodsOrderIdsByUser := map[int][]int{}
 	boundByUser := map[int][]string{}
 	if len(ids) > 0 {
 		type cntRow struct {
@@ -592,6 +594,16 @@ func authAdminGetUsers(c *gin.Context) {
 		db.DB.Select("id", "userId").Where("userId IN ?", ids).Order("id ASC").Find(&ordRows)
 		for _, o := range ordRows {
 			orderIdsByUser[o.UserID] = append(orderIdsByUser[o.UserID], o.ID)
+		}
+		var goodsCrows []cntRow
+		_ = db.DB.Model(&models.GoodsOrder{}).Select("userId, COUNT(id) as cnt").Where("userId IN ?", ids).Group("userId").Scan(&goodsCrows).Error
+		for _, r := range goodsCrows {
+			goodsOrderCounts[r.UserID] = r.Cnt
+		}
+		var goodsOrdRows []models.GoodsOrder
+		db.DB.Select("id", "userId").Where("userId IN ?", ids).Order("id ASC").Find(&goodsOrdRows)
+		for _, o := range goodsOrdRows {
+			goodsOrderIdsByUser[o.UserID] = append(goodsOrderIdsByUser[o.UserID], o.ID)
 		}
 		var ups []models.UserProduct
 		db.DB.Where("userId IN ?", ids).Find(&ups)
@@ -609,6 +621,11 @@ func authAdminGetUsers(c *gin.Context) {
 		plain["orderIds"] = orderIdsByUser[u.ID]
 		if plain["orderIds"] == nil {
 			plain["orderIds"] = []int{}
+		}
+		plain["goodsOrderCount"] = goodsOrderCounts[u.ID]
+		plain["goodsOrderIds"] = goodsOrderIdsByUser[u.ID]
+		if plain["goodsOrderIds"] == nil {
+			plain["goodsOrderIds"] = []int{}
 		}
 		plain["boundProductKeys"] = boundByUser[u.ID]
 		if plain["boundProductKeys"] == nil {

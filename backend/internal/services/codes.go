@@ -9,18 +9,35 @@ import (
 	"time"
 )
 
-// NormalizePhone 与 Node smsService.normalizePhone 一致
+// NormalizePhone 与 Node smsService.normalizePhone 一致；并抽取数字，兼容 86 前缀、空格、短横线等。
 func NormalizePhone(phone string) string {
-	p := strings.ReplaceAll(phone, " ", "")
+	p := strings.TrimSpace(phone)
+	p = strings.ReplaceAll(p, " ", "")
 	p = strings.ReplaceAll(p, "\t", "")
-	if len(p) == 11 && p[0] == '1' {
-		return p
-	}
 	if strings.HasPrefix(p, "+86") {
 		p = strings.TrimPrefix(p, "+86")
 		p = strings.TrimLeft(p, " ")
 	}
-	return p
+	var b strings.Builder
+	for _, r := range p {
+		if r >= '0' && r <= '9' {
+			b.WriteRune(r)
+		}
+	}
+	d := b.String()
+	if len(d) == 11 && d[0] == '1' {
+		return d
+	}
+	if len(d) == 13 && strings.HasPrefix(d, "86") && len(d) >= 3 && d[2] == '1' {
+		return d[2:]
+	}
+	if len(d) > 11 {
+		tail := d[len(d)-11:]
+		if tail[0] == '1' {
+			return tail
+		}
+	}
+	return d
 }
 
 type emailRec struct {

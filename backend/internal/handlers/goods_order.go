@@ -3,8 +3,10 @@ package handlers
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"math"
+	"strconv"
 	"strings"
 	"time"
 
@@ -289,3 +291,240 @@ func goodsOrderPayWechatPrepay(c *gin.Context, cfg *config.Config) {
 	resp.OK(c, params)
 }
 
+// ---- 管理端 商品订单 ----
+
+// goodsOrderAdminList GET /api/goods-orders/admin/list
+// query: status orderNo userId page pageSize
+func goodsOrderAdminList(c *gin.Context) {
+	status := c.Query("status")
+	orderNo := strings.TrimSpace(c.Query("orderNo"))
+	userID := strings.TrimSpace(c.Query("userId"))
+	page := queryInt(c, "page", 1)
+	pageSize := queryInt(c, "pageSize", 50)
+	if page <= 0 {
+		page = 1
+	}
+	if pageSize <= 0 {
+		pageSize = 50
+	}
+	if pageSize > 200 {
+		pageSize = 200
+	}
+	qb := db.DB.Model(&models.GoodsOrder{})
+	if status != "" && status != "all" {
+		qb = qb.Where("status = ?", status)
+	}
+	if orderNo != "" {
+		qb = qb.Where("orderNo LIKE ?", "%"+escapeLike(orderNo)+"%")
+	}
+	if userID != "" {
+		if uid, err := strconv.Atoi(userID); err == nil && uid > 0 {
+			qb = qb.Where("userId = ?", uid)
+		}
+	}
+	var total int64
+	sq := qb.Session(&gorm.Session{})
+	sq.Count(&total)
+	var rows []models.GoodsOrder
+	fq := qb.Session(&gorm.Session{})
+	fq.Preload("Items").Order("createdAt DESC").Limit(pageSize).Offset((page - 1) * pageSize).Find(&rows)
+
+	userIDs := make([]int, 0, len(rows))
+	seen := map[int]bool{}
+	for _, o := range rows {
+		if !seen[o.UserID] {
+			seen[o.UserID] = true
+			userIDs = append(userIDs, o.UserID)
+		}
+	}
+	userByID := map[int]models.User{}
+	if len(userIDs) > 0 {
+		var users []models.User
+		_ = db.DB.Select("id", "username", "email", "nickname", "phone").Where("id IN ?", userIDs).Find(&users).Error
+		for _, u := range users {
+			userByID[u.ID] = u
+		}
+	}
+
+	list := make([]gin.H, 0, len(rows))
+	for _, o := range rows {
+		s := orderStatusMap[o.Status]
+		raw, _ := json.Marshal(o)
+		var h gin.H
+		_ = json.Unmarshal(raw, &h)
+		h["statusText"] = s.Text
+		h["statusTextEn"] = s.TextEn
+		h["statusType"] = s.Type
+		if u, ok := userByID[o.UserID]; ok {
+			h["username"] = u.Username
+			h["userPhone"] = u.Phone
+			h["userNickname"] = u.Nickname
+		}
+		// 汇总件数
+		qty := 0
+		for _, it := range o.Items {
+			qty += it.Qty
+		}
+		h["totalQty"] = qty
+		list = append(list, h)
+	}
+	resp.OK(c, gin.H{"list": list, "total": total, "page": page, "pageSize": pageSize})
+}
+
+// goodsOrderAdminStats GET /api/goods-orders/admin/stats
+func goodsOrderAdminStats(c *gin.Context) {
+	var total, pending, paid, processing, completed, cancelled int64
+	db.DB.Model(&models.GoodsOrder{}).Count(&total)
+	db.DB.Model(&models.GoodsOrder{}).Where("status = ?", "pending").Count(&pending)
+	db.DB.Model(&models.GoodsOrder{}).Where("status = ?", "paid").Count(&paid)
+	db.DB.Model(&models.GoodsOrder{}).Where("status = ?", "processing").Count(&processing)
+	db.DB.Model(&models.GoodsOrder{}).Where("status = ?", "completed").Count(&completed)
+	db.DB.Model(&models.GoodsOrder{}).Where("status = ?", "cancelled").Count(&cancelled)
+	resp.OK(c, gin.H{
+		"total": total, "pending": pending, "paid": paid,
+		"processing": processing, "completed": completed, "cancelled": cancelled,
+	})
+}
+
+// goodsOrderAdminUpdateStatus PUT /api/goods-orders/admin/:id/status
+func goodsOrderAdminUpdateStatus(c *gin.Context) {
+	u, ok := ctxUser(c)
+	if !ok {
+		return
+	}
+	id, ok := parseID(c, "id")
+	if !ok {
+		resp.Err(c, 400, 400, "无效订单")
+		return
+	}
+	var body struct {
+		Status string `json:"status"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		resp.Err(c, 400, 400, "无效状态")
+		return
+	}
+	if _, ok := orderStatusMap[body.Status]; !ok {
+		resp.Err(c, 400, 400, "无效状态")
+		return
+	}
+	var o models.GoodsOrder
+	if err := db.DB.First(&o, id).Error; err != nil {
+		resp.Err(c, 404, 404, "订单不存在")
+		return
+	}
+	old := o.Status
+	if old != body.Status {
+		oldS := orderStatusMap[old].Text
+		newS := orderStatusMap[body.Status].Text
+		db.DB.Create(&models.GoodsOrderLog{
+			OrderID:    o.ID,
+			ChangeType: "status",
+			OldValue:   firstNonEmptyStr(oldS, old),
+			NewValue:   firstNonEmptyStr(newS, body.Status),
+			Operator:   u.Username,
+		})
+	}
+	o.Status = body.Status
+	db.DB.Save(&o)
+	s := orderStatusMap[o.Status]
+	raw, _ := json.Marshal(o)
+	var h gin.H
+	_ = json.Unmarshal(raw, &h)
+	h["statusText"] = s.Text
+	h["statusTextEn"] = s.TextEn
+	h["statusType"] = s.Type
+	resp.OK(c, h)
+}
+
+// goodsOrderAdminUpdatePrice PUT /api/goods-orders/admin/:id/price
+// body: { price }  —— 变更的是订单合计 totalPrice；items 明细保留原快照。
+func goodsOrderAdminUpdatePrice(c *gin.Context) {
+	u, ok := ctxUser(c)
+	if !ok {
+		return
+	}
+	id, ok := parseID(c, "id")
+	if !ok {
+		resp.Err(c, 400, 400, "无效订单")
+		return
+	}
+	var body struct {
+		Price float64 `json:"price"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		resp.Err(c, 400, 400, "无效金额")
+		return
+	}
+	if body.Price < 0 || math.IsNaN(body.Price) {
+		resp.Err(c, 400, 400, "无效金额")
+		return
+	}
+	var o models.GoodsOrder
+	if err := db.DB.First(&o, id).Error; err != nil {
+		resp.Err(c, 404, 404, "订单不存在")
+		return
+	}
+	oldP := o.TotalPrice
+	if oldP != body.Price {
+		db.DB.Create(&models.GoodsOrderLog{
+			OrderID:    o.ID,
+			ChangeType: "price",
+			OldValue:   fmt.Sprintf("¥%.2f", oldP),
+			NewValue:   fmt.Sprintf("¥%.2f", body.Price),
+			Operator:   u.Username,
+		})
+	}
+	o.TotalPrice = body.Price
+	db.DB.Save(&o)
+	resp.OK(c, o)
+}
+
+// goodsOrderAdminAddRemark POST /api/goods-orders/admin/:id/remark
+func goodsOrderAdminAddRemark(c *gin.Context) {
+	u, ok := ctxUser(c)
+	if !ok {
+		return
+	}
+	id, ok := parseID(c, "id")
+	if !ok {
+		resp.Err(c, 400, 400, "无效订单")
+		return
+	}
+	var body struct {
+		Remark string `json:"remark"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil || strings.TrimSpace(body.Remark) == "" {
+		resp.Err(c, 400, 400, "备注不能为空")
+		return
+	}
+	var o models.GoodsOrder
+	if err := db.DB.First(&o, id).Error; err != nil {
+		resp.Err(c, 404, 404, "订单不存在")
+		return
+	}
+	db.DB.Create(&models.GoodsOrderLog{
+		OrderID:    o.ID,
+		ChangeType: "admin_remark",
+		OldValue:   "",
+		NewValue:   strings.TrimSpace(body.Remark),
+		Operator:   u.Username,
+	})
+	o.AdminRemark = strings.TrimSpace(body.Remark)
+	db.DB.Save(&o)
+	resp.OKMsg(c, "备注已添加")
+}
+
+// goodsOrderAdminLogs GET /api/goods-orders/admin/:id/logs
+func goodsOrderAdminLogs(c *gin.Context) {
+	id, ok := parseID(c, "id")
+	if !ok {
+		resp.Err(c, 400, 400, "无效订单")
+		return
+	}
+	var logs []models.GoodsOrderLog
+	db.DB.Where("orderId = ?", id).Order("createdAt DESC").Find(&logs)
+	var o models.GoodsOrder
+	db.DB.Select("id", "orderNo", "adminRemark").First(&o, id)
+	resp.OK(c, gin.H{"logs": logs, "adminRemark": o.AdminRemark})
+}

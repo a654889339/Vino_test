@@ -14,6 +14,7 @@ type GoodsOrder struct {
 	ContactPhone string    `gorm:"column:contactPhone;size:20" json:"contactPhone"`
 	Address      string    `gorm:"size:500" json:"address"`
 	Remark       string    `gorm:"type:text" json:"remark"`
+	AdminRemark  string    `gorm:"column:adminRemark;type:text" json:"adminRemark"`
 	CreatedAt    time.Time `gorm:"column:createdAt;index:idx_goods_orders_userId_createdAt,priority:2;index:idx_goods_orders_status_createdAt,priority:2" json:"createdAt"`
 	UpdatedAt    time.Time `gorm:"column:updatedAt" json:"updatedAt"`
 
@@ -38,4 +39,17 @@ type GoodsOrderItem struct {
 }
 
 func (GoodsOrderItem) TableName() string { return "goods_order_items" }
+
+// GoodsOrderLog 商品订单变更日志
+type GoodsOrderLog struct {
+	ID         int       `gorm:"primaryKey" json:"id"`
+	OrderID    int       `gorm:"column:orderId;not null;index" json:"orderId"`
+	ChangeType string    `gorm:"column:changeType;type:enum('status','price','admin_remark');not null" json:"changeType"`
+	OldValue   string    `gorm:"column:oldValue;size:500" json:"oldValue"`
+	NewValue   string    `gorm:"column:newValue;size:500" json:"newValue"`
+	Operator   string    `gorm:"size:100" json:"operator"`
+	CreatedAt  time.Time `gorm:"column:createdAt" json:"createdAt"`
+}
+
+func (GoodsOrderLog) TableName() string { return "goods_order_logs" }
 

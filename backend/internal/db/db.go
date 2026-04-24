@@ -81,6 +81,7 @@ func AutoMigrate() error {
 		&models.OrderLog{},
 		&models.GoodsOrder{},
 		&models.GoodsOrderItem{},
+		&models.GoodsOrderLog{},
 		&models.OutletOrder{},
 		&models.OutletOrderLog{},
 		&models.ServiceCategory{},

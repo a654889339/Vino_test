@@ -18,7 +18,7 @@
           <van-cell v-for="row in lines" :key="row.guideId" :title="row.name">
             <template #icon>
               <div class="cart-line-icon">
-                <img v-if="row.imageURL" :src="fullUrl(row.imageURL)" class="cart-line-img" />
+                <img v-if="cartLineImage(row)" :src="fullUrl(cartLineImage(row))" class="cart-line-img" alt="" />
                 <van-icon v-else name="photo-o" size="36" color="#ccc" />
               </div>
             </template>
@@ -75,6 +75,12 @@ function fullUrl(url) {
   if (!url) return '';
   if (url.startsWith('http')) return url;
   return BASE.replace('/api', '') + url;
+}
+
+/** 后端 JSON 为 imageUrl；兼容历史/误写的 imageURL */
+function cartLineImage(row) {
+  if (!row) return '';
+  return row.imageUrl || row.imageURL || '';
 }
 
 const currencyHint = computed(() => {

@@ -235,6 +235,16 @@ function invokeWechatPay(params) {
   });
 }
 
+function digitsOnlyPhone(s) {
+  return String(s || '').replace(/\D/g, '');
+}
+
+function normalizeSubmitPhone(s) {
+  const d = digitsOnlyPhone(s);
+  if (d.length >= 11 && d[d.length - 11] === '1') return d.slice(-11);
+  return d;
+}
+
 async function submit() {
   if (!lines.value.length) {
     showToast('购物车为空');
@@ -248,13 +258,18 @@ async function submit() {
     showToast('请填写地址');
     return;
   }
+  const phoneNorm = normalizeSubmitPhone(form.contactPhone);
+  if (phoneNorm.length !== 11 || phoneNorm[0] !== '1') {
+    showToast('请输入正确的11位大陆手机号');
+    return;
+  }
   submitting.value = true;
   try {
     const res = await goodsOrderApi.checkout({
-      contactName: form.contactName,
-      contactPhone: form.contactPhone,
-      address: form.address,
-      remark: form.remark,
+      contactName: form.contactName.trim(),
+      contactPhone: phoneNorm,
+      address: form.address.trim(),
+      remark: form.remark.trim(),
     });
     const order = res.data;
     if (isWechatBrowser() && order && order.id) {
@@ -273,7 +288,12 @@ async function submit() {
     showToast('下单成功');
     router.replace('/goods-orders');
   } catch (e) {
-    showToast(e?.message || '下单失败');
+    const msg =
+      e?.response?.data?.message ||
+      e?.response?.data?.Message ||
+      e?.message ||
+      '下单失败';
+    showToast(msg);
   } finally {
     submitting.value = false;
   }

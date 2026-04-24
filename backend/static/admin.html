@@ -272,7 +272,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   <div class="dash-main">
   <div class="dash-topnav" id="dashTopNav">
     <div class="dash-nav-item active" data-page="overview" onclick="switchPage('overview')">概览</div>
-    <div class="dash-nav-item" data-page="orders" onclick="switchPage('orders')">订单管理</div>
+    <div class="dash-nav-item" data-page="orders" onclick="switchPage('orders')">服务订单管理</div>
+    <div class="dash-nav-item" data-page="goodsOrders" onclick="switchPage('goodsOrders')">商品订单管理</div>
     <div class="dash-nav-item" data-page="users" onclick="switchPage('users')">用户管理</div>
     <div class="dash-nav-item" data-page="guides" onclick="switchPage('guides')">商品配置</div>
     <div class="dash-nav-item" data-page="serviceConfig" onclick="switchPage('serviceConfig')">服务配置</div>
@@ -478,7 +479,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <button type="button" class="refresh-btn" style="background:#64748b" onclick="document.getElementById('userSearchKeyword').value='';document.getElementById('userSearchType').value='';userPage=1;loadUsers()">重置</button>
         </div>
         <table class="order-table" id="userTable">
-          <thead><tr><th>ID</th><th>用户名</th><th>手机号</th><th>邮箱</th><th>昵称</th><th>角色</th><th>订单数</th><th>地址数</th><th>已绑定商品</th><th>注册时间</th><th>操作</th><th>删除</th></tr></thead>
+          <thead><tr><th>ID</th><th>用户名</th><th>手机号</th><th>邮箱</th><th>昵称</th><th>角色</th><th>服务订单数</th><th>商品订单数</th><th>地址数</th><th>已绑定商品</th><th>注册时间</th><th>操作</th><th>删除</th></tr></thead>
           <tbody id="userTableBody"></tbody>
         </table>
         <div class="order-empty" id="userEmpty" style="display:none">暂无用户</div>
@@ -1514,6 +1515,41 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       </div>
     </div>
 
+    <!-- 商品订单管理 -->
+    <div class="dash-page" id="page-goodsOrders">
+      <div class="dash-stats" id="goodsOrderStats"></div>
+      <div class="dash-section">
+        <div class="section-header">
+          <h3>全部商品订单</h3>
+          <button class="refresh-btn" onclick="loadGoodsOrders()">刷新</button>
+        </div>
+        <div class="order-filters" id="goodsOrderFilters">
+          <button class="filter-btn active" onclick="filterGoodsOrders('all')">全部</button>
+          <button class="filter-btn" onclick="filterGoodsOrders('pending')">待支付</button>
+          <button class="filter-btn" onclick="filterGoodsOrders('paid')">已支付</button>
+          <button class="filter-btn" onclick="filterGoodsOrders('processing')">进行中</button>
+          <button class="filter-btn" onclick="filterGoodsOrders('completed')">已完成</button>
+          <button class="filter-btn" onclick="filterGoodsOrders('cancelled')">已取消</button>
+        </div>
+        <div class="order-filters" style="flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:12px">
+          <span style="font-size:13px;color:#666">订单号：</span>
+          <input type="text" id="goodsOrderSearchOrderNo" class="form-input" placeholder="模糊搜索" style="width:160px;padding:6px 10px" onkeydown="if(event.key==='Enter'){goodsOrderPage=1;loadGoodsOrders()}" />
+          <span style="font-size:13px;color:#666">用户ID：</span>
+          <input type="number" id="goodsOrderSearchUserId" class="form-input" placeholder="精确" style="width:100px;padding:6px 10px" min="1" onkeydown="if(event.key==='Enter'){goodsOrderPage=1;loadGoodsOrders()}" />
+          <button type="button" class="refresh-btn" onclick="goodsOrderPage=1;loadGoodsOrders()">搜索</button>
+          <button type="button" class="refresh-btn" style="background:#64748b" onclick="document.getElementById('goodsOrderSearchOrderNo').value='';document.getElementById('goodsOrderSearchUserId').value='';goodsOrderPage=1;loadGoodsOrders()">重置</button>
+        </div>
+        <div id="goodsOrderTableWrap">
+          <table class="order-table">
+            <thead><tr><th>订单号</th><th>用户ID</th><th>用户</th><th>收货人</th><th>电话</th><th>地址</th><th>件数</th><th>合计</th><th>状态</th><th>下单时间</th><th>操作</th></tr></thead>
+            <tbody id="goodsOrderTableBody"></tbody>
+          </table>
+          <div class="order-empty" id="goodsOrderEmpty" style="display:none">暂无商品订单数据</div>
+        </div>
+        <div class="pagination" id="goodsOrderPagination"></div>
+      </div>
+    </div>
+
     <!-- ========== Outlet Pages ========== -->
     <!-- Outlet Overview -->
     <div class="dash-page" id="page-outletOverview">
@@ -1706,6 +1742,10 @@ let currentUser = null;
 let orderPage = 1;
 const orderPageSize = 50;
 let orderFilter = 'all';
+let goodsOrderPage = 1;
+const goodsOrderPageSize = 50;
+let goodsOrderFilter = 'all';
+let currentLogKind = 'order';
 
 function jumpUserPageGo() {
   const el = document.getElementById('userPageJump');
@@ -1743,6 +1783,15 @@ function jumpOrderPageGo() {
   orderPage = Math.min(Math.max(1, p), max);
   loadOrders();
 }
+function jumpGoodsOrderPageGo() {
+  const el = document.getElementById('goodsOrderPageJump');
+  if (!el) return;
+  const max = parseInt(el.getAttribute('max'), 10) || 1;
+  const p = parseInt(el.value, 10);
+  if (Number.isNaN(p)) { alert('请输入有效页码'); return; }
+  goodsOrderPage = Math.min(Math.max(1, p), max);
+  loadGoodsOrders();
+}
 
 function switchTab(tab) {
   document.querySelectorAll('.auth-tab').forEach((t, i) => {
@@ -1771,12 +1820,12 @@ async function api(path, options = {}) {
 let currentHCPage = 'homeConfig';
 let currentGroup = 'ToC';
 
-const tocPages = ['overview','orders','users','guides','serviceConfig','inventory','homeConfig','homeAnimConfig','pageThemeConfig','i18nConfig','messages'];
+const tocPages = ['overview','orders','goodsOrders','users','guides','serviceConfig','inventory','homeConfig','homeAnimConfig','pageThemeConfig','i18nConfig','messages'];
 const outletPages = ['outletOverview','outletOrders','outletUsers','outletHomeConfig','outletHomeAnimConfig','outletMineConfig','outletMessages'];
 const debugPages = ['debugTocData','debugTocPage','debugFeatureFlags'];
 
 const tocNavItems = [
-  {page:'overview',label:'概览'},{page:'orders',label:'订单管理'},{page:'users',label:'用户管理'},
+  {page:'overview',label:'概览'},{page:'orders',label:'服务订单管理'},{page:'goodsOrders',label:'商品订单管理'},{page:'users',label:'用户管理'},
   {page:'guides',label:'商品配置'},{page:'serviceConfig',label:'服务配置'},{page:'inventory',label:'商品库存'},
   {page:'homeConfig',label:'首页配置'},{page:'homeAnimConfig',label:'首页动画配置'},
   {page:'pageThemeConfig',label:'页面基础配置'},{page:'i18nConfig',label:'语言翻译'},{page:'messages',label:'留言板'}
@@ -1877,6 +1926,7 @@ function switchPage(page) {
   if (page !== 'messages') { stopMsgPolling(); currentChatUserId = null; }
   if (page !== 'outletMessages') { stopOutletMsgPolling(); outletCurrentChatUserId = null; }
   if (page === 'orders') loadOrders();
+  if (page === 'goodsOrders') { loadGoodsOrderStats(); loadGoodsOrders(); }
   if (page === 'users') { userPage = 1; loadUsers(); }
   if (page === 'guides') { loadCategories(); loadGuides(); }
   if (page === 'serviceConfig') { loadServiceCategories(); loadServices(); }
@@ -2166,6 +2216,106 @@ async function updateOrderStatus(id, status) {
   } catch { alert('网络错误'); loadOrders(); }
 }
 
+async function loadGoodsOrderStats() {
+  const isAdmin = currentUser && isAdminRole(currentUser.role);
+  const wrap = document.getElementById('goodsOrderStats');
+  if (!wrap) return;
+  try {
+    if (isAdmin) {
+      const res = await api('/goods-orders/admin/stats');
+      if (res.code === 0) {
+        const d = res.data;
+        wrap.innerHTML = `
+          <div class="stat-card clickable" onclick="filterGoodsOrders('all')"><h3>全部商品订单</h3><div class="val">${d.total}</div></div>
+          <div class="stat-card clickable" onclick="filterGoodsOrders('pending')"><h3>待支付</h3><div class="val" style="color:#D97706">${d.pending}</div></div>
+          <div class="stat-card clickable" onclick="filterGoodsOrders('paid')"><h3>已支付</h3><div class="val" style="color:#2563EB">${d.paid || 0}</div></div>
+          <div class="stat-card clickable" onclick="filterGoodsOrders('processing')"><h3>进行中</h3><div class="val" style="color:#2563EB">${d.processing}</div></div>
+          <div class="stat-card clickable" onclick="filterGoodsOrders('completed')"><h3>已完成</h3><div class="val" style="color:#059669">${d.completed}</div></div>
+          <div class="stat-card clickable" onclick="filterGoodsOrders('cancelled')"><h3>已取消</h3><div class="val" style="color:#6B7280">${d.cancelled}</div></div>`;
+      }
+    } else {
+      wrap.innerHTML = '<div class="stat-card"><h3>权限提示</h3><div class="val" style="font-size:16px;color:var(--text-secondary)">需要管理员权限查看商品订单统计</div></div>';
+    }
+  } catch { /* ignore */ }
+}
+
+function filterGoodsOrders(status) {
+  goodsOrderFilter = status;
+  goodsOrderPage = 1;
+  const map = { all: '全部', pending: '待支付', paid: '已支付', processing: '进行中', completed: '已完成', cancelled: '已取消' };
+  document.querySelectorAll('#goodsOrderFilters .filter-btn').forEach(b => {
+    b.classList.toggle('active', b.textContent.includes(map[status] || '全部'));
+  });
+  loadGoodsOrders();
+}
+
+async function loadGoodsOrders() {
+  await loadServiceCurrency();
+  loadGoodsOrderStats();
+  const tbody = document.getElementById('goodsOrderTableBody');
+  const empty = document.getElementById('goodsOrderEmpty');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:30px;color:#999">加载中...</td></tr>';
+  try {
+    const params = new URLSearchParams({ page: goodsOrderPage, pageSize: goodsOrderPageSize });
+    if (goodsOrderFilter !== 'all') params.set('status', goodsOrderFilter);
+    const ono = document.getElementById('goodsOrderSearchOrderNo') && document.getElementById('goodsOrderSearchOrderNo').value.trim();
+    if (ono) params.set('orderNo', ono);
+    const uid = document.getElementById('goodsOrderSearchUserId') && document.getElementById('goodsOrderSearchUserId').value.trim();
+    if (uid) params.set('userId', uid);
+    const res = await api('/goods-orders/admin/list?' + params);
+    if (res.code === 0) {
+      const { list, total, page, pageSize } = res.data;
+      if (!list.length) { tbody.innerHTML = ''; empty.style.display = 'block'; }
+      else {
+        empty.style.display = 'none';
+        tbody.innerHTML = list.map(o => {
+          const qty = typeof o.totalQty === 'number' ? o.totalQty : (Array.isArray(o.items) ? o.items.reduce((s, it) => s + (it.qty || 0), 0) : 0);
+          const userName = o.userNickname || o.username || '-';
+          return `<tr>
+          <td style="font-size:12px;color:var(--text-secondary)">${escapeHtml(String(o.orderNo || ''))}</td>
+          <td style="font-size:12px;font-weight:600">${o.userId}</td>
+          <td style="font-size:12px">${escapeHtml(userName)}${o.userPhone ? '<br><span style=\"color:#999\">' + escapeHtml(o.userPhone) + '</span>' : ''}</td>
+          <td style="font-size:12px">${escapeHtml(o.contactName || '-')}</td>
+          <td style="font-size:12px">${escapeHtml(o.contactPhone || '-')}</td>
+          <td style="font-size:12px;max-width:220px;word-break:break-all">${escapeHtml(o.address || '-')}</td>
+          <td style="font-size:12px">${qty}</td>
+          <td style="color:var(--primary);font-weight:600">${formatAdminPrice(o.totalPrice)}</td>
+          <td><span class="status-badge ${o.status}">${statusLabels[o.status] || o.status}</span></td>
+          <td style="font-size:12px">${fmtTime(o.createdAt)}</td>
+          <td>
+            <select class="status-select" onchange="updateGoodsOrderStatus(${o.id}, this.value)" ${o.status === 'cancelled' ? 'disabled' : ''}>
+              <option value="pending" ${o.status === 'pending' ? 'selected' : ''}>待支付</option>
+              <option value="paid" ${o.status === 'paid' ? 'selected' : ''}>已支付</option>
+              <option value="processing" ${o.status === 'processing' ? 'selected' : ''}>进行中</option>
+              <option value="completed" ${o.status === 'completed' ? 'selected' : ''}>已完成</option>
+              <option value="cancelled" ${o.status === 'cancelled' ? 'selected' : ''}>已取消</option>
+            </select>
+            <button class="history-btn" onclick="openGoodsOrderLogModal(${o.id}, '${o.totalPrice}')">历史</button>
+          </td>
+        </tr>`;
+        }).join('');
+      }
+      const totalPages = Math.ceil(total / pageSize);
+      document.getElementById('goodsOrderPagination').innerHTML = totalPages > 1 ? `
+        <button class="page-btn" onclick="goodsOrderPage--;loadGoodsOrders()" ${page <= 1 ? 'disabled' : ''}>上一页</button>
+        <span class="page-info">${page} / ${totalPages}（共 ${total} 条）</span>
+        <span style="display:inline-flex;align-items:center;gap:6px;margin:0 8px;font-size:13px;color:var(--text-secondary)">
+          跳至 <input type="number" id="goodsOrderPageJump" min="1" max="${totalPages}" value="${page}" style="width:56px;padding:4px 8px;border:1px solid var(--border);border-radius:6px" onkeydown="if(event.key==='Enter'){jumpGoodsOrderPageGo()}" /> 页
+          <button type="button" class="page-btn" onclick="jumpGoodsOrderPageGo()">跳转</button>
+        </span>
+        <button class="page-btn" onclick="goodsOrderPage++;loadGoodsOrders()" ${page >= totalPages ? 'disabled' : ''}>下一页</button>` : `<span class="page-info">共 ${total} 条</span>`;
+    }
+  } catch { tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:30px;color:#B91C1C">加载失败，请检查权限</td></tr>'; }
+}
+
+async function updateGoodsOrderStatus(id, status) {
+  try {
+    const res = await api('/goods-orders/admin/' + id + '/status', { method: 'PUT', body: { status } });
+    if (res.code === 0) { loadGoodsOrders(); } else { alert(res.message || '更新失败'); loadGoodsOrders(); }
+  } catch { alert('网络错误'); loadGoodsOrders(); }
+}
+
 async function runSeed() {
   const btn = document.getElementById('seedBtn');
   const result = document.getElementById('seedResult');
@@ -2398,6 +2548,7 @@ let currentLogOrderId = null;
 const typeLabels = { status: '状态变更', price: '金额变更', admin_remark: '后台备注' };
 
 function openLogModal(orderId, price) {
+  currentLogKind = 'order';
   currentLogOrderId = orderId;
   document.getElementById('priceInput').value = price;
   document.getElementById('adminRemarkInput').value = '';
@@ -2405,9 +2556,55 @@ function openLogModal(orderId, price) {
   loadOrderLogs(orderId);
 }
 
+function openGoodsOrderLogModal(orderId, totalPrice) {
+  currentLogKind = 'goods';
+  currentLogOrderId = orderId;
+  document.getElementById('priceInput').value = (totalPrice === undefined || totalPrice === null) ? '' : totalPrice;
+  document.getElementById('adminRemarkInput').value = '';
+  document.getElementById('logModal').style.display = 'flex';
+  loadGoodsOrderLogs(orderId);
+}
+
 function closeLogModal() {
   document.getElementById('logModal').style.display = 'none';
   currentLogOrderId = null;
+}
+
+function renderLogList(logs, adminRemark) {
+  document.getElementById('adminRemarkDisplay').textContent = adminRemark || '（暂无备注）';
+  const listEl = document.getElementById('logList');
+  if (!logs || !logs.length) {
+    listEl.innerHTML = '<div class="log-empty">暂无变更记录</div>';
+    return;
+  }
+  listEl.innerHTML = logs.map(l => {
+    const typeClass = l.changeType;
+    const typeText = typeLabels[l.changeType] || l.changeType;
+    const time = new Date(l.createdAt).toLocaleString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+    let detail = '';
+    if (l.changeType === 'admin_remark') {
+      detail = `<div class="log-detail">${l.newValue}</div>`;
+    } else {
+      detail = `<div class="log-change"><span class="log-old">${l.oldValue}</span><span class="log-arrow">→</span><span class="log-new">${l.newValue}</span></div>`;
+    }
+    return `<div class="log-item">
+      <div class="log-meta">
+        <span><span class="log-type ${typeClass}">${typeText}</span><span class="log-operator">操作人: ${l.operator}</span></span>
+        <span class="log-time">${time}</span>
+      </div>
+      ${detail}
+    </div>`;
+  }).join('');
+}
+
+async function loadGoodsOrderLogs(orderId) {
+  try {
+    const res = await api(`/goods-orders/admin/${orderId}/logs`);
+    const { logs, adminRemark } = res.data;
+    renderLogList(logs, adminRemark);
+  } catch (e) {
+    document.getElementById('logList').innerHTML = '<div class="log-empty">加载失败</div>';
+  }
 }
 
 async function loadOrderLogs(orderId) {
@@ -2446,20 +2643,31 @@ async function loadOrderLogs(orderId) {
 async function submitAdminRemark() {
   const remark = document.getElementById('adminRemarkInput').value.trim();
   if (!remark) return;
+  const base = currentLogKind === 'goods' ? '/goods-orders/admin' : '/orders/admin';
   try {
-    await api(`/orders/admin/${currentLogOrderId}/remark`, { method: 'POST', body: { remark } });
+    await api(`${base}/${currentLogOrderId}/remark`, { method: 'POST', body: { remark } });
     document.getElementById('adminRemarkInput').value = '';
-    loadOrderLogs(currentLogOrderId);
+    if (currentLogKind === 'goods') {
+      loadGoodsOrderLogs(currentLogOrderId);
+    } else {
+      loadOrderLogs(currentLogOrderId);
+    }
   } catch (e) { alert(e.message || '添加备注失败'); }
 }
 
 async function submitPriceChange() {
   const price = document.getElementById('priceInput').value;
   if (!price || isNaN(Number(price)) || Number(price) < 0) { alert('请输入有效金额'); return; }
+  const base = currentLogKind === 'goods' ? '/goods-orders/admin' : '/orders/admin';
   try {
-    await api(`/orders/admin/${currentLogOrderId}/price`, { method: 'PUT', body: { price: Number(price) } });
-    loadOrderLogs(currentLogOrderId);
-    loadOrders();
+    await api(`${base}/${currentLogOrderId}/price`, { method: 'PUT', body: { price: Number(price) } });
+    if (currentLogKind === 'goods') {
+      loadGoodsOrderLogs(currentLogOrderId);
+      loadGoodsOrders();
+    } else {
+      loadOrderLogs(currentLogOrderId);
+      loadOrders();
+    }
   } catch (e) { alert(e.message || '修改金额失败'); }
 }
 
@@ -2471,7 +2679,7 @@ const userPageSize = 50;
 async function loadUsers() {
   const tbody = document.getElementById('userTableBody');
   const empty = document.getElementById('userEmpty');
-  tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:30px;color:#999">加载中...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;padding:30px;color:#999">加载中...</td></tr>';
   try {
     const params = new URLSearchParams({ page: userPage, pageSize: userPageSize });
     const st = document.getElementById('userSearchType') && document.getElementById('userSearchType').value;
@@ -2511,11 +2719,11 @@ async function loadUsers() {
         </span>
         <button class="page-btn" onclick="userPage++;loadUsers()" ${page >= totalPages ? 'disabled' : ''}>下一页</button>` : `<span class="page-info">共 ${total} 条</span>`;
     } else {
-      tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:30px;color:#B91C1C">' + escapeHtml(res.message || ('请求失败 code=' + res.code)) + '</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;padding:30px;color:#B91C1C">' + escapeHtml(res.message || ('请求失败 code=' + res.code)) + '</td></tr>';
       if (empty) empty.style.display = 'none';
     }
   } catch (e) {
-    tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:30px;color:#B91C1C">加载失败：' + escapeHtml(e.message || '') + '</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;padding:30px;color:#B91C1C">加载失败：' + escapeHtml(e.message || '') + '</td></tr>';
   }
 }
 
@@ -2543,6 +2751,7 @@ function renderUserTable() {
     const delBtn = (u.role === 'admin' || u.role === 'super_admin')
       ? '<button class="history-btn" style="padding:6px 10px;font-size:12px;background:#e5e7eb;color:#6b7280;cursor:not-allowed" disabled>不可删</button>'
       : `<button class="history-btn" style="padding:6px 10px;font-size:12px;background:#dc2626" onclick="deleteUser(${u.id})">删除</button>`;
+    const goodsOrderCount = u.goodsOrderCount || 0;
     html += `<tr>
       <td>${u.id}</td>
       <td><strong>${u.username}</strong></td>
@@ -2551,6 +2760,7 @@ function renderUserTable() {
       <td>${u.nickname || '-'}</td>
       <td>${roleCell}</td>
       <td>${u.orderCount}</td>
+      <td>${goodsOrderCount}</td>
       <td>${addrCount}</td>
       <td style="font-size:12px;max-width:180px;word-break:break-all" title="${boundStr}">${boundKeys.length ? boundKeys.length + ' 个' : '-'}</td>
       <td style="font-size:12px">${regTime}</td>
@@ -2558,8 +2768,8 @@ function renderUserTable() {
       <td>${delBtn}</td>
     </tr>`;
     if (isExpanded) {
-      const isEmptyNormal = (u.orderCount || 0) === 0 && boundKeys.length === 0 && addrCount === 0 && u.status === 'active';
-      html += `<tr class="user-detail-row"><td colspan="12"><div class="user-detail-inner">`;
+      const isEmptyNormal = (u.orderCount || 0) === 0 && goodsOrderCount === 0 && boundKeys.length === 0 && addrCount === 0 && u.status === 'active';
+      html += `<tr class="user-detail-row"><td colspan="13"><div class="user-detail-inner">`;
       if (isEmptyNormal) {
         html += '<div style="font-size:13px;color:#999">该用户暂无订单、绑定商品与收货地址，状态正常。</div>';
       } else {
@@ -2576,7 +2786,7 @@ function renderUserTable() {
           }).catch(() => { var el = document.getElementById('userRegion_' + u.id); if (el) el.textContent = '(查询失败)'; });
         }
         const orderIds = u.orderIds || [];
-        html += `<div style="font-size:14px;font-weight:600;margin-bottom:4px">该用户的订单 (${orderIds.length})</div>`;
+        html += `<div style="font-size:14px;font-weight:600;margin-bottom:4px">该用户的服务订单 (${orderIds.length})</div>`;
         if (orderIds.length) {
           html += '<div style="font-size:13px;color:#333;margin-bottom:8px">';
           orderIds.forEach(oid => {
@@ -2584,7 +2794,18 @@ function renderUserTable() {
           });
           html += '</div>';
         } else {
-          html += '<div class="no-addr">该用户暂无订单</div>';
+          html += '<div class="no-addr">该用户暂无服务订单</div>';
+        }
+        const goodsOrderIds = u.goodsOrderIds || [];
+        html += `<div style="font-size:14px;font-weight:600;margin:8px 0 4px">该用户的商品订单 (${goodsOrderIds.length})</div>`;
+        if (goodsOrderIds.length) {
+          html += '<div style="font-size:13px;color:#333;margin-bottom:8px">';
+          goodsOrderIds.forEach(gid => {
+            html += '<a href="#" onclick="goToGoodsOrder(' + gid + ');return false;" style="color:var(--primary);margin-right:12px;text-decoration:underline">商品订单#' + gid + '</a>';
+          });
+          html += '</div>';
+        } else {
+          html += '<div class="no-addr">该用户暂无商品订单</div>';
         }
         html += `<div style="font-size:14px;font-weight:600;margin-bottom:4px">已绑定的商品 (${boundKeys.length})</div>`;
         if (boundKeys.length) {
@@ -2684,6 +2905,11 @@ function toggleUserDetail(userId) {
   if (expandedUsers.has(userId)) expandedUsers.delete(userId);
   else expandedUsers.add(userId);
   renderUserTable();
+}
+
+function goToGoodsOrder(orderId) {
+  switchPage('goodsOrders');
+  openGoodsOrderLogModal(orderId, '');
 }
 
 function goToOrder(orderId) {

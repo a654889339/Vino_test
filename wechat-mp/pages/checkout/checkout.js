@@ -130,6 +130,12 @@ Page({
       });
   },
 
+  normalizeSubmitPhone(s) {
+    const d = String(s || '').replace(/\D/g, '');
+    if (d.length >= 11 && d[d.length - 11] === '1') return d.slice(-11);
+    return d;
+  },
+
   submit() {
     if (this.data.submitting) return;
     if (!this.data.lines.length) {
@@ -145,15 +151,20 @@ Page({
       wx.showToast({ title: '请填写地址', icon: 'none' });
       return;
     }
+    const phoneNorm = this.normalizeSubmitPhone(f.contactPhone);
+    if (phoneNorm.length !== 11 || phoneNorm[0] !== '1') {
+      wx.showToast({ title: '请输入正确的11位大陆手机号', icon: 'none' });
+      return;
+    }
     this.setData({ submitting: true });
     app.request({
       url: '/goods-orders/checkout',
       method: 'POST',
       data: {
-        contactName: f.contactName,
-        contactPhone: f.contactPhone,
-        address: f.address,
-        remark: f.remark,
+        contactName: String(f.contactName).trim(),
+        contactPhone: phoneNorm,
+        address: String(f.address).trim(),
+        remark: String(f.remark || '').trim(),
       },
     })
       .then((res) => {

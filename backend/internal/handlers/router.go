@@ -66,6 +66,13 @@ func RegisterRoutes(engine *gin.Engine, cfg *config.Config) {
 		goodsOrders.POST("/:id/pay-wechat", middleware.Auth(cfg), func(c *gin.Context) { goodsOrderPayWechatPrepay(c, cfg) })
 		goodsOrders.GET("", middleware.Auth(cfg), goodsOrderList)
 		goodsOrders.GET("/:id", middleware.Auth(cfg), goodsOrderDetail)
+
+		goodsOrders.GET("/admin/list", middleware.Auth(cfg), middleware.Admin(), goodsOrderAdminList)
+		goodsOrders.GET("/admin/stats", middleware.Auth(cfg), middleware.Admin(), goodsOrderAdminStats)
+		goodsOrders.PUT("/admin/:id/status", middleware.Auth(cfg), middleware.Admin(), goodsOrderAdminUpdateStatus)
+		goodsOrders.PUT("/admin/:id/price", middleware.Auth(cfg), middleware.Admin(), goodsOrderAdminUpdatePrice)
+		goodsOrders.POST("/admin/:id/remark", middleware.Auth(cfg), middleware.Admin(), goodsOrderAdminAddRemark)
+		goodsOrders.GET("/admin/:id/logs", middleware.Auth(cfg), middleware.Admin(), goodsOrderAdminLogs)
 	}
 
 	svc := api.Group("/services")

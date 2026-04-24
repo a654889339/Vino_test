@@ -46,9 +46,9 @@ Page({
         { label: i18n.t('mine.afterSales'), value: vals[3] || 0 },
       ],
       menus: [
-        { title: i18n.t('mine.orders'), icon: '/images/icons/mine-orders.svg', url: '/pages/orders/orders' },
-        { title: '购物车', icon: '/images/icons/mine-bag.svg', url: '/pages/cart/cart' },
+        { title: '服务订单', icon: '/images/icons/mine-orders.svg', url: '/pages/orders/orders' },
         { title: '商品订单', icon: '/images/icons/mine-orders.svg', url: '/pages/goods-orders/goods-orders' },
+        { title: '我的购物车', icon: '/images/icons/mine-bag.svg', url: '/pages/cart/cart' },
         { title: i18n.t('mine.products'), icon: '/images/icons/mine-bag.svg', url: '/pages/my-products/my-products' },
         { title: i18n.t('mine.address'), icon: '/images/icons/mine-location.svg', url: '/pages/address/address' },
         { title: i18n.t('mine.feedback'), icon: '/images/icons/mine-comment.svg', url: '', chat: true },

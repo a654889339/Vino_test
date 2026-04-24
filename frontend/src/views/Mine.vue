@@ -29,8 +29,9 @@
     </div>
 
     <van-cell-group inset class="menu-group">
-      <van-cell :title="t('mine.orders')" icon="orders-o" is-link to="/orders" />
+      <van-cell :title="isEn ? 'Service orders' : '服务订单'" icon="orders-o" is-link to="/orders" />
       <van-cell title="商品订单" icon="bag-o" is-link to="/goods-orders" />
+      <van-cell title="我的购物车" icon="cart-o" is-link to="/cart" />
       <van-cell :title="t('mine.products')" icon="bag-o" is-link to="/mine/products" />
       <van-cell :title="t('mine.address')" icon="location-o" is-link to="/address" />
     </van-cell-group>
@@ -67,7 +68,7 @@ import { showToast } from 'vant';
 import { homeConfigApi } from '@/api';
 import PageThemeLayer from '@/components/PageThemeLayer.vue';
 import { copyTextToClipboardSync } from '@/utils/clipboard';
-import { t } from '@/utils/i18n';
+import { t, isEn } from '@/utils/i18n';
 
 const userStore = useUserStore();
 const router = useRouter();
