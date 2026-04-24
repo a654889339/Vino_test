@@ -257,7 +257,6 @@ const previewImage = (url) => {
   showImagePreview({ images: [url], closeable: true });
 };
 
-const router = useRouter();
 const goHome = () => {
   router.replace('/');
 };
