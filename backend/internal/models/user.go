@@ -18,6 +18,8 @@ type User struct {
 	Status      string     `gorm:"type:enum('active','disabled');default:active" json:"status"`
 	CreatedAt   time.Time  `gorm:"column:createdAt" json:"createdAt"`
 	UpdatedAt   time.Time  `gorm:"column:updatedAt" json:"updatedAt"`
+	// 购物车（JSON 字符串），结构：[{ guideId, qty }]
+	CartJSON    *string    `gorm:"column:cartJson;type:longtext" json:"cartJson,omitempty"`
 	Messages    []Message  `gorm:"foreignKey:UserID;constraint:-" json:"messages,omitempty"`
 	Addresses   []Address  `gorm:"foreignKey:UserID;constraint:-" json:"addresses,omitempty"`
 }

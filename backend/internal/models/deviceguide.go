@@ -28,6 +28,10 @@ type DeviceGuide struct {
 	ManualPdfURL       string         `gorm:"column:manualPdfUrl;size:500" json:"manualPdfUrl"`
 	CategoryID         *int           `gorm:"column:categoryId" json:"categoryId"`
 	SortOrder          int            `gorm:"column:sortOrder" json:"sortOrder"`
+	// 商品价格（用于购物车/商品订单）：现价、原价（可选）与币种（可选）
+	ListPrice          float64        `gorm:"column:listPrice;type:decimal(10,2);default:0" json:"listPrice"`
+	OriginPrice        *float64       `gorm:"column:originPrice;type:decimal(10,2)" json:"originPrice"`
+	Currency           string         `gorm:"column:currency;size:10" json:"currency"`
 	QrcodeURL          string         `gorm:"column:qrcodeUrl;size:500" json:"qrcodeUrl"`
 	// 注意：数据库字段使用驼峰（如 nameEn），需显式指定 column，避免 GORM 默认转成 name_en 导致 1054
 	NameEn             string         `gorm:"column:nameEn;size:100" json:"nameEn"`

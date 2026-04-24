@@ -147,6 +147,13 @@ func RegisterRoutes(engine *gin.Engine, cfg *config.Config) {
 		inv.GET("/products/:id/bind-qr-url", middleware.Auth(cfg), middleware.Admin(), func(c *gin.Context) { invGetBindQrURL(c, cfg) })
 	}
 
+	// 购物车（商品）
+	cart := api.Group("/cart")
+	{
+		cart.GET("", middleware.Auth(cfg), meGetCart)
+		cart.PUT("", middleware.Auth(cfg), mePutCart)
+	}
+
 	out := api.Group("/outlet")
 	{
 		out.POST("/auth/send-code", func(c *gin.Context) { outletSendCode(c, cfg) })
