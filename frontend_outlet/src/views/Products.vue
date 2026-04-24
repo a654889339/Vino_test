@@ -358,14 +358,14 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 120px;
+  min-height: 80px;
 }
 
 .grid-card-icon-img {
   width: 100%;
   max-width: 100%;
   height: auto;
-  max-height: 240px;
+  max-height: 160px;
   object-fit: contain;
   display: block;
   vertical-align: top;
