@@ -50,7 +50,7 @@ type DeviceGuide struct {
 	Status             string         `gorm:"type:enum('active','inactive');default:active" json:"status"`
 	CreatedAt          time.Time      `gorm:"column:createdAt" json:"createdAt"`
 	UpdatedAt          time.Time      `gorm:"column:updatedAt" json:"updatedAt"`
-	Category           *ProductCategory `gorm:"foreignKey:CategoryID" json:"category,omitempty"`
+	Category           *ProductCategory `gorm:"foreignKey:CategoryID;references:ID;constraint:-" json:"category,omitempty"`
 }
 
 func (DeviceGuide) TableName() string { return "device_guides" }
