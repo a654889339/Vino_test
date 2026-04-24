@@ -11,6 +11,10 @@
         bindinput="onSearchInput"
         confirm-type="search"
       />
+      <view class="products-cart-btn" bindtap="goCart">
+        <text class="cart-icon">🛒</text>
+        <text wx:if="{{cartCount > 0}}" class="cart-badge">{{cartCount}}</text>
+      </view>
     </view>
   </view>
 
@@ -40,17 +44,18 @@
           bindtap="selectProduct"
         >
           <view class="grid-card-row">
-            <view class="grid-card-icon">
-              <image wx:if="{{item.displayImageUrl}}" src="{{item.displayImageUrl}}" class="grid-card-img" mode="widthFix" data-id="{{item.id}}" />
+            <view class="grid-card-thumb">
+              <image wx:if="{{item.displayImageUrl}}" src="{{item.displayImageUrl}}" class="grid-card-thumb-img" mode="aspectFill" data-id="{{item.id}}" />
               <text wx:else class="grid-card-placeholder">📦</text>
             </view>
             <view class="grid-card-body">
               <text class="grid-card-title">{{item.displayName}}</text>
-              <text wx:if="{{item.displaySubtitle}}" class="grid-card-subtitle">{{item.displaySubtitle}}</text>
-              <text wx:if="{{item.displayDescription}}" class="grid-card-desc">{{item.displayDescription}}</text>
+              <text class="grid-card-subtitle">{{item.displaySubtitle}}</text>
+              <text class="grid-card-desc">{{item.displayDescription}}</text>
               <view class="grid-card-price-row">
                 <view class="grid-card-price">
                   <text wx:if="{{item.displayListPrice}}" class="price-now">{{item.displayListPrice}}</text>
+                  <text wx:else class="price-placeholder">—</text>
                   <text
                     wx:if="{{item.displayOriginPrice && item.originPrice && item.originPrice > item.listPrice}}"
                     class="price-origin"

@@ -25,7 +25,7 @@ Page({
   data: {
     loading: true,
     isLoggedIn: false,
-    list: [],
+    order: null,
     i18n: { loading: '' },
   },
 
@@ -43,28 +43,39 @@ Page({
     const isLoggedIn = app.isLoggedIn();
     this.setData({ isLoggedIn, loading: true });
     if (!isLoggedIn) {
-      this.setData({ loading: false, list: [] });
+      this.setData({ loading: false, order: null });
       return;
     }
-    app.request({ url: '/goods-orders', data: { page: 1, pageSize: 50 } })
+    const id = this.options && this.options.id ? this.options.id : '';
+    if (!id) {
+      this.setData({ loading: false, order: null });
+      return;
+    }
+    app.request({ url: '/goods-orders/' + encodeURIComponent(String(id)) })
       .then((res) => {
+        const o = res.data || null;
+        if (!o) {
+          this.setData({ order: null, loading: false });
+          return;
+        }
         const sym = app.globalData.currencySymbol;
-        const list = (res.data && res.data.list ? res.data.list : []).map((o) => ({
-          ...o,
-          timeText: formatTime(o.createdAt),
-          totalText: currencyUtil.formatPriceDisplay(o.totalPrice, o.currency || sym) || '—',
-          statusText: orderStatusText(o.status),
-          statusClass: o.status,
+        const items = (o.items || []).map((it) => ({
+          ...it,
+          unitText: currencyUtil.formatPriceDisplay(it.unitPrice, it.currency || sym) || '—',
+          lineText: currencyUtil.formatPriceDisplay(it.lineTotal, it.currency || sym) || '—',
         }));
-        this.setData({ list, loading: false });
+        this.setData({
+          order: {
+            ...o,
+            timeText: formatTime(o.createdAt),
+            totalText: currencyUtil.formatPriceDisplay(o.totalPrice, o.currency || sym) || '—',
+            statusText: orderStatusText(o.status),
+            statusClass: o.status,
+            items,
+          },
+          loading: false,
+        });
       })
-      .catch(() => this.setData({ list: [], loading: false }));
-  },
-
-  open(e) {
-    const id = e.currentTarget.dataset.id;
-    if (!id) return;
-    wx.navigateTo({ url: '/pages/goods-order-detail/goods-order-detail?id=' + encodeURIComponent(String(id)) });
+      .catch(() => this.setData({ order: null, loading: false }));
   },
 });
-

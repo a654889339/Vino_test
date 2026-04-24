@@ -25,6 +25,7 @@ Page({
     noMatchText: '',
     noCategoryProductText: '',
     noConfigText: '',
+    cartCount: 0,
   },
 
   onShow() {
@@ -172,13 +173,17 @@ Page({
   loadCart() {
     if (!app.isLoggedIn()) {
       this.cartLines = [];
+      this.setData({ cartCount: 0 });
       return;
     }
     app.request({ url: '/cart' })
       .then((res) => {
-        this.cartLines = (res.data && res.data.items) ? res.data.items : [];
+        const items = (res.data && res.data.items) ? res.data.items : [];
+        this.cartLines = items;
+        const count = items.reduce((sum, x) => sum + (Number(x.qty) || 0), 0);
+        this.setData({ cartCount: count });
       })
-      .catch(() => { this.cartLines = []; });
+      .catch(() => { this.cartLines = []; this.setData({ cartCount: 0 }); });
   },
 
   selectProduct(e) {
@@ -189,6 +194,11 @@ Page({
     wx.navigateTo({
       url: `/pages/guide-detail/guide-detail?id=${encodeURIComponent(String(param))}`,
     });
+  },
+
+  goCart() {
+    if (!app.checkLogin()) return;
+    wx.navigateTo({ url: '/pages/cart/cart' });
   },
 
   addToCart(e) {
@@ -206,7 +216,10 @@ Page({
     else cur.push({ guideId: id, qty: 1 });
     app.request({ url: '/cart', method: 'PUT', data: { items: cur } })
       .then((res) => {
-        this.cartLines = (res.data && res.data.items) ? res.data.items : [];
+        const items = (res.data && res.data.items) ? res.data.items : [];
+        this.cartLines = items;
+        const count = items.reduce((sum, x) => sum + (Number(x.qty) || 0), 0);
+        this.setData({ cartCount: count });
         wx.showToast({ title: '已加入购物车', icon: 'success' });
       })
       .catch((err) => wx.showToast({ title: (err && err.message) || '加入失败', icon: 'none' }));

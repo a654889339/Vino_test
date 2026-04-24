@@ -16,6 +16,7 @@ Page({
     helpItems: [],
     firstMediaTitle: '',
     loading: false,
+    cartCount: 0,
   },
 
   onShow() {
@@ -23,6 +24,7 @@ Page({
     const setTitle = () => i18n.setNavTitle('products.title');
     if (i18n.isLoaded()) setTitle(); else i18n.loadI18nTexts(setTitle);
     if (!this.data.categories.length) this.loadCategories();
+    this.loadCart();
   },
 
   loadCategories() {
@@ -145,5 +147,26 @@ Page({
 
   goServices() {
     my.switchTab({ url: '/pages/service/service' });
+  },
+
+  loadCart() {
+    if (!app.isLoggedIn()) {
+      this.cartLines = [];
+      this.setData({ cartCount: 0 });
+      return;
+    }
+    app.request({ url: '/cart' })
+      .then((res) => {
+        const items = (res.data && res.data.items) ? res.data.items : [];
+        this.cartLines = items;
+        const count = items.reduce((sum, x) => sum + (Number(x.qty) || 0), 0);
+        this.setData({ cartCount: count });
+      })
+      .catch(() => { this.cartLines = []; this.setData({ cartCount: 0 }); });
+  },
+
+  goCart() {
+    if (!app.checkLogin()) return;
+    my.navigateTo({ url: '/pages/cart/cart' });
   },
 });

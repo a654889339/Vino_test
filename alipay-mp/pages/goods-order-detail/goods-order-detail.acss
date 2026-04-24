@@ -100,22 +100,3 @@
 .status-processing { background: #e0e7ff; color: #3730a3; }
 .status-completed { background: #d1fae5; color: #065f46; }
 .status-cancelled { background: #f3f4f6; color: #4b5563; }
-
-.action-bar {
-  margin-top: 24rpx;
-  padding: 0 16rpx;
-}
-.btn-pay {
-  width: 100%;
-  padding: 24rpx 0;
-  background: #b91c1c;
-  color: #fff;
-  font-size: 30rpx;
-  font-weight: 700;
-  text-align: center;
-  border-radius: 999rpx;
-}
-.btn-pay:active {
-  opacity: 0.9;
-}
-

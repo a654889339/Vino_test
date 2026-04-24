@@ -38,3 +38,20 @@
 .entry-item { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .entry-icon { width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
 .entry-item text:last-child { font-size: 12px; color: #666; }
+
+.price-card { margin-bottom: 80px; }
+.price-row { display: flex; align-items: center; justify-content: space-between; }
+.price-main { display: flex; align-items: baseline; gap: 8px; }
+.price-label { font-size: 14px; color: #666; }
+.price-now { font-size: 22px; font-weight: 800; color: #b91c1c; }
+.price-origin { font-size: 14px; color: #999; text-decoration: line-through; }
+.price-cart { display: flex; align-items: center; gap: 6px; padding: 8px 16px; background: #b91c1c; border-radius: 999rpx; }
+.price-cart-icon { font-size: 16px; }
+.price-cart-text { font-size: 13px; color: #fff; font-weight: 600; }
+
+.footer-bar { position: fixed; left: 0; right: 0; bottom: 0; padding: 10px 16px; padding-bottom: max(10px, env(safe-area-inset-bottom)); background: #fff; border-top: 1px solid rgba(0,0,0,0.06); display: flex; align-items: center; gap: 12px; z-index: 50; }
+.footer-cart { position: relative; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #f3f4f6; }
+.footer-cart-icon { font-size: 22px; }
+.footer-cart-badge { position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; line-height: 18px; text-align: center; background: #b91c1c; color: #fff; font-size: 11px; border-radius: 999rpx; padding: 0 5px; }
+.footer-add { flex: 1; height: 44px; line-height: 44px; text-align: center; background: #b91c1c; color: #fff; font-size: 15px; font-weight: 700; border-radius: 999rpx; }
+.footer-add:active { opacity: 0.9; }

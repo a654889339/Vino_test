@@ -544,21 +544,34 @@ func WechatPayNotify(c *gin.Context) {
 		c.JSON(200, gin.H{"code": "SUCCESS", "message": "成功"})
 		return
 	}
-	var o models.Order
-	if err := db.DB.Where("orderNo = ?", outTradeNo).First(&o).Error; err != nil {
+
+	// 先查服务订单（VN 前缀）
+	var svcOrder models.Order
+	if err := db.DB.Where("orderNo = ?", outTradeNo).First(&svcOrder).Error; err == nil {
+		if svcOrder.Status == "pending" {
+			expect := int(math.Round(svcOrder.Price * 100))
+			if int(amountFen) == expect {
+				svcOrder.Status = "processing"
+				db.DB.Save(&svcOrder)
+			}
+		}
 		c.JSON(200, gin.H{"code": "SUCCESS", "message": "成功"})
 		return
 	}
-	if o.Status != "pending" {
+
+	// 再查商品订单（GO 前缀）
+	var goodsOrder models.GoodsOrder
+	if err := db.DB.Where("orderNo = ?", outTradeNo).First(&goodsOrder).Error; err == nil {
+		if goodsOrder.Status == "pending" {
+			expect := int(math.Round(goodsOrder.TotalPrice * 100))
+			if int(amountFen) == expect {
+				goodsOrder.Status = "paid"
+				db.DB.Save(&goodsOrder)
+			}
+		}
 		c.JSON(200, gin.H{"code": "SUCCESS", "message": "成功"})
 		return
 	}
-	expect := int(math.Round(o.Price * 100))
-	if int(amountFen) != expect {
-		c.JSON(500, gin.H{"code": "FAIL", "message": "amount"})
-		return
-	}
-	o.Status = "processing"
-	db.DB.Save(&o)
+
 	c.JSON(200, gin.H{"code": "SUCCESS", "message": "成功"})
 }

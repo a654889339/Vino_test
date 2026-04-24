@@ -10,6 +10,10 @@ Page({
     mediaItems: [],
     helpItems: [],
     firstMediaTitle: '',
+    hasPrice: false,
+    displayListPrice: '',
+    displayOriginPrice: '',
+    cartCount: 0,
   },
 
   onLoad(options) {
@@ -32,6 +36,7 @@ Page({
     } else {
       i18n.setNavTitle('guideDetail.title', '设备指南', 'Device Guide');
     }
+    this.loadCart();
   },
 
   loadGuide(id) {
@@ -59,12 +64,19 @@ Page({
         });
         const helpItems = parse(g.helpItems);
         const sections = parse(g.sections);
+        const sym = (g.currency && String(g.currency).trim()) ? String(g.currency).trim() : (app.globalData.currencySymbol || '');
+        const listPrice = Number(g.listPrice) || 0;
+        const originPrice = (g.originPrice != null) ? Number(g.originPrice) : 0;
+        const hasPrice = listPrice > 0;
         this.setData({
           guide: g,
           sections,
           mediaItems,
           helpItems,
           firstMediaTitle: mediaItems.length ? (mediaItems[0].title || g.displayName || g.name) : (g.displayName || g.name),
+          hasPrice,
+          displayListPrice: hasPrice ? currencyUtil.formatPriceDisplay(listPrice, sym) : '',
+          displayOriginPrice: (hasPrice && originPrice > listPrice) ? currencyUtil.formatPriceDisplay(originPrice, sym) : '',
           loading: false,
         });
       })
@@ -127,6 +139,52 @@ Page({
 
   goServices() {
     my.switchTab({ url: '/pages/service/service' });
+  },
+
+  loadCart() {
+    if (!app.isLoggedIn()) {
+      this.cartLines = [];
+      this.setData({ cartCount: 0 });
+      return;
+    }
+    app.request({ url: '/cart' })
+      .then((res) => {
+        const items = (res.data && res.data.items) ? res.data.items : [];
+        this.cartLines = items;
+        const count = items.reduce((sum, x) => sum + (Number(x.qty) || 0), 0);
+        this.setData({ cartCount: count });
+      })
+      .catch(() => { this.cartLines = []; this.setData({ cartCount: 0 }); });
+  },
+
+  addToCart() {
+    const g = this.data.guide;
+    if (!g || !g.id) return;
+    if (!app.checkLogin()) return;
+    const listPrice = Number(g.listPrice) || 0;
+    if (!(listPrice > 0)) {
+      my.showToast({ content: '该商品暂未配置价格', type: 'none' });
+      return;
+    }
+    const gid = Number(g.id);
+    const cur = (this.cartLines || []).map((x) => ({ guideId: Number(x.guideId), qty: Number(x.qty) || 1 }));
+    const idx = cur.findIndex((x) => Number(x.guideId) === gid);
+    if (idx >= 0) cur[idx].qty += 1;
+    else cur.push({ guideId: gid, qty: 1 });
+    app.request({ url: '/cart', method: 'PUT', data: { items: cur } })
+      .then((res) => {
+        const items = (res.data && res.data.items) ? res.data.items : [];
+        this.cartLines = items;
+        const count = items.reduce((sum, x) => sum + (Number(x.qty) || 0), 0);
+        this.setData({ cartCount: count });
+        my.showToast({ content: '已加入购物车', type: 'success' });
+      })
+      .catch((err) => my.showToast({ content: (err && err.message) || '加入失败', type: 'none' }));
+  },
+
+  goCart() {
+    if (!app.checkLogin()) return;
+    my.navigateTo({ url: '/pages/cart/cart' });
   },
 
   open3DViewer() {

@@ -15,7 +15,11 @@
     "pages/address/address",
     "pages/address-edit/address-edit",
     "pages/profile-edit/profile-edit",
-    "pages/my-products/my-products"
+    "pages/my-products/my-products",
+    "pages/cart/cart",
+    "pages/checkout/checkout",
+    "pages/goods-orders/goods-orders",
+    "pages/goods-order-detail/goods-order-detail"
   ],
   "window": {
     "defaultTitle": "Vino服务",

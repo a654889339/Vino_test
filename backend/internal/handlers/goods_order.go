@@ -4,9 +4,11 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
+	"vino/backend/internal/config"
 	"vino/backend/internal/db"
 	"vino/backend/internal/models"
 	"vino/backend/internal/resp"
@@ -218,5 +220,72 @@ func goodsOrderDetail(c *gin.Context) {
 		return
 	}
 	resp.OK(c, o)
+}
+
+// goodsOrderPayWechatPrepay POST /api/goods-orders/:id/pay-wechat
+func goodsOrderPayWechatPrepay(c *gin.Context, cfg *config.Config) {
+	u, ok := ctxUser(c)
+	if !ok {
+		return
+	}
+	id, ok := parseID(c, "id")
+	if !ok {
+		resp.Err(c, 400, 400, "无效订单")
+		return
+	}
+	if !services.IsWechatPayConfigured(cfg) {
+		resp.Err(c, 503, 503, "服务器未配置微信支付")
+		return
+	}
+	var o models.GoodsOrder
+	if err := db.DB.First(&o, id).Error; err != nil {
+		resp.Err(c, 404, 404, "订单不存在")
+		return
+	}
+	if o.UserID != u.ID {
+		resp.Err(c, 403, 403, "无权操作")
+		return
+	}
+	if o.Status != "pending" {
+		resp.Err(c, 400, 400, "仅待支付订单可发起支付")
+		return
+	}
+	var user models.User
+	if err := db.DB.First(&user, u.ID).Error; err != nil || user.Openid == nil || *user.Openid == "" {
+		resp.Err(c, 400, 400, "请使用微信登录后再支付")
+		return
+	}
+	totalFen := int(math.Round(o.TotalPrice * 100))
+	if totalFen < 1 {
+		resp.Err(c, 400, 400, "订单金额无效")
+		return
+	}
+	desc := "商品订单"
+	if len(o.Items) > 0 {
+		desc = o.Items[0].NameSnapshot
+		if len([]rune(desc)) > 120 {
+			desc = string([]rune(desc)[:120])
+		}
+	}
+	prepay, err := services.JsapiPrepay(cfg, o.OrderNo, desc, totalFen, *user.Openid)
+	if err != nil {
+		resp.Err(c, 500, 500, fmt.Sprint(err))
+		return
+	}
+	prepayID, _ := prepay["prepay_id"].(string)
+	if prepayID == "" {
+		msg := "预下单失败"
+		if m, ok := prepay["message"].(string); ok {
+			msg = m
+		}
+		resp.Err(c, 500, 500, msg)
+		return
+	}
+	params, err := services.BuildMiniProgramPayParams(cfg, prepayID)
+	if err != nil {
+		resp.Err(c, 500, 500, err.Error())
+		return
+	}
+	resp.OK(c, params)
 }
 

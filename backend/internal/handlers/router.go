@@ -63,6 +63,7 @@ func RegisterRoutes(engine *gin.Engine, cfg *config.Config) {
 	goodsOrders := api.Group("/goods-orders")
 	{
 		goodsOrders.POST("/checkout", middleware.Auth(cfg), goodsOrderCheckout)
+		goodsOrders.POST("/:id/pay-wechat", middleware.Auth(cfg), func(c *gin.Context) { goodsOrderPayWechatPrepay(c, cfg) })
 		goodsOrders.GET("", middleware.Auth(cfg), goodsOrderList)
 		goodsOrders.GET("/:id", middleware.Auth(cfg), goodsOrderDetail)
 	}

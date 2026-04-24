@@ -1,19 +1,19 @@
 <view class="page">
-  <view wx:if="{{loading}}" class="loading">{{i18n.loading}}</view>
+  <view a:if="{{loading}}" class="loading">{{i18n.loading}}</view>
 
-  <view wx:elif="{{!isLoggedIn}}" class="empty">
+  <view a:elif="{{!isLoggedIn}}" class="empty">
     <text>请先登录</text>
     <navigator url="/pages/login/login" class="link">去登录</navigator>
   </view>
 
-  <view wx:elif="{{!lines.length}}" class="empty">
+  <view a:elif="{{!lines.length}}" class="empty">
     <text>购物车为空</text>
     <navigator url="/pages/products/products" class="link">去选购</navigator>
   </view>
 
-  <view wx:else>
-    <view class="card" bindtap="showAddressPicker">
-      <view wx:if="{{selectedAddress}}" class="addr-selected">
+  <view a:else>
+    <view class="card" onTap="showAddressPicker">
+      <view a:if="{{selectedAddress}}" class="addr-selected">
         <view class="addr-hd">
           <text class="addr-name">{{selectedAddress.contactName}}</text>
           <text class="addr-phone">{{selectedAddress.contactPhone}}</text>
@@ -21,7 +21,7 @@
         <view class="addr-detail">{{form.address}}</view>
         <view class="addr-change">更换 ></view>
       </view>
-      <view wx:else class="addr-empty">
+      <view a:else class="addr-empty">
         <text>暂无收货地址，去添加</text>
         <text class="addr-change">去添加 ></text>
       </view>
@@ -30,25 +30,25 @@
     <view class="card">
       <view class="row">
         <text class="label">联系人</text>
-        <input class="input" placeholder="请输入姓名" value="{{form.contactName}}" bindinput="onName" />
+        <input class="input" placeholder="请输入姓名" value="{{form.contactName}}" onInput="onName" />
       </view>
       <view class="row">
         <text class="label">手机号</text>
-        <input class="input" placeholder="请输入手机号" value="{{form.contactPhone}}" bindinput="onPhone" />
+        <input class="input" placeholder="请输入手机号" value="{{form.contactPhone}}" onInput="onPhone" />
       </view>
       <view class="row row-ta">
         <text class="label">地址</text>
-        <textarea class="ta" placeholder="请输入详细地址" value="{{form.address}}" bindinput="onAddr" />
+        <textarea class="ta" placeholder="请输入详细地址" value="{{form.address}}" onInput="onAddr" />
       </view>
       <view class="row">
         <text class="label">备注</text>
-        <input class="input" placeholder="可选" value="{{form.remark}}" bindinput="onRemark" />
+        <input class="input" placeholder="可选" value="{{form.remark}}" onInput="onRemark" />
       </view>
     </view>
 
     <view class="card">
       <view class="hd">商品明细</view>
-      <view class="line" wx:for="{{lines}}" wx:key="guideId">
+      <view class="line" a:for="{{lines}}" a:key="guideId">
         <text class="name">{{item.name}}</text>
         <text class="meta">{{item.qty}} 件 · {{item.priceText}}</text>
         <text class="lt">{{item.lineTotalText}}</text>
@@ -57,31 +57,31 @@
 
     <view class="bottom">
       <view class="total">合计 <text class="total-num">{{totalText}}</text></view>
-      <button class="submit" loading="{{submitting}}" bindtap="submit">提交订单</button>
+      <button class="submit" onTap="submit">提交订单</button>
     </view>
 
-    <view wx:if="{{showAddressPicker}}" class="addr-mask" bindtap="closeAddressPicker"></view>
-    <view wx:if="{{showAddressPicker}}" class="addr-sheet">
+    <view a:if="{{showAddressPicker}}" class="addr-mask" onTap="closeAddressPicker"></view>
+    <view a:if="{{showAddressPicker}}" class="addr-sheet">
       <view class="addr-sheet-hd">
         <text class="addr-sheet-title">选择收货地址</text>
-        <text class="addr-sheet-close" bindtap="closeAddressPicker">关闭</text>
+        <text class="addr-sheet-close" onTap="closeAddressPicker">关闭</text>
       </view>
       <scroll-view scroll-y class="addr-sheet-body">
         <view
-          wx:for="{{addresses}}"
-          wx:key="id"
+          a:for="{{addresses}}"
+          a:key="id"
           class="addr-sheet-item {{selectedAddress && selectedAddress.id === item.id ? 'active' : ''}}"
           data-id="{{item.id}}"
-          bindtap="selectAddress"
+          onTap="selectAddress"
         >
           <view class="addr-sheet-top">
             <text class="addr-sheet-name">{{item.contactName}}</text>
             <text class="addr-sheet-phone">{{item.contactPhone}}</text>
-            <text wx:if="{{item.isDefault}}" class="addr-sheet-tag">默认</text>
+            <text a:if="{{item.isDefault}}" class="addr-sheet-tag">默认</text>
           </view>
           <view class="addr-sheet-detail">{{item.country === '其他' ? item.customCountry : item.country}} {{item.province}} {{item.city}} {{item.district}} {{item.detailAddress}}</view>
         </view>
-        <view class="addr-sheet-add" bindtap="goAddAddress">
+        <view class="addr-sheet-add" onTap="goAddAddress">
           <text class="addr-sheet-add-icon">+</text>
           <text>新增地址</text>
         </view>
@@ -89,4 +89,3 @@
     </view>
   </view>
 </view>
-

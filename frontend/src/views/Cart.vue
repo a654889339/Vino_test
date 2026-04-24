@@ -16,10 +16,19 @@
       <div class="cart-list">
         <van-cell-group inset>
           <van-cell v-for="row in lines" :key="row.guideId" :title="row.name">
+            <template #icon>
+              <div class="cart-line-icon">
+                <img v-if="row.imageURL" :src="fullUrl(row.imageURL)" class="cart-line-img" />
+                <van-icon v-else name="photo-o" size="36" color="#ccc" />
+              </div>
+            </template>
             <template #label>
-              <span class="cart-line-meta">
-                {{ formatPriceDisplay(row.listPrice, row.currency) || '未定价' }}
-              </span>
+              <div class="cart-line-label">
+                <span class="cart-line-meta">
+                  {{ formatPriceDisplay(row.listPrice, row.currency) || '未定价' }}
+                </span>
+                <span class="cart-line-del" @click.stop="removeLine(row.guideId)">删除</span>
+              </div>
             </template>
             <template #right-icon>
               <van-stepper
@@ -60,6 +69,13 @@ const router = useRouter();
 const loading = ref(true);
 const lines = ref([]);
 const totalPrice = ref(0);
+
+const BASE = import.meta.env.VITE_API_BASE || '';
+function fullUrl(url) {
+  if (!url) return '';
+  if (url.startsWith('http')) return url;
+  return BASE.replace('/api', '') + url;
+}
 
 const currencyHint = computed(() => {
   const first = (lines.value || []).find((x) => x && x.currency);
@@ -103,6 +119,21 @@ function onQtyChange() {
   }, 300);
 }
 
+async function removeLine(guideId) {
+  const items = (lines.value || [])
+    .filter((x) => Number(x.guideId) !== Number(guideId))
+    .map((x) => ({ guideId: Number(x.guideId), qty: Number(x.qty) || 1 }));
+  try {
+    const res = await cartApi.put({ items });
+    const d = res.data || {};
+    lines.value = Array.isArray(d.items) ? d.items : [];
+    totalPrice.value = d.totalPrice || 0;
+    showToast('已删除');
+  } catch (e) {
+    showToast(e?.message || '删除失败');
+  }
+}
+
 function goCheckout() {
   if (!lines.value.length) {
     showToast('购物车为空');
@@ -130,9 +161,39 @@ onMounted(load);
   padding: 12px 0;
 }
 
+.cart-line-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+.cart-line-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.cart-line-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
 .cart-line-meta {
   font-size: 12px;
   color: #6b7280;
+}
+.cart-line-del {
+  font-size: 12px;
+  color: #ef4444;
+  padding: 2px 6px;
+  cursor: pointer;
 }
 
 .cart-bottom {

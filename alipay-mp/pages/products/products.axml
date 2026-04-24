@@ -99,5 +99,10 @@
     <text>暂无商品配置</text>
   </view>
 
+  <view class="cart-float" onTap="goCart">
+    <text class="cart-float-icon">🛒</text>
+    <text a:if="{{cartCount > 0}}" class="cart-float-badge">{{cartCount}}</text>
+  </view>
+
   <view class="tab-bar-placeholder"></view>
 </view>

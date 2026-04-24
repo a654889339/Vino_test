@@ -17,6 +17,7 @@
           <button type="button" class="products-cart-btn" @click="goCart">
             <van-icon name="cart-o" size="18" />
             <span class="products-cart-text">购物车</span>
+            <span v-if="cartCount > 0" class="cart-badge">{{ cartCount }}</span>
           </button>
         </div>
       </div>
@@ -54,11 +55,11 @@
               @click="openGuide(d)"
             >
               <div class="grid-card-row">
-                <div class="grid-card-icon">
+                <div class="grid-card-thumb">
                   <LodImg
                     v-if="cardImage(d)"
                     :src="cardImage(d)"
-                    class="grid-card-icon-img"
+                    class="grid-card-thumb-img"
                     alt=""
                   />
                   <van-icon v-else :name="d.icon || 'photo-o'" size="28" color="#6b7280" />
@@ -66,14 +67,15 @@
 
                 <div class="grid-card-body">
                   <div class="grid-card-title">{{ pick(d, 'name') }}</div>
-                  <div v-if="pick(d, 'subtitle')" class="grid-card-subtitle">{{ pick(d, 'subtitle') }}</div>
-                  <div v-if="pick(d, 'description')" class="grid-card-desc">{{ pick(d, 'description') }}</div>
+                  <div class="grid-card-subtitle">{{ pick(d, 'subtitle') || ' ' }}</div>
+                  <div class="grid-card-desc">{{ pick(d, 'description') || ' ' }}</div>
 
                   <div class="grid-card-price-row">
                     <div class="grid-card-price">
                       <span v-if="shouldShowPrice(d.listPrice)" class="price-now">
                         {{ formatPriceDisplay(d.listPrice, d.currency) }}
                       </span>
+                      <span v-else class="price-placeholder">—</span>
                       <span
                         v-if="shouldShowPrice(d.originPrice) && Number(d.originPrice) > Number(d.listPrice || 0)"
                         class="price-origin"
@@ -193,6 +195,10 @@ function goCart() {
   router.push('/cart');
 }
 
+const cartCount = computed(() => {
+  return (cartLines.value || []).reduce((sum, x) => sum + (Number(x.qty) || 0), 0);
+});
+
 const sortedCategories = computed(() => sortCategoriesForSidebar(categories.value));
 
 const currentCategoryName = computed(() => {
@@ -301,6 +307,7 @@ onMounted(async () => {
 }
 
 .products-cart-btn {
+  position: relative;
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
@@ -316,6 +323,22 @@ onMounted(async () => {
   font-size: 13px;
   font-weight: 600;
   line-height: 1;
+}
+
+.cart-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 16px;
+  height: 16px;
+  line-height: 16px;
+  padding: 0 4px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 999px;
+  text-align: center;
 }
 
 .products-search-icon {
@@ -450,11 +473,11 @@ onMounted(async () => {
 
 .grid-card-row {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 12px;
   width: 100%;
-  padding: 14px 0 12px;
+  padding: 12px 0;
   box-sizing: border-box;
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
@@ -463,54 +486,44 @@ onMounted(async () => {
   border-bottom: none;
 }
 
-/* 商品图独占一行，宽度贴齐主内容区，高度随素材、上限接近分类横幅区 */
-.grid-card-icon {
-  width: 100%;
+/* 左侧方形缩略图，下方不放文字 */
+.grid-card-thumb {
+  flex-shrink: 0;
+  width: 100px;
+  height: 100px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f3f4f6;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 80px;
 }
 
-.grid-card-icon-img {
+.grid-card-thumb-img {
   width: 100%;
-  max-width: 100%;
-  height: auto;
-  max-height: 160px;
-  object-fit: contain;
+  height: 100%;
+  object-fit: cover;
   display: block;
-  vertical-align: top;
 }
 
 .grid-card-body {
-  width: 100%;
-  margin-top: 10px;
-  padding: 0 4px;
+  flex: 1;
+  min-width: 0;
+  min-height: 100px;
+  margin-top: 0;
+  padding: 0 2px 0 0;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  text-align: left;
 }
 
 .grid-card-title {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   color: #111827;
-  text-align: center;
-  line-height: 1.4;
-}
-
-.grid-card-subtitle {
-  margin-top: 4px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #374151;
-  text-align: center;
-  line-height: 1.35;
-}
-
-.grid-card-desc {
-  margin-top: 4px;
-  font-size: 12px;
-  color: #6b7280;
-  text-align: center;
+  text-align: left;
   line-height: 1.35;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -518,12 +531,46 @@ onMounted(async () => {
   overflow: hidden;
 }
 
+.grid-card-subtitle {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+  text-align: left;
+  line-height: 1.35;
+  min-height: 1.35em;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.grid-card-desc {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #9ca3af;
+  text-align: left;
+  line-height: 1.35;
+  min-height: 1.35em;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .grid-card-price-row {
-  margin-top: 10px;
+  margin-top: auto;
+  padding-top: 8px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+}
+
+.price-placeholder {
+  font-size: 14px;
+  color: #9ca3af;
+  font-weight: 600;
 }
 
 .grid-card-price {

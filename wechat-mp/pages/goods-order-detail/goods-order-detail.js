@@ -10,6 +10,17 @@ function formatTime(s) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+function orderStatusText(status) {
+  const map = {
+    pending: '待付款',
+    paid: '已付款',
+    processing: '处理中',
+    completed: '已完成',
+    cancelled: '已取消',
+  };
+  return map[status] || status;
+}
+
 Page({
   data: {
     loading: true,
@@ -58,12 +69,46 @@ Page({
             ...o,
             timeText: formatTime(o.createdAt),
             totalText: currencyUtil.formatPriceDisplay(o.totalPrice, o.currency || sym) || '—',
+            statusText: orderStatusText(o.status),
+            statusClass: o.status,
             items,
           },
           loading: false,
         });
       })
       .catch(() => this.setData({ order: null, loading: false }));
+  },
+
+  doWechatPay(orderId) {
+    return app.request({ url: '/goods-orders/' + orderId + '/pay-wechat', method: 'POST' })
+      .then((res) => {
+        const params = res.data;
+        return new Promise((resolve, reject) => {
+          wx.requestPayment({
+            timeStamp: params.timeStamp,
+            nonceStr: params.nonceStr,
+            package: params.package,
+            signType: params.signType,
+            paySign: params.paySign,
+            success: () => resolve('ok'),
+            fail: (err) => reject(err || new Error('支付失败')),
+          });
+        });
+      });
+  },
+
+  payOrder() {
+    const order = this.data.order;
+    if (!order || !order.id) return;
+    const id = order.id;
+    this.doWechatPay(id)
+      .then(() => {
+        wx.showToast({ title: '支付成功', icon: 'success' });
+        this.load();
+      })
+      .catch((err) => {
+        wx.showToast({ title: (err && err.message) || '支付失败', icon: 'none' });
+      });
   },
 });
 

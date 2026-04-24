@@ -14,10 +14,13 @@
           v-for="o in list"
           :key="o.id"
           :title="o.orderNo"
-          :label="formatTime(o.createdAt)"
           is-link
           @click="open(o)"
         >
+          <template #label>
+            <span :class="['status-tag', o.status]">{{ orderStatusText(o.status) }}</span>
+            <span class="order-time">{{ formatTime(o.createdAt) }}</span>
+          </template>
           <template #value>
             <span class="price">{{ formatPriceDisplay(o.totalPrice, o.currency) }}</span>
           </template>
@@ -45,6 +48,17 @@ function formatTime(s) {
   if (Number.isNaN(d.getTime())) return String(s);
   const pad = (n) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function orderStatusText(status) {
+  const map = {
+    pending: '待付款',
+    paid: '已付款',
+    processing: '处理中',
+    completed: '已完成',
+    cancelled: '已取消',
+  };
+  return map[status] || status;
 }
 
 function open(o) {
@@ -85,6 +99,23 @@ onMounted(load);
 .price {
   color: #b91c1c;
   font-weight: 800;
+}
+.status-tag {
+  display: inline-block;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-right: 8px;
+  font-weight: 600;
+}
+.status-tag.pending { background: #fef3c7; color: #92400e; }
+.status-tag.paid { background: #dbeafe; color: #1e40af; }
+.status-tag.processing { background: #e0e7ff; color: #3730a3; }
+.status-tag.completed { background: #d1fae5; color: #065f46; }
+.status-tag.cancelled { background: #f3f4f6; color: #4b5563; }
+.order-time {
+  font-size: 12px;
+  color: #6b7280;
 }
 </style>
 

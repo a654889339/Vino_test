@@ -2286,6 +2286,9 @@ function closeDbRestoreModal() {
 function escapeHtml(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
+function escapeAttr(s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
 
 function decodeB64Safe(s) {
   try { return decodeURIComponent(escape(atob(s || ''))); } catch { try { return atob(s || ''); } catch { return ''; } }
@@ -2703,40 +2706,90 @@ async function unbindUserProduct(userId, productKey) {
 }
 
 let allGuides = [];
+
+function onGuideTableBodyClick(ev) {
+  const el = ev.target && ev.target.closest ? ev.target.closest('[data-guide-action]') : null;
+  if (!el) return;
+  const action = el.getAttribute('data-guide-action');
+  const id = parseInt(el.getAttribute('data-id'), 10);
+  if (!id || !action) return;
+  if (action === 'toggleGuideStatus') {
+    const st = el.getAttribute('data-status') || '';
+    toggleGuideStatus(id, st);
+    return;
+  }
+  if (action === 'guideQrClick') {
+    const g = allGuides.find(x => x.id === id);
+    if (!g) return;
+    showGuideQR(id, g.name || '', g.qrcodeUrl || '');
+    return;
+  }
+  if (action === 'editGuide') { editGuide(id); return; }
+  if (action === 'deleteGuide') { deleteGuide(id); return; }
+}
+
 async function loadGuides() {
   const tbody = document.getElementById('guideTableBody');
   const empty = document.getElementById('guideEmpty');
-  tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#999">加载中...</td></tr>';
+  if (!tbody) return;
   try {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#999">加载中...</td></tr>';
+    if (empty) empty.style.display = 'none';
     const res = await api('/guides/admin/list');
     if (res.code !== 0) {
       tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#B91C1C">' + escapeHtml(res.message || '加载失败') + '</td></tr>';
-      empty.style.display = 'none';
+      if (empty) empty.style.display = 'none';
       return;
     }
-    allGuides = res.data || [];
-    if (!allGuides.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
-    empty.style.display = 'none';
-    tbody.innerHTML = allGuides.map(g => `<tr>
-      <td>${g.sortOrder}</td>
-      <td style="font-size:12px;color:#666">${g.category ? g.category.name : '-'}</td>
-      <td><strong>${g.name}</strong></td>
-      <td style="font-size:12px;color:#6366F1;font-family:monospace">${g.slug || '<span style="color:#ccc">-</span>'}</td>
-      <td style="font-size:12px;color:#666">${g.subtitle || '-'}</td>
-      <td>${g.iconUrl ? '<img src="'+g.iconUrl+'" style="width:36px;height:36px;object-fit:contain;border-radius:8px;background:#f5f5f5;padding:2px" class="lod-img">' : (g.icon || '-')}</td>
-      <td><span style="display:inline-block;padding:4px 14px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:500;transition:all .2s;${g.status==='active'?'background:#D1FAE5;color:#059669':'background:#F3F4F6;color:#999'}" onclick="toggleGuideStatus(${g.id},'${g.status}')">${g.status==='active'?'启用':'禁用'}</span></td>
-      <td>${g.qrcodeUrl
-        ? '<img src="'+(g.qrcodeUrlThumb||g.qrcodeUrl)+'" data-full-src="'+(g.qrcodeUrlThumb?g.qrcodeUrl:'')+'" style="width:48px;height:48px;cursor:pointer;border:1px solid #eee;border-radius:6px" onclick="showGuideQR('+g.id+',\''+escapeHtml(g.name)+'\',\''+g.qrcodeUrl+'\')" title="点击查看大图" class="lod-img" />'
-        : '<button class="detail-btn" onclick="showGuideQR('+g.id+',\''+escapeHtml(g.name)+'\',\'\')">生成</button>'
-      }</td>
+    allGuides = Array.isArray(res.data) ? res.data : [];
+    if (!allGuides.length) {
+      tbody.innerHTML = '';
+      if (empty) empty.style.display = 'block';
+      return;
+    }
+    if (empty) empty.style.display = 'none';
+    tbody.innerHTML = allGuides.map(g => {
+      const catName = (g.category && g.category.name) ? escapeHtml(g.category.name) : '-';
+      const slugCell = g.slug ? '<span style="font-family:monospace">' + escapeHtml(String(g.slug)) + '</span>' : '<span style="color:#ccc">-</span>';
+      const iconCell = g.iconUrl
+        ? '<img src="' + escapeAttr(g.iconUrl) + '" style="width:36px;height:36px;object-fit:contain;border-radius:8px;background:#f5f5f5;padding:2px" class="lod-img" alt="" />'
+        : escapeHtml(g.icon || '-');
+      const qrThumb = g.qrcodeUrlThumb || g.qrcodeUrl || '';
+      const qrFull = (g.qrcodeUrlThumb && g.qrcodeUrl) ? g.qrcodeUrl : '';
+      const qrCell = g.qrcodeUrl
+        ? '<img src="' + escapeAttr(qrThumb) + '" data-full-src="' + escapeAttr(qrFull) + '" style="width:48px;height:48px;cursor:pointer;border:1px solid #eee;border-radius:6px" data-guide-action="guideQrClick" data-id="' + g.id + '" title="点击查看大图" class="lod-img" alt="" />'
+        : '<button type="button" class="detail-btn" data-guide-action="guideQrClick" data-id="' + g.id + '">生成</button>';
+      const st = g.status === 'active' ? 'active' : 'inactive';
+      const statusStyle = g.status === 'active' ? 'background:#D1FAE5;color:#059669' : 'background:#F3F4F6;color:#999';
+      return `<tr>
+      <td>${escapeHtml(String(g.sortOrder != null ? g.sortOrder : ''))}</td>
+      <td style="font-size:12px;color:#666">${catName}</td>
+      <td><strong>${escapeHtml(g.name || '')}</strong></td>
+      <td style="font-size:12px;color:#6366F1">${slugCell}</td>
+      <td style="font-size:12px;color:#666">${escapeHtml(g.subtitle || '-')}</td>
+      <td>${iconCell}</td>
+      <td><span style="display:inline-block;padding:4px 14px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:500;transition:all .2s;${statusStyle}" data-guide-action="toggleGuideStatus" data-id="${g.id}" data-status="${escapeAttr(st)}">${g.status==='active'?'启用':'禁用'}</span></td>
+      <td>${qrCell}</td>
       <td>
-        <button class="detail-btn" onclick='editGuide(${g.id})'>编辑</button>
-        <button class="history-btn" style="color:#B91C1C;border-color:#FCA5A5" onclick="deleteGuide(${g.id})">删除</button>
+        <button type="button" class="detail-btn" data-guide-action="editGuide" data-id="${g.id}">编辑</button>
+        <button type="button" class="history-btn" style="color:#B91C1C;border-color:#FCA5A5" data-guide-action="deleteGuide" data-id="${g.id}">删除</button>
       </td>
-    </tr>`).join('');
-  } catch { tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#B91C1C">加载失败</td></tr>'; }
+    </tr>`;
+    }).join('');
+  } catch (e) {
+    console.error('loadGuides', e);
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#B91C1C">加载失败：' + escapeHtml(e.message || String(e)) + '</td></tr>';
+    if (empty) empty.style.display = 'none';
+  }
   setTimeout(upgradeLodImages, 0);
 }
+
+(function bindGuideTableDelegation() {
+  const tbody = document.getElementById('guideTableBody');
+  if (!tbody || tbody.dataset.guideClickBound === '1') return;
+  tbody.dataset.guideClickBound = '1';
+  tbody.addEventListener('click', onGuideTableBodyClick);
+})();
 
 let allCategories = [];
 async function loadCategories() {

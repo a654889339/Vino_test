@@ -1,0 +1,38 @@
+<view class="page">
+  <view a:if="{{loading}}" class="loading">{{i18n.loading}}</view>
+
+  <view a:elif="{{!isLoggedIn}}" class="empty">
+    <text>请先登录</text>
+    <navigator url="/pages/login/login" class="link">去登录</navigator>
+  </view>
+
+  <view a:elif="{{!lines.length}}" class="empty">
+    <text>购物车是空的</text>
+    <navigator url="/pages/products/products" class="link">去选购</navigator>
+  </view>
+
+  <view a:else class="list">
+    <view class="line" a:for="{{lines}}" a:key="guideId">
+      <view class="line-left">
+        <image a:if="{{item.imageUrl}}" class="img" src="{{item.imageUrl}}" mode="aspectFit" />
+        <view a:else class="img ph">📦</view>
+      </view>
+      <view class="line-mid">
+        <text class="name">{{item.name}}</text>
+        <text class="price">{{item.priceText}}</text>
+      </view>
+      <view class="line-right">
+        <view class="qty">
+          <text class="btn" data-id="{{item.guideId}}" data-delta="-1" onTap="changeQty">-</text>
+          <text class="num">{{item.qty}}</text>
+          <text class="btn" data-id="{{item.guideId}}" data-delta="1" onTap="changeQty">+</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view a:if="{{lines.length}}" class="bottom">
+    <view class="total">合计 <text class="total-num">{{totalText}}</text></view>
+    <button class="submit" onTap="goCheckout">去结算</button>
+  </view>
+</view>

@@ -17,6 +17,7 @@ Page({
     ],
     menus: [
       { title: '我的订单', emoji: '📋', url: '/pages/orders/orders' },
+      { title: '商品订单', emoji: '🛒', url: '/pages/goods-orders/goods-orders' },
       { title: '我的商品', emoji: '📦', url: '/pages/my-products/my-products' },
       { title: '地址管理', emoji: '📍', url: '/pages/address/address' },
       { title: '意见反馈', emoji: '💬', url: '', chat: true },

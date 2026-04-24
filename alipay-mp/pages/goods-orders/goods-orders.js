@@ -64,7 +64,6 @@ Page({
   open(e) {
     const id = e.currentTarget.dataset.id;
     if (!id) return;
-    wx.navigateTo({ url: '/pages/goods-order-detail/goods-order-detail?id=' + encodeURIComponent(String(id)) });
+    my.navigateTo({ url: '/pages/goods-order-detail/goods-order-detail?id=' + encodeURIComponent(String(id)) });
   },
 });
-

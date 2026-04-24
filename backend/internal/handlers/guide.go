@@ -147,7 +147,9 @@ func guideUpdate(c *gin.Context) {
 	}
 	raw, _ := json.Marshal(body)
 	_ = json.Unmarshal(raw, &guide)
-	if err := db.DB.Save(&guide).Error; err != nil {
+	// 清空预加载/合并后的关联，避免 GORM Save 时写关联表或外键异常；仅更新 device_guides 行
+	guide.Category = nil
+	if err := db.DB.Omit("Category").Save(&guide).Error; err != nil {
 		resp.Err(c, 500, 500, err.Error())
 		return
 	}

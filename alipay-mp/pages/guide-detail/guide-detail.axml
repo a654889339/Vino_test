@@ -47,6 +47,21 @@
       </view>
     </view>
 
+    <!-- Price & Cart -->
+    <view a:if="{{hasPrice}}" class="card price-card">
+      <view class="price-row">
+        <view class="price-main">
+          <text class="price-label">价格</text>
+          <text class="price-now">{{displayListPrice}}</text>
+          <text a:if="{{displayOriginPrice}}" class="price-origin">{{displayOriginPrice}}</text>
+        </view>
+        <view class="price-cart" onTap="addToCart">
+          <text class="price-cart-icon">🛒</text>
+          <text class="price-cart-text">加入购物车</text>
+        </view>
+      </view>
+    </view>
+
     <!-- Service entries -->
     <view class="card">
       <text class="title">服务入口</text>
@@ -55,6 +70,16 @@
         <view class="entry-item" onTap="goServices"><view class="entry-icon" style="background:#DBEAFE"><text>📍</text></view><text>服务网点</text></view>
         <view class="entry-item" onTap="goServices"><view class="entry-icon" style="background:#D1FAE5"><text>🛡</text></view><text>售后政策</text></view>
         <view class="entry-item" onTap="goServices"><view class="entry-icon" style="background:#FEF3C7"><text>💰</text></view><text>维修报价</text></view>
+      </view>
+    </view>
+
+    <view class="footer-bar">
+      <view class="footer-cart" onTap="goCart">
+        <text class="footer-cart-icon">🛒</text>
+        <text a:if="{{cartCount > 0}}" class="footer-cart-badge">{{cartCount}}</text>
+      </view>
+      <view class="footer-add" onTap="addToCart">
+        <text class="footer-add-text">加入购物车</text>
       </view>
     </view>
   </block>

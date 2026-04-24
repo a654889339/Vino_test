@@ -1,17 +1,17 @@
 <view class="page">
-  <view wx:if="{{loading}}" class="loading">{{i18n.loading}}</view>
+  <view a:if="{{loading}}" class="loading">{{i18n.loading}}</view>
 
-  <view wx:elif="{{!isLoggedIn}}" class="empty">
+  <view a:elif="{{!isLoggedIn}}" class="empty">
     <text>请先登录</text>
     <navigator url="/pages/login/login" class="link">去登录</navigator>
   </view>
 
-  <view wx:elif="{{!list.length}}" class="empty">
+  <view a:elif="{{!list.length}}" class="empty">
     <text>暂无订单</text>
   </view>
 
-  <view wx:else class="list">
-    <view class="card" wx:for="{{list}}" wx:key="id" data-id="{{item.id}}" bindtap="open">
+  <view a:else class="list">
+    <view class="card" a:for="{{list}}" a:key="id" data-id="{{item.id}}" onTap="open">
       <view class="row">
         <text class="no">{{item.orderNo}}</text>
         <text class="status status-{{item.statusClass}}">{{item.statusText}}</text>
@@ -23,4 +23,3 @@
     </view>
   </view>
 </view>
-

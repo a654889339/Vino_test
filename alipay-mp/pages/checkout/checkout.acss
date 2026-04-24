@@ -118,7 +118,7 @@
 .addr-name { font-size: 30rpx; font-weight: 700; color: #111827; }
 .addr-phone { font-size: 26rpx; color: #6b7280; }
 .addr-detail { margin-top: 8rpx; font-size: 26rpx; color: #374151; line-height: 1.4; }
-.addr-change { position: absolute; right: 16rpx; top: 50%; transform: translateY(-50%); font-size: 24rpx; color: #b91c1c; }
+.addr-change { position: absolute; right: 0; top: 50%; transform: translateY(-50%); font-size: 24rpx; color: #b91c1c; }
 .addr-empty { display: flex; align-items: center; justify-content: space-between; padding: 16rpx 0; font-size: 28rpx; color: #b91c1c; }
 
 .addr-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 100; }

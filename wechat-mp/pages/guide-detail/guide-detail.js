@@ -2,6 +2,7 @@ const app = getApp();
 const { openManualFromGuide } = require('../../utils/openManual.js');
 const i18n = require('../../utils/i18n.js');
 const { normalizeImageUrl } = require('../../utils/image.js');
+const currencyUtil = require('../../utils/currency.js');
 
 Page({
   data: {
@@ -23,6 +24,10 @@ Page({
     show3DViewer: false,
     preview3DLabel: '',
     preview3DTip: '',
+    addCartLabel: '',
+    hasPrice: false,
+    displayListPrice: '',
+    displayOriginPrice: '',
   },
 
   onLoad(options) {
@@ -55,6 +60,7 @@ Page({
         firstMediaTitle: mediaItems.length ? (mediaItems[0].title || g.displayName || g.name) : (g.displayName || g.name),
       });
     }
+    this.loadCart();
   },
 
   refreshI18n() {
@@ -70,6 +76,7 @@ Page({
       repairQuoteLabel: i18n.t('guideDetail.repairQuote'),
       preview3DLabel: i18n.t('guideDetail.preview3D'),
       preview3DTip: i18n.t('guideDetail.preview3DTip'),
+      addCartLabel: i18n.t('guideDetail.addToCart') || '加入购物车',
     });
   },
 
@@ -110,12 +117,19 @@ Page({
         });
         const helpItems = parse(g.helpItems);
         const sections = parse(g.sections);
+        const sym = (g.currency && String(g.currency).trim()) ? String(g.currency).trim() : (app.globalData.currencySymbol || '');
+        const listPrice = Number(g.listPrice) || 0;
+        const originPrice = (g.originPrice != null) ? Number(g.originPrice) : 0;
+        const hasPrice = listPrice > 0;
         this.setData({
           guide: g,
           sections,
           mediaItems,
           helpItems,
           firstMediaTitle: mediaItems.length ? (mediaItems[0].title || g.displayName || g.name) : (g.displayName || g.name),
+          hasPrice,
+          displayListPrice: hasPrice ? currencyUtil.formatPriceDisplay(listPrice, sym) : '',
+          displayOriginPrice: (hasPrice && originPrice > listPrice) ? currencyUtil.formatPriceDisplay(originPrice, sym) : '',
           loading: false,
         });
       })
@@ -185,6 +199,40 @@ Page({
 
   goServices() {
     wx.switchTab({ url: '/pages/service/service' });
+  },
+
+  loadCart() {
+    if (!app.isLoggedIn()) {
+      this.cartLines = [];
+      return;
+    }
+    app.request({ url: '/cart' })
+      .then((res) => {
+        this.cartLines = (res.data && res.data.items) ? res.data.items : [];
+      })
+      .catch(() => { this.cartLines = []; });
+  },
+
+  addToCart() {
+    const g = this.data.guide;
+    if (!g || !g.id) return;
+    if (!app.checkLogin()) return;
+    const listPrice = Number(g.listPrice) || 0;
+    if (!(listPrice > 0)) {
+      wx.showToast({ title: '该商品暂未配置价格', icon: 'none' });
+      return;
+    }
+    const gid = Number(g.id);
+    const cur = (this.cartLines || []).map((x) => ({ guideId: Number(x.guideId), qty: Number(x.qty) || 1 }));
+    const idx = cur.findIndex((x) => Number(x.guideId) === gid);
+    if (idx >= 0) cur[idx].qty += 1;
+    else cur.push({ guideId: gid, qty: 1 });
+    app.request({ url: '/cart', method: 'PUT', data: { items: cur } })
+      .then((res) => {
+        this.cartLines = (res.data && res.data.items) ? res.data.items : [];
+        wx.showToast({ title: '已加入购物车', icon: 'success' });
+      })
+      .catch((err) => wx.showToast({ title: (err && err.message) || '加入失败', icon: 'none' }));
   },
 
   open3DViewer() {

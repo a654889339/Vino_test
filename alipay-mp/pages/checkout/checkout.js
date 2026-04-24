@@ -109,40 +109,22 @@ Page({
   },
 
   goAddAddress() {
-    wx.navigateTo({ url: '/pages/address-edit/address-edit' });
-  },
-
-  doWechatPay(orderId) {
-    return app.request({ url: '/goods-orders/' + orderId + '/pay-wechat', method: 'POST' })
-      .then((res) => {
-        const params = res.data;
-        return new Promise((resolve, reject) => {
-          wx.requestPayment({
-            timeStamp: params.timeStamp,
-            nonceStr: params.nonceStr,
-            package: params.package,
-            signType: params.signType,
-            paySign: params.paySign,
-            success: () => resolve('ok'),
-            fail: (err) => reject(err || new Error('支付失败')),
-          });
-        });
-      });
+    my.navigateTo({ url: '/pages/address-edit/address-edit' });
   },
 
   submit() {
     if (this.data.submitting) return;
     if (!this.data.lines.length) {
-      wx.showToast({ title: '购物车为空', icon: 'none' });
+      my.showToast({ content: '购物车为空', type: 'none' });
       return;
     }
     const f = this.data.form || {};
     if (!String(f.contactName || '').trim() || !String(f.contactPhone || '').trim()) {
-      wx.showToast({ title: '请填写联系人和手机号', icon: 'none' });
+      my.showToast({ content: '请填写联系人和手机号', type: 'none' });
       return;
     }
     if (!String(f.address || '').trim()) {
-      wx.showToast({ title: '请填写地址', icon: 'none' });
+      my.showToast({ content: '请填写地址', type: 'none' });
       return;
     }
     this.setData({ submitting: true });
@@ -156,24 +138,13 @@ Page({
         remark: f.remark,
       },
     })
-      .then((res) => {
-        const order = res.data;
-        if (order && order.id) {
-          return this.doWechatPay(order.id)
-            .then(() => {
-              wx.showToast({ title: '支付成功', icon: 'success' });
-              wx.redirectTo({ url: '/pages/goods-orders/goods-orders' });
-            })
-            .catch((err) => {
-              wx.showToast({ title: (err && err.message) || '支付未完成', icon: 'none' });
-              wx.redirectTo({ url: '/pages/goods-order-detail/goods-order-detail?id=' + encodeURIComponent(String(order.id)) });
-            });
-        }
-        wx.showToast({ title: '下单成功', icon: 'success' });
-        wx.redirectTo({ url: '/pages/goods-orders/goods-orders' });
+      .then(() => {
+        my.showToast({ content: '下单成功', type: 'success' });
+        my.redirectTo({ url: '/pages/goods-orders/goods-orders' });
       })
-      .catch((err) => wx.showToast({ title: (err && err.message) || '下单失败', icon: 'none' }))
-      .finally(() => this.setData({ submitting: false }));
+      .catch((err) => {
+        my.showToast({ content: (err && err.message) || '下单失败', type: 'none' });
+        this.setData({ submitting: false });
+      });
   },
 });
-

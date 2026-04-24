@@ -75,4 +75,5 @@ export const goodsOrderApi = {
   checkout: (data) => request.post('/goods-orders/checkout', data),
   list: (params) => request.get('/goods-orders', { params }),
   detail: (id) => request.get(`/goods-orders/${id}`),
+  payWechat: (id) => request.post(`/goods-orders/${id}/pay-wechat`),
 };

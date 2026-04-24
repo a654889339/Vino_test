@@ -69,7 +69,31 @@
         </view>
       </view>
     </view>
+
+    <!-- Price Info -->
+    <view wx:if="{{hasPrice}}" class="price-card">
+      <view class="price-row">
+        <text class="price-name">{{guide.displayName || guide.name}}</text>
+        <view class="price-values">
+          <text wx:if="{{displayListPrice}}" class="price-now">{{displayListPrice}}</text>
+          <text wx:if="{{displayOriginPrice}}" class="price-origin">{{displayOriginPrice}}</text>
+        </view>
+      </view>
+    </view>
   </block>
+
+  <!-- 底部固定操作栏 -->
+  <view wx:if="{{hasPrice}}" class="guide-footer-fixed">
+    <view class="footer-inner">
+      <view class="footer-price">
+        <text wx:if="{{displayListPrice}}" class="footer-price-now">{{displayListPrice}}</text>
+      </view>
+      <view class="footer-btn-cart" bindtap="addToCart">
+        <text>🛒</text>
+        <text>{{addCartLabel}}</text>
+      </view>
+    </view>
+  </view>
 
   <view wx:if="{{show3DViewer}}" class="viewer3d-backdrop" catchtap="close3DViewer">
     <view class="viewer3d-overlay" catchtap="noop">

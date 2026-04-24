@@ -44,6 +44,22 @@
         </div>
       </div>
 
+      <!-- Price Info -->
+      <div v-if="shouldShowPrice(guide.listPrice)" class="price-info-card">
+        <div class="price-info-row">
+          <div class="price-info-name">{{ displayGuideName }}</div>
+          <div class="price-info-price">
+            <span class="price-now">{{ formatPriceDisplay(guide.listPrice, guide.currency) }}</span>
+            <span
+              v-if="shouldShowPrice(guide.originPrice) && Number(guide.originPrice) > Number(guide.listPrice || 0)"
+              class="price-origin"
+            >
+              {{ formatPriceDisplay(guide.originPrice, guide.currency) }}
+            </span>
+          </div>
+        </div>
+      </div>
+
       <!-- Help Links -->
       <div v-if="helpItems.length || sections.length" class="section-card">
         <h3 class="section-title">{{ t('guideDetail.helpSection') }}</h3>
@@ -100,9 +116,28 @@
         <div class="video-close" @click="closeVideo()"><van-icon name="cross" size="24" color="#fff" /></div>
       </div>
     </div>
-    <!-- 固定底部：返回主页（始终可见可点） -->
+    <!-- 固定底部操作栏 -->
     <div class="guide-footer-fixed">
-      <van-button type="primary" color="#B91C1C" block round class="btn-home" @click="goHome">{{ t('guideDetail.backHome') }}</van-button>
+      <div class="footer-actions">
+        <div v-if="shouldShowPrice(guide.listPrice)" class="footer-price">
+          <span class="footer-price-now">{{ formatPriceDisplay(guide.listPrice, guide.currency) }}</span>
+        </div>
+        <div class="footer-btns">
+          <van-button
+            v-if="shouldShowPrice(guide.listPrice)"
+            type="warning"
+            round
+            class="btn-cart"
+            @click="addToCart"
+          >
+            <van-icon name="cart-o" size="16" />
+            <span>加入购物车</span>
+          </van-button>
+          <van-button type="primary" color="#B91C1C" round class="btn-home" @click="goHome">
+            {{ t('guideDetail.backHome') }}
+          </van-button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -110,9 +145,10 @@
 <script setup>
 import { ref, computed, onMounted, defineAsyncComponent } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { showImagePreview } from 'vant';
-import { guideApi } from '@/api';
+import { showImagePreview, showToast } from 'vant';
+import { guideApi, cartApi } from '@/api';
 import { t, pick } from '@/utils/i18n';
+import { formatPriceDisplay, shouldShowPrice } from '@/utils/currency';
 import LodImg from '@/components/LodImg.vue';
 
 const ProductModelViewer = defineAsyncComponent(() =>
@@ -120,11 +156,13 @@ const ProductModelViewer = defineAsyncComponent(() =>
 );
 
 const route = useRoute();
+const router = useRouter();
 const loading = ref(true);
 const guide = ref({});
 const playShowcase = ref(false);
 const currentVideoUrl = ref('');
 const show3DViewer = ref(false);
+const cartLines = ref([]);
 
 const model3DEnabled = computed(() => !!(guide.value && guide.value.model3dEnabled && guide.value.model3dUrl));
 // 3D 资源走后端 COS 代理（同源），避免直接请求腾讯云 COS 触发 CORS（Three.js 贴图/GLB 都需要 crossOrigin）。
@@ -224,6 +262,42 @@ const goHome = () => {
   router.replace('/');
 };
 
+async function loadCart() {
+  const token = localStorage.getItem('vino_token');
+  if (!token) { cartLines.value = []; return; }
+  try {
+    const res = await cartApi.get();
+    cartLines.value = res.data?.items || [];
+  } catch { cartLines.value = []; }
+}
+
+async function addToCart() {
+  const token = localStorage.getItem('vino_token');
+  if (!token) {
+    showToast('请先登录');
+    router.push('/login');
+    return;
+  }
+  const g = guide.value;
+  if (!g || !g.id) return;
+  if (!shouldShowPrice(g.listPrice)) {
+    showToast('该商品暂未配置价格');
+    return;
+  }
+  const gid = Number(g.id);
+  const items = (cartLines.value || []).map((x) => ({ guideId: Number(x.guideId), qty: Number(x.qty) || 1 }));
+  const idx = items.findIndex((x) => Number(x.guideId) === gid);
+  if (idx >= 0) items[idx].qty += 1;
+  else items.push({ guideId: gid, qty: 1 });
+  try {
+    const res = await cartApi.put({ items });
+    cartLines.value = res.data?.items || [];
+    showToast('已加入购物车');
+  } catch (e) {
+    showToast(e?.message || '加入失败');
+  }
+}
+
 const openMedia = (m) => {
   const url = getMediaUrl(m);
   if (!url) return;
@@ -244,6 +318,7 @@ onMounted(async () => {
     guide.value = res.data || {};
   } catch { /* fallback empty */ }
   loading.value = false;
+  loadCart();
 });
 </script>
 
@@ -492,7 +567,47 @@ onMounted(async () => {
   font-weight: 500;
 }
 
-/* ===== 固定底部返回主页（层级低于视频浮层，始终可见） ===== */
+/* ===== Price Info Card ===== */
+.price-info-card {
+  background: #fff;
+  margin: 8px 12px;
+  border-radius: var(--vino-radius);
+  padding: 16px 20px;
+}
+.price-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.price-info-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--vino-dark);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.price-info-price {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.price-info-price .price-now {
+  color: #b91c1c;
+  font-size: 20px;
+  font-weight: 800;
+}
+.price-info-price .price-origin {
+  color: #9ca3af;
+  font-size: 13px;
+  text-decoration: line-through;
+}
+
+/* ===== 固定底部操作栏 ===== */
 .guide-footer-fixed {
   position: fixed;
   bottom: 0;
@@ -504,10 +619,37 @@ onMounted(async () => {
   background: linear-gradient(to top, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.95) 100%);
   backdrop-filter: blur(8px);
 }
-.guide-footer-fixed .btn-home {
-  max-width: 280px;
+.footer-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  max-width: 560px;
   margin: 0 auto;
-  display: block;
+}
+.footer-price {
+  flex-shrink: 0;
+}
+.footer-price-now {
+  color: #b91c1c;
+  font-size: 20px;
+  font-weight: 800;
+}
+.footer-btns {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  justify-content: flex-end;
+}
+.btn-cart {
+  min-width: 120px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.btn-home {
+  min-width: 100px;
 }
 
 /* ===== Video Overlay ===== */
