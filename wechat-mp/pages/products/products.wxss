@@ -112,7 +112,7 @@
   color: #6b7280;
 }
 
-/* 一行一个：左图右文，无白底框，图片区随素材自适应 */
+/* 一行一个：上图下文，名称居中；图片占满主区宽度，高度参考横幅区（红框） */
 .product-grid {
   display: flex;
   flex-direction: column;
@@ -127,11 +127,11 @@
 
 .grid-card-row {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: center;
   width: 100%;
   box-sizing: border-box;
-  padding: 20rpx 0;
+  padding: 24rpx 0 20rpx;
   border-bottom: 1rpx solid rgba(0, 0, 0, 0.06);
 }
 
@@ -140,36 +140,37 @@
 }
 
 .grid-card-icon {
-  flex-shrink: 0;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 20rpx;
-  max-width: 200rpx;
-  max-height: 160rpx;
+  min-height: 200rpx;
 }
 
 .grid-card-img {
-  max-width: 200rpx;
-  max-height: 160rpx;
-  width: auto;
+  width: 100%;
+  max-width: 100%;
+  max-height: 440rpx;
   height: auto;
   display: block;
 }
 
 .grid-card-placeholder {
-  font-size: 48rpx;
+  font-size: 64rpx;
   line-height: 1;
+  padding: 32rpx 0;
 }
 
 .grid-card-name {
-  flex: 1;
-  min-width: 0;
+  width: 100%;
+  margin-top: 16rpx;
+  padding: 0 8rpx;
+  box-sizing: border-box;
   font-size: 28rpx;
   color: #111827;
   font-weight: 600;
-  text-align: left;
-  line-height: 1.4;
+  text-align: center;
+  line-height: 1.45;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;

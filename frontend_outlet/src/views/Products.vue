@@ -340,11 +340,11 @@ onMounted(async () => {
 
 .grid-card-row {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 0;
   width: 100%;
-  padding: 10px 0;
+  padding: 14px 0 12px;
   box-sizing: border-box;
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
@@ -354,32 +354,33 @@ onMounted(async () => {
 }
 
 .grid-card-icon {
-  flex-shrink: 0;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  max-width: 100px;
-  max-height: 80px;
+  min-height: 120px;
 }
 
 .grid-card-icon-img {
-  width: auto;
+  width: 100%;
+  max-width: 100%;
   height: auto;
-  max-width: 100px;
-  max-height: 80px;
+  max-height: 240px;
   object-fit: contain;
   display: block;
   vertical-align: top;
 }
 
 .grid-card-name {
-  flex: 1;
-  min-width: 0;
+  width: 100%;
+  margin-top: 10px;
+  padding: 0 4px;
+  box-sizing: border-box;
   font-size: 14px;
   font-weight: 600;
   color: #111827;
-  text-align: left;
-  line-height: 1.4;
+  text-align: center;
+  line-height: 1.45;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
