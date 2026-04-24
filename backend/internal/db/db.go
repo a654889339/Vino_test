@@ -74,8 +74,6 @@ func MigrateSuperAdmin() {
 }
 
 func AutoMigrate() error {
-	DB.Exec("SET FOREIGN_KEY_CHECKS=0")
-	defer DB.Exec("SET FOREIGN_KEY_CHECKS=1")
 	return DB.AutoMigrate(
 		&models.User{},
 		&models.OutletUser{},
