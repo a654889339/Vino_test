@@ -2,6 +2,7 @@ const app = getApp();
 const { sortGuidesByDisplayOrder, sortCategoriesForSidebar } = require('../../utils/productGuideOrder.js');
 const i18n = require('../../utils/i18n.js');
 const { pick } = i18n;
+const currencyUtil = require('../../utils/currency.js');
 
 function resolveMediaUrl(u) {
   if (!u || !String(u).trim()) return '';
@@ -39,6 +40,7 @@ Page({
     } else {
       i18n.loadI18nTexts(doRefresh);
     }
+    this.loadCart();
   },
 
   refreshI18n() {
@@ -134,16 +136,30 @@ Page({
         const sorted = sortGuidesByDisplayOrder(raw, cat.name);
         const list = sorted.map((g) => {
           const rawIcon = pick(g, 'iconUrl') || '';
+          const rawCover = pick(g, 'coverImage') || '';
           const iconUrl = rawIcon ? (rawIcon.startsWith('http') ? rawIcon : base + rawIcon) : '';
+          const coverUrl = rawCover ? (rawCover.startsWith('http') ? rawCover : base + rawCover) : '';
+          const img = (coverUrl || iconUrl || '').trim();
+          const sym = (g && g.currency && String(g.currency).trim()) ? String(g.currency).trim() : app.globalData.currencySymbol;
+          const listPrice = Number(g && g.listPrice) || 0;
+          const originPrice = (g && g.originPrice != null) ? Number(g.originPrice) : 0;
           return {
             id: g.id,
             name: g.name,
             nameEn: g.nameEn,
             displayName: pick(g, 'name'),
+            displaySubtitle: pick(g, 'subtitle'),
+            displayDescription: pick(g, 'description'),
             slug: g.slug || '',
             icon: g.icon || '',
             iconUrl,
-            displayIconUrl: (iconUrl || '').trim(),
+            coverImage: coverUrl,
+            displayImageUrl: img,
+            listPrice,
+            originPrice: (g && g.originPrice != null) ? originPrice : null,
+            currencySymbol: sym,
+            displayListPrice: currencyUtil.formatPriceDisplay(listPrice, sym),
+            displayOriginPrice: currencyUtil.formatPriceDisplay(originPrice, sym),
           };
         });
         this.setData({ deviceGuides: list, listLoading: false }, () => {
@@ -151,6 +167,18 @@ Page({
         });
       })
       .catch(() => this.setData({ listLoading: false }));
+  },
+
+  loadCart() {
+    if (!app.isLoggedIn()) {
+      this.cartLines = [];
+      return;
+    }
+    app.request({ url: '/cart' })
+      .then((res) => {
+        this.cartLines = (res.data && res.data.items) ? res.data.items : [];
+      })
+      .catch(() => { this.cartLines = []; });
   },
 
   selectProduct(e) {
@@ -161,5 +189,26 @@ Page({
     wx.navigateTo({
       url: `/pages/guide-detail/guide-detail?id=${encodeURIComponent(String(param))}`,
     });
+  },
+
+  addToCart(e) {
+    const id = Number(e.currentTarget.dataset.id) || 0;
+    if (!id) return;
+    if (!app.checkLogin()) return;
+    const g = (this.data.deviceGuides || []).find((x) => Number(x.id) === id);
+    if (!g || !(Number(g.listPrice) > 0)) {
+      wx.showToast({ title: '该商品暂未配置价格', icon: 'none' });
+      return;
+    }
+    const cur = (this.cartLines || []).map((x) => ({ guideId: Number(x.guideId), qty: Number(x.qty) || 1 }));
+    const idx = cur.findIndex((x) => Number(x.guideId) === id);
+    if (idx >= 0) cur[idx].qty += 1;
+    else cur.push({ guideId: id, qty: 1 });
+    app.request({ url: '/cart', method: 'PUT', data: { items: cur } })
+      .then((res) => {
+        this.cartLines = (res.data && res.data.items) ? res.data.items : [];
+        wx.showToast({ title: '已加入购物车', icon: 'success' });
+      })
+      .catch((err) => wx.showToast({ title: (err && err.message) || '加入失败', icon: 'none' }));
   },
 });

@@ -1,0 +1,26 @@
+<view class="page">
+  <view wx:if="{{loading}}" class="loading">{{i18n.loading}}</view>
+
+  <view wx:elif="{{!isLoggedIn}}" class="empty">
+    <text>请先登录</text>
+    <navigator url="/pages/login/login" class="link">去登录</navigator>
+  </view>
+
+  <view wx:elif="{{!list.length}}" class="empty">
+    <text>暂无订单</text>
+  </view>
+
+  <view wx:else class="list">
+    <view class="card" wx:for="{{list}}" wx:key="id" data-id="{{item.id}}" bindtap="open">
+      <view class="row">
+        <text class="no">{{item.orderNo}}</text>
+        <text class="status">{{item.status}}</text>
+      </view>
+      <view class="row2">
+        <text class="time">{{item.timeText}}</text>
+        <text class="price">{{item.totalText}}</text>
+      </view>
+    </view>
+  </view>
+</view>
+

@@ -41,10 +41,26 @@
         >
           <view class="grid-card-row">
             <view class="grid-card-icon">
-              <image wx:if="{{item.iconUrl}}" src="{{item.displayIconUrl}}" class="grid-card-img" mode="widthFix" data-id="{{item.id}}" />
+              <image wx:if="{{item.displayImageUrl}}" src="{{item.displayImageUrl}}" class="grid-card-img" mode="widthFix" data-id="{{item.id}}" />
               <text wx:else class="grid-card-placeholder">📦</text>
             </view>
-            <text class="grid-card-name">{{item.displayName}}</text>
+            <view class="grid-card-body">
+              <text class="grid-card-title">{{item.displayName}}</text>
+              <text wx:if="{{item.displaySubtitle}}" class="grid-card-subtitle">{{item.displaySubtitle}}</text>
+              <text wx:if="{{item.displayDescription}}" class="grid-card-desc">{{item.displayDescription}}</text>
+              <view class="grid-card-price-row">
+                <view class="grid-card-price">
+                  <text wx:if="{{item.displayListPrice}}" class="price-now">{{item.displayListPrice}}</text>
+                  <text
+                    wx:if="{{item.displayOriginPrice && item.originPrice && item.originPrice > item.listPrice}}"
+                    class="price-origin"
+                  >{{item.displayOriginPrice}}</text>
+                </view>
+                <view class="add-cart-btn" data-id="{{item.id}}" catchtap="addToCart">
+                  <text class="add-cart-icon">🛒</text>
+                </view>
+              </view>
+            </view>
           </view>
         </view>
       </view>
