@@ -79,6 +79,8 @@ func AutoMigrate() error {
 		&models.OutletUser{},
 		&models.Order{},
 		&models.OrderLog{},
+		&models.GoodsOrder{},
+		&models.GoodsOrderItem{},
 		&models.OutletOrder{},
 		&models.OutletOrderLog{},
 		&models.ServiceCategory{},

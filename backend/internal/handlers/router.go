@@ -60,6 +60,13 @@ func RegisterRoutes(engine *gin.Engine, cfg *config.Config) {
 		orders.GET("/admin/:id/logs", middleware.Auth(cfg), middleware.Admin(), orderAdminLogs)
 	}
 
+	goodsOrders := api.Group("/goods-orders")
+	{
+		goodsOrders.POST("/checkout", middleware.Auth(cfg), goodsOrderCheckout)
+		goodsOrders.GET("", middleware.Auth(cfg), goodsOrderList)
+		goodsOrders.GET("/:id", middleware.Auth(cfg), goodsOrderDetail)
+	}
+
 	svc := api.Group("/services")
 	{
 		svc.GET("/", svcList)
