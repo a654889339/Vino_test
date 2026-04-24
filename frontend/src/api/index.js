@@ -64,3 +64,15 @@ export const addressApi = {
   remove: (id) => request.delete(`/addresses/${id}`),
   setDefault: (id) => request.put(`/addresses/${id}/default`),
 };
+
+// 商品购物车 / 商品订单
+export const cartApi = {
+  get: () => request.get('/cart'),
+  put: (data) => request.put('/cart', data),
+};
+
+export const goodsOrderApi = {
+  checkout: (data) => request.post('/goods-orders/checkout', data),
+  list: (params) => request.get('/goods-orders', { params }),
+  detail: (id) => request.get(`/goods-orders/${id}`),
+};

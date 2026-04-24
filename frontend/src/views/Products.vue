@@ -52,13 +52,36 @@
               <div class="grid-card-row">
                 <div class="grid-card-icon">
                   <LodImg
-                    v-if="d.iconUrl"
-                    :src="fullUrl(d.iconUrl)"
+                    v-if="cardImage(d)"
+                    :src="cardImage(d)"
                     class="grid-card-icon-img"
+                    alt=""
                   />
                   <van-icon v-else :name="d.icon || 'photo-o'" size="28" color="#6b7280" />
                 </div>
-                <span class="grid-card-name">{{ pick(d, 'name') }}</span>
+
+                <div class="grid-card-body">
+                  <div class="grid-card-title">{{ pick(d, 'name') }}</div>
+                  <div v-if="pick(d, 'subtitle')" class="grid-card-subtitle">{{ pick(d, 'subtitle') }}</div>
+                  <div v-if="pick(d, 'description')" class="grid-card-desc">{{ pick(d, 'description') }}</div>
+
+                  <div class="grid-card-price-row">
+                    <div class="grid-card-price">
+                      <span v-if="shouldShowPrice(d.listPrice)" class="price-now">
+                        {{ formatPriceDisplay(d.listPrice, d.currency) }}
+                      </span>
+                      <span
+                        v-if="shouldShowPrice(d.originPrice) && Number(d.originPrice) > Number(d.listPrice || 0)"
+                        class="price-origin"
+                      >
+                        {{ formatPriceDisplay(d.originPrice, d.currency) }}
+                      </span>
+                    </div>
+                    <button type="button" class="add-cart-btn" @click.stop="addToCart(d)">
+                      <van-icon name="cart-o" size="18" />
+                    </button>
+                  </div>
+                </div>
               </div>
             </button>
           </div>
@@ -82,10 +105,12 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { guideApi } from '@/api';
+import { cartApi, guideApi } from '@/api';
 import LodImg from '@/components/LodImg.vue';
 import PageThemeLayer from '@/components/PageThemeLayer.vue';
 import { pick, t } from '@/utils/i18n';
+import { formatPriceDisplay, shouldShowPrice } from '@/utils/currency';
+import { showToast } from 'vant';
 import {
   sortGuidesByDisplayOrder,
   sortCategoriesForSidebar,
@@ -98,12 +123,60 @@ const selectedCategoryId = ref(null);
 const deviceGuides = ref([]);
 const listLoading = ref(false);
 const searchKeyword = ref('');
+const cartLines = ref([]);
 
 const BASE = import.meta.env.VITE_API_BASE || '';
 function fullUrl(url) {
   if (!url) return '';
   if (url.startsWith('http')) return url;
   return BASE.replace('/api', '') + url;
+}
+
+function cardImage(d) {
+  const cover = d && d.coverImage ? String(d.coverImage).trim() : '';
+  const icon = d && d.iconUrl ? String(d.iconUrl).trim() : '';
+  const u = cover || icon;
+  return u ? fullUrl(u) : '';
+}
+
+async function loadCart() {
+  const token = localStorage.getItem('vino_token');
+  if (!token) {
+    cartLines.value = [];
+    return;
+  }
+  try {
+    const res = await cartApi.get();
+    cartLines.value = res.data?.items || [];
+  } catch {
+    cartLines.value = [];
+  }
+}
+
+async function addToCart(d) {
+  const token = localStorage.getItem('vino_token');
+  if (!token) {
+    showToast('请先登录');
+    router.push('/login');
+    return;
+  }
+  const gid = Number(d && d.id) || 0;
+  if (!gid) return;
+  if (!shouldShowPrice(d.listPrice)) {
+    showToast('该商品暂未配置价格');
+    return;
+  }
+  const items = (cartLines.value || []).map((x) => ({ guideId: Number(x.guideId), qty: Number(x.qty) || 1 }));
+  const idx = items.findIndex((x) => Number(x.guideId) === gid);
+  if (idx >= 0) items[idx].qty += 1;
+  else items.push({ guideId: gid, qty: 1 });
+  try {
+    const res = await cartApi.put({ items });
+    cartLines.value = res.data?.items || [];
+    showToast('已加入购物车');
+  } catch (e) {
+    showToast(e?.message || '加入失败');
+  }
 }
 
 const sortedCategories = computed(() => sortCategoriesForSidebar(categories.value));
@@ -179,6 +252,7 @@ onMounted(async () => {
   } catch {
     /* empty */
   }
+  loadCart();
 });
 </script>
 
@@ -376,20 +450,80 @@ onMounted(async () => {
   vertical-align: top;
 }
 
-.grid-card-name {
+.grid-card-body {
   width: 100%;
   margin-top: 10px;
   padding: 0 4px;
   box-sizing: border-box;
+}
+
+.grid-card-title {
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   color: #111827;
   text-align: center;
-  line-height: 1.45;
+  line-height: 1.4;
+}
+
+.grid-card-subtitle {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  text-align: center;
+  line-height: 1.35;
+}
+
+.grid-card-desc {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #6b7280;
+  text-align: center;
+  line-height: 1.35;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.grid-card-price-row {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.grid-card-price {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.price-now {
+  color: #f59e0b;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.price-origin {
+  color: #9ca3af;
+  font-size: 12px;
+  text-decoration: line-through;
+}
+
+.add-cart-btn {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #f97316;
 }
 
 .empty-hint {
