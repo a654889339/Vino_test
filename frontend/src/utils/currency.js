@@ -3,6 +3,19 @@ export const DEFAULT_CURRENCY = '¥';
 
 let cachedSymbol = DEFAULT_CURRENCY;
 
+/** 币种代码 -> 符号（用于商品订单/购物车） */
+export function currencyCodeToSymbol(code, fallbackSymbol) {
+  const c = (code == null ? '' : String(code)).trim().toUpperCase();
+  if (c === 'CNY') return '¥';
+  if (c === 'USD') return '$';
+  if (c === 'HKD') return 'HK$';
+  if (c === 'EUR') return '€';
+  if (c === 'GBP') return '£';
+  if (c === 'JPY') return '¥';
+  const fb = (fallbackSymbol == null ? '' : String(fallbackSymbol)).trim();
+  return fb || DEFAULT_CURRENCY;
+}
+
 export function setCurrencySymbol(sym) {
   const t = (sym == null ? '' : String(sym)).trim();
   cachedSymbol = t || DEFAULT_CURRENCY;
@@ -26,14 +39,19 @@ function formatNumberPart(n) {
 /**
  * 展示价格：非 0 时带币种符号；金额为 0 时不显示数字（返回空字符串）。
  * @param {string|number|null|undefined} amount
- * @param {string|null|undefined} currencySymbolOverride 有值时优先于全局币种（如服务页的 currencyEn）
+ * @param {string|null|undefined} currencyOverride 支持币种符号或币种代码（CNY/USD...）；有值时优先于全局币种
  */
-export function formatPriceDisplay(amount, currencySymbolOverride) {
+export function formatPriceDisplay(amount, currencyOverride) {
   const override =
-    currencySymbolOverride != null && String(currencySymbolOverride).trim() !== ''
-      ? String(currencySymbolOverride).trim()
+    currencyOverride != null && String(currencyOverride).trim() !== ''
+      ? String(currencyOverride).trim()
       : null;
-  const sym = override ?? getCurrencySymbol();
+  const base = getCurrencySymbol();
+  const sym =
+    override == null
+      ? base
+      : // 若为常见币种代码则映射符号，否则保持原样（允许直接传符号）
+        currencyCodeToSymbol(override, override);
   const n = Number(amount);
   if (!Number.isFinite(n)) {
     if (amount == null || amount === '') return '';

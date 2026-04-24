@@ -93,8 +93,13 @@ func goodsOrderCheckout(c *gin.Context) {
 			img = strings.TrimSpace(g.IconURL)
 		}
 		cur := strings.TrimSpace(g.Currency)
-		if currency == "" {
+		// 兜底禁止混币种：以首个非空币种为准，其它商品必须一致
+		if currency == "" && cur != "" {
 			currency = cur
+		}
+		if currency != "" && cur != "" && !strings.EqualFold(currency, cur) {
+			resp.Err(c, 400, 400, "购物车不支持混币种商品")
+			return
 		}
 		lineTot := unit * float64(it.Qty)
 		rows = append(rows, row{

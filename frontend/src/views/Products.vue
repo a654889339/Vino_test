@@ -14,6 +14,10 @@
             enterkeyhint="search"
             autocomplete="off"
           />
+          <button type="button" class="products-cart-btn" @click="goCart">
+            <van-icon name="cart-o" size="18" />
+            <span class="products-cart-text">购物车</span>
+          </button>
         </div>
       </div>
 
@@ -179,6 +183,16 @@ async function addToCart(d) {
   }
 }
 
+function goCart() {
+  const token = localStorage.getItem('vino_token');
+  if (!token) {
+    showToast('请先登录');
+    router.push('/login');
+    return;
+  }
+  router.push('/cart');
+}
+
 const sortedCategories = computed(() => sortCategoriesForSidebar(categories.value));
 
 const currentCategoryName = computed(() => {
@@ -284,6 +298,24 @@ onMounted(async () => {
   border-radius: 10px;
   padding: 10px 14px;
   box-sizing: border-box;
+}
+
+.products-cart-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.08);
+  color: #f3f4f6;
+}
+
+.products-cart-text {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
 }
 
 .products-search-icon {

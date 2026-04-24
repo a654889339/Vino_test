@@ -139,6 +139,43 @@ func mePutCart(c *gin.Context) {
 		return
 	}
 	merged := mergeCartLines(body.Items)
+
+	// 禁止混币种：按 guideId 查询对应的 DeviceGuide.currency
+	if len(merged) > 0 {
+		ids := make([]int, 0, len(merged))
+		for _, it := range merged {
+			if it.GuideID > 0 {
+				ids = append(ids, it.GuideID)
+			}
+		}
+		if len(ids) > 0 {
+			var rows []struct {
+				ID       int    `gorm:"column:id"`
+				Currency string `gorm:"column:currency"`
+			}
+			_ = db.DB.Model(&models.DeviceGuide{}).Select("id", "currency").Where("id IN ?", ids).Find(&rows).Error
+			cMap := map[int]string{}
+			for _, r := range rows {
+				cMap[r.ID] = strings.TrimSpace(r.Currency)
+			}
+			seen := ""
+			for _, it := range merged {
+				cur := strings.TrimSpace(cMap[it.GuideID])
+				if cur == "" {
+					continue
+				}
+				if seen == "" {
+					seen = cur
+					continue
+				}
+				if !strings.EqualFold(seen, cur) {
+					resp.Err(c, 400, 400, "购物车不支持混币种商品")
+					return
+				}
+			}
+		}
+	}
+
 	b, err := json.Marshal(merged)
 	if err != nil {
 		resp.Err(c, 500, 500, "保存失败")
