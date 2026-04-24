@@ -39,13 +39,13 @@
           data-slug="{{item.slug}}"
           bindtap="selectProduct"
         >
-          <view class="grid-card-inner">
+          <view class="grid-card-row">
             <view class="grid-card-icon">
               <image wx:if="{{item.iconUrl}}" src="{{item.displayIconUrl}}" class="grid-card-img" mode="aspectFit" data-id="{{item.id}}" />
               <text wx:else class="grid-card-placeholder">📦</text>
             </view>
+            <text class="grid-card-name">{{item.displayName}}</text>
           </view>
-          <text class="grid-card-name">{{item.displayName}}</text>
         </view>
       </view>
       <view wx:elif="{{selectedCategoryId && !listLoading && deviceGuides.length && !filteredDeviceGuides.length}}" class="main-empty">{{noMatchText}}</view>

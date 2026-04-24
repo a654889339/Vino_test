@@ -49,7 +49,7 @@
               class="grid-card"
               @click="openGuide(d)"
             >
-              <div class="grid-card-inner">
+              <div class="grid-card-row">
                 <div class="grid-card-icon">
                   <LodImg
                     v-if="d.iconUrl"
@@ -58,8 +58,8 @@
                   />
                   <van-icon v-else :name="d.icon || 'photo-o'" size="28" color="#6b7280" />
                 </div>
+                <span class="grid-card-name">{{ pick(d, 'name') }}</span>
               </div>
-              <span class="grid-card-name">{{ pick(d, 'name') }}</span>
             </button>
           </div>
           <div v-else-if="selectedCategoryId && !listLoading && sortedDeviceGuides.length && !filteredDeviceGuides.length" class="main-empty">
@@ -247,33 +247,36 @@ onMounted(async () => {
 .product-sidebar {
   flex-shrink: 0;
   width: 96px;
-  padding: 12px 0;
-  background: #eef0f3;
+  padding: 0;
+  background: #f7f6f2;
   border-right: 1px solid rgba(0, 0, 0, 0.08);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0;
   align-items: stretch;
 }
 
 .sidebar-item {
-  margin: 0 8px;
-  padding: 12px 8px;
+  margin: 0;
+  padding: 14px 10px 14px 12px;
   border: none;
-  border-radius: 999px;
+  border-radius: 0;
+  border-left: 3px solid transparent;
+  box-sizing: border-box;
   background: transparent;
   font-size: 14px;
   font-weight: 500;
   color: #4b5563;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
   line-height: 1.35;
-  text-align: center;
+  text-align: left;
   -webkit-tap-highlight-color: transparent;
 }
 
 .sidebar-item.active {
-  background: rgba(255, 183, 77, 0.45);
+  background: #e8e8e8;
+  border-left-color: #07c160;
   color: #111827;
   font-weight: 600;
 }
@@ -319,60 +322,68 @@ onMounted(async () => {
 }
 
 .product-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
 .grid-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
   cursor: pointer;
-  transition: transform 0.2s;
+  text-align: left;
   -webkit-tap-highlight-color: transparent;
 }
 
 .grid-card:active {
-  transform: scale(0.98);
+  opacity: 0.92;
 }
 
-.grid-card-inner {
-  width: 100%;
-  box-sizing: border-box;
+.grid-card-row {
   display: flex;
+  flex-direction: row;
   align-items: center;
-  justify-content: center;
-  padding: 10px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 12px;
-  background: #ffffff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  gap: 12px;
+  width: 100%;
+  padding: 10px 0;
+  box-sizing: border-box;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.grid-card:last-child .grid-card-row {
+  border-bottom: none;
 }
 
 .grid-card-icon {
-  width: 80%;
-  aspect-ratio: 1;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
-  overflow: hidden;
+  max-width: 100px;
+  max-height: 80px;
 }
 
 .grid-card-icon-img {
-  width: 100%;
-  height: 100%;
+  width: auto;
+  height: auto;
+  max-width: 100px;
+  max-height: 80px;
   object-fit: contain;
+  display: block;
+  vertical-align: top;
 }
 
 .grid-card-name {
-  font-size: 12px;
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
   font-weight: 600;
   color: #111827;
-  text-align: center;
-  line-height: 1.35;
+  text-align: left;
+  line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
