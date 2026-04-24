@@ -30,6 +30,7 @@
 
     <van-cell-group inset class="menu-group">
       <van-cell :title="t('mine.orders')" icon="orders-o" is-link to="/orders" />
+      <van-cell title="商品订单" icon="bag-o" is-link to="/goods-orders" />
       <van-cell :title="t('mine.products')" icon="bag-o" is-link to="/mine/products" />
       <van-cell :title="t('mine.address')" icon="location-o" is-link to="/address" />
     </van-cell-group>
