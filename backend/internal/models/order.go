@@ -22,8 +22,8 @@ type Order struct {
 	GuideID         *int       `gorm:"column:guideId" json:"guideId"`
 	CreatedAt       time.Time  `gorm:"column:createdAt" json:"createdAt"`
 	UpdatedAt       time.Time  `gorm:"column:updatedAt" json:"updatedAt"`
-	User            *User      `gorm:"foreignKey:UserID" json:"user,omitempty"`
-	Guide           *DeviceGuide `gorm:"foreignKey:GuideID" json:"guide,omitempty"`
+	User            *User      `gorm:"foreignKey:UserID;constraint:-" json:"user,omitempty"`
+	Guide           *DeviceGuide `gorm:"foreignKey:GuideID;constraint:-" json:"guide,omitempty"`
 }
 
 func (Order) TableName() string { return "orders" }
@@ -57,7 +57,7 @@ type OutletOrder struct {
 	AdminRemark     string     `gorm:"column:adminRemark;type:text" json:"adminRemark"`
 	CreatedAt       time.Time  `gorm:"column:createdAt" json:"createdAt"`
 	UpdatedAt       time.Time  `gorm:"column:updatedAt" json:"updatedAt"`
-	User            *OutletUser `gorm:"foreignKey:UserID" json:"user,omitempty"`
+	User            *OutletUser `gorm:"foreignKey:UserID;constraint:-" json:"user,omitempty"`
 }
 
 func (OutletOrder) TableName() string { return "outlet_orders" }

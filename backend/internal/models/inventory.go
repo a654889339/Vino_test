@@ -9,7 +9,7 @@ type InventoryCategory struct {
 	Status    string    `gorm:"type:enum('active','inactive');default:active" json:"status"`
 	CreatedAt time.Time `gorm:"column:createdAt" json:"createdAt"`
 	UpdatedAt time.Time `gorm:"column:updatedAt" json:"updatedAt"`
-	Products  []InventoryProduct `gorm:"foreignKey:CategoryID" json:"products,omitempty"`
+	Products  []InventoryProduct `gorm:"foreignKey:CategoryID;constraint:-" json:"products,omitempty"`
 }
 
 func (InventoryCategory) TableName() string { return "inventory_categories" }
@@ -25,7 +25,7 @@ type InventoryProduct struct {
 	Tags         string    `gorm:"size:200" json:"tags"`
 	CreatedAt    time.Time `gorm:"column:createdAt" json:"createdAt"`
 	UpdatedAt    time.Time `gorm:"column:updatedAt" json:"updatedAt"`
-	Category     *InventoryCategory `gorm:"foreignKey:CategoryID" json:"category,omitempty"`
+	Category     *InventoryCategory `gorm:"foreignKey:CategoryID;constraint:-" json:"category,omitempty"`
 }
 
 func (InventoryProduct) TableName() string { return "inventory_products" }

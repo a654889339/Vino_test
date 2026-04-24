@@ -13,7 +13,7 @@ type ServiceCategory struct {
 	Status    string    `gorm:"type:enum('active','inactive');default:active" json:"status"`
 	CreatedAt time.Time `gorm:"column:createdAt" json:"createdAt"`
 	UpdatedAt time.Time `gorm:"column:updatedAt" json:"updatedAt"`
-	Services  []Service `gorm:"foreignKey:CategoryID" json:"services,omitempty"`
+	Services  []Service `gorm:"foreignKey:CategoryID;constraint:-" json:"services,omitempty"`
 }
 
 func (ServiceCategory) TableName() string { return "service_categories" }
@@ -40,7 +40,7 @@ type Service struct {
 	SortOrder      int      `gorm:"column:sortOrder" json:"sortOrder"`
 	CreatedAt      time.Time `gorm:"column:createdAt" json:"createdAt"`
 	UpdatedAt      time.Time `gorm:"column:updatedAt" json:"updatedAt"`
-	ServiceCategory *ServiceCategory `gorm:"foreignKey:CategoryID" json:"serviceCategory,omitempty"`
+	ServiceCategory *ServiceCategory `gorm:"foreignKey:CategoryID;constraint:-" json:"serviceCategory,omitempty"`
 }
 
 func (Service) TableName() string { return "services" }
@@ -93,7 +93,7 @@ type OutletServiceCategory struct {
 	Status    string    `gorm:"type:enum('active','inactive');default:active" json:"status"`
 	CreatedAt time.Time `gorm:"column:createdAt" json:"createdAt"`
 	UpdatedAt time.Time `gorm:"column:updatedAt" json:"updatedAt"`
-	Services  []OutletService `gorm:"foreignKey:CategoryID" json:"services,omitempty"`
+	Services  []OutletService `gorm:"foreignKey:CategoryID;constraint:-" json:"services,omitempty"`
 }
 
 func (OutletServiceCategory) TableName() string { return "outlet_service_categories" }
@@ -115,7 +115,7 @@ type OutletService struct {
 	SortOrder   int      `gorm:"column:sortOrder" json:"sortOrder"`
 	CreatedAt   time.Time `gorm:"column:createdAt" json:"createdAt"`
 	UpdatedAt   time.Time `gorm:"column:updatedAt" json:"updatedAt"`
-	ServiceCategory *OutletServiceCategory `gorm:"foreignKey:CategoryID" json:"serviceCategory,omitempty"`
+	ServiceCategory *OutletServiceCategory `gorm:"foreignKey:CategoryID;constraint:-" json:"serviceCategory,omitempty"`
 }
 
 func (OutletService) TableName() string { return "outlet_services" }

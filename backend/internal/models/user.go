@@ -18,8 +18,8 @@ type User struct {
 	Status      string     `gorm:"type:enum('active','disabled');default:active" json:"status"`
 	CreatedAt   time.Time  `gorm:"column:createdAt" json:"createdAt"`
 	UpdatedAt   time.Time  `gorm:"column:updatedAt" json:"updatedAt"`
-	Messages    []Message  `gorm:"foreignKey:UserID" json:"messages,omitempty"`
-	Addresses   []Address  `gorm:"foreignKey:UserID" json:"addresses,omitempty"`
+	Messages    []Message  `gorm:"foreignKey:UserID;constraint:-" json:"messages,omitempty"`
+	Addresses   []Address  `gorm:"foreignKey:UserID;constraint:-" json:"addresses,omitempty"`
 }
 
 func (User) TableName() string { return "users" }
@@ -38,8 +38,8 @@ type OutletUser struct {
 	Status    string    `gorm:"type:enum('active','disabled');default:active" json:"status"`
 	CreatedAt time.Time `gorm:"column:createdAt" json:"createdAt"`
 	UpdatedAt time.Time `gorm:"column:updatedAt" json:"updatedAt"`
-	Messages  []OutletMessage `gorm:"foreignKey:UserID" json:"messages,omitempty"`
-	Addresses []OutletAddress `gorm:"foreignKey:UserID" json:"addresses,omitempty"`
+	Messages  []OutletMessage `gorm:"foreignKey:UserID;constraint:-" json:"messages,omitempty"`
+	Addresses []OutletAddress `gorm:"foreignKey:UserID;constraint:-" json:"addresses,omitempty"`
 }
 
 func (OutletUser) TableName() string { return "outlet_users" }
