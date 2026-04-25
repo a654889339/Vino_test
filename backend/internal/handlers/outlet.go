@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math"
 	mathrand "math/rand"
 	"path"
 	"strconv"
