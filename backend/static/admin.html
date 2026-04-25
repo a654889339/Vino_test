@@ -316,9 +316,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <div class="dash-page active" id="page-overview">
       <div class="dash-stats" id="overviewStats">
         <div class="stat-card"><h3>系统状态</h3><div class="val" style="color:#059669">运行中</div><div class="sub">所有服务正常</div></div>
-        <div class="stat-card"><h3>总订单</h3><div class="val" id="statTotal">-</div><div class="sub">全部订单</div></div>
-        <div class="stat-card"><h3>待处理</h3><div class="val" id="statPending" style="color:#D97706">-</div><div class="sub">等待支付/处理</div></div>
-        <div class="stat-card"><h3>已完成</h3><div class="val" id="statCompleted" style="color:#059669">-</div><div class="sub">完成的订单</div></div>
+        <div class="stat-card"><h3>服务订单</h3><div class="val" id="statServiceTotal">-</div><div class="sub">预约/维修服务订单</div></div>
+        <div class="stat-card"><h3>商品订单</h3><div class="val" id="statGoodsTotal">-</div><div class="sub">购物车结算订单</div></div>
+        <div class="stat-card"><h3>待处理</h3><div class="val" id="statPending" style="color:#D97706">-</div><div class="sub">两类订单待处理</div></div>
+        <div class="stat-card"><h3>已完成</h3><div class="val" id="statCompleted" style="color:#059669">-</div><div class="sub">两类订单已完成</div></div>
       </div>
       <div class="dash-section" id="pageVisitSection">
         <h3>网站访问统计</h3>
@@ -363,11 +364,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <button type="button" class="refresh-btn" style="background:#64748b;padding:4px 12px;font-size:12px" onclick="refreshDebugDbStatus()">刷新</button>
         </div>
         <p style="font-size:13px;color:#666;margin-bottom:10px">
-          审计日志上传至腾讯云 COS（<code style="font-size:12px">log/backend/</code>）。db 备份按钮导出<strong>当前主库</strong>（上方显示），通过 docker exec 到 vino-mysql 容器执行 mysqldump 并上传 <code style="font-size:12px">db_save/</code>（兼容 <code style="font-size:12px">db_save/YYYY-MM/DD.sql.gz</code> 与 <code style="font-size:12px">db_save/YYYY-MM-DD/HH.sql.gz</code>）。
+          审计日志上传至腾讯云 COS（<code style="font-size:12px">log/backend/</code>）。打点日志按类型上传至 <code style="font-size:12px">log/stat/{类型}/</code>（如 <code style="font-size:12px">log/stat/login/</code>、<code style="font-size:12px">log/stat/register/</code>）。db 备份按钮导出<strong>当前主库</strong>（上方显示），通过 docker exec 到 vino-mysql 容器执行 mysqldump 并上传 <code style="font-size:12px">db_save/</code>（兼容 <code style="font-size:12px">db_save/YYYY-MM/DD.sql.gz</code> 与 <code style="font-size:12px">db_save/YYYY-MM-DD/HH.sql.gz</code>）。
           恢复时粘贴完整 HTTPS URL（path 须以 <code style="font-size:12px">/db_save/</code> 开头），后端会解压并导入到<strong>新库</strong> <code style="font-size:12px">restore_YYYY_MM_DD_HH</code>（冲突自动 _2/_3…），<strong>不会删除</strong>原库（如 <code style="font-size:12px">vino_db</code>）。若切库后发现数据变少，多半是备份较旧；可在下方输入原库名 <code style="font-size:12px">vino_db</code> 点「备份恢复」切回。
         </p>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
           <button type="button" class="refresh-btn" style="background:#0f766e;padding:8px 20px" onclick="runAuditLogBackup()">日志备份</button>
+          <button type="button" class="refresh-btn" style="background:#0891b2;padding:8px 20px" onclick="runStatLogBackup()">打点日志备份</button>
           <button type="button" class="refresh-btn" style="background:#1d4ed8;padding:8px 20px" onclick="runDbBackup()">db备份</button>
           <button type="button" class="refresh-btn" style="background:#7c3aed;padding:8px 20px" onclick="openDbRestoreModal()">db恢复</button>
         </div>
@@ -457,11 +459,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
           <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid #eee;border-radius:10px;padding:12px 14px">
             <div>
-              <div style="font-weight:600">创建订单</div>
+              <div style="font-weight:600">创建服务订单</div>
               <div style="font-size:12px;color:#666;margin-top:2px">关闭后 `/api/orders` 与 `/api/outlet/orders` 创建将返回 403。</div>
             </div>
             <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#333;white-space:nowrap">
               <input type="checkbox" id="ffEnableCreateOrder" />
+              启用
+            </label>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid #eee;border-radius:10px;padding:12px 14px">
+            <div>
+              <div style="font-weight:600">创建商品订单</div>
+              <div style="font-size:12px;color:#666;margin-top:2px">关闭后 `/api/goods-orders/checkout` 商品结算创建将返回 403。</div>
+            </div>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#333;white-space:nowrap">
+              <input type="checkbox" id="ffEnableCreateGoodsOrder" />
               启用
             </label>
           </div>
@@ -2004,6 +2017,7 @@ async function loadFeatureFlags() {
     document.getElementById('ffMaintenanceMode').checked = !!d.maintenanceMode;
     document.getElementById('ffEnableRegister').checked = !!d.enableRegister;
     document.getElementById('ffEnableCreateOrder').checked = !!d.enableCreateOrder;
+    document.getElementById('ffEnableCreateGoodsOrder').checked = d.enableCreateGoodsOrder !== false;
     document.getElementById('ffEnableCreateAddress').checked = !!d.enableCreateAddress;
     if (result) { result.style.color = '#059669'; result.textContent = '已加载'; }
   } catch (e) {
@@ -2018,6 +2032,7 @@ async function saveFeatureFlags() {
     maintenanceMode: !!document.getElementById('ffMaintenanceMode').checked,
     enableRegister: !!document.getElementById('ffEnableRegister').checked,
     enableCreateOrder: !!document.getElementById('ffEnableCreateOrder').checked,
+    enableCreateGoodsOrder: !!document.getElementById('ffEnableCreateGoodsOrder').checked,
     enableCreateAddress: !!document.getElementById('ffEnableCreateAddress').checked,
   };
   try {
@@ -2122,27 +2137,39 @@ async function loadOrderStats() {
   const isAdmin = currentUser && isAdminRole(currentUser.role);
   try {
     if (isAdmin) {
-      const res = await api('/orders/admin/stats');
-      if (res.code === 0) {
-        const d = res.data;
-        document.getElementById('statTotal').textContent = d.total;
-        document.getElementById('statPending').textContent = d.pending;
-        document.getElementById('statCompleted').textContent = d.completed;
+      const [serviceRes, goodsRes] = await Promise.all([
+        api('/orders/admin/stats'),
+        api('/goods-orders/admin/stats').catch(() => ({ code: 1, data: {} })),
+      ]);
+      if (serviceRes.code === 0) {
+        const d = serviceRes.data || {};
+        const g = goodsRes.code === 0 ? (goodsRes.data || {}) : {};
+        const serviceTotal = Number(d.total || 0);
+        const goodsTotal = Number(g.total || 0);
+        const pendingTotal = Number(d.pending || 0) + Number(g.pending || 0);
+        const completedTotal = Number(d.completed || 0) + Number(g.completed || 0);
+        document.getElementById('statServiceTotal').textContent = serviceTotal;
+        document.getElementById('statGoodsTotal').textContent = goodsTotal;
+        document.getElementById('statPending').textContent = pendingTotal;
+        document.getElementById('statCompleted').textContent = completedTotal;
         document.getElementById('orderStats').innerHTML = `
-          <div class="stat-card clickable" onclick="filterOrders('all')"><h3>全部订单</h3><div class="val">${d.total}</div></div>
-          <div class="stat-card clickable" onclick="filterOrders('pending')"><h3>待支付</h3><div class="val" style="color:#D97706">${d.pending}</div></div>
-          <div class="stat-card clickable" onclick="filterOrders('processing')"><h3>进行中</h3><div class="val" style="color:#2563EB">${d.processing}</div></div>
-          <div class="stat-card clickable" onclick="filterOrders('completed')"><h3>已完成</h3><div class="val" style="color:#059669">${d.completed}</div></div>
-          <div class="stat-card clickable" onclick="filterOrders('cancelled')"><h3>已取消</h3><div class="val" style="color:#6B7280">${d.cancelled}</div></div>`;
+          <div class="stat-card clickable" onclick="filterOrders('all')"><h3>服务订单总数</h3><div class="val">${serviceTotal}</div><div class="sub">点击进入服务订单</div></div>
+          <div class="stat-card clickable" onclick="switchPage('goodsOrders')"><h3>商品订单总数</h3><div class="val">${goodsTotal}</div><div class="sub">点击进入商品订单</div></div>
+          <div class="stat-card clickable" onclick="filterOrders('pending')"><h3>服务待支付</h3><div class="val" style="color:#D97706">${Number(d.pending || 0)}</div></div>
+          <div class="stat-card clickable" onclick="switchPage('goodsOrders');filterGoodsOrders('pending')"><h3>商品待支付</h3><div class="val" style="color:#D97706">${Number(g.pending || 0)}</div></div>
+          <div class="stat-card clickable" onclick="filterOrders('completed')"><h3>服务已完成</h3><div class="val" style="color:#059669">${Number(d.completed || 0)}</div></div>
+          <div class="stat-card clickable" onclick="switchPage('goodsOrders');filterGoodsOrders('completed')"><h3>商品已完成</h3><div class="val" style="color:#059669">${Number(g.completed || 0)}</div></div>`;
       }
     } else {
-      document.getElementById('statTotal').textContent = '-';
+      document.getElementById('statServiceTotal').textContent = '-';
+      document.getElementById('statGoodsTotal').textContent = '-';
       document.getElementById('statPending').textContent = '-';
       document.getElementById('statCompleted').textContent = '-';
       document.getElementById('orderStats').innerHTML = '<div class="stat-card"><h3>权限提示</h3><div class="val" style="font-size:16px;color:var(--text-secondary)">需要管理员权限查看订单统计</div></div>';
     }
   } catch {
-    document.getElementById('statTotal').textContent = '0';
+    document.getElementById('statServiceTotal').textContent = '0';
+    document.getElementById('statGoodsTotal').textContent = '0';
     document.getElementById('statPending').textContent = '0';
     document.getElementById('statCompleted').textContent = '0';
   }
@@ -2151,9 +2178,39 @@ async function loadOrderStats() {
 function renderPageVisitTable(rows) {
   if (!rows || !rows.length) return '<div class="order-empty" style="display:block">暂无访问数据</div>';
   function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
-  return '<table class="order-table"><thead><tr><th>页面</th><th>总访问量</th><th>近7日</th><th>近30日</th><th>近90日(季)</th></tr></thead><tbody>' +
-    rows.map(function(r) { return '<tr><td style="font-size:12px;max-width:280px;word-break:break-all">' + esc(r.pageKey) + '</td><td>' + r.total + '</td><td>' + r.last7Days + '</td><td>' + r.last30Days + '</td><td>' + r.lastQuarter + '</td></tr>'; }).join('') +
+  return '<table class="order-table"><thead><tr><th>页面</th><th>来源</th><th>总访问量</th><th>近7日</th><th>近30日</th><th>近90日(季)</th></tr></thead><tbody>' +
+    rows.map(function(r) {
+      const info = formatPageVisitKey(r.pageKey);
+      return '<tr><td style="font-size:12px;max-width:280px;word-break:break-all"><div style="font-weight:600;color:#111827">' + esc(info.label) + '</div><div style="color:#94a3b8;margin-top:2px">' + esc(r.pageKey) + '</div></td><td>' + esc(info.source) + '</td><td>' + r.total + '</td><td>' + r.last7Days + '</td><td>' + r.last30Days + '</td><td>' + r.lastQuarter + '</td></tr>';
+    }).join('') +
     '</tbody></table>';
+}
+
+function formatPageVisitKey(pageKey) {
+  const raw = String(pageKey || '');
+  const parts = raw.split(':');
+  const app = parts.length > 1 ? parts[0] : 'toc';
+  let path = parts.length > 1 ? parts.slice(1).join(':') : raw;
+  if (!path || path === '/') path = '/';
+  const sourceMap = { toc: 'To C 主站', outlet: '服务商端', mp: '小程序' };
+  const pathMap = {
+    '/': '首页',
+    '/products': '商品页',
+    '/services': '服务页',
+    '/mine': '我的',
+    '/orders': '服务订单',
+    '/goods-orders': '商品订单',
+    '/cart': '购物车',
+    '/checkout': '确认订单',
+    '/login': '登录',
+    '/register': '注册',
+  };
+  let label = pathMap[path] || path;
+  if (/^\/guide\//.test(path) || /^\/guide-detail/.test(path)) label = '商品详情';
+  if (/^\/service\//.test(path)) label = '服务详情';
+  if (/^\/manual/.test(path)) label = '电子说明书';
+  if (/^\/maintenance/.test(path)) label = '常见问题与保养';
+  return { source: sourceMap[app] || app || '未知来源', label };
 }
 
 async function loadPageVisitStats() {
@@ -2387,6 +2444,26 @@ async function runAuditLogBackup() {
   el.textContent = '日志备份执行中…';
   try {
     const res = await api('/admin/ops/audit-log-backup', { method: 'POST', body: {} });
+    if (res.code !== 0) {
+      el.style.color = '#B91C1C';
+      el.textContent = res.message || '失败';
+      return;
+    }
+    const d = res.data || {};
+    el.style.color = '#059669';
+    el.textContent = JSON.stringify(d, null, 2);
+  } catch (e) {
+    el.style.color = '#B91C1C';
+    el.textContent = '请求失败：' + (e.message || '未知错误');
+  }
+}
+
+async function runStatLogBackup() {
+  const el = document.getElementById('opsBackupResult');
+  el.style.color = '#059669';
+  el.textContent = '打点日志备份执行中…';
+  try {
+    const res = await api('/admin/ops/stat-log-backup', { method: 'POST', body: {} });
     if (res.code !== 0) {
       el.style.color = '#B91C1C';
       el.textContent = res.message || '失败';

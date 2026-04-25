@@ -231,6 +231,7 @@ func RegisterRoutes(engine *gin.Engine, cfg *config.Config) {
 		adminOps.GET("/feature-flags", AdminGetFeatureFlags)
 		adminOps.PUT("/feature-flags", AdminPutFeatureFlags)
 		adminOps.POST("/audit-log-backup", func(c *gin.Context) { adminPostAuditLogBackup(c, cfg) })
+		adminOps.POST("/stat-log-backup", func(c *gin.Context) { adminPostStatLogBackup(c, cfg) })
 		adminOps.POST("/db-backup", func(c *gin.Context) { adminPostDbBackup(c, cfg) })
 		adminOps.GET("/db/status", func(c *gin.Context) { adminGetDbStatus(c, cfg) })
 		adminOps.GET("/db/databases", func(c *gin.Context) { adminGetDbDatabases(c, cfg) })

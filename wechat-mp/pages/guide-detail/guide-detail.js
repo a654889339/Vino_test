@@ -64,6 +64,7 @@ Page({
   },
 
   refreshI18n() {
+    const addCartText = i18n.t('guideDetail.addToCart');
     this.setData({
       loadingText: i18n.t('common.loading'),
       helpTitle: i18n.t('guideDetail.helpTitle'),
@@ -76,7 +77,7 @@ Page({
       repairQuoteLabel: i18n.t('guideDetail.repairQuote'),
       preview3DLabel: i18n.t('guideDetail.preview3D'),
       preview3DTip: i18n.t('guideDetail.preview3DTip'),
-      addCartLabel: i18n.t('guideDetail.addToCart') || '加入购物车',
+      addCartLabel: addCartText && addCartText !== 'guideDetail.addToCart' ? addCartText : '加入购物车',
     });
   },
 
@@ -94,6 +95,7 @@ Page({
     if (!g) return g;
     g.displayName = i18n.pick(g, 'name');
     g.displaySubtitle = i18n.pick(g, 'subtitle');
+    g.displayDescription = i18n.pick(g, 'description');
     return g;
   },
 

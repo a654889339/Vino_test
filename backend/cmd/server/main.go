@@ -12,6 +12,7 @@ import (
 	"vino/backend/internal/db"
 	"vino/backend/internal/handlers"
 	"vino/backend/internal/middleware"
+	"vino/backend/internal/stat"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -35,11 +36,33 @@ func main() {
 		log.Printf("[Vino] COS 密钥未就绪: 审计日志仅写本地目录 %s；配置 COS_SECRET_ID/COS_SECRET_KEY 并重启后可自动上云", cfg.Log.BackendDir)
 	}
 	audit.StartUploader(cfg)
+	if err := stat.Init(cfg.Log.StatDir); err != nil {
+		log.Printf("[Vino] stat log dir: %v", err)
+	}
+	stat.Record("system", map[string]interface{}{
+		"source": "system",
+		"action": "system.backend_start",
+		"tables": []string{"schema_migrations", "users", "home_configs"},
+		"status": "success",
+	})
+	stat.StartUploader(cfg)
 	// 进程内整点 db 备份（60s tick，跨整点触发一次，键 db_save/{db}/YYYY-MM-DD/HH.sql.gz，TZ=Asia/Shanghai）
 	handlers.StartHourlyDbBackup(cfg)
 	if err := bootstrap.Run(); err != nil {
+		stat.Record("system", map[string]interface{}{
+			"source": "system",
+			"action": "system.bootstrap",
+			"status": "failed",
+			"error":  err.Error(),
+		})
 		log.Fatalf("[Vino] bootstrap: %v", err)
 	}
+	stat.Record("system", map[string]interface{}{
+		"source": "system",
+		"action": "system.bootstrap",
+		"status": "success",
+		"tables": []string{"users", "i18n_texts", "product_categories", "service_categories", "home_configs", "services", "device_guides"},
+	})
 
 	if cfg.NodeEnv == "production" {
 		gin.SetMode(gin.ReleaseMode)
@@ -48,6 +71,7 @@ func main() {
 	engine := gin.New()
 	engine.Use(gin.Recovery())
 	engine.Use(middleware.HTTPAuditLog())
+	engine.Use(middleware.StatMutationLog())
 	engine.Use(gin.Logger())
 	engine.Use(cors.Default())
 	engine.MaxMultipartMemory = 10 << 20

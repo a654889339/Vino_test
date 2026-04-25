@@ -29,6 +29,7 @@ services:
     environment:
       TZ: Asia/Shanghai
       LOG_BACKEND_DIR: /app/data/logs/backend
+      LOG_STAT_DIR: /app/data/logs/stat
       NODE_ENV: production
       PORT: 5202
       DB_HOST: vino-mysql
@@ -66,6 +67,7 @@ services:
         condition: service_healthy
     volumes:
       - vino-backend-logs:/app/data/logs/backend
+      - vino-stat-logs:/app/data/logs/stat
       - vino-backend-state:/app/data/state
       - /var/run/docker.sock:/var/run/docker.sock
 
@@ -90,4 +92,5 @@ services:
 volumes:
   vino-mysql-data:
   vino-backend-logs:
+  vino-stat-logs:
   vino-backend-state:

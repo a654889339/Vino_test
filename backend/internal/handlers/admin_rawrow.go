@@ -7,7 +7,9 @@ import (
 	"strings"
 
 	"vino/backend/internal/db"
+	"vino/backend/internal/middleware"
 	"vino/backend/internal/resp"
+	"vino/backend/internal/stat"
 
 	"github.com/gin-gonic/gin"
 )
@@ -293,6 +295,28 @@ func rawRowUpdate(c *gin.Context) {
 		resp.Err(c, 404, 404, "记录不存在")
 		return
 	}
+	changedKeys := make([]string, 0, len(filtered))
+	for k := range filtered {
+		changedKeys = append(changedKeys, k)
+	}
+	operatorID, operatorRole := 0, ""
+	if u, ok := middleware.GetUser(c); ok {
+		operatorID = u.ID
+		operatorRole = u.Role
+	}
+	stat.Record("raw_row", gin.H{
+		"source":         "admin",
+		"action":         "admin.raw_row.update.detail",
+		"table":          table,
+		"id":             idStr,
+		"changedKeys":    changedKeys,
+		"skippedKeys":    skipped,
+		"operatorUserId": operatorID,
+		"operatorRole":   operatorRole,
+		"requestPath":    c.Request.URL.Path,
+		"clientIp":       c.ClientIP(),
+		"status":         "success",
+	})
 
 	resp.OKDataMsg(c, gin.H{
 		"updated": filtered,

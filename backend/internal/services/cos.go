@@ -40,10 +40,10 @@ func validateBackupKey(key string) error {
 	if key == "" || strings.Contains(key, "..") || strings.Contains(key, "\\") {
 		return fmt.Errorf("invalid key")
 	}
-	if strings.HasPrefix(key, "log/backend/") || strings.HasPrefix(key, "db_save/") {
+	if strings.HasPrefix(key, "log/backend/") || strings.HasPrefix(key, "log/stat/") || strings.HasPrefix(key, "db_save/") {
 		return nil
 	}
-	return fmt.Errorf("backup key must use log/backend/ or db_save/ prefix")
+	return fmt.Errorf("backup key must use log/backend/, log/stat/ or db_save/ prefix")
 }
 
 // PutBackupObject uploads a private object (audit hourly logs, DB dump). No public-read ACL.

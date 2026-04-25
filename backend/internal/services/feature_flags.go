@@ -21,6 +21,7 @@ const (
 	FlagMaintenanceMode   = "maintenanceMode"
 	FlagEnableRegister    = "enableRegister"
 	FlagEnableCreateOrder = "enableCreateOrder"
+	FlagEnableGoodsOrder  = "enableCreateGoodsOrder"
 	FlagEnableCreateAddr  = "enableCreateAddress"
 )
 
@@ -28,6 +29,7 @@ type FeatureFlags struct {
 	MaintenanceMode   bool              `json:"maintenanceMode"`
 	EnableRegister    bool              `json:"enableRegister"`
 	EnableCreateOrder bool              `json:"enableCreateOrder"`
+	EnableGoodsOrder  bool              `json:"enableCreateGoodsOrder"`
 	EnableCreateAddr  bool              `json:"enableCreateAddress"`
 	All              map[string]bool    `json:"all,omitempty"`
 	UpdatedAtUnixMs  int64              `json:"updatedAtUnixMs,omitempty"`
@@ -49,6 +51,7 @@ func defaultFeatureFlags() FeatureFlags {
 		MaintenanceMode:   false,
 		EnableRegister:    true,
 		EnableCreateOrder: true,
+		EnableGoodsOrder:  true,
 		EnableCreateAddr:  true,
 	}
 }
@@ -105,6 +108,9 @@ func GetFeatureFlagsWithTTL(ttl time.Duration) FeatureFlags {
 	}
 	if v, ok := byKey[FlagEnableCreateOrder]; ok {
 		flags.EnableCreateOrder = v
+	}
+	if v, ok := byKey[FlagEnableGoodsOrder]; ok {
+		flags.EnableGoodsOrder = v
 	}
 	if v, ok := byKey[FlagEnableCreateAddr]; ok {
 		flags.EnableCreateAddr = v

@@ -17,6 +17,7 @@ import (
 	"vino/backend/internal/models"
 	"vino/backend/internal/resp"
 	"vino/backend/internal/services"
+	"vino/backend/internal/stat"
 
 	"github.com/gin-gonic/gin"
 	// _ "github.com/go-sql-driver/mysql" 已在同 package 的 admin_db_ops.go 匿名导入
@@ -45,6 +46,26 @@ func adminPostAuditLogBackup(c *gin.Context, cfg *config.Config) {
 		"skippedCurrentHour": skip,
 		"failedFiles":        failed,
 		"logDir":             audit.LogDir(),
+		"message":            msg,
+	})
+}
+
+// POST /api/admin/ops/stat-log-backup — 将已结束的整点打点日志按类型批量上传 COS。
+func adminPostStatLogBackup(c *gin.Context, cfg *config.Config) {
+	if !cfg.COSConfigured() {
+		resp.Err(c, 503, 503, "COS 未配置，无法上传打点日志")
+		return
+	}
+	up, skip, failed := stat.FlushCompletedStatLogs(cfg)
+	msg := "ok"
+	if len(failed) > 0 {
+		msg = "部分文件上传失败: " + strings.Join(failed, ", ")
+	}
+	resp.OK(c, gin.H{
+		"uploadedHours":      up,
+		"skippedCurrentHour": skip,
+		"failedFiles":        failed,
+		"logDir":             stat.RootDir(),
 		"message":            msg,
 	})
 }
@@ -223,6 +244,7 @@ func AdminGetFeatureFlags(c *gin.Context) {
 		"maintenanceMode":     flags.MaintenanceMode,
 		"enableRegister":      flags.EnableRegister,
 		"enableCreateOrder":   flags.EnableCreateOrder,
+		"enableCreateGoodsOrder": flags.EnableGoodsOrder,
 		"enableCreateAddress": flags.EnableCreateAddr,
 		"updatedAtUnixMs":     flags.UpdatedAtUnixMs,
 	})
@@ -233,6 +255,7 @@ func AdminPutFeatureFlags(c *gin.Context) {
 		MaintenanceMode     *bool `json:"maintenanceMode"`
 		EnableRegister      *bool `json:"enableRegister"`
 		EnableCreateOrder   *bool `json:"enableCreateOrder"`
+		EnableGoodsOrder    *bool `json:"enableCreateGoodsOrder"`
 		EnableCreateAddress *bool `json:"enableCreateAddress"`
 	}
 	if err := c.ShouldBindJSON(&body); err != nil {
@@ -252,6 +275,7 @@ func AdminPutFeatureFlags(c *gin.Context) {
 		{services.FlagMaintenanceMode, body.MaintenanceMode},
 		{services.FlagEnableRegister, body.EnableRegister},
 		{services.FlagEnableCreateOrder, body.EnableCreateOrder},
+		{services.FlagEnableGoodsOrder, body.EnableGoodsOrder},
 		{services.FlagEnableCreateAddr, body.EnableCreateAddress},
 	}
 

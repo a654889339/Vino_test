@@ -28,12 +28,13 @@ func Health(c *gin.Context) {
 func AppStatus(c *gin.Context) {
 	flags := services.GetFeatureFlags()
 	resp.OK(c, gin.H{
-		"maintenanceMode":   flags.MaintenanceMode,
-		"enableRegister":    flags.EnableRegister,
-		"enableCreateOrder": flags.EnableCreateOrder,
-		"enableCreateAddress": flags.EnableCreateAddr,
-		"updatedAtUnixMs":   flags.UpdatedAtUnixMs,
-		"message":           func() string { if flags.MaintenanceMode { return "系统维护中" }; return "ok" }(),
+		"maintenanceMode":         flags.MaintenanceMode,
+		"enableRegister":          flags.EnableRegister,
+		"enableCreateOrder":       flags.EnableCreateOrder,
+		"enableCreateGoodsOrder":  flags.EnableGoodsOrder,
+		"enableCreateAddress":     flags.EnableCreateAddr,
+		"updatedAtUnixMs":         flags.UpdatedAtUnixMs,
+		"message":                 func() string { if flags.MaintenanceMode { return "系统维护中" }; return "ok" }(),
 	})
 }
 

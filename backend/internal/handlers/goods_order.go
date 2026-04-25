@@ -35,6 +35,11 @@ func goodsOrderCheckout(c *gin.Context) {
 	if !ok {
 		return
 	}
+	flags := services.GetFeatureFlags()
+	if !flags.EnableGoodsOrder {
+		resp.Err(c, 403, 403, "商品下单功能已关闭")
+		return
+	}
 	var body struct {
 		ContactName  string `json:"contactName"`
 		ContactPhone string `json:"contactPhone"`

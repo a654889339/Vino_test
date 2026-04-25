@@ -15,6 +15,7 @@ type Config struct {
 	NodeEnv string
 	Log     struct {
 		BackendDir string
+		StatDir    string
 	}
 	JWT     struct {
 		Secret    string
@@ -109,6 +110,7 @@ func Load() *Config {
 	c.SMS.CodeExpireMinutes = atoi(getenv("SMS_CODE_EXPIRE_MINUTES", "5"), 5)
 	c.FrontendURL = getenv("FRONTEND_URL", "http://106.54.50.88:5201")
 	c.Log.BackendDir = getenv("LOG_BACKEND_DIR", "data/logs/backend")
+	c.Log.StatDir = getenv("LOG_STAT_DIR", "data/logs/stat")
 	c.DBActiveNameFile = getenv("DB_ACTIVE_NAME_FILE", "data/state/active_db")
 	c.DBRestoreMaxBytes = int64(atoi(getenv("DB_RESTORE_MAX_BYTES", "2147483648"), 2147483648))
 	// 若存在已持久化的「当前主库」文件（切换后写入）则覆盖 DB.Name，重启后仍连切换后的库。

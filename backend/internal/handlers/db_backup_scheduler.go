@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"vino/backend/internal/config"
+	"vino/backend/internal/stat"
 )
 
 // StartHourlyDbBackup 进程内整点 db 备份调度器。
@@ -64,6 +65,13 @@ func runOneHourlyBackup(cfg *config.Config, now time.Time) {
 	// 再次校验 DB 名合法（active_db 切库后 cfg.DB.Name 可能变化）
 	if !dbNameIdent.MatchString(cfg.DB.Name) {
 		log.Printf("[hourly-db-backup] skip: invalid DB name %q", cfg.DB.Name)
+		stat.Record("system", map[string]interface{}{
+			"source": "system",
+			"action": "system.hourly_db_backup",
+			"status": "failed",
+			"error":  "invalid DB name",
+			"database": cfg.DB.Name,
+		})
 		return
 	}
 	key := fmt.Sprintf("db_save/%s/%s/%02d.sql.gz",
@@ -73,8 +81,28 @@ func runOneHourlyBackup(cfg *config.Config, now time.Time) {
 	res, err := runDbBackupCore(ctx, cfg, key)
 	if err != nil {
 		log.Printf("[hourly-db-backup] %s FAIL: %v", key, err)
+		stat.Record("system", map[string]interface{}{
+			"source": "system",
+			"action": "system.hourly_db_backup",
+			"status": "failed",
+			"error":  err.Error(),
+			"cosKey": key,
+			"database": cfg.DB.Name,
+		})
 		return
 	}
+	stat.Record("system", map[string]interface{}{
+		"source": "system",
+		"action": "system.hourly_db_backup",
+		"status": "success",
+		"cosKey": res.CosKey,
+		"database": res.Database,
+		"bytes": res.Bytes,
+		"sqlBytes": res.SqlBytes,
+		"tableCount": res.TableCount,
+		"totalRows": res.TotalRows,
+		"elapsedMs": res.ElapsedMs,
+	})
 	log.Printf("[hourly-db-backup] %s OK bytes=%d sqlBytes=%d tableCount=%d totalRows=%d elapsed=%s",
 		res.CosKey, res.Bytes, res.SqlBytes, res.TableCount, res.TotalRows, res.ElapsedHuman)
 }

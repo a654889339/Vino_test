@@ -84,10 +84,14 @@
               block
               round
               :loading="submitting"
+              :disabled="createGoodsOrderDisabled"
               @click="submit"
             >
               提交订单
             </van-button>
+            <div v-if="createGoodsOrderDisabled" class="disabled-tip">
+              {{ createGoodsOrderDisabledText }}
+            </div>
           </div>
         </div>
 
@@ -119,7 +123,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue';
+import { ref, reactive, onMounted, computed, inject } from 'vue';
 import { useRouter } from 'vue-router';
 import { showToast } from 'vant';
 import { cartApi, goodsOrderApi, addressApi } from '@/api';
@@ -130,6 +134,7 @@ const router = useRouter();
 const loading = ref(true);
 const submitting = ref(false);
 const showAddressSheet = ref(false);
+const injectedStatus = inject('appStatus', null);
 
 const lines = ref([]);
 const totalPrice = ref(0);
@@ -140,6 +145,13 @@ const currencyHint = computed(() => {
   const first = (lines.value || []).find((x) => x && x.currency);
   return first ? first.currency : null;
 });
+
+const createGoodsOrderDisabled = computed(() => {
+  const s = injectedStatus && injectedStatus.value ? injectedStatus.value : null;
+  if (!s) return false;
+  return s.enableCreateGoodsOrder === false;
+});
+const createGoodsOrderDisabledText = computed(() => t('当前已关闭商品下单功能，请稍后再试。', 'Goods order creation is currently disabled. Please try again later.'));
 
 const form = reactive({
   contactName: '',
@@ -246,6 +258,10 @@ function normalizeSubmitPhone(s) {
 }
 
 async function submit() {
+  if (createGoodsOrderDisabled.value) {
+    showToast(createGoodsOrderDisabledText.value);
+    return;
+  }
   if (!lines.value.length) {
     showToast('购物车为空');
     return;
@@ -364,6 +380,13 @@ onMounted(load);
 .total strong {
   color: #b91c1c;
   font-size: 20px;
+}
+
+.disabled-tip {
+  margin-top: 8px;
+  text-align: center;
+  font-size: 12px;
+  color: #b91c1c;
 }
 
 .back-btn {

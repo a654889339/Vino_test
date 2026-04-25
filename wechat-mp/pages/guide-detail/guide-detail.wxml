@@ -5,7 +5,7 @@
     <!-- Hero + Media merged block -->
     <view class="hero-block">
       <view class="hero" style="background:{{guide.gradient || '#333'}}">
-        <image wx:if="{{guide.coverImage}}" src="{{guide.displayCoverUrl}}" class="hero-img" mode="aspectFill" bindtap="previewCover" bindload="onCoverLoad" binderror="onHeroImgError" />
+        <image wx:if="{{guide.coverImage}}" src="{{guide.displayCoverUrl}}" class="hero-img" mode="widthFix" bindtap="previewCover" bindload="onCoverLoad" binderror="onHeroImgError" />
         <view wx:else class="hero-fallback">
           <image wx:if="{{guide.iconUrl}}" src="{{guide.displayIconUrl}}" class="hero-icon-img" bindload="onIconLoad" binderror="onIconErr" />
           <text wx:else class="hero-emoji">{{guide.emoji}}</text>
@@ -73,7 +73,11 @@
     <!-- Price Info -->
     <view wx:if="{{hasPrice}}" class="price-card">
       <view class="price-row">
-        <text class="price-name">{{guide.displayName || guide.name}}</text>
+        <view class="price-info">
+          <text class="price-name">{{guide.displayName || guide.name}}</text>
+          <text wx:if="{{guide.displaySubtitle}}" class="price-subtitle">{{guide.displaySubtitle}}</text>
+          <text wx:if="{{guide.displayDescription}}" class="price-desc">{{guide.displayDescription}}</text>
+        </view>
         <view class="price-values">
           <text wx:if="{{displayListPrice}}" class="price-now">{{displayListPrice}}</text>
           <text wx:if="{{displayOriginPrice}}" class="price-origin">{{displayOriginPrice}}</text>
