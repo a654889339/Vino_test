@@ -4,6 +4,7 @@ import "time"
 
 type ServiceCategory struct {
 	ID        int       `gorm:"primaryKey" json:"id"`
+	Versioned
 	Name      string    `gorm:"size:100;not null" json:"name"`
 	Bg        *string   `gorm:"size:50" json:"bg"`
 	BgOpacity *float64  `gorm:"column:bgOpacity;type:decimal(5,2)" json:"bgOpacity"`
@@ -20,6 +21,7 @@ func (ServiceCategory) TableName() string { return "service_categories" }
 
 type Service struct {
 	ID             int      `gorm:"primaryKey" json:"id"`
+	Versioned
 	Title          string   `gorm:"size:200;not null" json:"title"`
 	Description    string   `gorm:"type:text" json:"description"`
 	Icon           string   `gorm:"size:500" json:"icon"`
@@ -47,6 +49,7 @@ func (Service) TableName() string { return "services" }
 
 type ProductCategory struct {
 	ID              int       `gorm:"primaryKey" json:"id"`
+	Versioned
 	Name            string    `gorm:"size:100;not null" json:"name"`
 	ThumbnailURL    *string   `gorm:"column:thumbnail_url;size:1024" json:"thumbnailUrl"`
 	NameEn          string    `gorm:"column:nameEn;size:100" json:"nameEn"`
@@ -61,6 +64,7 @@ func (ProductCategory) TableName() string { return "product_categories" }
 
 type HomeConfig struct {
 	ID               int       `gorm:"primaryKey" json:"id"`
+	Versioned
 	Section          string    `gorm:"size:50;not null" json:"section"`
 	Title            string    `gorm:"size:100" json:"title"`
 	Desc             string    `gorm:"size:200" json:"desc"`
@@ -85,6 +89,7 @@ func (HomeConfig) TableName() string { return "home_configs" }
 
 type OutletServiceCategory struct {
 	ID        int       `gorm:"primaryKey" json:"id"`
+	Versioned
 	Name      string    `gorm:"size:100;not null" json:"name"`
 	Bg        *string   `gorm:"size:50" json:"bg"`
 	BgOpacity *float64  `gorm:"column:bgOpacity;type:decimal(5,2)" json:"bgOpacity"`
@@ -100,6 +105,7 @@ func (OutletServiceCategory) TableName() string { return "outlet_service_categor
 
 type OutletService struct {
 	ID          int      `gorm:"primaryKey" json:"id"`
+	Versioned
 	Title       string   `gorm:"size:200;not null" json:"title"`
 	Description string   `gorm:"type:text" json:"description"`
 	Icon        string   `gorm:"size:500" json:"icon"`
@@ -122,6 +128,7 @@ func (OutletService) TableName() string { return "outlet_services" }
 
 type OutletHomeConfig struct {
 	ID            int       `gorm:"primaryKey" json:"id"`
+	Versioned
 	Section       string    `gorm:"size:50;not null" json:"section"`
 	Title         string    `gorm:"size:100" json:"title"`
 	Desc          string    `gorm:"size:200" json:"desc"`

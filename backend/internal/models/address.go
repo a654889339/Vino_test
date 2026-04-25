@@ -4,6 +4,7 @@ import "time"
 
 type Address struct {
 	ID             int       `gorm:"primaryKey" json:"id"`
+	Versioned
 	UserID         int       `gorm:"column:userId;not null;index" json:"userId"`
 	ContactName    string    `gorm:"column:contactName;size:50;not null" json:"contactName"`
 	ContactPhone   string    `gorm:"column:contactPhone;size:20;not null" json:"contactPhone"`
@@ -22,6 +23,7 @@ func (Address) TableName() string { return "addresses" }
 
 type OutletAddress struct {
 	ID            int       `gorm:"primaryKey" json:"id"`
+	Versioned
 	UserID        int       `gorm:"column:userId;not null" json:"userId"`
 	ContactName   string    `gorm:"column:contactName;size:50;not null" json:"contactName"`
 	ContactPhone  string    `gorm:"column:contactPhone;size:20;not null" json:"contactPhone"`

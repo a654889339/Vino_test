@@ -5,6 +5,7 @@ import "time"
 // GoodsOrder 商品订单（购物车下单）
 type GoodsOrder struct {
 	ID           int       `gorm:"primaryKey" json:"id"`
+	Versioned
 	OrderNo      string    `gorm:"column:orderNo;size:32;not null;uniqueIndex:uq_goods_orders_orderNo" json:"orderNo"`
 	UserID       int       `gorm:"column:userId;not null;index:idx_goods_orders_userId_createdAt,priority:1" json:"userId"`
 	Status       string    `gorm:"type:enum('pending','paid','processing','completed','cancelled');default:pending;index:idx_goods_orders_status_createdAt,priority:1" json:"status"`
@@ -25,6 +26,7 @@ func (GoodsOrder) TableName() string { return "goods_orders" }
 
 type GoodsOrderItem struct {
 	ID           int     `gorm:"primaryKey" json:"id"`
+	Versioned
 	OrderID      int     `gorm:"column:orderId;not null;index:idx_goods_order_items_orderId" json:"orderId"`
 	GuideID      int     `gorm:"column:guideId;not null;index:idx_goods_order_items_guideId" json:"guideId"`
 	NameSnapshot string  `gorm:"column:nameSnapshot;size:200" json:"nameSnapshot"`
@@ -43,6 +45,7 @@ func (GoodsOrderItem) TableName() string { return "goods_order_items" }
 // GoodsOrderLog 商品订单变更日志
 type GoodsOrderLog struct {
 	ID         int       `gorm:"primaryKey" json:"id"`
+	Versioned
 	OrderID    int       `gorm:"column:orderId;not null;index" json:"orderId"`
 	ChangeType string    `gorm:"column:changeType;type:enum('status','price','admin_remark');not null" json:"changeType"`
 	OldValue   string    `gorm:"column:oldValue;size:500" json:"oldValue"`

@@ -4,6 +4,7 @@ import "time"
 
 type Message struct {
 	ID        int       `gorm:"primaryKey" json:"id"`
+	Versioned
 	UserID    int       `gorm:"column:userId;not null;index" json:"userId"`
 	Sender    string    `gorm:"type:enum('user','admin');not null;default:user" json:"sender"`
 	Content   string    `gorm:"type:text;not null" json:"content"`
@@ -17,6 +18,7 @@ func (Message) TableName() string { return "messages" }
 
 type OutletMessage struct {
 	ID        int       `gorm:"primaryKey" json:"id"`
+	Versioned
 	UserID    int       `gorm:"column:userId;not null;index" json:"userId"`
 	Sender    string    `gorm:"type:enum('user','admin');not null;default:user" json:"sender"`
 	Content   string    `gorm:"type:text;not null" json:"content"`

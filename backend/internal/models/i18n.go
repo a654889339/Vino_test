@@ -4,6 +4,7 @@ import "time"
 
 type I18nText struct {
 	ID        int       `gorm:"primaryKey" json:"id"`
+	Versioned
 	Key       string    `gorm:"size:100;not null;uniqueIndex" json:"key"`
 	Zh        string    `gorm:"size:500;not null" json:"zh"`
 	En        string    `gorm:"size:500;not null" json:"en"`

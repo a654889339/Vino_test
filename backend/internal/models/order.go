@@ -4,6 +4,7 @@ import "time"
 
 type Order struct {
 	ID              int        `gorm:"primaryKey" json:"id"`
+	Versioned
 	OrderNo         string     `gorm:"column:orderNo;size:32;not null;uniqueIndex:orderNo" json:"orderNo"`
 	UserID          int        `gorm:"column:userId;not null;index" json:"userId"`
 	ServiceID       *int       `gorm:"column:serviceId" json:"serviceId"`
@@ -30,6 +31,7 @@ func (Order) TableName() string { return "orders" }
 
 type OrderLog struct {
 	ID         int       `gorm:"primaryKey" json:"id"`
+	Versioned
 	OrderID    int       `gorm:"column:orderId;not null;index" json:"orderId"`
 	ChangeType string    `gorm:"column:changeType;type:enum('status','price','admin_remark');not null" json:"changeType"`
 	OldValue   string    `gorm:"column:oldValue;size:500" json:"oldValue"`
@@ -42,6 +44,7 @@ func (OrderLog) TableName() string { return "order_logs" }
 
 type OutletOrder struct {
 	ID              int        `gorm:"primaryKey" json:"id"`
+	Versioned
 	OrderNo         string     `gorm:"column:orderNo;size:32;not null;uniqueIndex:outlet_orders_orderNo" json:"orderNo"`
 	UserID          int        `gorm:"column:userId;not null" json:"userId"`
 	ServiceID       *int       `gorm:"column:serviceId" json:"serviceId"`
@@ -64,6 +67,7 @@ func (OutletOrder) TableName() string { return "outlet_orders" }
 
 type OutletOrderLog struct {
 	ID         int       `gorm:"primaryKey" json:"id"`
+	Versioned
 	OrderID    int       `gorm:"column:orderId;not null" json:"orderId"`
 	ChangeType string    `gorm:"column:changeType;type:enum('status','price','admin_remark');not null" json:"changeType"`
 	OldValue   string    `gorm:"column:oldValue;size:500" json:"oldValue"`

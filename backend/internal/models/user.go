@@ -4,6 +4,7 @@ import "time"
 
 type User struct {
 	ID          int        `gorm:"primaryKey" json:"id"`
+	Versioned
 	Username    string     `gorm:"size:50;not null;uniqueIndex:username" json:"username"`
 	Email       *string    `gorm:"size:255;uniqueIndex:email" json:"email"`
 	Password    string     `gorm:"size:255;not null" json:"-"`
@@ -28,6 +29,7 @@ func (User) TableName() string { return "users" }
 
 type OutletUser struct {
 	ID        int       `gorm:"primaryKey" json:"id"`
+	Versioned
 	Username  string    `gorm:"size:50;not null;uniqueIndex:outlet_users_username" json:"username"`
 	Email     *string   `gorm:"size:255;uniqueIndex:outlet_users_email" json:"email"`
 	Password  string    `gorm:"size:255;not null" json:"-"`

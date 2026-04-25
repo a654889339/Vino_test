@@ -8,6 +8,7 @@ import (
 
 type DeviceGuide struct {
 	ID                 int            `gorm:"primaryKey" json:"id"`
+	Versioned
 	Name               string         `gorm:"size:100;not null" json:"name"`
 	Slug               *string        `gorm:"size:100;uniqueIndex:slug" json:"slug"`
 	Subtitle           string         `gorm:"size:200" json:"subtitle"`

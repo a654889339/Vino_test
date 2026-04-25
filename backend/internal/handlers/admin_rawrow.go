@@ -24,8 +24,8 @@ type tableSpec struct {
 	sensitive []string
 }
 
-// 基线只读列集合：主键 id / 时间戳
-var baseReadonly = []string{"id", "createdAt", "updatedAt", "created_at", "updated_at"}
+// 基线只读列集合：主键 id / 时间戳 / 行版本号
+var baseReadonly = []string{"id", "version", "createdAt", "updatedAt", "created_at", "updated_at"}
 
 // 白名单：只放管理员真正会去「详情/修改」的业务表。
 var rawRowTableSpecs = map[string]tableSpec{

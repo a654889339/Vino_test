@@ -20,9 +20,29 @@ import (
 
 func main() {
 	cfg := config.Load()
+	if err := stat.Init(cfg.Log.StatDir); err != nil {
+		log.Printf("[Vino] stat log dir: %v", err)
+	}
 	if err := db.Connect(cfg); err != nil {
 		log.Fatalf("[Vino] DB connect: %v", err)
 	}
+	versionMigration := db.MigrateVersionColumns()
+	versionMigrationStatus := "success"
+	if len(versionMigration.FailedTables) > 0 {
+		versionMigrationStatus = "failed"
+	}
+	stat.Record("system", map[string]interface{}{
+		"source":        "system",
+		"action":        "system.schema.version_columns",
+		"tables":        versionMigration.CheckedTables,
+		"addedTables":   versionMigration.AddedTables,
+		"failedTables":  versionMigration.FailedTables,
+		"checkedCount":  len(versionMigration.CheckedTables),
+		"addedCount":    len(versionMigration.AddedTables),
+		"failedCount":   len(versionMigration.FailedTables),
+		"schemaVersion": db.CurrentSchemaVersion,
+		"status":        versionMigrationStatus,
+	})
 	if err := db.AutoMigrate(); err != nil {
 		// 与已有 MySQL 表结构不完全一致时仅告警，避免进程退出（可手工对齐外键/列类型）
 		log.Printf("[Vino] AutoMigrate: %v", err)
@@ -36,9 +56,6 @@ func main() {
 		log.Printf("[Vino] COS 密钥未就绪: 审计日志仅写本地目录 %s；配置 COS_SECRET_ID/COS_SECRET_KEY 并重启后可自动上云", cfg.Log.BackendDir)
 	}
 	audit.StartUploader(cfg)
-	if err := stat.Init(cfg.Log.StatDir); err != nil {
-		log.Printf("[Vino] stat log dir: %v", err)
-	}
 	stat.Record("system", map[string]interface{}{
 		"source": "system",
 		"action": "system.backend_start",
