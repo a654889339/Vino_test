@@ -1,6 +1,14 @@
 const app = getApp();
 const i18n = require('../../utils/i18n.js');
 
+const GOODS_ORDER_STAT_GROUPS = {
+  pendingPay: ['pending'],
+  pendingShipment: ['paid'],
+  pendingReceipt: ['processing'],
+  pendingReview: ['completed'],
+  afterSales: ['after_sale', 'after-sales', 'refund', 'refunding', 'refunded'],
+};
+
 Page({
   data: {
     userInfo: null,
@@ -10,6 +18,8 @@ Page({
     maskedPhone: '',
     profileHeaderStyle: 'background: linear-gradient(135deg, #B91C1C, #7F1D1D);',
     stats: [],
+    cartPreviewItems: [],
+    cartTotalCount: 0,
     menus: [],
     i18n: {},
   },
@@ -31,24 +41,31 @@ Page({
 
   refreshI18n() {
     i18n.setNavTitle('mine.title');
-    const vals = this.data.stats.map(s => s.value);
+    const vals = {};
+    this.data.stats.forEach(s => { vals[s.key] = s.value; });
     this.setData({
       i18n: {
         user: i18n.t('mine.user'),
         tapLogin: i18n.t('mine.tapLogin'),
         loginBenefits: i18n.t('mine.loginBenefits'),
         logout: i18n.t('mine.logout'),
+        myOrders: i18n.t('我的订单', 'My Orders'),
+        viewAllOrders: i18n.t('查看全部订单', 'View All'),
+        myCart: i18n.t('我的购物车', 'My Cart'),
+        view: i18n.t('查看', 'View'),
+        total: i18n.t('共', 'Total'),
+        itemUnit: i18n.t('件', 'items'),
+        cartEmpty: i18n.t('购物车是空的', 'Cart is empty'),
       },
       stats: [
-        { label: i18n.t('mine.pendingPay'), value: vals[0] || 0 },
-        { label: i18n.t('mine.inProgress'), value: vals[1] || 0 },
-        { label: i18n.t('mine.pendingReview'), value: vals[2] || 0 },
-        { label: i18n.t('mine.afterSales'), value: vals[3] || 0 },
+        { key: 'pendingPay', label: i18n.t('待付款', 'Pending'), value: vals.pendingPay || 0, iconText: '▱' },
+        { key: 'pendingShipment', label: i18n.t('待发货', 'To Ship'), value: vals.pendingShipment || 0, iconText: '↝' },
+        { key: 'pendingReceipt', label: i18n.t('待收货', 'To Receive'), value: vals.pendingReceipt || 0, iconText: '▣' },
+        { key: 'pendingReview', label: i18n.t('待评价', 'To Review'), value: vals.pendingReview || 0, iconText: '□' },
+        { key: 'afterSales', label: i18n.t('退款/售后', 'Refund/After-sales'), value: vals.afterSales || 0, iconText: '↻' },
       ],
       menus: [
         { title: '服务订单', icon: '/images/icons/mine-orders.svg', url: '/pages/orders/orders' },
-        { title: '商品订单', icon: '/images/icons/mine-orders.svg', url: '/pages/goods-orders/goods-orders' },
-        { title: '我的购物车', icon: '/images/icons/mine-bag.svg', url: '/pages/cart/cart' },
         { title: i18n.t('mine.products'), icon: '/images/icons/mine-bag.svg', url: '/pages/my-products/my-products' },
         { title: i18n.t('mine.address'), icon: '/images/icons/mine-location.svg', url: '/pages/address/address' },
         { title: i18n.t('mine.feedback'), icon: '/images/icons/mine-comment.svg', url: '', chat: true },
@@ -78,17 +95,25 @@ Page({
           const user = res.data || {};
           app.globalData.userInfo = user;
           this.applyUserData(user);
+          this.loadGoodsOrderStats();
+          this.loadCartSummary();
         })
         .catch(() => {
           app.clearToken();
           this.setData({ userInfo: null, isLoggedIn: false, avatarUrl: '', avatarInitial: 'V' });
+          this.resetGoodsOrderStats();
+          this.resetCartSummary();
         });
     } else {
       const user = app.globalData.userInfo || null;
       if (user) {
         this.applyUserData(user);
+        this.loadGoodsOrderStats();
+        this.loadCartSummary();
       } else {
         this.setData({ userInfo: null, isLoggedIn: isLoggedIn, avatarUrl: '', avatarInitial: 'V' });
+        this.resetGoodsOrderStats();
+        this.resetCartSummary();
       }
     }
   },
@@ -100,12 +125,100 @@ Page({
     this.setData({ userInfo: user, isLoggedIn: true, avatarInitial: initial, avatarUrl, maskedPhone });
   },
 
+  resetGoodsOrderStats() {
+    this.setGoodsOrderStats({
+      pendingPay: 0,
+      pendingShipment: 0,
+      pendingReceipt: 0,
+      pendingReview: 0,
+      afterSales: 0,
+    });
+  },
+
+  setGoodsOrderStats(values) {
+    const labels = {
+      pendingPay: i18n.t('待付款', 'Pending') || '待付款',
+      pendingShipment: i18n.t('待发货', 'To Ship') || '待发货',
+      pendingReceipt: i18n.t('待收货', 'To Receive') || '待收货',
+      pendingReview: i18n.t('待评价', 'To Review') || '待评价',
+      afterSales: i18n.t('退款/售后', 'Refund/After-sales') || '退款/售后',
+    };
+    this.setData({
+      stats: [
+        { key: 'pendingPay', label: labels.pendingPay, value: values.pendingPay || 0, iconText: '▱' },
+        { key: 'pendingShipment', label: labels.pendingShipment, value: values.pendingShipment || 0, iconText: '↝' },
+        { key: 'pendingReceipt', label: labels.pendingReceipt, value: values.pendingReceipt || 0, iconText: '▣' },
+        { key: 'pendingReview', label: labels.pendingReview, value: values.pendingReview || 0, iconText: '□' },
+        { key: 'afterSales', label: labels.afterSales, value: values.afterSales || 0, iconText: '↻' },
+      ],
+    });
+  },
+
+  loadGoodsOrderStats() {
+    if (!app.isLoggedIn()) {
+      this.resetGoodsOrderStats();
+      return;
+    }
+    const tasks = Object.keys(GOODS_ORDER_STAT_GROUPS).map((key) => {
+      const statuses = GOODS_ORDER_STAT_GROUPS[key];
+      return Promise.all(statuses.map((status) => app.request({
+        url: '/goods-orders',
+        data: { status, page: 1, pageSize: 1 },
+      }).then(res => Number((res.data && res.data.total) || 0)).catch(() => 0)))
+        .then(totals => ({ key, value: totals.reduce((sum, n) => sum + n, 0) }));
+    });
+    Promise.all(tasks)
+      .then((items) => {
+        const values = {};
+        items.forEach(item => { values[item.key] = item.value; });
+        this.setGoodsOrderStats(values);
+      })
+      .catch(() => this.resetGoodsOrderStats());
+  },
+
+  resetCartSummary() {
+    this.setData({ cartPreviewItems: [], cartTotalCount: 0 });
+  },
+
+  loadCartSummary() {
+    if (!app.isLoggedIn()) {
+      this.resetCartSummary();
+      return;
+    }
+    app.request({ url: '/cart' })
+      .then((res) => {
+        const d = res.data || {};
+        const items = (d.items || []).slice(0, 3).map((x) => ({
+          ...x,
+          imageUrl: x.imageUrl ? (String(x.imageUrl).startsWith('http') ? x.imageUrl : app.globalData.baseUrl.replace('/api', '') + x.imageUrl) : '',
+        }));
+        const total = Number(d.totalCount || (d.items || []).reduce((sum, x) => sum + (Number(x.qty) || 0), 0));
+        this.setData({ cartPreviewItems: items, cartTotalCount: total });
+      })
+      .catch(() => this.resetCartSummary());
+  },
+
   onProfileTap() {
     if (!app.isLoggedIn()) {
       wx.navigateTo({ url: '/pages/login/login' });
     } else {
       wx.navigateTo({ url: '/pages/profile-edit/profile-edit' });
     }
+  },
+
+  onStatTap(e) {
+    const statusGroup = e.currentTarget.dataset.statusGroup || '';
+    wx.navigateTo({
+      url: '/pages/goods-orders/goods-orders?statusGroup=' + encodeURIComponent(statusGroup),
+    });
+  },
+
+  onAllGoodsOrdersTap() {
+    wx.navigateTo({ url: '/pages/goods-orders/goods-orders' });
+  },
+
+  onCartTap() {
+    wx.navigateTo({ url: '/pages/cart/cart' });
   },
 
   onMenuTap(e) {
@@ -144,6 +257,8 @@ Page({
         if (res.confirm) {
           app.clearToken();
           this.setData({ userInfo: null, isLoggedIn: false, avatarUrl: '', avatarInitial: 'V' });
+          this.resetGoodsOrderStats();
+          this.resetCartSummary();
           wx.showToast({ title: i18n.t('mine.loggedOut'), icon: 'success' });
         }
       },

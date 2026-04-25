@@ -21,17 +21,41 @@
       </div>
     </div>
 
-    <div class="stats-row">
-      <div class="stat-item" v-for="s in stats" :key="s.label">
-        <span class="stat-num">{{ s.value }}</span>
-        <span class="stat-label">{{ s.label }}</span>
+    <section class="mine-section order-section">
+      <div class="section-head">
+        <h3>{{ t('我的订单', 'My Orders') }}</h3>
+        <button type="button" class="section-link" @click="openGoodsOrders()">{{ t('查看全部订单', 'View All') }} ›</button>
       </div>
-    </div>
+      <div class="order-card">
+        <div class="order-stat-item" v-for="s in stats" :key="s.key" @click="openGoodsOrders(s.key)">
+          <div class="order-icon-wrap">
+            <van-icon :name="s.icon" size="22" />
+            <span v-if="s.value > 0" class="order-badge">{{ s.value }}</span>
+          </div>
+          <span class="order-stat-label">{{ s.label }}</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="mine-section cart-section">
+      <div class="section-head">
+        <h3>{{ t('我的购物车', 'My Cart') }}</h3>
+        <button type="button" class="section-link" @click="router.push('/cart')">{{ t('查看', 'View') }} ›</button>
+      </div>
+      <div class="cart-summary-card" @click="router.push('/cart')">
+        <div class="cart-preview-list" v-if="cartPreviewItems.length">
+          <div class="cart-preview-item" v-for="item in cartPreviewItems" :key="item.guideId">
+            <img v-if="cartLineImage(item)" :src="fullUrl(cartLineImage(item))" alt="" />
+            <van-icon v-else name="photo-o" size="28" color="#cbd5e1" />
+          </div>
+        </div>
+        <div class="cart-empty-preview" v-else>{{ t('购物车是空的', 'Cart is empty') }}</div>
+        <div class="cart-total-text">{{ t('共', 'Total') }} {{ cartTotalCount }} {{ t('件', 'items') }}</div>
+      </div>
+    </section>
 
     <van-cell-group inset class="menu-group">
       <van-cell :title="isEn ? 'Service orders' : '服务订单'" icon="orders-o" is-link to="/orders" />
-      <van-cell title="商品订单" icon="bag-o" is-link to="/goods-orders" />
-      <van-cell title="我的购物车" icon="cart-o" is-link to="/cart" />
       <van-cell :title="t('mine.products')" icon="bag-o" is-link to="/mine/products" />
       <van-cell :title="t('mine.address')" icon="location-o" is-link to="/address" />
     </van-cell-group>
@@ -65,7 +89,7 @@ import { ref, inject, onMounted, computed } from 'vue';
 import { useUserStore } from '@/stores/user';
 import { useRouter } from 'vue-router';
 import { showToast } from 'vant';
-import { homeConfigApi } from '@/api';
+import { cartApi, goodsOrderApi, homeConfigApi } from '@/api';
 import PageThemeLayer from '@/components/PageThemeLayer.vue';
 import { copyTextToClipboardSync } from '@/utils/clipboard';
 import { t, isEn } from '@/utils/i18n';
@@ -81,6 +105,16 @@ const profileSubtitle = computed(() => {
   if (u.email) return u.email;
   return t('mine.noPhone');
 });
+
+const goodsOrderStats = ref({
+  pendingPay: 0,
+  pendingShipment: 0,
+  pendingReceipt: 0,
+  pendingReview: 0,
+  afterSales: 0,
+});
+const cartPreviewItems = ref([]);
+const cartTotalCount = ref(0);
 
 const onProfileHeaderClick = () => {
   if (userStore.isLoggedIn) {
@@ -133,11 +167,85 @@ const onContactCopy = () => {
 };
 
 const stats = computed(() => [
-  { label: t('mine.pendingPay'), value: 0 },
-  { label: t('mine.inProgress'), value: 0 },
-  { label: t('mine.pendingReview'), value: 0 },
-  { label: t('mine.afterSales'), value: 0 },
+  { key: 'pendingPay', label: t('待付款', 'Pending'), value: goodsOrderStats.value.pendingPay, icon: 'balance-pay' },
+  { key: 'pendingShipment', label: t('待发货', 'To Ship'), value: goodsOrderStats.value.pendingShipment, icon: 'logistics' },
+  { key: 'pendingReceipt', label: t('待收货', 'To Receive'), value: goodsOrderStats.value.pendingReceipt, icon: 'completed' },
+  { key: 'pendingReview', label: t('待评价', 'To Review'), value: goodsOrderStats.value.pendingReview, icon: 'comment-o' },
+  { key: 'afterSales', label: t('退款/售后', 'Refund/After-sales'), value: goodsOrderStats.value.afterSales, icon: 'replay' },
 ]);
+
+const GOODS_ORDER_STAT_GROUPS = {
+  pendingPay: ['pending'],
+  pendingShipment: ['paid'],
+  pendingReceipt: ['processing'],
+  pendingReview: ['completed'],
+  afterSales: ['after_sale', 'after-sales', 'refund', 'refunding', 'refunded'],
+};
+
+const emptyGoodsOrderStats = () => ({
+  pendingPay: 0,
+  pendingShipment: 0,
+  pendingReceipt: 0,
+  pendingReview: 0,
+  afterSales: 0,
+});
+
+const BASE = import.meta.env.VITE_API_BASE || '';
+function fullUrl(url) {
+  if (!url) return '';
+  if (url.startsWith('http')) return url;
+  return BASE.replace('/api', '') + url;
+}
+
+function cartLineImage(row) {
+  if (!row) return '';
+  return row.imageUrl || row.imageURL || '';
+}
+
+const openGoodsOrders = (statusGroup) => {
+  router.push(statusGroup ? { path: '/goods-orders', query: { statusGroup } } : { path: '/goods-orders' });
+};
+
+const loadGoodsOrderStats = async () => {
+  if (!userStore.isLoggedIn) {
+    goodsOrderStats.value = emptyGoodsOrderStats();
+    return;
+  }
+  try {
+    const entries = await Promise.all(Object.entries(GOODS_ORDER_STAT_GROUPS).map(async ([key, statuses]) => {
+      const totals = await Promise.all(statuses.map(async (status) => {
+        try {
+          const res = await goodsOrderApi.list({ status, page: 1, pageSize: 1 });
+          return Number(res.data?.total || 0);
+        } catch {
+          return 0;
+        }
+      }));
+      return [key, totals.reduce((sum, n) => sum + n, 0)];
+    }));
+    goodsOrderStats.value = Object.fromEntries(entries);
+  } catch {
+    goodsOrderStats.value = emptyGoodsOrderStats();
+  }
+};
+
+const loadCartSummary = async () => {
+  if (!userStore.isLoggedIn) {
+    cartPreviewItems.value = [];
+    cartTotalCount.value = 0;
+    return;
+  }
+  try {
+    const res = await cartApi.get();
+    const d = res.data || {};
+    const items = Array.isArray(d.items) ? d.items : [];
+    cartPreviewItems.value = items.slice(0, 3);
+    cartTotalCount.value = Number(d.totalCount || items.reduce((sum, item) => sum + (Number(item.qty) || 0), 0));
+  } catch {
+    cartPreviewItems.value = [];
+    cartTotalCount.value = 0;
+  }
+};
 
 onMounted(async () => {
   if (userStore.isLoggedIn && !userStore.userInfo) {
@@ -153,6 +261,8 @@ onMounted(async () => {
     const mineBg = items.find(i => i.section === 'mineBg' && i.status === 'active');
     if (mineBg && mineBg.imageUrl) mineBgImageUrl.value = mineBg.imageUrl;
   } catch (_) {}
+  loadGoodsOrderStats();
+  loadCartSummary();
 });
 
 const handleLogout = () => {
@@ -215,34 +325,133 @@ const handleLogout = () => {
   font-size: 14px;
 }
 
-.stats-row {
+.mine-section {
   position: relative;
   z-index: 1;
-  display: flex;
-  background: var(--vino-card);
-  padding: 20px 0;
-  margin-bottom: 8px;
+  margin: 0 12px 14px;
 }
 
-.stat-item {
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px 9px;
+}
+
+.section-head h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--vino-dark);
+}
+
+.section-link {
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: var(--vino-text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.order-card,
+.cart-summary-card {
+  background: var(--vino-card);
+  border-radius: 18px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+}
+
+.order-card {
+  display: flex;
+  padding: 16px 8px;
+}
+
+.order-stat-item {
   flex: 1;
-  text-align: center;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  align-items: center;
+  gap: 8px;
+  color: #0f4f3c;
+  cursor: pointer;
 }
 
-.stat-num {
-  font-size: 20px;
+.order-icon-wrap {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.order-badge {
+  position: absolute;
+  top: -8px;
+  right: -14px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #ef5b63;
+  color: #fff;
+  font-size: 10px;
   font-weight: 700;
-  color: var(--vino-dark);
-  letter-spacing: -0.02em;
+  line-height: 16px;
+  text-align: center;
 }
 
-.stat-label {
+.order-stat-label {
   font-size: 12px;
-  color: var(--vino-text-secondary);
   font-weight: 500;
+  color: var(--vino-dark);
+}
+
+.cart-summary-card {
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px;
+  cursor: pointer;
+}
+
+.cart-preview-list {
+  flex: 1;
+  display: flex;
+  gap: 10px;
+  min-width: 0;
+}
+
+.cart-preview-item {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cart-preview-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cart-empty-preview {
+  flex: 1;
+  color: var(--vino-text-secondary);
+  font-size: 13px;
+}
+
+.cart-total-text {
+  flex-shrink: 0;
+  color: var(--vino-text-secondary);
+  font-size: 14px;
+  white-space: nowrap;
 }
 
 .menu-group {

@@ -5,7 +5,7 @@
     <van-loading v-if="loading" class="page-loading" size="36" vertical>{{ t('common.loading') }}</van-loading>
 
     <template v-else-if="!list.length">
-      <van-empty description="暂无订单" />
+      <van-empty :description="emptyText" />
     </template>
 
     <template v-else>
@@ -31,16 +31,40 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { computed, ref, onMounted, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { showToast } from 'vant';
 import { goodsOrderApi } from '@/api';
 import { formatPriceDisplay } from '@/utils/currency';
 import { t } from '@/utils/i18n';
 
 const router = useRouter();
+const route = useRoute();
 const loading = ref(true);
 const list = ref([]);
+
+const GOODS_ORDER_STATUS_GROUPS = {
+  pendingPay: ['pending'],
+  pendingShipment: ['paid'],
+  pendingReceipt: ['processing'],
+  pendingReview: ['completed'],
+  afterSales: ['after_sale', 'after-sales', 'refund', 'refunding', 'refunded'],
+};
+
+const statusGroupText = {
+  pendingPay: '待付款',
+  pendingShipment: '待发货',
+  pendingReceipt: '待收货',
+  pendingReview: '待评价',
+  afterSales: '退款/售后',
+};
+
+const currentStatusGroup = computed(() => String(route.query.statusGroup || ''));
+const currentStatuses = computed(() => GOODS_ORDER_STATUS_GROUPS[currentStatusGroup.value] || []);
+const emptyText = computed(() => {
+  const label = statusGroupText[currentStatusGroup.value];
+  return label ? `暂无${label}商品订单` : '暂无订单';
+});
 
 function formatTime(s) {
   if (!s) return '';
@@ -66,6 +90,7 @@ function open(o) {
 }
 
 async function load() {
+  loading.value = true;
   const token = localStorage.getItem('vino_token');
   if (!token) {
     loading.value = false;
@@ -74,8 +99,16 @@ async function load() {
     return;
   }
   try {
-    const res = await goodsOrderApi.list({ page: 1, pageSize: 50 });
-    list.value = res.data?.list || [];
+    const statuses = currentStatuses.value;
+    if (statuses.length) {
+      const results = await Promise.all(statuses.map((status) => goodsOrderApi.list({ status, page: 1, pageSize: 50 })));
+      list.value = results
+        .flatMap((res) => res.data?.list || [])
+        .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+    } else {
+      const res = await goodsOrderApi.list({ page: 1, pageSize: 50 });
+      list.value = res.data?.list || [];
+    }
   } catch {
     list.value = [];
   } finally {
@@ -84,6 +117,7 @@ async function load() {
 }
 
 onMounted(load);
+watch(() => route.query.statusGroup, load);
 </script>
 
 <style scoped>

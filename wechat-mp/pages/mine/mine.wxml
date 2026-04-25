@@ -10,10 +10,36 @@
     </view>
   </view>
 
-  <view class="stats-row">
-    <view class="stat-item" wx:for="{{stats}}" wx:key="label">
-      <text class="stat-num">{{item.value}}</text>
-      <text class="stat-label">{{item.label}}</text>
+  <view class="mine-section">
+    <view class="section-head">
+      <text class="section-title">{{i18n.myOrders}}</text>
+      <text class="section-link" bindtap="onAllGoodsOrdersTap">{{i18n.viewAllOrders}} ›</text>
+    </view>
+    <view class="order-card">
+      <view class="order-stat-item" wx:for="{{stats}}" wx:key="key" data-status-group="{{item.key}}" bindtap="onStatTap">
+        <view class="order-icon-wrap">
+          <text class="order-icon-text">{{item.iconText}}</text>
+          <text wx:if="{{item.value > 0}}" class="order-badge">{{item.value}}</text>
+        </view>
+        <text class="order-stat-label">{{item.label}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="mine-section">
+    <view class="section-head">
+      <text class="section-title">{{i18n.myCart}}</text>
+      <text class="section-link" bindtap="onCartTap">{{i18n.view}} ›</text>
+    </view>
+    <view class="cart-summary-card" bindtap="onCartTap">
+      <view wx:if="{{cartPreviewItems.length}}" class="cart-preview-list">
+        <view class="cart-preview-item" wx:for="{{cartPreviewItems}}" wx:key="guideId">
+          <image wx:if="{{item.imageUrl}}" src="{{item.imageUrl}}" mode="aspectFill" />
+          <text wx:else class="cart-preview-empty">图</text>
+        </view>
+      </view>
+      <text wx:else class="cart-empty-text">{{i18n.cartEmpty}}</text>
+      <text class="cart-total-text">{{i18n.total}} {{cartTotalCount}} {{i18n.itemUnit}}</text>
     </view>
   </view>
 

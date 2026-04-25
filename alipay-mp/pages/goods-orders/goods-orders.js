@@ -2,6 +2,14 @@ const app = getApp();
 const i18n = require('../../utils/i18n.js');
 const currencyUtil = require('../../utils/currency.js');
 
+const GOODS_ORDER_STATUS_GROUPS = {
+  pendingPay: ['pending'],
+  pendingShipment: ['paid'],
+  pendingReceipt: ['processing'],
+  pendingReview: ['completed'],
+  afterSales: ['after_sale', 'after-sales', 'refund', 'refunding', 'refunded'],
+};
+
 function formatTime(s) {
   if (!s) return '';
   const d = new Date(s);
@@ -26,7 +34,12 @@ Page({
     loading: true,
     isLoggedIn: false,
     list: [],
+    statusGroup: '',
     i18n: { loading: '' },
+  },
+
+  onLoad(options) {
+    this.setData({ statusGroup: options && options.statusGroup ? decodeURIComponent(options.statusGroup) : '' });
   },
 
   onShow() {
@@ -46,10 +59,17 @@ Page({
       this.setData({ loading: false, list: [] });
       return;
     }
-    app.request({ url: '/goods-orders', data: { page: 1, pageSize: 50 } })
-      .then((res) => {
+    const statuses = GOODS_ORDER_STATUS_GROUPS[this.data.statusGroup] || [];
+    const requests = statuses.length
+      ? statuses.map(status => app.request({ url: '/goods-orders', data: { status, page: 1, pageSize: 50 } }))
+      : [app.request({ url: '/goods-orders', data: { page: 1, pageSize: 50 } })];
+    Promise.all(requests)
+      .then((results) => {
         const sym = app.globalData.currencySymbol;
-        const list = (res.data && res.data.list ? res.data.list : []).map((o) => ({
+        const rows = results
+          .reduce((all, res) => all.concat((res.data && res.data.list) ? res.data.list : []), [])
+          .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+        const list = rows.map((o) => ({
           ...o,
           timeText: formatTime(o.createdAt),
           totalText: currencyUtil.formatPriceDisplay(o.totalPrice, o.currency || sym) || '—',
