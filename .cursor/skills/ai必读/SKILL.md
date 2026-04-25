@@ -130,6 +130,8 @@ Vino_test 的主用户表 `users` 支持三种角色：
 - **推荐（全局）**：在专用表（如 `app_meta`，`key='schema_version'` / 单列 `version`）存**整数** schema 版本；启动或首次访问时检查并执行迁移链。
 - **可选（按实体）**：若某业务表行级历史差异大，可在该表增加 **`data_version`（或沿用单列 `version`）** 整型字段，表示**该行**的数据形态版本；读该行时若 `version < 当前代码期望版本`，则走升级逻辑并 **写回** 新版本号。
 - **当前项目统一要求**：所有持久化业务表都必须保留 `version INT NOT NULL DEFAULT 0` 列；新增 GORM 模型时嵌入 `models.Versioned`，历史/非 GORM 表由启动迁移幂等补齐。`version=0` 表示未升级的基线数据，后续读路径按具体业务的当前版本链处理。
+- **启动时自动补列（与读路径兼容）**：`backend/cmd/server/main.go` 在 **`db.AutoMigrate()` 与 `db.MigrateSuperAdmin()` 之后** 调用 `db.MigrateVersionColumns()`（实现见 `backend/internal/db/db.go`）。该函数查询当前库 `INFORMATION_SCHEMA` 下全部 `BASE TABLE`，若某表无 `version` 列则执行 `ALTER TABLE ... ADD COLUMN version INT NOT NULL DEFAULT 0`，可安全重复执行。结果会通过打点 `action = system.schema.version_columns` 记录（含 `addedTables` / `failedTables`）。因此**仅新增 `version` 列且默认 0** 时，已有读路径通常无需改代码；当某次业务变更需要按行区分数据形态时，再在对应 handler 中实现 `NormalizeXxx` / `UpgradeXxx`，并在升级完成后把该行的 `version` 写回为**大于 0**的当前期望版本。
+- **模型与后台编辑**：行级 `version` 定义在 `backend/internal/models/version.go`（`Versioned` 嵌入结构体）。后台通用 `raw-row` 将 `version` 列为只读，避免人工改乱升级语义（`backend/internal/handlers/admin_rawrow.go` 的 `baseReadonly`）。
 
 具体选用哪种由任务决定，但**禁止**只加列、不写版本、也不在读路径做兼容。
 
@@ -160,7 +162,9 @@ Vino_test 的主用户表 `users` 支持三种角色：
 | 文件 | 含义 |
 | ---- | ---- |
 | `backend/internal/models/user.go` | Role enum 定义 |
-| `backend/internal/db/db.go` (`MigrateSuperAdmin`) | 启动时幂等迁移 + 自动提升 |
+| `backend/internal/models/version.go` | 行级 `Versioned`（`version` 列） |
+| `backend/cmd/server/main.go` | 启动顺序：`AutoMigrate` → `MigrateSuperAdmin` → `MigrateVersionColumns` + 打点 |
+| `backend/internal/db/db.go` (`MigrateSuperAdmin`, `MigrateVersionColumns`, `CurrentSchemaVersion`) | 启动时幂等迁移、全表补 `version`、全局 schema 版本常量 |
 | `backend/internal/middleware/middleware.go` (`Admin` / `SuperAdmin`) | 权限中间件 |
 | `backend/internal/handlers/router.go` | `/admin/ops/*` & `/auth/admin/users/:id/role` 路由 |
 | `backend/internal/handlers/auth.go` (`authAdminSetUserRole`) | 超级管理员改他人角色 |
