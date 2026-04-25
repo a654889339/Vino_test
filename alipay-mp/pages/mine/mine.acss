@@ -1,10 +1,15 @@
+.page {
+  min-height: 100vh;
+  background: #f5f3ee;
+}
+
 .profile-header {
   position: relative;
   padding: 32rpx 32rpx 36rpx;
   display: flex;
   flex-direction: column;
   gap: 38rpx;
-  background: linear-gradient(160deg, #2d7748 0%, #357f52 100%);
+  background: linear-gradient(135deg, #3a1f22 0%, #b91c1c 100%);
   overflow: hidden;
 }
 
@@ -24,14 +29,33 @@
   padding: 0 22rpx;
   border-radius: 999rpx;
   background: #fff;
-  color: #27633f;
-  font-size: 24rpx;
-  font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6rpx;
   box-shadow: 0 10rpx 24rpx rgba(15, 23, 42, 0.08);
+}
+
+.lang-part {
+  color: #9ca3af;
+  font-size: 21rpx;
+  font-weight: 600;
+  line-height: 1;
+  transform: scale(0.92);
+}
+
+.lang-part.active {
+  color: #7f1d1d;
+  font-size: 24rpx;
+  font-weight: 800;
+  transform: scale(1);
+}
+
+.lang-divider {
+  color: #d1d5db;
+  font-size: 21rpx;
+  font-weight: 600;
+  line-height: 1;
 }
 
 .profile-main {

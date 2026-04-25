@@ -16,6 +16,7 @@ Page({
     avatarInitial: 'V',
     avatarUrl: '',
     maskedPhone: '',
+    isEn: false,
     stats: [
       { key: 'pendingPay', label: '待付款', value: 0, iconText: '▱' },
       { key: 'pendingShipment', label: '待发货', value: 0, iconText: '↝' },
@@ -62,6 +63,7 @@ Page({
     const vals = {};
     this.data.stats.forEach(s => { vals[s.key] = s.value; });
     this.setData({
+      isEn: i18n.isEn(),
       i18n: {
         myOrders: i18n.t('我的订单', 'My Orders'),
         viewEditProfile: i18n.t('查看/编辑资料', 'View / Edit Profile'),

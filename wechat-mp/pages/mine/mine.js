@@ -16,6 +16,7 @@ Page({
     avatarInitial: 'V',
     avatarUrl: '',
     maskedPhone: '',
+    isEn: false,
     stats: [],
     cartPreviewItems: [],
     cartTotalCount: 0,
@@ -42,6 +43,7 @@ Page({
     const vals = {};
     this.data.stats.forEach(s => { vals[s.key] = s.value; });
     this.setData({
+      isEn: i18n.isEn(),
       i18n: {
         user: i18n.t('mine.user'),
         tapLogin: i18n.t('mine.tapLogin'),

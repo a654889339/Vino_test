@@ -7,9 +7,9 @@
     >
       <div class="profile-brand">VINO</div>
       <button type="button" class="mine-lang-switch" @click.stop="toggleMineLang">
-        <span>中</span>
-        <span>/</span>
-        <span>EN</span>
+        <span :class="['lang-part', { active: !isEn }]">中</span>
+        <span class="lang-divider">/</span>
+        <span :class="['lang-part', { active: isEn }]">EN</span>
       </button>
       <div class="profile-main">
         <div class="avatar">
@@ -271,14 +271,26 @@ const handleLogout = () => {
 <style scoped>
 .mine-page {
   position: relative;
-  background: var(--vino-bg);
+  background: #f5f3ee;
   min-height: 100vh;
+}
+
+.mine-page::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  left: 50%;
+  width: 100vw;
+  transform: translateX(-50%);
+  background: #eef1f5;
+  z-index: -2;
+  pointer-events: none;
 }
 
 .profile-header {
   position: relative;
   z-index: 1;
-  background: linear-gradient(160deg, #2d7748 0%, #357f52 100%);
+  background: linear-gradient(135deg, #3a1f22 0%, #b91c1c 100%);
   padding: 18px 16px 20px;
   display: flex;
   flex-direction: column;
@@ -301,18 +313,39 @@ const handleLogout = () => {
   right: 16px;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   min-width: 62px;
   height: 30px;
   padding: 0 12px;
   border: none;
   border-radius: 999px;
   background: #fff;
-  color: #27633f;
-  font-size: 12px;
-  font-weight: 700;
+  color: #7f1d1d;
   cursor: pointer;
   box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+}
+
+.lang-part {
+  color: #9ca3af;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  transform: scale(0.92);
+  transform-origin: center;
+}
+
+.lang-part.active {
+  color: #7f1d1d;
+  font-size: 12px;
+  font-weight: 800;
+  transform: scale(1);
+}
+
+.lang-divider {
+  color: #d1d5db;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
 }
 
 .profile-main {
@@ -436,7 +469,7 @@ const handleLogout = () => {
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  color: #0f4f3c;
+  color: #0f5f46;
   cursor: pointer;
 }
 

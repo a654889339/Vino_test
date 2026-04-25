@@ -2,9 +2,9 @@
   <view class="profile-header" bindtap="onProfileTap">
     <text class="profile-brand">VINO</text>
     <view class="mine-lang-switch" catchtap="onLangTap">
-      <text>中</text>
-      <text>/</text>
-      <text>EN</text>
+      <text class="lang-part {{isEn ? '' : 'active'}}">中</text>
+      <text class="lang-divider">/</text>
+      <text class="lang-part {{isEn ? 'active' : ''}}">EN</text>
     </view>
     <view class="profile-main">
       <view class="avatar">
