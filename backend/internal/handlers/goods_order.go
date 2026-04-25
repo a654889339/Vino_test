@@ -407,22 +407,22 @@ func goodsOrderAdminItems(c *gin.Context) {
 	var total int64
 	qb.Session(&gorm.Session{}).Count(&total)
 
+	// 必须写 gorm column：MySQL 驱动返回的列名为 camelCase（如 orderId），否则 Scan 无法填入结构体字段。
 	type itemRow struct {
-		ID           int      `json:"id"`
-		OrderID      int      `json:"orderId"`
-		OrderNo      string   `json:"orderNo"`
-		GuideID      int      `json:"guideId"`
-		NameSnapshot string   `json:"nameSnapshot"`
-		ImageURL     string   `json:"imageUrl"`
-		UnitPrice    float64  `json:"unitPrice"`
-		OriginPrice  *float64 `json:"originPrice"`
-		Currency     string   `json:"currency"`
-		Qty          int      `json:"qty"`
-		LineTotal    float64  `json:"lineTotal"`
+		ID           int      `gorm:"column:id" json:"id"`
+		OrderID      int      `gorm:"column:orderId" json:"orderId"`
+		GuideID      int      `gorm:"column:guideId" json:"guideId"`
+		NameSnapshot string   `gorm:"column:nameSnapshot" json:"nameSnapshot"`
+		ImageURL     string   `gorm:"column:imageUrl" json:"imageUrl"`
+		UnitPrice    float64  `gorm:"column:unitPrice" json:"unitPrice"`
+		OriginPrice  *float64 `gorm:"column:originPrice" json:"originPrice,omitempty"`
+		Currency     string   `gorm:"column:currency" json:"currency"`
+		Qty          int      `gorm:"column:qty" json:"qty"`
+		LineTotal    float64  `gorm:"column:lineTotal" json:"lineTotal"`
 	}
 	var rows []itemRow
 	err := qb.Session(&gorm.Session{}).
-		Select("i.id, i.orderId, o.orderNo, i.guideId, i.nameSnapshot, i.imageUrl, i.unitPrice, i.originPrice, i.currency, i.qty, i.lineTotal").
+		Select("i.id, i.orderId, i.guideId, i.nameSnapshot, i.imageUrl, i.unitPrice, i.originPrice, i.currency, i.qty, i.lineTotal").
 		Order("i.id DESC").
 		Limit(pageSize).
 		Offset((page - 1) * pageSize).

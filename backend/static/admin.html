@@ -1599,7 +1599,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
             <button class="refresh-btn" style="background:#64748b" onclick="toggleGoodsOrderItemsPanel(false)">收起</button>
           </div>
         </div>
-        <p style="font-size:13px;color:#666;margin-bottom:12px">读取 `goods_order_items` 表：展示主键、关联订单 ID/订单号、商品快照和金额信息。点击「详情」可弹窗查看该明细行的所有字段。</p>
+        <p style="font-size:13px;color:#666;margin-bottom:12px">读取 `goods_order_items` 表：展示主键、关联订单 ID（orderId）、商品 ID、名称快照与金额。可按订单号筛选（不必在表格中展示订单号）。点击「详情」可弹窗查看该明细行的所有字段。</p>
         <div class="order-filters" style="flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:12px">
           <span style="font-size:13px;color:#666">订单ID：</span>
           <input type="number" id="goodsOrderItemSearchOrderId" class="form-input" placeholder="精确" style="width:100px;padding:6px 10px" min="1" onkeydown="if(event.key==='Enter'){goodsOrderItemPage=1;loadGoodsOrderItems()}" />
@@ -1609,7 +1609,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <button type="button" class="refresh-btn" style="background:#64748b" onclick="document.getElementById('goodsOrderItemSearchOrderId').value='';document.getElementById('goodsOrderItemSearchOrderNo').value='';goodsOrderItemPage=1;loadGoodsOrderItems()">重置</button>
         </div>
         <table class="order-table">
-          <thead><tr><th>主键ID</th><th>关联订单ID</th><th>订单号</th><th>商品ID</th><th>商品名快照</th><th>数量</th><th>单价</th><th>小计</th><th>操作</th></tr></thead>
+          <thead><tr><th>主键ID</th><th>关联订单ID</th><th>商品ID</th><th>商品名快照</th><th>数量</th><th>单价</th><th>小计</th><th>操作</th></tr></thead>
           <tbody id="goodsOrderItemsTableBody"></tbody>
         </table>
         <div class="order-empty" id="goodsOrderItemsEmpty" style="display:none">暂无订单商品明细</div>
@@ -2509,7 +2509,7 @@ async function loadGoodsOrderItems() {
   const empty = document.getElementById('goodsOrderItemsEmpty');
   const pagination = document.getElementById('goodsOrderItemsPagination');
   if (!tbody) return;
-  tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#999">加载中...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:#999">加载中...</td></tr>';
   if (empty) empty.style.display = 'none';
   try {
     const params = new URLSearchParams({ page: goodsOrderItemPage, pageSize: goodsOrderItemPageSize });
@@ -2519,7 +2519,7 @@ async function loadGoodsOrderItems() {
     if (orderNo) params.set('orderNo', orderNo);
     const res = await api('/goods-orders/admin/items?' + params);
     if (!res || res.code !== 0) {
-      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#B91C1C">加载失败：' + escapeHtml((res && res.message) || '未知错误') + '</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:#B91C1C">加载失败：' + escapeHtml((res && res.message) || '未知错误') + '</td></tr>';
       return;
     }
     const data = res.data || {};
@@ -2534,10 +2534,9 @@ async function loadGoodsOrderItems() {
       if (empty) empty.style.display = 'none';
       tbody.innerHTML = list.map(it => `<tr>
         <td style="font-weight:600">${it.id}</td>
-        <td>${it.orderId || '-'}</td>
-        <td style="font-size:12px;color:var(--text-secondary)">${escapeHtml(it.orderNo || '-')}</td>
-        <td>${it.guideId || '-'}</td>
-        <td style="font-size:12px;max-width:220px;word-break:break-all">${escapeHtml(it.nameSnapshot || '-')}</td>
+        <td>${(it.orderId !== undefined && it.orderId !== null) ? it.orderId : '-'}</td>
+        <td>${(it.guideId !== undefined && it.guideId !== null) ? it.guideId : '-'}</td>
+        <td style="font-size:12px;max-width:220px;word-break:break-all">${escapeHtml((it.nameSnapshot != null && String(it.nameSnapshot).trim() !== '') ? it.nameSnapshot : '-')}</td>
         <td>${it.qty || 0}</td>
         <td style="color:var(--primary);font-weight:600">${formatAdminPrice(it.unitPrice)}</td>
         <td style="color:var(--primary);font-weight:600">${formatAdminPrice(it.lineTotal)}</td>
@@ -2552,7 +2551,7 @@ async function loadGoodsOrderItems() {
         <button class="page-btn" onclick="goodsOrderItemPage++;loadGoodsOrderItems()" ${page >= totalPages ? 'disabled' : ''}>下一页</button>` : `<span class="page-info">共 ${total} 条</span>`;
     }
   } catch (e) {
-    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#B91C1C">加载失败：' + escapeHtml(e && e.message || e) + '</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:#B91C1C">加载失败：' + escapeHtml(e && e.message || e) + '</td></tr>';
   }
 }
 
