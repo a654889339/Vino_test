@@ -3,21 +3,42 @@
     <PageThemeLayer path="/mine" />
     <div
       class="profile-header"
-      :style="profileHeaderStyle"
       @click="onProfileHeaderClick"
     >
-      <div class="avatar">
-        <img v-if="userStore.isLoggedIn && userStore.userInfo?.avatar" :src="userStore.userInfo.avatar" class="avatar-img" alt="" />
-        <span v-else-if="userStore.isLoggedIn && (userStore.userInfo?.nickname || userStore.userInfo?.username)" class="avatar-initial">{{ (userStore.userInfo?.nickname || userStore.userInfo?.username).charAt(0) }}</span>
-        <van-icon v-else name="user-o" size="36" color="#fff" />
+      <div class="profile-brand">VINO</div>
+      <button type="button" class="mine-lang-switch" @click.stop="toggleMineLang">
+        <span>中</span>
+        <span>/</span>
+        <span>EN</span>
+      </button>
+      <div class="profile-main">
+        <div class="avatar">
+          <img v-if="userStore.isLoggedIn && userStore.userInfo?.avatar" :src="userStore.userInfo.avatar" class="avatar-img" alt="" />
+          <span v-else-if="userStore.isLoggedIn && (userStore.userInfo?.nickname || userStore.userInfo?.username)" class="avatar-initial">{{ (userStore.userInfo?.nickname || userStore.userInfo?.username).charAt(0) }}</span>
+          <van-icon v-else name="user-o" size="30" color="#fff" />
+        </div>
+        <div class="profile-info" v-if="userStore.isLoggedIn">
+          <h3>{{ userStore.userInfo?.nickname || userStore.userInfo?.username || t('mine.user') }}</h3>
+          <p>{{ t('查看/编辑资料', 'View / Edit Profile') }} ›</p>
+        </div>
+        <div class="profile-info" v-else>
+          <h3>{{ t('mine.tapLogin') }}</h3>
+          <p>{{ t('mine.loginBenefits') }} ›</p>
+        </div>
       </div>
-      <div class="profile-info" v-if="userStore.isLoggedIn">
-        <h3>{{ userStore.userInfo?.nickname || userStore.userInfo?.username || t('mine.user') }}</h3>
-        <p>{{ profileSubtitle }}</p>
-      </div>
-      <div class="profile-info" v-else>
-        <h3>{{ t('mine.tapLogin') }}</h3>
-        <p>{{ t('mine.loginBenefits') }}</p>
+      <div class="profile-assets">
+        <div class="profile-asset">
+          <strong>0</strong>
+          <span>{{ t('积分', 'Points') }}</span>
+        </div>
+        <div class="profile-asset">
+          <strong>0</strong>
+          <span>{{ t('购物券', 'Coupons') }}</span>
+        </div>
+        <div class="profile-asset">
+          <strong>¥0</strong>
+          <span>{{ t('钱包', 'Wallet') }}</span>
+        </div>
       </div>
     </div>
 
@@ -89,22 +110,14 @@ import { ref, inject, onMounted, computed } from 'vue';
 import { useUserStore } from '@/stores/user';
 import { useRouter } from 'vue-router';
 import { showToast } from 'vant';
-import { cartApi, goodsOrderApi, homeConfigApi } from '@/api';
+import { cartApi, goodsOrderApi } from '@/api';
 import PageThemeLayer from '@/components/PageThemeLayer.vue';
 import { copyTextToClipboardSync } from '@/utils/clipboard';
-import { t, isEn } from '@/utils/i18n';
+import { t, isEn, setLang } from '@/utils/i18n';
 
 const userStore = useUserStore();
 const router = useRouter();
 const chatWidgetRef = inject('chatWidget', ref(null));
-
-const profileSubtitle = computed(() => {
-  const u = userStore.userInfo;
-  if (!u) return t('mine.noPhone');
-  if (u.phone) return u.phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
-  if (u.email) return u.email;
-  return t('mine.noPhone');
-});
 
 const goodsOrderStats = ref({
   pendingPay: 0,
@@ -124,19 +137,9 @@ const onProfileHeaderClick = () => {
   }
 };
 
-const mineBgImageUrl = ref('');
-const profileHeaderStyle = computed(() => {
-  if (mineBgImageUrl.value) {
-    return {
-      backgroundImage: `url(${mineBgImageUrl.value})`,
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-    };
-  }
-  return {
-    background: 'linear-gradient(160deg, #1d1d1f 0%, #B91C1C 100%)',
-  };
-});
+const toggleMineLang = () => {
+  setLang(isEn.value ? 'zh' : 'en');
+};
 
 const openFeedback = () => {
   if (chatWidgetRef.value) {
@@ -255,12 +258,6 @@ onMounted(async () => {
       userStore.logout();
     }
   }
-  try {
-    const res = await homeConfigApi.list();
-    const items = res.data || [];
-    const mineBg = items.find(i => i.section === 'mineBg' && i.status === 'active');
-    if (mineBg && mineBg.imageUrl) mineBgImageUrl.value = mineBg.imageUrl;
-  } catch (_) {}
   loadGoodsOrderStats();
   loadCartSummary();
 });
@@ -281,19 +278,54 @@ const handleLogout = () => {
 .profile-header {
   position: relative;
   z-index: 1;
-  background: linear-gradient(160deg, #1d1d1f 0%, #B91C1C 100%);
-  padding: 48px 24px 36px;
+  background: linear-gradient(160deg, #2d7748 0%, #357f52 100%);
+  padding: 18px 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.profile-brand {
+  color: #fff;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+}
+
+.mine-lang-switch {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 62px;
+  height: 30px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 999px;
+  background: #fff;
+  color: #27633f;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+}
+
+.profile-main {
   display: flex;
   align-items: center;
   gap: 16px;
-  cursor: pointer;
 }
 
 .avatar {
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
@@ -321,8 +353,40 @@ const handleLogout = () => {
 }
 
 .profile-info p {
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 14px;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.profile-assets {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 74px;
+  padding: 14px 0;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.profile-asset {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: #fff;
+}
+
+.profile-asset strong {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.profile-asset span {
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .mine-section {

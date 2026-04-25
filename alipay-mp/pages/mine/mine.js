@@ -16,7 +16,6 @@ Page({
     avatarInitial: 'V',
     avatarUrl: '',
     maskedPhone: '',
-    profileHeaderStyle: 'background: linear-gradient(135deg, #B91C1C, #7F1D1D);',
     stats: [
       { key: 'pendingPay', label: '待付款', value: 0, iconText: '▱' },
       { key: 'pendingShipment', label: '待发货', value: 0, iconText: '↝' },
@@ -26,6 +25,10 @@ Page({
     ],
     i18n: {
       myOrders: '我的订单',
+      viewEditProfile: '查看/编辑资料',
+      points: '积分',
+      coupons: '购物券',
+      wallet: '钱包',
       viewAllOrders: '查看全部订单',
       myCart: '我的购物车',
       view: '查看',
@@ -51,7 +54,6 @@ Page({
       i18n.setNavTitle('mine.title');
       this.refreshTexts();
       this.checkLoginState();
-      this.loadMineBg();
     };
     if (i18n.isLoaded()) refresh(); else i18n.loadI18nTexts(refresh);
   },
@@ -62,6 +64,10 @@ Page({
     this.setData({
       i18n: {
         myOrders: i18n.t('我的订单', 'My Orders'),
+        viewEditProfile: i18n.t('查看/编辑资料', 'View / Edit Profile'),
+        points: i18n.t('积分', 'Points'),
+        coupons: i18n.t('购物券', 'Coupons'),
+        wallet: i18n.t('钱包', 'Wallet'),
         viewAllOrders: i18n.t('查看全部订单', 'View All'),
         myCart: i18n.t('我的购物车', 'My Cart'),
         view: i18n.t('查看', 'View'),
@@ -77,17 +83,6 @@ Page({
         { key: 'afterSales', label: i18n.t('退款/售后', 'Refund/After-sales'), value: vals.afterSales || 0, iconText: '↻' },
       ],
     });
-  },
-
-  loadMineBg() {
-    app.request({ url: '/home-config' }).then(res => {
-      const list = res.data || [];
-      const mineBg = list.find(i => i.section === 'mineBg' && i.status === 'active');
-      const style = mineBg && mineBg.imageUrl
-        ? 'background-image: url(' + mineBg.imageUrl + '); background-size: cover; background-position: center;'
-        : 'background: linear-gradient(135deg, #B91C1C, #7F1D1D);';
-      this.setData({ profileHeaderStyle: style });
-    }).catch(() => {});
   },
 
   checkLoginState() {
@@ -201,6 +196,11 @@ Page({
     } else {
       my.navigateTo({ url: '/pages/profile-edit/profile-edit' });
     }
+  },
+
+  onLangTap() {
+    i18n.setLang(i18n.isEn() ? 'zh' : 'en');
+    this.refreshTexts();
   },
 
   onStatTap(e) {

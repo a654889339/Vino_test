@@ -16,7 +16,6 @@ Page({
     avatarInitial: 'V',
     avatarUrl: '',
     maskedPhone: '',
-    profileHeaderStyle: 'background: linear-gradient(135deg, #B91C1C, #7F1D1D);',
     stats: [],
     cartPreviewItems: [],
     cartTotalCount: 0,
@@ -30,7 +29,6 @@ Page({
     const doRefresh = () => {
       self.refreshI18n();
       self.checkLoginState();
-      self.loadMineBg();
     };
     if (i18n.isLoaded()) {
       doRefresh();
@@ -49,6 +47,10 @@ Page({
         tapLogin: i18n.t('mine.tapLogin'),
         loginBenefits: i18n.t('mine.loginBenefits'),
         logout: i18n.t('mine.logout'),
+        viewEditProfile: i18n.t('查看/编辑资料', 'View / Edit Profile'),
+        points: i18n.t('积分', 'Points'),
+        coupons: i18n.t('购物券', 'Coupons'),
+        wallet: i18n.t('钱包', 'Wallet'),
         myOrders: i18n.t('我的订单', 'My Orders'),
         viewAllOrders: i18n.t('查看全部订单', 'View All'),
         myCart: i18n.t('我的购物车', 'My Cart'),
@@ -73,17 +75,6 @@ Page({
         { title: i18n.t('mine.contact'), icon: '/images/icons/mine-phone.svg', url: '', contact: true },
       ],
     });
-  },
-
-  loadMineBg() {
-    app.request({ url: '/home-config' }).then(res => {
-      const list = res.data || [];
-      const mineBg = list.find(i => i.section === 'mineBg' && i.status === 'active');
-      const style = mineBg && mineBg.imageUrl
-        ? 'background-image: url(' + mineBg.imageUrl + '); background-size: cover; background-position: center;'
-        : 'background: linear-gradient(135deg, #B91C1C, #7F1D1D);';
-      this.setData({ profileHeaderStyle: style });
-    }).catch(() => {});
   },
 
   checkLoginState() {
@@ -204,6 +195,11 @@ Page({
     } else {
       wx.navigateTo({ url: '/pages/profile-edit/profile-edit' });
     }
+  },
+
+  onLangTap() {
+    i18n.setLang(i18n.isEn() ? 'zh' : 'en');
+    this.refreshI18n();
   },
 
   onStatTap(e) {
