@@ -2178,6 +2178,7 @@ async function loadOrderStats() {
 function renderPageVisitTable(rows) {
   if (!rows || !rows.length) return '<div class="order-empty" style="display:block">暂无访问数据</div>';
   function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
+  rows = buildPageVisitDisplayRows(rows);
   return '<table class="order-table"><thead><tr><th>页面</th><th>来源</th><th>总访问量</th><th>近7日</th><th>近30日</th><th>近90日(季)</th></tr></thead><tbody>' +
     rows.map(function(r) {
       const info = formatPageVisitKey(r.pageKey);
@@ -2186,8 +2187,38 @@ function renderPageVisitTable(rows) {
     '</tbody></table>';
 }
 
+function buildPageVisitDisplayRows(rows) {
+  const orderPaths = ['/orders', '/orders/detail', '/goods-orders', '/goods-orders/detail'];
+  const orderSummary = { pageKey: '__order_pages__', total: 0, last7Days: 0, last30Days: 0, lastQuarter: 0 };
+  (rows || []).forEach(function(r) {
+    const path = getPageVisitPath(r.pageKey);
+    if (orderPaths.indexOf(path) >= 0) {
+      orderSummary.total += Number(r.total || 0);
+      orderSummary.last7Days += Number(r.last7Days || 0);
+      orderSummary.last30Days += Number(r.last30Days || 0);
+      orderSummary.lastQuarter += Number(r.lastQuarter || 0);
+    }
+  });
+  const out = [];
+  if (orderSummary.total > 0) out.push(orderSummary);
+  (rows || []).forEach(function(r) {
+    out.push(r);
+  });
+  return out;
+}
+
+function getPageVisitPath(pageKey) {
+  const raw = String(pageKey || '');
+  if (raw === '__order_pages__') return raw;
+  const parts = raw.split(':');
+  return parts.length > 1 ? parts.slice(1).join(':') : raw;
+}
+
 function formatPageVisitKey(pageKey) {
   const raw = String(pageKey || '');
+  if (raw === '__order_pages__') {
+    return { source: '汇总', label: '订单页统计' };
+  }
   const parts = raw.split(':');
   const app = parts.length > 1 ? parts[0] : 'toc';
   let path = parts.length > 1 ? parts.slice(1).join(':') : raw;
@@ -2198,12 +2229,16 @@ function formatPageVisitKey(pageKey) {
     '/products': '商品页',
     '/services': '服务页',
     '/mine': '我的',
-    '/orders': '服务订单',
-    '/goods-orders': '商品订单',
+    '/orders': '服务订单列表',
+    '/orders/detail': '服务订单详情',
+    '/goods-orders': '商品订单列表',
+    '/goods-orders/detail': '商品订单详情',
     '/cart': '购物车',
     '/checkout': '确认订单',
     '/login': '登录',
     '/register': '注册',
+    '/guide/detail': '商品详情',
+    '/service/detail': '服务详情',
   };
   let label = pathMap[path] || path;
   if (/^\/guide\//.test(path) || /^\/guide-detail/.test(path)) label = '商品详情';

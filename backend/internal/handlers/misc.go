@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -44,19 +45,11 @@ func AnalyticsPageView(c *gin.Context) {
 		Path string `json:"path"`
 	}
 	_ = c.ShouldBindJSON(&body)
-	app := body.App
-	if app == "" {
-		app = "toc"
-	}
-	if app != "toc" && app != "outlet" && app != "mp" {
-		app = "toc"
-	}
-	p := strings.TrimSpace(body.Path)
-	if p == "" {
-		p = "/"
-	}
-	if len(p) > 500 {
-		p = p[:500]
+	app := normalizeAnalyticsApp(body.App)
+	p, ok := normalizeAnalyticsPath(body.Path)
+	if !ok {
+		resp.OK(c, gin.H{"skipped": true})
+		return
 	}
 	pageKey := app + ":" + p
 	visitDate := time.Now().Format("2006-01-02")
@@ -93,13 +86,145 @@ func AnalyticsStats(c *gin.Context) {
 		resp.Err(c, 500, 1, err.Error())
 		return
 	}
-	out := make([]gin.H, 0, len(rows))
+	type aggRow struct {
+		PageKey string
+		Total   int
+		D7      int
+		D30     int
+		D90     int
+	}
+	byKey := map[string]*aggRow{}
 	for _, r := range rows {
+		key, ok := normalizeAnalyticsPageKey(r.PageKey)
+		if !ok {
+			continue
+		}
+		a := byKey[key]
+		if a == nil {
+			a = &aggRow{PageKey: key}
+			byKey[key] = a
+		}
+		a.Total += int(r.Total)
+		a.D7 += int(r.D7)
+		a.D30 += int(r.D30)
+		a.D90 += int(r.D90)
+	}
+	merged := make([]*aggRow, 0, len(byKey))
+	for _, r := range byKey {
+		merged = append(merged, r)
+	}
+	sort.Slice(merged, func(i, j int) bool {
+		if merged[i].Total == merged[j].Total {
+			return merged[i].PageKey < merged[j].PageKey
+		}
+		return merged[i].Total > merged[j].Total
+	})
+	out := make([]gin.H, 0, len(merged))
+	for _, r := range merged {
 		out = append(out, gin.H{
-			"pageKey": r.PageKey, "total": int(r.Total), "last7Days": int(r.D7), "last30Days": int(r.D30), "lastQuarter": int(r.D90),
+			"pageKey": r.PageKey, "total": r.Total, "last7Days": r.D7, "last30Days": r.D30, "lastQuarter": r.D90,
 		})
 	}
 	resp.OK(c, gin.H{"rows": out})
+}
+
+func normalizeAnalyticsApp(app string) string {
+	app = strings.TrimSpace(app)
+	if app != "toc" && app != "outlet" && app != "mp" {
+		return "toc"
+	}
+	return app
+}
+
+func normalizeAnalyticsPageKey(pageKey string) (string, bool) {
+	pageKey = strings.TrimSpace(pageKey)
+	app := "toc"
+	path := pageKey
+	if i := strings.Index(pageKey, ":"); i >= 0 {
+		app = normalizeAnalyticsApp(pageKey[:i])
+		path = pageKey[i+1:]
+	}
+	normalizedPath, ok := normalizeAnalyticsPath(path)
+	if !ok {
+		return "", false
+	}
+	return app + ":" + normalizedPath, true
+}
+
+func normalizeAnalyticsPath(raw string) (string, bool) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		raw = "/"
+	}
+	if len(raw) > 1000 {
+		raw = raw[:1000]
+	}
+	path, query := raw, ""
+	if u, err := url.Parse(raw); err == nil {
+		if u.Path != "" || u.RawQuery != "" || u.Scheme != "" || u.Host != "" {
+			path = u.Path
+			query = u.RawQuery
+		}
+	}
+	if query == "" {
+		if i := strings.Index(path, "?"); i >= 0 {
+			query = path[i+1:]
+			path = path[:i]
+		}
+	}
+	if i := strings.Index(path, "#"); i >= 0 {
+		path = path[:i]
+	}
+	if path == "" {
+		path = "/"
+	}
+	if !strings.HasPrefix(path, "/") {
+		path = "/" + path
+	}
+	if path != "/" {
+		path = strings.TrimRight(path, "/")
+	}
+	lowerPath := strings.ToLower(path)
+	lowerQuery := strings.ToLower(query)
+	if path == "/" && strings.Contains(lowerQuery, "wework_cfm_code") {
+		return "", false
+	}
+	if strings.HasSuffix(lowerPath, "/group.html") || lowerPath == "/group.html" {
+		return "", false
+	}
+	parts := strings.Split(strings.Trim(path, "/"), "/")
+	if len(parts) >= 2 {
+		switch parts[0] {
+		case "goods-orders":
+			if isAnalyticsIDSegment(parts[1]) {
+				return "/goods-orders/detail", true
+			}
+		case "orders":
+			if isAnalyticsIDSegment(parts[1]) {
+				return "/orders/detail", true
+			}
+		case "guide", "guide-detail":
+			return "/guide/detail", true
+		case "service":
+			return "/service/detail", true
+		}
+	}
+	if len(path) > 500 {
+		path = path[:500]
+	}
+	return path, true
+}
+
+func isAnalyticsIDSegment(s string) bool {
+	if s == "" {
+		return false
+	}
+	for _, r := range s {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 func SeedData(c *gin.Context) {
