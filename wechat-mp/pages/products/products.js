@@ -14,6 +14,8 @@ function resolveMediaUrl(u) {
 Page({
   data: {
     categories: [],
+    categoryPages: [],
+    activeCategoryIndex: 0,
     selectedCategoryId: null,
     deviceGuides: [],
     filteredDeviceGuides: [],
@@ -27,18 +29,44 @@ Page({
     noConfigText: '',
     cartCount: 0,
     tabScrollKey: '',
+    dragOffset: 0,
+    trackStyle: 'transform: translate3d(0%, 0, 0); transition: transform 280ms cubic-bezier(0.22, 0.61, 0.36, 1);',
   },
 
+  categoryGuidesMap: {},
+  categoryLoadingMap: {},
   _touchStartX: 0,
   _touchStartY: 0,
+  _dragOffset: 0,
+  _dragging: false,
   onListTouchStart(e) {
     const t = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]);
     if (!t) return;
     this._touchStartX = t.clientX;
     this._touchStartY = t.clientY;
+    this._dragOffset = 0;
+    this._dragging = true;
+    this.updateTrackStyle(0, false);
+  },
+  onListTouchMove(e) {
+    if (!this._dragging) return;
+    const t = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]);
+    if (!t) return;
+    const dx = t.clientX - this._touchStartX;
+    const dy = t.clientY - this._touchStartY;
+    if (Math.abs(dy) > Math.abs(dx)) return;
+    const idx = this.data.activeCategoryIndex || 0;
+    const cats = this.data.categories || [];
+    const maxLeft = idx === 0 ? 0 : 120;
+    const maxRight = idx >= cats.length - 1 ? 0 : 120;
+    this._dragOffset = Math.max(-maxRight, Math.min(maxLeft, dx));
+    this.updateTrackStyle(this._dragOffset, false);
   },
   onListTouchEnd(e) {
     const t = (e.changedTouches && e.changedTouches[0]) || (e.touches && e.touches[0]);
+    this._dragging = false;
+    this._dragOffset = 0;
+    this.updateTrackStyle(0, true);
     if (!t) return;
     const dx = t.clientX - this._touchStartX;
     const dy = t.clientY - this._touchStartY;
@@ -50,6 +78,15 @@ Page({
     if (idx < 0) return;
     const target = dx < 0 ? cats[idx + 1] : cats[idx - 1];
     if (target) this.selectCategoryByCat(target);
+  },
+
+  updateTrackStyle(offset, transition) {
+    const percent = -((this.data.activeCategoryIndex || 0) * 100);
+    const timing = transition ? 'transform 280ms cubic-bezier(0.22, 0.61, 0.36, 1)' : 'none';
+    this.setData({
+      dragOffset: offset,
+      trackStyle: `transform: translate3d(${percent}%, 0, 0) translateX(${offset}px); transition: ${timing};`,
+    });
   },
 
   onShow() {
@@ -85,11 +122,7 @@ Page({
       ...c,
       displayName: pick(c, 'name'),
     }));
-    const deviceGuides = (this.data.deviceGuides || []).map((g) => ({
-      ...g,
-      displayName: pick(g, 'name'),
-    }));
-    this.setData({ categories, deviceGuides }, () => this.applyFilter());
+    this.setData({ categories }, () => this.rebuildCategoryPages());
   },
 
   loadCategories() {
@@ -99,9 +132,12 @@ Page({
           ...c,
           displayName: pick(c, 'name'),
         }));
+        this.categoryGuidesMap = {};
+        this.categoryLoadingMap = {};
         this.setData({ categories });
         if (categories.length) {
           this.selectCategoryByCat(categories[0]);
+          categories.slice(1).forEach(cat => this.loadGuidesForCategory(cat));
         }
       })
       .catch(() => {});
@@ -126,18 +162,40 @@ Page({
     this.setData({ categoryBannerUrl: url });
   },
 
-  applyFilter() {
-    const list = this.data.deviceGuides || [];
-    const kw = (this.data.searchKeyword || '').trim().toLowerCase();
-    if (!kw) {
-      this.setData({ filteredDeviceGuides: list });
-      return;
-    }
-    const filtered = list.filter((g) => {
+  buildCategoryPage(cat) {
+    const guides = this.categoryGuidesMap[cat.id] || [];
+    const kw = cat.id === this.data.selectedCategoryId ? (this.data.searchKeyword || '').trim().toLowerCase() : '';
+    const filteredGuides = kw ? guides.filter((g) => {
       const hay = [g.displayName, g.name, g.nameEn].filter(Boolean).join(' ').toLowerCase();
       return hay.indexOf(kw) !== -1;
+    }) : guides;
+    let bannerUrl = '';
+    const tu = pick(cat, 'thumbnailUrl');
+    if (tu) bannerUrl = resolveMediaUrl(tu);
+    return {
+      id: cat.id,
+      displayName: cat.displayName,
+      bannerUrl,
+      guides,
+      filteredGuides,
+      loading: !!this.categoryLoadingMap[cat.id],
+    };
+  },
+
+  rebuildCategoryPages() {
+    const categoryPages = (this.data.categories || []).map(cat => this.buildCategoryPage(cat));
+    const current = categoryPages.find(page => page.id === this.data.selectedCategoryId);
+    this.setData({
+      categoryPages,
+      categoryBannerUrl: current ? current.bannerUrl : '',
+      deviceGuides: current ? current.guides : [],
+      filteredDeviceGuides: current ? current.filteredGuides : [],
+      listLoading: current ? current.loading : false,
     });
-    this.setData({ filteredDeviceGuides: filtered });
+  },
+
+  applyFilter() {
+    this.rebuildCategoryPages();
   },
 
   onSearchInput(e) {
@@ -146,15 +204,23 @@ Page({
   },
 
   selectCategoryByCat(cat) {
+    const activeCategoryIndex = Math.max(0, (this.data.categories || []).findIndex(c => c.id === cat.id));
     this.setData({
       selectedCategoryId: cat.id,
-      deviceGuides: [],
-      filteredDeviceGuides: [],
+      activeCategoryIndex,
       searchKeyword: '',
-      listLoading: true,
       tabScrollKey: 'tab-' + cat.id,
+    }, () => {
+      this.updateTrackStyle(0, true);
+      this.rebuildCategoryPages();
     });
-    this.updateCategoryBanner();
+    this.loadGuidesForCategory(cat);
+  },
+
+  loadGuidesForCategory(cat) {
+    if (!cat || this.categoryGuidesMap[cat.id] || this.categoryLoadingMap[cat.id]) return;
+    this.categoryLoadingMap[cat.id] = true;
+    this.rebuildCategoryPages();
     app.request({ url: '/guides', data: { categoryId: cat.id } })
       .then(res => {
         const base = app.globalData.baseUrl.replace('/api', '');
@@ -188,11 +254,15 @@ Page({
             displayOriginPrice: currencyUtil.formatPriceDisplay(originPrice, sym),
           };
         });
-        this.setData({ deviceGuides: list, listLoading: false }, () => {
-          this.applyFilter();
-        });
+        this.categoryGuidesMap[cat.id] = list;
+        this.categoryLoadingMap[cat.id] = false;
+        this.rebuildCategoryPages();
       })
-      .catch(() => this.setData({ listLoading: false }));
+      .catch(() => {
+        this.categoryGuidesMap[cat.id] = [];
+        this.categoryLoadingMap[cat.id] = false;
+        this.rebuildCategoryPages();
+      });
   },
 
   loadCart() {

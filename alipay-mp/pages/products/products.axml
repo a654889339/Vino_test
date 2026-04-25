@@ -1,5 +1,4 @@
 <view class="page">
-  <!-- 第一行：商品种类（与网页前台一致） -->
   <view class="product-nav">
     <scroll-view scroll-x class="product-nav-scroll">
       <view
@@ -12,97 +11,70 @@
     </scroll-view>
   </view>
 
-  <!-- 第二行：选择商品（与网页前台一致） -->
   <view
     class="product-content-area"
     onTouchStart="onContentTouchStart"
+    onTouchMove="onContentTouchMove"
     onTouchEnd="onContentTouchEnd"
+    onTouchCancel="onContentTouchEnd"
   >
-  <picker
-    a:if="{{categories.length && deviceGuides.length}}"
-    mode="selector"
-    range="{{deviceGuides}}"
-    range-key="name"
-    value="{{productPickerIndex}}"
-    onChange="onProductPick"
-  >
-    <view class="product-select-row">
-      <view class="select-product-field">
-        <text class="select-label">选择商品</text>
-        <text class="select-value">{{selectedProductLabel}}</text>
-        <text class="select-arrow">›</text>
-      </view>
-    </view>
-  </picker>
-  <view a:elif="{{categories.length}}" class="product-select-row">
-    <view class="select-product-field">
-      <text class="select-label">选择商品</text>
-      <text class="select-value">{{selectedCategoryId && !deviceGuides.length ? '该种类下暂无商品' : '请选择商品'}}</text>
-      <text class="select-arrow">›</text>
-    </view>
-  </view>
+    <view class="product-carousel">
+      <view class="product-carousel-track" style="{{trackStyle}}">
+        <view class="product-carousel-page" a:for="{{categoryPages}}" a:key="id">
+          <view a:if="{{item.bannerUrl}}" class="category-banner">
+            <image class="category-banner-img" src="{{item.bannerUrl}}" mode="widthFix" />
+          </view>
 
-  <!-- Loading -->
-  <view a:if="{{loading}}" class="loading">加载中...</view>
-
-  <!-- Guide Detail -->
-  <block a:elif="{{guide.id}}">
-    <view class="hero-block">
-      <view class="hero" style="background:{{guide.gradient || '#333'}}">
-        <image a:if="{{guide.coverImage}}" src="{{guide.coverImage}}" class="hero-img" mode="widthFix" onTap="previewCover" />
-        <view a:else class="hero-fallback">
-          <image a:if="{{guide.iconUrl}}" src="{{guide.iconUrl}}" class="hero-icon-img" />
-          <text a:else class="hero-emoji">{{guide.emoji}}</text>
-          <text class="hero-name">{{guide.name}}</text>
-        </view>
-        <view a:if="{{guide.showcaseVideo}}" class="play-btn" onTap="playShowcase">▶</view>
-      </view>
-      <view a:if="{{mediaItems.length}}" class="hero-media">
-        <text class="hero-media-title">{{firstMediaTitle}}</text>
-        <scroll-view scroll-x class="media-scroll">
-          <view a:for="{{mediaItems}}" a:for-index="idx" a:for-item="item" class="media-card" onTap="openMedia" data-idx="{{idx}}">
-            <view class="media-thumb-wrap">
-              <image a:if="{{item.thumb}}" src="{{item.thumb}}" class="media-thumb" mode="aspectFill" />
-              <view a:else class="media-placeholder">{{item.type === 'video' ? '🎬' : '🖼'}}</view>
-              <view a:if="{{item.type === 'video'}}" class="media-play">▶</view>
-              <view class="media-label-overlay">
-                <text>{{item.title}}</text>
+          <view a:if="{{item.loading}}" class="loading">加载中...</view>
+          <view a:elif="{{item.guides.length}}" class="product-grid">
+            <view
+              class="grid-card"
+              a:for="{{item.guides}}"
+              a:for-item="guide"
+              a:key="id"
+              data-id="{{guide.id}}"
+              data-slug="{{guide.slug}}"
+              onTap="selectProduct"
+            >
+              <view class="grid-card-row">
+                <view class="grid-card-thumb">
+                  <image a:if="{{guide.displayImageUrl}}" src="{{guide.displayImageUrl}}" class="grid-card-thumb-img" mode="aspectFill" />
+                  <text a:else class="grid-card-placeholder">📦</text>
+                </view>
+                <view class="grid-card-body">
+                  <text class="grid-card-title">{{guide.displayName}}</text>
+                  <text class="grid-card-subtitle">{{guide.displaySubtitle}}</text>
+                  <text class="grid-card-desc">{{guide.displayDescription}}</text>
+                  <view class="grid-card-price-row">
+                    <view class="grid-card-price">
+                      <text a:if="{{guide.displayListPrice}}" class="price-now">{{guide.displayListPrice}}</text>
+                      <text a:else class="price-placeholder">—</text>
+                      <text
+                        a:if="{{guide.displayOriginPrice && guide.originPrice && guide.originPrice > guide.listPrice}}"
+                        class="price-origin"
+                      >{{guide.displayOriginPrice}}</text>
+                    </view>
+                    <view class="add-cart-btn" data-id="{{guide.id}}" catchTap="addToCart">
+                      <view class="cart-outline-icon add-cart-icon" aria-hidden="true">
+                        <view class="cart-outline-basket"></view>
+                        <view class="cart-outline-wheel cart-outline-wheel-left"></view>
+                        <view class="cart-outline-wheel cart-outline-wheel-right"></view>
+                      </view>
+                    </view>
+                  </view>
+                </view>
               </view>
             </view>
           </view>
-        </scroll-view>
+          <view a:elif="{{!item.loading}}" class="empty-hint">
+            <text>该种类下暂无商品</text>
+          </view>
+        </view>
       </view>
     </view>
-
-    <view a:if="{{helpItems.length || sections.length || guide.manualPdfUrl}}" class="card">
-      <text class="title">使用帮助</text>
-      <view a:if="{{helpItems.length || guide.manualPdfUrl}}" class="help-row" onTap="goManual">
-        <text class="help-title">电子说明书</text>
-        <text class="help-arrow">›</text>
-      </view>
-      <view a:if="{{sections.length}}" class="help-row" onTap="goMaintenance">
-        <text class="help-title">常见问题与保养建议</text>
-        <text class="help-arrow">›</text>
-      </view>
+    <view a:if="{{!categories.length}}" class="empty-hint">
+      <text>暂无商品配置</text>
     </view>
-
-    <view class="card">
-      <text class="title">服务入口</text>
-      <view class="entry-grid">
-        <view class="entry-item" onTap="goServices"><view class="entry-icon" style="background:#EDE9FE"><text>🔧</text></view><text>自助服务</text></view>
-        <view class="entry-item" onTap="goServices"><view class="entry-icon" style="background:#DBEAFE"><text>📍</text></view><text>服务网点</text></view>
-        <view class="entry-item" onTap="goServices"><view class="entry-icon" style="background:#D1FAE5"><text>🛡</text></view><text>售后政策</text></view>
-        <view class="entry-item" onTap="goServices"><view class="entry-icon" style="background:#FEF3C7"><text>💰</text></view><text>维修报价</text></view>
-      </view>
-    </view>
-  </block>
-
-  <view a:elif="{{!loading && categories.length}}" class="empty-hint">
-    <text>请在上方选择种类与商品</text>
-  </view>
-  <view a:elif="{{!loading}}" class="empty-hint">
-    <text>暂无商品配置</text>
-  </view>
   </view>
 
   <view class="cart-float" onTap="goCart">

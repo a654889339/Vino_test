@@ -44,71 +44,89 @@
         <div
           class="product-main"
           @touchstart="onMainTouchStart"
+          @touchmove="onMainTouchMove"
           @touchend="onMainTouchEnd"
+          @touchcancel="onMainTouchEnd"
         >
-          <div v-if="currentCategoryBannerSrc" class="category-banner">
-            <LodImg
-              :src="currentCategoryBannerSrc"
-              :thumb="currentCategoryBannerThumb"
-              class="category-banner-img"
-              alt=""
-            />
-          </div>
-
-          <van-loading v-if="listLoading" size="28" class="main-loading" />
-          <div v-else-if="filteredDeviceGuides.length" class="product-grid">
-            <button
-              v-for="d in filteredDeviceGuides"
-              :key="d.id"
-              type="button"
-              class="grid-card"
-              @click="openGuide(d)"
+          <div class="product-carousel">
+            <div
+              class="product-carousel-track"
+              :class="{ dragging: isDragging }"
+              :style="carouselTrackStyle"
             >
-              <div class="grid-card-row">
-                <div class="grid-card-thumb">
+              <section
+                v-for="cat in sortedCategories"
+                :key="cat.id"
+                class="product-carousel-page"
+              >
+                <div v-if="categoryBannerSrc(cat)" class="category-banner">
                   <LodImg
-                    v-if="cardImage(d)"
-                    :src="cardImage(d)"
-                    class="grid-card-thumb-img"
+                    :src="categoryBannerSrc(cat)"
+                    :thumb="categoryBannerSrc(cat)"
+                    class="category-banner-img"
                     alt=""
                   />
-                  <van-icon v-else :name="d.icon || 'photo-o'" size="28" color="#6b7280" />
                 </div>
 
-                <div class="grid-card-body">
-                  <div class="grid-card-title">{{ pick(d, 'name') }}</div>
-                  <div class="grid-card-subtitle">{{ pick(d, 'subtitle') || ' ' }}</div>
-                  <div class="grid-card-desc">{{ pick(d, 'description') || ' ' }}</div>
+                <van-loading v-if="isCategoryLoading(cat.id)" size="28" class="main-loading" />
+                <div v-else-if="filteredGuidesForCategory(cat).length" class="product-grid">
+                  <button
+                    v-for="d in filteredGuidesForCategory(cat)"
+                    :key="d.id"
+                    type="button"
+                    class="grid-card"
+                    @click="openGuide(d)"
+                  >
+                    <div class="grid-card-row">
+                      <div class="grid-card-thumb">
+                        <LodImg
+                          v-if="cardImage(d)"
+                          :src="cardImage(d)"
+                          class="grid-card-thumb-img"
+                          alt=""
+                        />
+                        <van-icon v-else :name="d.icon || 'photo-o'" size="28" color="#6b7280" />
+                      </div>
 
-                  <div class="grid-card-price-row">
-                    <div class="grid-card-price">
-                      <span v-if="shouldShowPrice(d.listPrice)" class="price-now">
-                        {{ formatPriceDisplay(d.listPrice, d.currency) }}
-                      </span>
-                      <span v-else class="price-placeholder">—</span>
-                      <span
-                        v-if="shouldShowPrice(d.originPrice) && Number(d.originPrice) > Number(d.listPrice || 0)"
-                        class="price-origin"
-                      >
-                        {{ formatPriceDisplay(d.originPrice, d.currency) }}
-                      </span>
+                      <div class="grid-card-body">
+                        <div class="grid-card-title">{{ pick(d, 'name') }}</div>
+                        <div class="grid-card-subtitle">{{ pick(d, 'subtitle') || ' ' }}</div>
+                        <div class="grid-card-desc">{{ pick(d, 'description') || ' ' }}</div>
+
+                        <div class="grid-card-price-row">
+                          <div class="grid-card-price">
+                            <span v-if="shouldShowPrice(d.listPrice)" class="price-now">
+                              {{ formatPriceDisplay(d.listPrice, d.currency) }}
+                            </span>
+                            <span v-else class="price-placeholder">—</span>
+                            <span
+                              v-if="shouldShowPrice(d.originPrice) && Number(d.originPrice) > Number(d.listPrice || 0)"
+                              class="price-origin"
+                            >
+                              {{ formatPriceDisplay(d.originPrice, d.currency) }}
+                            </span>
+                          </div>
+                          <button type="button" class="add-cart-btn" @click.stop="addToCart(d)">
+                            <van-icon name="cart-o" size="18" />
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                    <button type="button" class="add-cart-btn" @click.stop="addToCart(d)">
-                      <van-icon name="cart-o" size="18" />
-                    </button>
-                  </div>
+                  </button>
                 </div>
-              </div>
-            </button>
+                <div v-else-if="!isCategoryLoading(cat.id) && guidesForCategory(cat).length && !filteredGuidesForCategory(cat).length" class="main-empty">
+                  {{ t('products.emptyNoMatch') }}
+                </div>
+                <div v-else-if="!isCategoryLoading(cat.id) && !guidesForCategory(cat).length" class="main-empty">
+                  {{ t('products.emptyCategoryEmpty') }}
+                </div>
+              </section>
+            </div>
           </div>
-          <div v-else-if="selectedCategoryId && !listLoading && sortedDeviceGuides.length && !filteredDeviceGuides.length" class="main-empty">
-            {{ t('products.emptyNoMatch') }}
-          </div>
-          <div v-else-if="selectedCategoryId && !listLoading && !sortedDeviceGuides.length" class="main-empty">{{ t('products.emptyCategoryEmpty') }}</div>
         </div>
       </div>
 
-      <div v-if="!listLoading && !sortedCategories.length" class="empty-hint">
+      <div v-if="!sortedCategories.length" class="empty-hint">
         <van-icon name="info-o" size="48" color="#ccc" />
         <p>{{ t('products.emptyNoConfig') }}</p>
       </div>
@@ -136,8 +154,8 @@ const router = useRouter();
 
 const categories = ref([]);
 const selectedCategoryId = ref(null);
-const deviceGuides = ref([]);
-const listLoading = ref(false);
+const categoryGuides = ref({});
+const categoryLoading = ref({});
 const searchKeyword = ref('');
 const cartLines = ref([]);
 
@@ -159,17 +177,41 @@ function scrollActiveTabIntoView() {
 
 const touchStartX = ref(0);
 const touchStartY = ref(0);
+const dragOffset = ref(0);
+const isDragging = ref(false);
+const trackTransition = ref(true);
 function onMainTouchStart(e) {
   const t = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]);
   if (!t) return;
   touchStartX.value = t.clientX;
   touchStartY.value = t.clientY;
+  dragOffset.value = 0;
+  isDragging.value = true;
+  trackTransition.value = false;
 }
-function onMainTouchEnd(e) {
-  const t = (e.changedTouches && e.changedTouches[0]) || (e.touches && e.touches[0]);
+function onMainTouchMove(e) {
+  if (!isDragging.value) return;
+  const t = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]);
   if (!t) return;
   const dx = t.clientX - touchStartX.value;
   const dy = t.clientY - touchStartY.value;
+  if (Math.abs(dy) > Math.abs(dx)) return;
+  const idx = activeCategoryIndex.value;
+  const maxLeft = idx === 0 ? 0 : 120;
+  const maxRight = idx >= sortedCategories.value.length - 1 ? 0 : 120;
+  dragOffset.value = Math.max(-maxRight, Math.min(maxLeft, dx));
+}
+function onMainTouchEnd(e) {
+  const t = (e.changedTouches && e.changedTouches[0]) || (e.touches && e.touches[0]);
+  isDragging.value = false;
+  trackTransition.value = true;
+  if (!t) {
+    dragOffset.value = 0;
+    return;
+  }
+  const dx = t.clientX - touchStartX.value;
+  const dy = t.clientY - touchStartY.value;
+  dragOffset.value = 0;
   if (Math.abs(dx) < 60) return;
   if (Math.abs(dy) > 30) return;
   const list = sortedCategories.value;
@@ -255,55 +297,65 @@ const cartCount = computed(() => {
 
 const sortedCategories = computed(() => sortCategoriesForSidebar(categories.value));
 
-const currentCategoryName = computed(() => {
-  const c = categories.value.find((x) => x.id === selectedCategoryId.value);
-  return c ? c.name : '';
+const activeCategoryIndex = computed(() => {
+  const idx = sortedCategories.value.findIndex((x) => x.id === selectedCategoryId.value);
+  return idx >= 0 ? idx : 0;
 });
 
-const sortedDeviceGuides = computed(() =>
-  sortGuidesByDisplayOrder(deviceGuides.value, currentCategoryName.value)
-);
+const carouselTrackStyle = computed(() => ({
+  transform: `translateX(calc(${-activeCategoryIndex.value * 100}% + ${dragOffset.value}px))`,
+  transition: trackTransition.value ? 'transform 0.28s cubic-bezier(0.22, 0.61, 0.36, 1)' : 'none',
+}));
 
-const filteredDeviceGuides = computed(() => {
-  const list = sortedDeviceGuides.value;
+function categoryBannerSrc(cat) {
+  const u = pick(cat, 'thumbnailUrl');
+  if (!u || !String(u).trim()) return '';
+  return fullUrl(String(u).trim());
+}
+
+function guidesForCategory(cat) {
+  if (!cat) return [];
+  return sortGuidesByDisplayOrder(categoryGuides.value[cat.id] || [], cat.name);
+}
+
+function filteredGuidesForCategory(cat) {
+  const list = guidesForCategory(cat);
+  if (cat && cat.id !== selectedCategoryId.value) return list;
   const kw = searchKeyword.value.trim().toLowerCase();
   if (!kw) return list;
   return list.filter((d) => {
     const hay = [d.name, d.nameEn, d.slug].filter(Boolean).join(' ').toLowerCase();
     return hay.includes(kw);
   });
-});
+}
 
-const currentCategory = computed(() =>
-  categories.value.find((x) => x.id === selectedCategoryId.value) || null
-);
-
-const currentCategoryBannerSrc = computed(() => {
-  const u = pick(currentCategory.value, 'thumbnailUrl');
-  if (!u || !String(u).trim()) return '';
-  return fullUrl(String(u).trim());
-});
-
-const currentCategoryBannerThumb = computed(() => currentCategoryBannerSrc.value);
+function isCategoryLoading(id) {
+  return !!categoryLoading.value[id];
+}
 
 function openGuide(d) {
   const idOrSlug = d.slug || d.id;
   router.push(`/guide/${encodeURIComponent(String(idOrSlug))}`);
 }
 
+async function loadGuidesForCategory(cat) {
+  if (!cat || categoryGuides.value[cat.id] || categoryLoading.value[cat.id]) return;
+  categoryLoading.value = { ...categoryLoading.value, [cat.id]: true };
+  try {
+    const res = await guideApi.list({ categoryId: cat.id });
+    categoryGuides.value = { ...categoryGuides.value, [cat.id]: res.data || [] };
+  } catch {
+    categoryGuides.value = { ...categoryGuides.value, [cat.id]: [] };
+  }
+  categoryLoading.value = { ...categoryLoading.value, [cat.id]: false };
+}
+
 const selectCategory = async (cat) => {
   if (selectedCategoryId.value === cat.id) return;
   selectedCategoryId.value = cat.id;
   searchKeyword.value = '';
-  listLoading.value = true;
   nextTick(scrollActiveTabIntoView);
-  try {
-    const res = await guideApi.list({ categoryId: cat.id });
-    deviceGuides.value = res.data || [];
-  } catch {
-    deviceGuides.value = [];
-  }
-  listLoading.value = false;
+  await loadGuidesForCategory(cat);
 };
 
 onMounted(async () => {
@@ -315,14 +367,8 @@ onMounted(async () => {
     if (sorted.length) {
       const first = sorted[0];
       selectedCategoryId.value = first.id;
-      listLoading.value = true;
-      try {
-        const listRes = await guideApi.list({ categoryId: first.id });
-        deviceGuides.value = listRes.data || [];
-      } catch {
-        deviceGuides.value = [];
-      }
-      listLoading.value = false;
+      await loadGuidesForCategory(first);
+      sorted.slice(1).forEach((cat) => loadGuidesForCategory(cat));
     }
   } catch {
     /* empty */
@@ -423,22 +469,16 @@ onMounted(async () => {
 .product-tabs {
   display: flex;
   align-items: stretch;
-  gap: 0;
+  gap: 6px;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  background: #ffffff;
-  padding: 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-  background-image: linear-gradient(
-    to right,
-    transparent 0,
-    transparent 49.8%,
-    rgba(0, 0, 0, 0.08) 49.8%,
-    rgba(0, 0, 0, 0.08) 50.2%,
-    transparent 50.2%,
-    transparent 100%
-  );
+  background: #f3f4f6;
+  padding: 6px;
+  margin: 0 12px 10px;
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
 }
 
 .product-tabs::-webkit-scrollbar {
@@ -449,25 +489,26 @@ onMounted(async () => {
   flex: 1 1 0;
   min-width: 0;
   margin: 0;
-  padding: 14px 8px;
+  padding: 12px 8px;
   border: none;
+  border-radius: 12px;
   background: transparent;
   font-size: 15px;
   font-weight: 500;
   color: #4b5563;
   cursor: pointer;
-  transition: color 0.2s, border-color 0.2s;
+  transition: color 0.2s, background 0.2s, box-shadow 0.2s;
   line-height: 1.35;
   text-align: center;
   white-space: nowrap;
-  border-bottom: 2px solid transparent;
   -webkit-tap-highlight-color: transparent;
 }
 
 .tab-item.active {
-  color: #111827;
+  color: #b91c1c;
   font-weight: 700;
-  border-bottom-color: #07c160;
+  background: #ffffff;
+  box-shadow: 0 6px 14px rgba(185, 28, 28, 0.16);
 }
 
 .tab-item:active {
@@ -484,10 +525,33 @@ onMounted(async () => {
 .product-main {
   width: 100%;
   min-width: 0;
-  padding: 12px;
   background: #fafafa;
   box-sizing: border-box;
   touch-action: pan-y;
+  overflow: hidden;
+}
+
+.product-carousel {
+  width: 100%;
+  overflow: hidden;
+}
+
+.product-carousel-track {
+  display: flex;
+  width: 100%;
+  will-change: transform;
+}
+
+.product-carousel-track.dragging {
+  cursor: grabbing;
+}
+
+.product-carousel-page {
+  flex: 0 0 100%;
+  width: 100%;
+  min-width: 0;
+  padding: 12px;
+  box-sizing: border-box;
 }
 
 .category-banner {

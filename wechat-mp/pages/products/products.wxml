@@ -43,54 +43,63 @@
     <view
       class="product-main"
       bindtouchstart="onListTouchStart"
+      bindtouchmove="onListTouchMove"
       bindtouchend="onListTouchEnd"
+      bindtouchcancel="onListTouchEnd"
     >
-      <view wx:if="{{categoryBannerUrl}}" class="category-banner">
-        <image class="category-banner-img" src="{{categoryBannerUrl}}" mode="widthFix" />
-      </view>
-
-      <view wx:if="{{listLoading}}" class="main-loading">{{loadingText}}</view>
-      <view wx:elif="{{filteredDeviceGuides.length}}" class="product-grid">
-        <view
-          class="grid-card"
-          wx:for="{{filteredDeviceGuides}}"
-          wx:key="id"
-          data-id="{{item.id}}"
-          data-slug="{{item.slug}}"
-          bindtap="selectProduct"
-        >
-          <view class="grid-card-row">
-            <view class="grid-card-thumb">
-              <image wx:if="{{item.displayImageUrl}}" src="{{item.displayImageUrl}}" class="grid-card-thumb-img" mode="aspectFill" data-id="{{item.id}}" />
-              <text wx:else class="grid-card-placeholder">📦</text>
+      <view class="product-carousel">
+        <view class="product-carousel-track" style="{{trackStyle}}">
+          <view class="product-carousel-page" wx:for="{{categoryPages}}" wx:key="id">
+            <view wx:if="{{item.bannerUrl}}" class="category-banner">
+              <image class="category-banner-img" src="{{item.bannerUrl}}" mode="widthFix" />
             </view>
-            <view class="grid-card-body">
-              <text class="grid-card-title">{{item.displayName}}</text>
-              <text class="grid-card-subtitle">{{item.displaySubtitle}}</text>
-              <text class="grid-card-desc">{{item.displayDescription}}</text>
-              <view class="grid-card-price-row">
-                <view class="grid-card-price">
-                  <text wx:if="{{item.displayListPrice}}" class="price-now">{{item.displayListPrice}}</text>
-                  <text wx:else class="price-placeholder">—</text>
-                  <text
-                    wx:if="{{item.displayOriginPrice && item.originPrice && item.originPrice > item.listPrice}}"
-                    class="price-origin"
-                  >{{item.displayOriginPrice}}</text>
-                </view>
-                <view class="add-cart-btn" data-id="{{item.id}}" catchtap="addToCart">
-                  <view class="cart-outline-icon add-cart-icon" aria-hidden="true">
-                    <view class="cart-outline-basket"></view>
-                    <view class="cart-outline-wheel cart-outline-wheel-left"></view>
-                    <view class="cart-outline-wheel cart-outline-wheel-right"></view>
+
+            <view wx:if="{{item.loading}}" class="main-loading">{{loadingText}}</view>
+            <view wx:elif="{{item.filteredGuides.length}}" class="product-grid">
+              <view
+                class="grid-card"
+                wx:for="{{item.filteredGuides}}"
+                wx:for-item="guide"
+                wx:key="id"
+                data-id="{{guide.id}}"
+                data-slug="{{guide.slug}}"
+                bindtap="selectProduct"
+              >
+                <view class="grid-card-row">
+                  <view class="grid-card-thumb">
+                    <image wx:if="{{guide.displayImageUrl}}" src="{{guide.displayImageUrl}}" class="grid-card-thumb-img" mode="aspectFill" data-id="{{guide.id}}" />
+                    <text wx:else class="grid-card-placeholder">📦</text>
+                  </view>
+                  <view class="grid-card-body">
+                    <text class="grid-card-title">{{guide.displayName}}</text>
+                    <text class="grid-card-subtitle">{{guide.displaySubtitle}}</text>
+                    <text class="grid-card-desc">{{guide.displayDescription}}</text>
+                    <view class="grid-card-price-row">
+                      <view class="grid-card-price">
+                        <text wx:if="{{guide.displayListPrice}}" class="price-now">{{guide.displayListPrice}}</text>
+                        <text wx:else class="price-placeholder">—</text>
+                        <text
+                          wx:if="{{guide.displayOriginPrice && guide.originPrice && guide.originPrice > guide.listPrice}}"
+                          class="price-origin"
+                        >{{guide.displayOriginPrice}}</text>
+                      </view>
+                      <view class="add-cart-btn" data-id="{{guide.id}}" catchtap="addToCart">
+                        <view class="cart-outline-icon add-cart-icon" aria-hidden="true">
+                          <view class="cart-outline-basket"></view>
+                          <view class="cart-outline-wheel cart-outline-wheel-left"></view>
+                          <view class="cart-outline-wheel cart-outline-wheel-right"></view>
+                        </view>
+                      </view>
+                    </view>
                   </view>
                 </view>
               </view>
             </view>
+            <view wx:elif="{{selectedCategoryId && !item.loading && item.guides.length && !item.filteredGuides.length}}" class="main-empty">{{noMatchText}}</view>
+            <view wx:elif="{{selectedCategoryId && !item.loading && !item.guides.length}}" class="main-empty">{{noCategoryProductText}}</view>
           </view>
         </view>
       </view>
-      <view wx:elif="{{selectedCategoryId && !listLoading && deviceGuides.length && !filteredDeviceGuides.length}}" class="main-empty">{{noMatchText}}</view>
-      <view wx:elif="{{selectedCategoryId && !listLoading && !deviceGuides.length}}" class="main-empty">{{noCategoryProductText}}</view>
     </view>
   </view>
 
