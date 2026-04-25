@@ -13,6 +13,11 @@
   </view>
 
   <!-- 第二行：选择商品（与网页前台一致） -->
+  <view
+    class="product-content-area"
+    onTouchStart="onContentTouchStart"
+    onTouchEnd="onContentTouchEnd"
+  >
   <picker
     a:if="{{categories.length && deviceGuides.length}}"
     mode="selector"
@@ -97,6 +102,7 @@
   </view>
   <view a:elif="{{!loading}}" class="empty-hint">
     <text>暂无商品配置</text>
+  </view>
   </view>
 
   <view class="cart-float" onTap="goCart">

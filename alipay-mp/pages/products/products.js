@@ -46,6 +46,29 @@ Page({
     if (cat) this.selectCategoryByCat(cat);
   },
 
+  _touchStartX: 0,
+  _touchStartY: 0,
+  onContentTouchStart(e) {
+    const t = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]);
+    if (!t) return;
+    this._touchStartX = t.clientX;
+    this._touchStartY = t.clientY;
+  },
+  onContentTouchEnd(e) {
+    const t = (e.changedTouches && e.changedTouches[0]) || (e.touches && e.touches[0]);
+    if (!t) return;
+    const dx = t.clientX - this._touchStartX;
+    const dy = t.clientY - this._touchStartY;
+    if (Math.abs(dx) < 60) return;
+    if (Math.abs(dy) > 30) return;
+    const cats = this.data.categories || [];
+    if (!cats.length) return;
+    const idx = cats.findIndex(c => c.id === this.data.selectedCategoryId);
+    if (idx < 0) return;
+    const target = dx < 0 ? cats[idx + 1] : cats[idx - 1];
+    if (target) this.selectCategoryByCat(target);
+  },
+
   selectCategoryByCat(cat) {
     this.setData({ selectedCategoryId: cat.id, deviceGuides: [], activeId: null, guide: {}, loading: true });
     app.request({ url: '/guides', data: { categoryId: cat.id } })

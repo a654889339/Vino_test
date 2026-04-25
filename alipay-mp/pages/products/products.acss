@@ -89,6 +89,8 @@
 .empty-hint { text-align: center; padding: 80px 0; color: #999; font-size: 14px; }
 .tab-bar-placeholder { height: 120rpx; }
 
+.product-content-area { width: 100%; min-height: 50vh; }
+
 .cart-float { position: fixed; right: 24rpx; bottom: 160rpx; width: 96rpx; height: 96rpx; border-radius: 50%; background: #fff; box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; z-index: 50; }
 .cart-float-icon { font-size: 40rpx; }
 .cart-float-badge { position: absolute; top: -4rpx; right: -4rpx; min-width: 36rpx; height: 36rpx; line-height: 36rpx; text-align: center; background: #b91c1c; color: #fff; font-size: 22rpx; border-radius: 999rpx; padding: 0 10rpx; }

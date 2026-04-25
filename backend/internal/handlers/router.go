@@ -241,6 +241,10 @@ func RegisterRoutes(engine *gin.Engine, cfg *config.Config) {
 	api.POST("/admin/generate-thumbs", middleware.Auth(cfg), middleware.Admin(), func(c *gin.Context) { AdminGenerateThumbs(c, cfg) })
 	api.POST("/admin/seed", middleware.Auth(cfg), middleware.Admin(), SeedData)
 
+	// 通用 raw-row 详情/修改（受白名单约束）
+	api.GET("/admin/raw-row/:table/:id", middleware.Auth(cfg), middleware.Admin(), rawRowGet)
+	api.PUT("/admin/raw-row/:table/:id", middleware.Auth(cfg), middleware.Admin(), rawRowUpdate)
+
 	api.GET("/i18n", I18nList)
 	api.POST("/i18n/bulk", middleware.Auth(cfg), middleware.Admin(), I18nBulkUpsert)
 	api.PUT("/i18n/:id", middleware.Auth(cfg), middleware.Admin(), I18nUpdate)

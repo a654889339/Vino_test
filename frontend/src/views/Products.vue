@@ -22,20 +22,30 @@
         </div>
       </div>
 
+      <nav
+        v-if="sortedCategories.length"
+        class="product-tabs"
+        ref="tabBarRef"
+      >
+        <button
+          v-for="cat in sortedCategories"
+          :key="cat.id"
+          type="button"
+          class="tab-item"
+          :class="{ active: selectedCategoryId === cat.id }"
+          :ref="(el) => setTabRef(cat.id, el)"
+          @click="selectCategory(cat)"
+        >
+          {{ pick(cat, 'name') }}
+        </button>
+      </nav>
+
       <div class="products-layout">
-        <aside class="product-sidebar" v-if="sortedCategories.length">
-          <button
-            v-for="cat in sortedCategories"
-            :key="cat.id"
-            type="button"
-            class="sidebar-item"
-            :class="{ active: selectedCategoryId === cat.id }"
-            @click="selectCategory(cat)"
-          >
-            {{ pick(cat, 'name') }}
-          </button>
-        </aside>
-        <div class="product-main">
+        <div
+          class="product-main"
+          @touchstart="onMainTouchStart"
+          @touchend="onMainTouchEnd"
+        >
           <div v-if="currentCategoryBannerSrc" class="category-banner">
             <LodImg
               :src="currentCategoryBannerSrc"
@@ -109,7 +119,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { cartApi, guideApi } from '@/api';
 import LodImg from '@/components/LodImg.vue';
@@ -130,6 +140,50 @@ const deviceGuides = ref([]);
 const listLoading = ref(false);
 const searchKeyword = ref('');
 const cartLines = ref([]);
+
+const tabBarRef = ref(null);
+const tabElMap = {};
+function setTabRef(id, el) {
+  if (el) tabElMap[id] = el;
+}
+function scrollActiveTabIntoView() {
+  const el = tabElMap[selectedCategoryId.value];
+  if (el && typeof el.scrollIntoView === 'function') {
+    try {
+      el.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    } catch {
+      el.scrollIntoView();
+    }
+  }
+}
+
+const touchStartX = ref(0);
+const touchStartY = ref(0);
+function onMainTouchStart(e) {
+  const t = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]);
+  if (!t) return;
+  touchStartX.value = t.clientX;
+  touchStartY.value = t.clientY;
+}
+function onMainTouchEnd(e) {
+  const t = (e.changedTouches && e.changedTouches[0]) || (e.touches && e.touches[0]);
+  if (!t) return;
+  const dx = t.clientX - touchStartX.value;
+  const dy = t.clientY - touchStartY.value;
+  if (Math.abs(dx) < 60) return;
+  if (Math.abs(dy) > 30) return;
+  const list = sortedCategories.value;
+  if (!list.length) return;
+  const idx = list.findIndex((x) => x.id === selectedCategoryId.value);
+  if (idx < 0) return;
+  if (dx < 0) {
+    const next = list[idx + 1];
+    if (next) selectCategory(next);
+  } else {
+    const prev = list[idx - 1];
+    if (prev) selectCategory(prev);
+  }
+}
 
 const BASE = import.meta.env.VITE_API_BASE || '';
 function fullUrl(url) {
@@ -242,6 +296,7 @@ const selectCategory = async (cat) => {
   selectedCategoryId.value = cat.id;
   searchKeyword.value = '';
   listLoading.value = true;
+  nextTick(scrollActiveTabIntoView);
   try {
     const res = await guideApi.list({ categoryId: cat.id });
     deviceGuides.value = res.data || [];
@@ -365,60 +420,64 @@ onMounted(async () => {
   height: 56px;
 }
 
-.products-layout {
+.product-tabs {
   display: flex;
   align-items: stretch;
-  min-height: 200px;
+  gap: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
   background: #ffffff;
+  padding: 0 4px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-.product-sidebar {
-  flex-shrink: 0;
-  width: 96px;
-  padding: 0;
-  background: #f7f6f2;
-  border-right: 1px solid rgba(0, 0, 0, 0.08);
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  align-items: stretch;
+.product-tabs::-webkit-scrollbar {
+  display: none;
 }
 
-.sidebar-item {
+.tab-item {
+  flex: 0 0 auto;
   margin: 0;
-  padding: 14px 10px 14px 12px;
+  padding: 12px 18px;
   border: none;
-  border-radius: 0;
-  border-left: 3px solid transparent;
-  box-sizing: border-box;
   background: transparent;
   font-size: 14px;
   font-weight: 500;
   color: #4b5563;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  transition: color 0.2s, border-color 0.2s;
   line-height: 1.35;
-  text-align: left;
+  text-align: center;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
   -webkit-tap-highlight-color: transparent;
 }
 
-.sidebar-item.active {
-  background: #e8e8e8;
-  border-left-color: #07c160;
+.tab-item.active {
   color: #111827;
-  font-weight: 600;
+  font-weight: 700;
+  border-bottom-color: #07c160;
 }
 
-.sidebar-item:active {
-  opacity: 0.88;
+.tab-item:active {
+  opacity: 0.85;
+}
+
+.products-layout {
+  display: block;
+  min-height: 200px;
+  background: #ffffff;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .product-main {
-  flex: 1;
+  width: 100%;
   min-width: 0;
   padding: 12px;
   background: #fafafa;
+  box-sizing: border-box;
+  touch-action: pan-y;
 }
 
 .category-banner {

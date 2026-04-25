@@ -144,6 +144,33 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .addr-card .addr-default-tag{position:absolute;top:8px;right:10px;font-size:10px;background:#B91C1C;color:#fff;padding:1px 6px;border-radius:3px}
 .no-addr{font-size:13px;color:#999;padding:8px 0}
 
+.row-detail-row td{padding:0!important;border-bottom:1px solid #f0f0f0;background:#fafafa}
+.row-detail-inner{padding:14px 18px}
+.row-detail-inner .row-detail-title{font-size:13px;font-weight:600;color:#333;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.row-detail-inner .row-detail-title .row-detail-meta{font-size:12px;color:#888;font-weight:normal}
+.kv-grid{display:grid;grid-template-columns:200px 1fr;gap:6px 16px;font-size:13px;align-items:start}
+.kv-key{color:#666;word-break:break-all}
+.kv-val{color:#1a1a1a;word-break:break-all;white-space:pre-wrap;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+.kv-val.kv-empty{color:#bbb;font-style:italic}
+.kv-val.kv-readonly{color:#999}
+.kv-val.kv-sensitive{color:#bbb;font-style:italic}
+.row-detail-actions{margin-top:12px;display:flex;gap:8px}
+.row-edit-btn{padding:6px 16px;background:#B91C1C;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px}
+.row-edit-btn:hover{background:#991B1B}
+.row-detail-loading{padding:12px 0;color:#888;font-size:13px}
+.row-detail-error{padding:12px 0;color:#B91C1C;font-size:13px}
+.raw-edit-form{display:grid;grid-template-columns:180px 1fr;gap:10px 14px;align-items:start}
+.raw-edit-form .raw-label{font-size:13px;color:#555;padding-top:8px;word-break:break-all}
+.raw-edit-form .raw-label .raw-type{display:block;font-size:11px;color:#aaa;margin-top:2px}
+.raw-edit-form .raw-input{width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:6px;font-size:13px;background:#fafafa;box-sizing:border-box;font-family:inherit}
+.raw-edit-form .raw-input:focus{outline:none;border-color:var(--primary);background:#fff}
+.raw-edit-form .raw-input[disabled]{background:#f0f0f0;color:#999;cursor:not-allowed}
+.raw-edit-form textarea.raw-input{min-height:72px;resize:vertical;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px}
+.raw-edit-footer{display:flex;justify-content:flex-end;gap:10px;padding:12px 20px;border-top:1px solid #f0f0f0}
+.raw-edit-cancel{padding:8px 18px;background:#f5f5f5;color:#333;border:1px solid #ddd;border-radius:6px;cursor:pointer;font-size:13px}
+.raw-edit-save{padding:8px 18px;background:#B91C1C;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px}
+.raw-edit-save:disabled{background:#aaa;cursor:not-allowed}
+
 .dash-menu-btn{display:none;background:transparent;color:#fff;border:none;font-size:22px;line-height:1;cursor:pointer;padding:4px 10px;margin-right:6px;border-radius:6px}
 .dash-menu-btn:hover{background:rgba(255,255,255,.1)}
 .dash-sidebar-mask{display:none;position:fixed;left:0;right:0;top:60px;bottom:0;background:rgba(0,0,0,.45);z-index:110}
@@ -1705,6 +1732,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   </div>
 </div>
 
+<!-- 通用 raw-row 行编辑弹窗 -->
+<div class="modal-overlay" id="rawRowEditModal" style="display:none" onclick="if(event.target===this)closeRawRowEditModal()">
+  <div class="modal-content" style="width:720px">
+    <div class="modal-header">
+      <h3 id="rawRowEditTitle">编辑记录</h3>
+      <span class="modal-close" onclick="closeRawRowEditModal()">&times;</span>
+    </div>
+    <div class="modal-body" id="rawRowEditBody">
+      <div style="color:#888;font-size:13px">加载中...</div>
+    </div>
+    <div class="raw-edit-footer">
+      <button type="button" class="raw-edit-cancel" onclick="closeRawRowEditModal()">取消</button>
+      <button type="button" class="raw-edit-save" id="rawRowEditSave" onclick="submitRawRowEdit()">保存</button>
+    </div>
+  </div>
+</div>
+
 <!-- 订单历史记录弹窗 -->
 <div class="modal-overlay" id="logModal" style="display:none" onclick="if(event.target===this)closeLogModal()">
   <div class="modal-content">
@@ -2193,6 +2237,7 @@ async function loadOrders() {
               <option value="cancelled" ${o.status === 'cancelled' ? 'selected' : ''}>已取消</option>
             </select>
             <button class="history-btn" onclick="openLogModal(${o.id}, '${o.price}')">历史</button>
+            <button class="detail-btn" onclick="openRowDetail('orders',${o.id},this.closest('tr'),12)">详情</button>
           </td>
         </tr>`).join('');
       }
@@ -2292,6 +2337,7 @@ async function loadGoodsOrders() {
               <option value="cancelled" ${o.status === 'cancelled' ? 'selected' : ''}>已取消</option>
             </select>
             <button class="history-btn" onclick="openGoodsOrderLogModal(${o.id}, '${o.totalPrice}')">历史</button>
+            <button class="detail-btn" onclick="openRowDetail('goods_orders',${o.id},this.closest('tr'),11)">详情</button>
           </td>
         </tr>`;
         }).join('');
@@ -2843,6 +2889,9 @@ function renderUserTable() {
           html += '<div class="no-addr" style="margin-top:8px">该用户暂无收货地址</div>';
         }
       }
+      html += '<div class="row-detail-actions" style="margin-top:14px">'
+        + '<button type="button" class="row-edit-btn" onclick="openRowEditModal(\'users\',' + u.id + ')">修改</button>'
+        + '</div>';
       html += '</div></td></tr>';
     }
   });
@@ -2998,6 +3047,7 @@ async function loadGuides() {
       <td>${qrCell}</td>
       <td>
         <button type="button" class="detail-btn" data-guide-action="editGuide" data-id="${g.id}">编辑</button>
+        <button type="button" class="detail-btn" onclick="openRowDetail('device_guides',${g.id},this.closest('tr'),9)">详情</button>
         <button type="button" class="history-btn" style="color:#B91C1C;border-color:#FCA5A5" data-guide-action="deleteGuide" data-id="${g.id}">删除</button>
       </td>
     </tr>`;
@@ -3032,6 +3082,7 @@ async function loadCategories() {
         <td><span style="padding:2px 8px;border-radius:4px;font-size:12px;${c.status==='active'?'background:#D1FAE5;color:#059669':'background:#F3F4F6;color:#999'}">${c.status==='active'?'启用':'禁用'}</span></td>
         <td>
           <button class="detail-btn" onclick="openCategoryEditor(${c.id})">编辑</button>
+          <button class="detail-btn" onclick="openRowDetail('product_categories',${c.id},this.closest('tr'),6)">详情</button>
           <button class="history-btn" style="color:#B91C1C;border-color:#FCA5A5" onclick="deleteCategory(${c.id})">删除</button>
         </td>
       </tr>`).join('');
@@ -3216,6 +3267,7 @@ async function loadServiceCategories() {
         <td><span style="padding:2px 8px;border-radius:4px;font-size:12px;${c.status==='active'?'background:#D1FAE5;color:#059669':'background:#F3F4F6;color:#999'}">${c.status==='active'?'启用':'禁用'}</span></td>
         <td>
           <button class="detail-btn" onclick="openServiceCategoryEditor(${c.id})">编辑</button>
+          <button class="detail-btn" onclick="openRowDetail('service_categories',${c.id},this.closest('tr'),8)">详情</button>
           <button class="history-btn" style="color:#B91C1C;border-color:#FCA5A5" onclick="deleteServiceCategory(${c.id})">删除</button>
         </td>
       </tr>`).join('');
@@ -3263,6 +3315,7 @@ function renderServicesTable() {
     <td><span style="padding:2px 8px;border-radius:4px;font-size:12px;${s.status==='active'?'background:#D1FAE5;color:#059669':'background:#F3F4F6;color:#999'}">${s.status==='active'?'启用':'禁用'}</span></td>
     <td>
       <button class="detail-btn" onclick="editServiceItem(${s.id})">编辑</button>
+      <button class="detail-btn" onclick="openRowDetail('services',${s.id},this.closest('tr'),10)">详情</button>
       <button class="history-btn" style="color:#B91C1C;border-color:#FCA5A5" onclick="deleteServiceItem(${s.id})">删除</button>
     </td>
   </tr>`).join('');
@@ -3835,7 +3888,7 @@ async function loadInventoryCategories() {
       <td>${c.name}</td>
       <td>${c.sortOrder}</td>
       <td>${c.status === 'active' ? '启用' : '禁用'}</td>
-      <td><button class="detail-btn" onclick="editInvCategory(${c.id})">编辑</button> <button class="history-btn" onclick="deleteInvCategory(${c.id})">删除</button></td>
+      <td><button class="detail-btn" onclick="editInvCategory(${c.id})">编辑</button> <button class="detail-btn" onclick="openRowDetail('inventory_categories',${c.id},this.closest('tr'),5)">详情</button> <button class="history-btn" onclick="deleteInvCategory(${c.id})">删除</button></td>
     </tr>`).join('');
   } catch { document.getElementById('invCategoryTableBody').innerHTML = '<tr><td colspan="5" style="text-align:center;color:#B91C1C">加载失败</td></tr>'; }
 }
@@ -3886,7 +3939,7 @@ async function loadInventoryProducts(resetPage) {
       <td style="font-size:12px;color:#666">${formatDateTime(p.createdAt)}</td>
       <td><button class="detail-btn" onclick="showInvProductQR(${p.id})">生成二维码</button></td>
       <td style="font-size:12px">${boundStr(p)}</td>
-      <td><button class="detail-btn" onclick="editInvProduct(${p.id})">编辑</button> <button class="history-btn" onclick="deleteInvProduct(${p.id})">删除</button></td>
+      <td><button class="detail-btn" onclick="editInvProduct(${p.id})">编辑</button> <button class="detail-btn" onclick="openRowDetail('inventory_products',${p.id},this.closest('tr'),11)">详情</button> <button class="history-btn" onclick="deleteInvProduct(${p.id})">删除</button></td>
     </tr>`).join('');
     const totalPages = Math.ceil(total / pageSize);
     document.getElementById('invProductPagination').innerHTML = totalPages > 1 ? `
@@ -5317,7 +5370,9 @@ async function loadOutletOrders() {
       <td><select style="padding:4px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px" onchange="updateOutletOrderStatus(${o.id},this.value)">
         <option value="pending" ${o.status==='pending'?'selected':''}>待支付</option><option value="paid" ${o.status==='paid'?'selected':''}>已支付</option>
         <option value="processing" ${o.status==='processing'?'selected':''}>进行中</option><option value="completed" ${o.status==='completed'?'selected':''}>已完成</option>
-        <option value="cancelled" ${o.status==='cancelled'?'selected':''}>已取消</option></select></td>
+        <option value="cancelled" ${o.status==='cancelled'?'selected':''}>已取消</option></select>
+      <button class="detail-btn" onclick="openRowDetail('outlet_orders',${o.id},this.closest('tr'),8)">详情</button>
+      </td>
     </tr>`).join('');
     const totalPages = Math.ceil(total / outletOrderPageSize);
     const pag = document.getElementById('outletOrderPagination');
@@ -5358,7 +5413,8 @@ async function loadOutletUsers() {
       <td><span style="color:${u.role==='admin'?'#B91C1C':'#7C3AED'};font-weight:600">${u.role==='admin'?'管理员':'服务商'}</span></td>
       <td>${u.orderCount || 0}</td><td>${u.addresses ? u.addresses.length : 0}</td>
       <td style="font-size:12px">${new Date(u.createdAt).toLocaleString('zh-CN')}</td>
-      <td><button class="refresh-btn" style="padding:4px 10px;font-size:12px" onclick="openOutletUserDetail(${u.id})">详情</button></td>
+      <td><button class="refresh-btn" style="padding:4px 10px;font-size:12px" onclick="openOutletUserDetail(${u.id})">详情</button>
+          <button class="detail-btn" onclick="openRowDetail('outlet_users',${u.id},this.closest('tr'),10)">原始</button></td>
     </tr>`).join('');
     const totalPages = Math.ceil(total / outletUserPageSize);
     document.getElementById('outletUserPagination').innerHTML = totalPages > 1 ? `
@@ -5857,7 +5913,10 @@ function renderI18nTable(data) {
     <td><code style="font-size:12px;background:#f3f4f6;padding:2px 6px;border-radius:4px">${r.key}</code></td>
     <td><input class="form-input i18n-zh" data-id="${r.id}" value="${escH(r.zh)}" style="width:100%" /></td>
     <td><input class="form-input i18n-en" data-id="${r.id}" value="${escH(r.en)}" style="width:100%" /></td>
-    <td><button class="btn" onclick="deleteI18n(${r.id})" style="background:#DC2626;color:#fff;padding:4px 10px;font-size:12px">删除</button></td>
+    <td>
+      <button class="detail-btn" onclick="openRowDetail('i18n_texts',${r.id},this.closest('tr'),5)">详情</button>
+      <button class="btn" onclick="deleteI18n(${r.id})" style="background:#DC2626;color:#fff;padding:4px 10px;font-size:12px">删除</button>
+    </td>
   </tr>`).join('');
 }
 
@@ -5918,6 +5977,226 @@ async function submitI18nAdd() {
       document.getElementById('i18nAddModal').style.display = 'none';
     } else alert('添加失败: ' + (res.message || ''));
   } catch (e) { alert('添加失败: ' + e.message); }
+}
+
+/* ========== 通用 raw-row 详情 / 修改 ========== */
+const _rawRowDetailState = new Map();
+let _rawRowEditCtx = null;
+
+function _rawEscHtml(v) {
+  if (v == null) return '';
+  const s = String(v);
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function _rawFormatValueForDisplay(v) {
+  if (v === null || v === undefined) return { text: '(null)', empty: true };
+  if (typeof v === 'object') {
+    try { return { text: JSON.stringify(v), empty: false }; } catch { return { text: String(v), empty: false }; }
+  }
+  const s = String(v);
+  if (s === '') return { text: '(空)', empty: true };
+  return { text: s, empty: false };
+}
+
+function _rawFormatValueForInput(v) {
+  if (v === null || v === undefined) return '';
+  if (typeof v === 'object') {
+    try { return JSON.stringify(v); } catch { return String(v); }
+  }
+  return String(v);
+}
+
+function _rawTypeIsNumeric(t) {
+  return ['tinyint','smallint','mediumint','int','integer','bigint','decimal','numeric','float','double'].includes((t||'').toLowerCase());
+}
+function _rawTypeIsLongText(t) {
+  return ['text','mediumtext','longtext','json','blob'].includes((t||'').toLowerCase());
+}
+
+async function openRowDetail(table, id, anchorTr, colspan) {
+  if (!anchorTr || !table || id === undefined || id === null) return;
+  const key = table + ':' + id;
+  const existing = anchorTr.nextElementSibling;
+  if (existing && existing.classList && existing.classList.contains('row-detail-row') && existing.dataset.rawKey === key) {
+    existing.parentNode.removeChild(existing);
+    _rawRowDetailState.delete(key);
+    return;
+  }
+  // 先移除其他已展开同表行（避免叠加）
+  let sib = anchorTr.nextElementSibling;
+  while (sib && sib.classList && sib.classList.contains('row-detail-row')) {
+    const next = sib.nextElementSibling;
+    sib.parentNode.removeChild(sib);
+    sib = next;
+  }
+
+  const cs = colspan || (anchorTr.children ? anchorTr.children.length : 1);
+  const tr = document.createElement('tr');
+  tr.className = 'row-detail-row';
+  tr.dataset.rawKey = key;
+  tr.innerHTML = '<td colspan="' + cs + '"><div class="row-detail-inner"><div class="row-detail-loading">加载中...</div></div></td>';
+  anchorTr.parentNode.insertBefore(tr, anchorTr.nextSibling);
+
+  try {
+    const res = await api('/admin/raw-row/' + encodeURIComponent(table) + '/' + encodeURIComponent(id));
+    if (!res || res.code !== 0) {
+      tr.querySelector('.row-detail-inner').innerHTML = '<div class="row-detail-error">加载失败：' + _rawEscHtml((res && res.message) || '未知错误') + '</div>';
+      return;
+    }
+    const data = res.data || {};
+    _rawRowDetailState.set(key, data);
+    const cols = data.columns || [];
+    const values = data.values || {};
+    let html = '<div class="row-detail-title">'
+      + '<span>表: <code style="background:#f3f4f6;padding:1px 6px;border-radius:4px">' + _rawEscHtml(table) + '</code> &nbsp;主键: <code style="background:#f3f4f6;padding:1px 6px;border-radius:4px">' + _rawEscHtml(id) + '</code></span>'
+      + '<span class="row-detail-meta">共 ' + cols.length + ' 列</span>'
+      + '</div>';
+    html += '<div class="kv-grid">';
+    for (let i = 0; i < cols.length; i++) {
+      const col = cols[i];
+      const v = values[col.name];
+      const vv = _rawFormatValueForDisplay(v);
+      let cls = 'kv-val';
+      if (vv.empty) cls += ' kv-empty';
+      if (col.readonly) cls += ' kv-readonly';
+      if (col.sensitive) cls += ' kv-sensitive';
+      html += '<div class="kv-key">' + _rawEscHtml(col.name)
+        + (col.pk ? ' <span style="color:#2563EB;font-size:11px">[主键]</span>' : '')
+        + (col.readonly && !col.pk ? ' <span style="color:#999;font-size:11px">[只读]</span>' : '')
+        + (col.sensitive ? ' <span style="color:#B91C1C;font-size:11px">[敏感]</span>' : '')
+        + '</div>';
+      html += '<div class="' + cls + '">' + _rawEscHtml(vv.text) + '</div>';
+    }
+    html += '</div>';
+    html += '<div class="row-detail-actions">'
+      + '<button type="button" class="row-edit-btn" onclick="openRowEditModal(\'' + _rawEscHtml(table) + '\',' + JSON.stringify(id).replace(/"/g, '&quot;') + ')">修改</button>'
+      + '</div>';
+    tr.querySelector('.row-detail-inner').innerHTML = html;
+  } catch (e) {
+    tr.querySelector('.row-detail-inner').innerHTML = '<div class="row-detail-error">加载失败：' + _rawEscHtml(e && e.message || e) + '</div>';
+  }
+}
+
+async function openRowEditModal(table, id) {
+  const modal = document.getElementById('rawRowEditModal');
+  const body = document.getElementById('rawRowEditBody');
+  const title = document.getElementById('rawRowEditTitle');
+  if (!modal || !body) return;
+  _rawRowEditCtx = null;
+  body.innerHTML = '<div style="color:#888;font-size:13px">加载中...</div>';
+  title.textContent = '编辑记录 ' + table + '#' + id;
+  modal.style.display = 'flex';
+  try {
+    const key = table + ':' + id;
+    let data = _rawRowDetailState.get(key);
+    if (!data) {
+      const res = await api('/admin/raw-row/' + encodeURIComponent(table) + '/' + encodeURIComponent(id));
+      if (!res || res.code !== 0) {
+        body.innerHTML = '<div style="color:#B91C1C">加载失败：' + _rawEscHtml((res && res.message) || '未知错误') + '</div>';
+        return;
+      }
+      data = res.data || {};
+      _rawRowDetailState.set(key, data);
+    }
+    const cols = data.columns || [];
+    const values = data.values || {};
+    _rawRowEditCtx = { table, id, pk: data.pk, columns: cols };
+    let html = '<div class="raw-edit-form">';
+    for (let i = 0; i < cols.length; i++) {
+      const col = cols[i];
+      const v = values[col.name];
+      const disabled = col.pk || col.readonly || col.sensitive;
+      const inpId = 'rawEdit_' + i;
+      const raw = _rawFormatValueForInput(v);
+      const typeLabel = col.columnType || col.type || '';
+      html += '<div class="raw-label"><code>' + _rawEscHtml(col.name) + '</code>'
+        + (col.pk ? ' <span style="color:#2563EB;font-size:11px">[主键]</span>' : '')
+        + (col.readonly && !col.pk ? ' <span style="color:#999;font-size:11px">[只读]</span>' : '')
+        + (col.sensitive ? ' <span style="color:#B91C1C;font-size:11px">[敏感]</span>' : '')
+        + (typeLabel ? '<span class="raw-type">' + _rawEscHtml(typeLabel) + '</span>' : '')
+        + '</div>';
+      if (_rawTypeIsLongText(col.type)) {
+        html += '<textarea id="' + inpId + '" class="raw-input" data-col="' + _rawEscHtml(col.name) + '" data-type="' + _rawEscHtml(col.type) + '"' + (disabled ? ' disabled' : '') + '>' + _rawEscHtml(raw) + '</textarea>';
+      } else {
+        const inputType = _rawTypeIsNumeric(col.type) ? 'number' : (col.type === 'date' ? 'date' : (col.type === 'datetime' || col.type === 'timestamp' ? 'text' : 'text'));
+        const stepAttr = (_rawTypeIsNumeric(col.type) && !['tinyint','smallint','mediumint','int','integer','bigint'].includes(col.type)) ? ' step="0.01"' : '';
+        html += '<input type="' + inputType + '" id="' + inpId + '" class="raw-input" value="' + _rawEscHtml(raw) + '"' + stepAttr + ' data-col="' + _rawEscHtml(col.name) + '" data-type="' + _rawEscHtml(col.type) + '"' + (disabled ? ' disabled' : '') + ' />';
+      }
+    }
+    html += '</div>';
+    body.innerHTML = html;
+  } catch (e) {
+    body.innerHTML = '<div style="color:#B91C1C">加载失败：' + _rawEscHtml(e && e.message || e) + '</div>';
+  }
+}
+
+function closeRawRowEditModal() {
+  const modal = document.getElementById('rawRowEditModal');
+  if (modal) modal.style.display = 'none';
+  _rawRowEditCtx = null;
+}
+
+async function submitRawRowEdit() {
+  if (!_rawRowEditCtx) return;
+  const { table, id, columns } = _rawRowEditCtx;
+  const saveBtn = document.getElementById('rawRowEditSave');
+  const values = {};
+  const body = document.getElementById('rawRowEditBody');
+  const inputs = body.querySelectorAll('.raw-input');
+  inputs.forEach(el => {
+    if (el.disabled) return;
+    const col = el.getAttribute('data-col');
+    const type = el.getAttribute('data-type');
+    let raw = el.value;
+    if (raw === '' && el.tagName === 'INPUT' && el.type === 'number') {
+      values[col] = null;
+      return;
+    }
+    if (raw === '') { values[col] = ''; return; }
+    if (_rawTypeIsNumeric(type)) {
+      const n = Number(raw);
+      if (Number.isFinite(n)) { values[col] = n; return; }
+    }
+    values[col] = raw;
+  });
+  if (Object.keys(values).length === 0) {
+    alert('没有可提交的字段');
+    return;
+  }
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '保存中...'; }
+  try {
+    const res = await api('/admin/raw-row/' + encodeURIComponent(table) + '/' + encodeURIComponent(id), { method: 'PUT', body: { values } });
+    if (!res || res.code !== 0) {
+      alert('保存失败：' + ((res && res.message) || '未知错误'));
+      return;
+    }
+    _rawRowDetailState.delete(table + ':' + id);
+    alert('保存成功');
+    closeRawRowEditModal();
+    // 若当前页有对应列表 reload 函数则触发刷新
+    try {
+      const reloaders = {
+        'users': () => typeof loadUsers === 'function' && loadUsers(),
+        'orders': () => typeof loadOrders === 'function' && loadOrders(),
+        'goods_orders': () => typeof loadGoodsOrders === 'function' && loadGoodsOrders(),
+        'device_guides': () => typeof loadGuides === 'function' && loadGuides(),
+        'product_categories': () => typeof loadCategories === 'function' && loadCategories(),
+        'services': () => typeof loadServices === 'function' && loadServices(),
+        'service_categories': () => typeof loadServiceCategories === 'function' && loadServiceCategories(),
+        'inventory_products': () => typeof loadInvProducts === 'function' && loadInvProducts(),
+        'inventory_categories': () => typeof loadInvCategories === 'function' && loadInvCategories(),
+        'home_configs': () => typeof loadHomeConfigs === 'function' && loadHomeConfigs(),
+        'i18n_texts': () => typeof loadI18n === 'function' && loadI18n(),
+        'messages': () => typeof loadMessages === 'function' && loadMessages(),
+      };
+      if (reloaders[table]) reloaders[table]();
+    } catch {}
+  } catch (e) {
+    alert('保存失败：' + (e && e.message || e));
+  } finally {
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '保存'; }
+  }
 }
 </script>
 </body>

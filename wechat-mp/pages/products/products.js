@@ -26,6 +26,30 @@ Page({
     noCategoryProductText: '',
     noConfigText: '',
     cartCount: 0,
+    tabScrollKey: '',
+  },
+
+  _touchStartX: 0,
+  _touchStartY: 0,
+  onListTouchStart(e) {
+    const t = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]);
+    if (!t) return;
+    this._touchStartX = t.clientX;
+    this._touchStartY = t.clientY;
+  },
+  onListTouchEnd(e) {
+    const t = (e.changedTouches && e.changedTouches[0]) || (e.touches && e.touches[0]);
+    if (!t) return;
+    const dx = t.clientX - this._touchStartX;
+    const dy = t.clientY - this._touchStartY;
+    if (Math.abs(dx) < 60) return;
+    if (Math.abs(dy) > 30) return;
+    const cats = this.data.categories || [];
+    if (!cats.length) return;
+    const idx = cats.findIndex(c => c.id === this.data.selectedCategoryId);
+    if (idx < 0) return;
+    const target = dx < 0 ? cats[idx + 1] : cats[idx - 1];
+    if (target) this.selectCategoryByCat(target);
   },
 
   onShow() {
@@ -128,6 +152,7 @@ Page({
       filteredDeviceGuides: [],
       searchKeyword: '',
       listLoading: true,
+      tabScrollKey: 'tab-' + cat.id,
     });
     this.updateCategoryBanner();
     app.request({ url: '/guides', data: { categoryId: cat.id } })

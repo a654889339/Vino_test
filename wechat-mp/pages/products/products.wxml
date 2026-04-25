@@ -18,17 +18,29 @@
     </view>
   </view>
 
+  <scroll-view
+    wx:if="{{categories.length}}"
+    scroll-x
+    class="product-tabs"
+    scroll-into-view="{{tabScrollKey}}"
+    scroll-with-animation
+  >
+    <view
+      class="tab-item {{selectedCategoryId === item.id ? 'active' : ''}}"
+      wx:for="{{categories}}"
+      wx:key="id"
+      id="tab-{{item.id}}"
+      data-id="{{item.id}}"
+      bindtap="selectCategory"
+    >{{item.displayName}}</view>
+  </scroll-view>
+
   <view class="products-layout">
-    <view class="product-sidebar" wx:if="{{categories.length}}">
-      <view
-        class="sidebar-item {{selectedCategoryId === item.id ? 'active' : ''}}"
-        wx:for="{{categories}}"
-        wx:key="id"
-        data-id="{{item.id}}"
-        bindtap="selectCategory"
-      >{{item.displayName}}</view>
-    </view>
-    <view class="product-main">
+    <view
+      class="product-main"
+      bindtouchstart="onListTouchStart"
+      bindtouchend="onListTouchEnd"
+    >
       <view wx:if="{{categoryBannerUrl}}" class="category-banner">
         <image class="category-banner-img" src="{{categoryBannerUrl}}" mode="widthFix" />
       </view>
