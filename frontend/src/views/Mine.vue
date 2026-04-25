@@ -290,7 +290,7 @@ const handleLogout = () => {
 .profile-header {
   position: relative;
   z-index: 1;
-  background: linear-gradient(135deg, #3a1f22 0%, #b91c1c 100%);
+  background: #b91c1c;
   padding: 18px 16px 20px;
   display: flex;
   flex-direction: column;
@@ -426,6 +426,10 @@ const handleLogout = () => {
   position: relative;
   z-index: 1;
   margin: 0 12px 14px;
+}
+
+.profile-header + .mine-section {
+  margin-top: 14px;
 }
 
 .section-head {

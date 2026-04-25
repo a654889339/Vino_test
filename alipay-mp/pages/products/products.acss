@@ -19,8 +19,9 @@
 .product-nav {
   background: #f3f4f6;
   white-space: nowrap;
-  margin: 20rpx 24rpx;
+  margin: 20rpx 24rpx 0;
   padding: 10rpx;
+  height: 92rpx;
   border: 1rpx solid rgba(17, 24, 39, 0.08);
   border-radius: 28rpx;
   box-shadow: 0 12rpx 28rpx rgba(15, 23, 42, 0.08);
@@ -38,6 +39,7 @@
   align-items: center;
   justify-content: center;
   width: 50%;
+  height: 72rpx;
   padding: 22rpx 8rpx;
   border-radius: 22rpx;
   font-size: 30rpx;
@@ -95,7 +97,7 @@
 .product-content-area { width: 100%; min-height: 50vh; overflow: hidden; background: #fafafa; }
 .product-carousel { width: 100%; overflow: hidden; }
 .product-carousel-track { display: flex; flex-direction: row; width: 100%; will-change: transform; }
-.product-carousel-page { flex-shrink: 0; width: 100%; padding: 20rpx; box-sizing: border-box; }
+.product-carousel-page { flex-shrink: 0; width: 100%; padding: 18rpx 20rpx 20rpx; box-sizing: border-box; }
 .category-banner { width: 100%; margin-bottom: 20rpx; border-radius: 16rpx; overflow: hidden; background: #e5e7eb; line-height: 0; }
 .category-banner-img { width: 100%; display: block; vertical-align: top; }
 .product-grid { display: flex; flex-direction: column; width: 100%; box-sizing: border-box; }

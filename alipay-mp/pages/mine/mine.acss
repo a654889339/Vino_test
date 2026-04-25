@@ -9,7 +9,7 @@
   display: flex;
   flex-direction: column;
   gap: 38rpx;
-  background: linear-gradient(135deg, #3a1f22 0%, #b91c1c 100%);
+  background: #b91c1c;
   overflow: hidden;
 }
 
@@ -132,6 +132,10 @@
 
 .mine-section {
   margin: 0 32rpx 28rpx;
+}
+
+.profile-header + .mine-section {
+  margin-top: 28rpx;
 }
 
 .section-head {

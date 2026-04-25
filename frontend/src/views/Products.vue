@@ -475,7 +475,7 @@ onMounted(async () => {
   scrollbar-width: none;
   background: #f3f4f6;
   padding: 6px;
-  margin: 0 12px 10px;
+  margin: 0 12px;
   border: 1px solid rgba(17, 24, 39, 0.08);
   border-radius: 16px;
   box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
@@ -550,7 +550,7 @@ onMounted(async () => {
   flex: 0 0 100%;
   width: 100%;
   min-width: 0;
-  padding: 12px;
+  padding: 10px 12px 12px;
   box-sizing: border-box;
 }
 
