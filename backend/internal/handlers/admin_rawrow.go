@@ -284,8 +284,13 @@ func rawRowUpdate(c *gin.Context) {
 		return
 	}
 
-	if err := db.DB.Table(table).Where("`"+spec.pk+"` = ?", idStr).Updates(filtered).Error; err != nil {
-		resp.Err(c, 500, 500, "更新失败: "+err.Error())
+	result := db.DB.Table(table).Where("`"+spec.pk+"` = ?", idStr).Updates(filtered)
+	if result.Error != nil {
+		resp.Err(c, 500, 500, "更新失败: "+result.Error.Error())
+		return
+	}
+	if result.RowsAffected == 0 {
+		resp.Err(c, 404, 404, "记录不存在")
 		return
 	}
 

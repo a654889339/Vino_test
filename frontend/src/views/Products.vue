@@ -424,12 +424,21 @@ onMounted(async () => {
   display: flex;
   align-items: stretch;
   gap: 0;
-  overflow-x: auto;
+  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   background: #ffffff;
-  padding: 0 4px;
+  padding: 0;
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  background-image: linear-gradient(
+    to right,
+    transparent 0,
+    transparent 49.8%,
+    rgba(0, 0, 0, 0.08) 49.8%,
+    rgba(0, 0, 0, 0.08) 50.2%,
+    transparent 50.2%,
+    transparent 100%
+  );
 }
 
 .product-tabs::-webkit-scrollbar {
@@ -437,12 +446,13 @@ onMounted(async () => {
 }
 
 .tab-item {
-  flex: 0 0 auto;
+  flex: 1 1 0;
+  min-width: 0;
   margin: 0;
-  padding: 12px 18px;
+  padding: 14px 8px;
   border: none;
   background: transparent;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
   color: #4b5563;
   cursor: pointer;
