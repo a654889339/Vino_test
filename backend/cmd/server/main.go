@@ -86,7 +86,12 @@ func main() {
 		log.Printf("[Vino] mkdir uploads: %v", err)
 	}
 	engine.Static("/uploads", uploadsDir)
-	engine.StaticFile("/", filepath.Join("static", "admin.html"))
+	engine.GET("/", func(c *gin.Context) {
+		c.Header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+		c.Header("Pragma", "no-cache")
+		c.Header("Expires", "0")
+		c.File(filepath.Join("static", "admin.html"))
+	})
 
 	addr := fmt.Sprintf("0.0.0.0:%d", cfg.Port)
 	log.Printf("[Vino Backend] listening on http://%s", addr)
