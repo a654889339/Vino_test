@@ -10,6 +10,14 @@ function formatTime(s) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+function itemDisplayImageUrl(it, baseUrl) {
+  const raw = (it && (it.imageUrl || it.imageURL) ? String(it.imageUrl || it.imageURL) : '').trim();
+  if (!raw) return '';
+  if (raw.indexOf('http') === 0) return raw;
+  const base = (baseUrl || '').replace(/\/api\/?$/, '');
+  return base + (raw.charAt(0) === '/' ? raw : '/' + raw);
+}
+
 function orderStatusText(status) {
   const map = {
     pending: '待付款',
@@ -59,8 +67,10 @@ Page({
           return;
         }
         const sym = app.globalData.currencySymbol;
+        const baseUrl = app.globalData.baseUrl || '';
         const items = (o.items || []).map((it) => ({
           ...it,
+          displayImageUrl: itemDisplayImageUrl(it, baseUrl),
           unitText: currencyUtil.formatPriceDisplay(it.unitPrice, it.currency || sym) || '—',
           lineText: currencyUtil.formatPriceDisplay(it.lineTotal, it.currency || sym) || '—',
         }));

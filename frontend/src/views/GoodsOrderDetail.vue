@@ -25,14 +25,19 @@
 
       <van-cell-group inset class="mt12">
         <van-cell title="商品明细" />
-        <van-cell v-for="it in order.items || []" :key="it.id" :title="it.nameSnapshot">
-          <template #label>
-            <span class="meta">{{ it.qty }} 件 · {{ formatPriceDisplay(it.unitPrice, it.currency) }}</span>
-          </template>
-          <template #value>
-            <span class="price">{{ formatPriceDisplay(it.lineTotal, it.currency) }}</span>
-          </template>
-        </van-cell>
+        <div v-for="it in order.items || []" :key="it.id" class="goods-item-row">
+          <div class="goods-item-thumb">
+            <img v-if="itemLineImage(it)" :src="fullUrl(itemLineImage(it))" alt="" />
+            <van-icon v-else name="photo-o" size="28" color="#ccc" />
+          </div>
+          <div class="goods-item-body">
+            <div class="goods-item-top">
+              <span class="goods-item-name">{{ it.nameSnapshot }}</span>
+              <span class="price goods-item-line">{{ formatPriceDisplay(it.lineTotal, it.currency) }}</span>
+            </div>
+            <div class="meta">{{ it.qty }} 件 · {{ formatPriceDisplay(it.unitPrice, it.currency) }}</div>
+          </div>
+        </div>
         <van-cell title="合计">
           <template #value>
             <span class="price">{{ formatPriceDisplay(order.totalPrice, order.currency) }}</span>
@@ -61,6 +66,17 @@ const route = useRoute();
 const router = useRouter();
 const loading = ref(true);
 const order = ref(null);
+
+const BASE = import.meta.env.VITE_API_BASE || '';
+function fullUrl(url) {
+  if (!url) return '';
+  if (url.startsWith('http')) return url;
+  return BASE.replace('/api', '') + (url.startsWith('/') ? url : `/${url}`);
+}
+function itemLineImage(row) {
+  if (!row) return '';
+  return row.imageUrl || row.imageURL || '';
+}
 
 function formatTime(s) {
   if (!s) return '';
@@ -151,7 +167,54 @@ onMounted(load);
 .mt12 {
   margin-top: 12px;
 }
+.goods-item-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  padding: 12px 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  gap: 12px;
+}
+.goods-item-thumb {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f3f4f6;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.goods-item-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.goods-item-body {
+  flex: 1;
+  min-width: 0;
+}
+.goods-item-top {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+.goods-item-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.35;
+  flex: 1;
+}
+.goods-item-line {
+  flex-shrink: 0;
+  font-size: 15px;
+}
 .meta {
+  margin-top: 6px;
   font-size: 12px;
   color: #6b7280;
 }

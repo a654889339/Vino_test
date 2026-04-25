@@ -24,9 +24,15 @@
     <view class="card">
       <view class="hd">商品明细</view>
       <view class="line" wx:for="{{order.items}}" wx:key="id">
-        <text class="name">{{item.nameSnapshot}}</text>
-        <text class="meta">{{item.qty}} 件 · {{item.unitText}}</text>
-        <text class="lt">{{item.lineText}}</text>
+        <image wx:if="{{item.displayImageUrl}}" class="thumb" src="{{item.displayImageUrl}}" mode="aspectFill" />
+        <view wx:else class="thumb thumb-empty"></view>
+        <view class="line-body">
+          <view class="line-top">
+            <text class="name">{{item.nameSnapshot}}</text>
+            <text class="lt">{{item.lineText}}</text>
+          </view>
+          <text class="meta">{{item.qty}} 件 · {{item.unitText}}</text>
+        </view>
       </view>
       <view class="sum">合计 <text class="sum-num">{{order.totalText}}</text></view>
     </view>
