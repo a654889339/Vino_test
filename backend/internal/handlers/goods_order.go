@@ -376,6 +376,64 @@ func goodsOrderAdminList(c *gin.Context) {
 	resp.OK(c, gin.H{"list": list, "total": total, "page": page, "pageSize": pageSize})
 }
 
+// goodsOrderAdminItems GET /api/goods-orders/admin/items
+// query: orderId orderNo page pageSize
+func goodsOrderAdminItems(c *gin.Context) {
+	orderID := strings.TrimSpace(c.Query("orderId"))
+	orderNo := strings.TrimSpace(c.Query("orderNo"))
+	page := queryInt(c, "page", 1)
+	pageSize := queryInt(c, "pageSize", 50)
+	if page <= 0 {
+		page = 1
+	}
+	if pageSize <= 0 {
+		pageSize = 50
+	}
+	if pageSize > 200 {
+		pageSize = 200
+	}
+
+	qb := db.DB.Table("goods_order_items AS i").
+		Joins("LEFT JOIN goods_orders AS o ON o.id = i.orderId")
+	if orderID != "" {
+		if oid, err := strconv.Atoi(orderID); err == nil && oid > 0 {
+			qb = qb.Where("i.orderId = ?", oid)
+		}
+	}
+	if orderNo != "" {
+		qb = qb.Where("o.orderNo LIKE ?", "%"+escapeLike(orderNo)+"%")
+	}
+
+	var total int64
+	qb.Session(&gorm.Session{}).Count(&total)
+
+	type itemRow struct {
+		ID           int      `json:"id"`
+		OrderID      int      `json:"orderId"`
+		OrderNo      string   `json:"orderNo"`
+		GuideID      int      `json:"guideId"`
+		NameSnapshot string   `json:"nameSnapshot"`
+		ImageURL     string   `json:"imageUrl"`
+		UnitPrice    float64  `json:"unitPrice"`
+		OriginPrice  *float64 `json:"originPrice"`
+		Currency     string   `json:"currency"`
+		Qty          int      `json:"qty"`
+		LineTotal    float64  `json:"lineTotal"`
+	}
+	var rows []itemRow
+	err := qb.Session(&gorm.Session{}).
+		Select("i.id, i.orderId, o.orderNo, i.guideId, i.nameSnapshot, i.imageUrl, i.unitPrice, i.originPrice, i.currency, i.qty, i.lineTotal").
+		Order("i.id DESC").
+		Limit(pageSize).
+		Offset((page - 1) * pageSize).
+		Scan(&rows).Error
+	if err != nil {
+		resp.Err(c, 500, 500, "读取商品订单明细失败")
+		return
+	}
+	resp.OK(c, gin.H{"list": rows, "total": total, "page": page, "pageSize": pageSize})
+}
+
 // goodsOrderAdminStats GET /api/goods-orders/admin/stats
 func goodsOrderAdminStats(c *gin.Context) {
 	var total, pending, paid, processing, completed, cancelled int64

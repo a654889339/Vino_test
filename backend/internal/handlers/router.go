@@ -68,6 +68,7 @@ func RegisterRoutes(engine *gin.Engine, cfg *config.Config) {
 		goodsOrders.GET("/:id", middleware.Auth(cfg), goodsOrderDetail)
 
 		goodsOrders.GET("/admin/list", middleware.Auth(cfg), middleware.Admin(), goodsOrderAdminList)
+		goodsOrders.GET("/admin/items", middleware.Auth(cfg), middleware.Admin(), goodsOrderAdminItems)
 		goodsOrders.GET("/admin/stats", middleware.Auth(cfg), middleware.Admin(), goodsOrderAdminStats)
 		goodsOrders.PUT("/admin/:id/status", middleware.Auth(cfg), middleware.Admin(), goodsOrderAdminUpdateStatus)
 		goodsOrders.PUT("/admin/:id/price", middleware.Auth(cfg), middleware.Admin(), goodsOrderAdminUpdatePrice)

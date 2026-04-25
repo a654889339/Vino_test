@@ -1561,7 +1561,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <div class="dash-section">
         <div class="section-header">
           <h3>全部商品订单</h3>
-          <button class="refresh-btn" onclick="loadGoodsOrders()">刷新</button>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button class="refresh-btn" onclick="toggleGoodsOrderItemsPanel()">订单商品明细</button>
+            <button class="refresh-btn" onclick="loadGoodsOrders()">刷新</button>
+          </div>
         </div>
         <div class="order-filters" id="goodsOrderFilters">
           <button class="filter-btn active" onclick="filterGoodsOrders('all')">全部</button>
@@ -1587,6 +1590,30 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <div class="order-empty" id="goodsOrderEmpty" style="display:none">暂无商品订单数据</div>
         </div>
         <div class="pagination" id="goodsOrderPagination"></div>
+      </div>
+      <div class="dash-section" id="goodsOrderItemsSection" style="display:none;margin-top:24px">
+        <div class="section-header">
+          <h3>订单商品明细</h3>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button class="refresh-btn" onclick="loadGoodsOrderItems()">刷新明细</button>
+            <button class="refresh-btn" style="background:#64748b" onclick="toggleGoodsOrderItemsPanel(false)">收起</button>
+          </div>
+        </div>
+        <p style="font-size:13px;color:#666;margin-bottom:12px">读取 `goods_order_items` 表：展示主键、关联订单 ID/订单号、商品快照和金额信息。点击「详情」可弹窗查看该明细行的所有字段。</p>
+        <div class="order-filters" style="flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:12px">
+          <span style="font-size:13px;color:#666">订单ID：</span>
+          <input type="number" id="goodsOrderItemSearchOrderId" class="form-input" placeholder="精确" style="width:100px;padding:6px 10px" min="1" onkeydown="if(event.key==='Enter'){goodsOrderItemPage=1;loadGoodsOrderItems()}" />
+          <span style="font-size:13px;color:#666">订单号：</span>
+          <input type="text" id="goodsOrderItemSearchOrderNo" class="form-input" placeholder="模糊搜索" style="width:180px;padding:6px 10px" onkeydown="if(event.key==='Enter'){goodsOrderItemPage=1;loadGoodsOrderItems()}" />
+          <button type="button" class="refresh-btn" onclick="goodsOrderItemPage=1;loadGoodsOrderItems()">搜索</button>
+          <button type="button" class="refresh-btn" style="background:#64748b" onclick="document.getElementById('goodsOrderItemSearchOrderId').value='';document.getElementById('goodsOrderItemSearchOrderNo').value='';goodsOrderItemPage=1;loadGoodsOrderItems()">重置</button>
+        </div>
+        <table class="order-table">
+          <thead><tr><th>主键ID</th><th>关联订单ID</th><th>订单号</th><th>商品ID</th><th>商品名快照</th><th>数量</th><th>单价</th><th>小计</th><th>操作</th></tr></thead>
+          <tbody id="goodsOrderItemsTableBody"></tbody>
+        </table>
+        <div class="order-empty" id="goodsOrderItemsEmpty" style="display:none">暂无订单商品明细</div>
+        <div class="pagination" id="goodsOrderItemsPagination"></div>
       </div>
     </div>
 
@@ -1762,6 +1789,21 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   </div>
 </div>
 
+<div class="modal-overlay" id="rawRowViewModal" style="display:none" onclick="if(event.target===this)closeRawRowViewModal()">
+  <div class="modal-content" style="width:720px">
+    <div class="modal-header">
+      <h3 id="rawRowViewTitle">记录详情</h3>
+      <span class="modal-close" onclick="closeRawRowViewModal()">&times;</span>
+    </div>
+    <div class="modal-body" id="rawRowViewBody">
+      <div style="color:#888;font-size:13px">加载中...</div>
+    </div>
+    <div class="raw-edit-footer">
+      <button type="button" class="raw-edit-cancel" onclick="closeRawRowViewModal()">关闭</button>
+    </div>
+  </div>
+</div>
+
 <!-- 订单历史记录弹窗 -->
 <div class="modal-overlay" id="logModal" style="display:none" onclick="if(event.target===this)closeLogModal()">
   <div class="modal-content">
@@ -1802,6 +1844,8 @@ let orderFilter = 'all';
 let goodsOrderPage = 1;
 const goodsOrderPageSize = 50;
 let goodsOrderFilter = 'all';
+let goodsOrderItemPage = 1;
+const goodsOrderItemPageSize = 50;
 let currentLogKind = 'order';
 
 function jumpUserPageGo() {
@@ -2445,6 +2489,71 @@ async function loadGoodsOrders() {
         <button class="page-btn" onclick="goodsOrderPage++;loadGoodsOrders()" ${page >= totalPages ? 'disabled' : ''}>下一页</button>` : `<span class="page-info">共 ${total} 条</span>`;
     }
   } catch { tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:30px;color:#B91C1C">加载失败，请检查权限</td></tr>'; }
+}
+
+function toggleGoodsOrderItemsPanel(show) {
+  const section = document.getElementById('goodsOrderItemsSection');
+  if (!section) return;
+  const shouldShow = typeof show === 'boolean' ? show : section.style.display === 'none';
+  section.style.display = shouldShow ? 'block' : 'none';
+  if (shouldShow) {
+    goodsOrderItemPage = 1;
+    loadGoodsOrderItems();
+  }
+}
+
+async function loadGoodsOrderItems() {
+  const section = document.getElementById('goodsOrderItemsSection');
+  if (!section || section.style.display === 'none') return;
+  const tbody = document.getElementById('goodsOrderItemsTableBody');
+  const empty = document.getElementById('goodsOrderItemsEmpty');
+  const pagination = document.getElementById('goodsOrderItemsPagination');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#999">加载中...</td></tr>';
+  if (empty) empty.style.display = 'none';
+  try {
+    const params = new URLSearchParams({ page: goodsOrderItemPage, pageSize: goodsOrderItemPageSize });
+    const orderId = document.getElementById('goodsOrderItemSearchOrderId') && document.getElementById('goodsOrderItemSearchOrderId').value.trim();
+    const orderNo = document.getElementById('goodsOrderItemSearchOrderNo') && document.getElementById('goodsOrderItemSearchOrderNo').value.trim();
+    if (orderId) params.set('orderId', orderId);
+    if (orderNo) params.set('orderNo', orderNo);
+    const res = await api('/goods-orders/admin/items?' + params);
+    if (!res || res.code !== 0) {
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#B91C1C">加载失败：' + escapeHtml((res && res.message) || '未知错误') + '</td></tr>';
+      return;
+    }
+    const data = res.data || {};
+    const list = data.list || [];
+    const total = Number(data.total || 0);
+    const page = Number(data.page || goodsOrderItemPage);
+    const pageSize = Number(data.pageSize || goodsOrderItemPageSize);
+    if (!list.length) {
+      tbody.innerHTML = '';
+      if (empty) empty.style.display = 'block';
+    } else {
+      if (empty) empty.style.display = 'none';
+      tbody.innerHTML = list.map(it => `<tr>
+        <td style="font-weight:600">${it.id}</td>
+        <td>${it.orderId || '-'}</td>
+        <td style="font-size:12px;color:var(--text-secondary)">${escapeHtml(it.orderNo || '-')}</td>
+        <td>${it.guideId || '-'}</td>
+        <td style="font-size:12px;max-width:220px;word-break:break-all">${escapeHtml(it.nameSnapshot || '-')}</td>
+        <td>${it.qty || 0}</td>
+        <td style="color:var(--primary);font-weight:600">${formatAdminPrice(it.unitPrice)}</td>
+        <td style="color:var(--primary);font-weight:600">${formatAdminPrice(it.lineTotal)}</td>
+        <td><button class="detail-btn" onclick="openRawRowViewModal('goods_order_items',${it.id})">详情</button></td>
+      </tr>`).join('');
+    }
+    const totalPages = Math.ceil(total / pageSize);
+    if (pagination) {
+      pagination.innerHTML = totalPages > 1 ? `
+        <button class="page-btn" onclick="goodsOrderItemPage--;loadGoodsOrderItems()" ${page <= 1 ? 'disabled' : ''}>上一页</button>
+        <span class="page-info">${page} / ${totalPages}（共 ${total} 条）</span>
+        <button class="page-btn" onclick="goodsOrderItemPage++;loadGoodsOrderItems()" ${page >= totalPages ? 'disabled' : ''}>下一页</button>` : `<span class="page-info">共 ${total} 条</span>`;
+    }
+  } catch (e) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#B91C1C">加载失败：' + escapeHtml(e && e.message || e) + '</td></tr>';
+  }
 }
 
 async function updateGoodsOrderStatus(id, status) {
@@ -6124,6 +6233,54 @@ function _rawTypeIsNumeric(t) {
 }
 function _rawTypeIsLongText(t) {
   return ['text','mediumtext','longtext','json','blob'].includes((t||'').toLowerCase());
+}
+
+async function openRawRowViewModal(table, id) {
+  const modal = document.getElementById('rawRowViewModal');
+  const body = document.getElementById('rawRowViewBody');
+  const title = document.getElementById('rawRowViewTitle');
+  if (!modal || !body) return;
+  title.textContent = '记录详情 ' + table + '#' + id;
+  body.innerHTML = '<div style="color:#888;font-size:13px">加载中...</div>';
+  modal.style.display = 'flex';
+  try {
+    const res = await api('/admin/raw-row/' + encodeURIComponent(table) + '/' + encodeURIComponent(id));
+    if (!res || res.code !== 0) {
+      body.innerHTML = '<div style="color:#B91C1C">加载失败：' + _rawEscHtml((res && res.message) || '未知错误') + '</div>';
+      return;
+    }
+    const data = res.data || {};
+    const cols = data.columns || [];
+    const values = data.values || {};
+    let html = '<div class="row-detail-title">'
+      + '<span>表: <code style="background:#f3f4f6;padding:1px 6px;border-radius:4px">' + _rawEscHtml(table) + '</code> &nbsp;主键: <code style="background:#f3f4f6;padding:1px 6px;border-radius:4px">' + _rawEscHtml(id) + '</code></span>'
+      + '<span class="row-detail-meta">共 ' + cols.length + ' 列</span>'
+      + '</div>';
+    html += '<div class="kv-grid">';
+    for (let i = 0; i < cols.length; i++) {
+      const col = cols[i];
+      const vv = _rawFormatValueForDisplay(values[col.name]);
+      let cls = 'kv-val';
+      if (vv.empty) cls += ' kv-empty';
+      if (col.readonly) cls += ' kv-readonly';
+      if (col.sensitive) cls += ' kv-sensitive';
+      html += '<div class="kv-key">' + _rawEscHtml(col.name)
+        + (col.pk ? ' <span style="color:#2563EB;font-size:11px">[主键]</span>' : '')
+        + (col.readonly && !col.pk ? ' <span style="color:#999;font-size:11px">[只读]</span>' : '')
+        + (col.sensitive ? ' <span style="color:#B91C1C;font-size:11px">[敏感]</span>' : '')
+        + '</div>';
+      html += '<div class="' + cls + '">' + _rawEscHtml(vv.text) + '</div>';
+    }
+    html += '</div>';
+    body.innerHTML = html;
+  } catch (e) {
+    body.innerHTML = '<div style="color:#B91C1C">加载失败：' + _rawEscHtml(e && e.message || e) + '</div>';
+  }
+}
+
+function closeRawRowViewModal() {
+  const modal = document.getElementById('rawRowViewModal');
+  if (modal) modal.style.display = 'none';
 }
 
 async function openRowDetail(table, id, anchorTr, colspan) {
