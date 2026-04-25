@@ -17,6 +17,7 @@ Page({
     activeCategoryIndex: 0,
     selectedCategoryId: null,
     deviceGuides: [],
+    categoryBannerUrl: '',
     loading: false,
     cartCount: 0,
     dragOffset: 0,
@@ -187,6 +188,7 @@ Page({
     const current = categoryPages.find(page => page.id === this.data.selectedCategoryId);
     this.setData({
       categoryPages,
+      categoryBannerUrl: current ? current.bannerUrl : '',
       deviceGuides: current ? current.guides : [],
       loading: current ? current.loading : false,
     });

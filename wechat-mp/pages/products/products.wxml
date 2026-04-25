@@ -40,20 +40,20 @@
   </scroll-view>
 
   <view class="products-layout">
-    <view
-      class="product-main"
-      bindtouchstart="onListTouchStart"
-      bindtouchmove="onListTouchMove"
-      bindtouchend="onListTouchEnd"
-      bindtouchcancel="onListTouchEnd"
-    >
-      <view class="product-carousel">
+    <view class="product-main">
+      <view wx:if="{{categoryBannerUrl}}" class="category-banner">
+        <image class="category-banner-img" src="{{categoryBannerUrl}}" mode="widthFix" />
+      </view>
+
+      <view
+        class="product-carousel"
+        bindtouchstart="onListTouchStart"
+        bindtouchmove="onListTouchMove"
+        bindtouchend="onListTouchEnd"
+        bindtouchcancel="onListTouchEnd"
+      >
         <view class="product-carousel-track" style="{{trackStyle}}">
           <view class="product-carousel-page" wx:for="{{categoryPages}}" wx:key="id">
-            <view wx:if="{{item.bannerUrl}}" class="category-banner">
-              <image class="category-banner-img" src="{{item.bannerUrl}}" mode="widthFix" />
-            </view>
-
             <view wx:if="{{item.loading}}" class="main-loading">{{loadingText}}</view>
             <view wx:elif="{{item.filteredGuides.length}}" class="product-grid">
               <view

@@ -41,14 +41,23 @@
       </nav>
 
       <div class="products-layout">
-        <div
-          class="product-main"
-          @touchstart="onMainTouchStart"
-          @touchmove="onMainTouchMove"
-          @touchend="onMainTouchEnd"
-          @touchcancel="onMainTouchEnd"
-        >
-          <div class="product-carousel">
+        <div class="product-main">
+          <div v-if="currentCategoryBannerSrc" class="category-banner">
+            <LodImg
+              :src="currentCategoryBannerSrc"
+              :thumb="currentCategoryBannerSrc"
+              class="category-banner-img"
+              alt=""
+            />
+          </div>
+
+          <div
+            class="product-carousel"
+            @touchstart="onMainTouchStart"
+            @touchmove="onMainTouchMove"
+            @touchend="onMainTouchEnd"
+            @touchcancel="onMainTouchEnd"
+          >
             <div
               class="product-carousel-track"
               :class="{ dragging: isDragging }"
@@ -59,15 +68,6 @@
                 :key="cat.id"
                 class="product-carousel-page"
               >
-                <div v-if="categoryBannerSrc(cat)" class="category-banner">
-                  <LodImg
-                    :src="categoryBannerSrc(cat)"
-                    :thumb="categoryBannerSrc(cat)"
-                    class="category-banner-img"
-                    alt=""
-                  />
-                </div>
-
                 <van-loading v-if="isCategoryLoading(cat.id)" size="28" class="main-loading" />
                 <div v-else-if="filteredGuidesForCategory(cat).length" class="product-grid">
                   <button
@@ -301,6 +301,12 @@ const activeCategoryIndex = computed(() => {
   const idx = sortedCategories.value.findIndex((x) => x.id === selectedCategoryId.value);
   return idx >= 0 ? idx : 0;
 });
+
+const currentCategory = computed(() =>
+  sortedCategories.value.find((x) => x.id === selectedCategoryId.value) || null
+);
+
+const currentCategoryBannerSrc = computed(() => categoryBannerSrc(currentCategory.value));
 
 const carouselTrackStyle = computed(() => ({
   transform: `translateX(calc(${-activeCategoryIndex.value * 100}% + ${dragOffset.value}px))`,

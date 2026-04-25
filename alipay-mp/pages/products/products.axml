@@ -13,18 +13,20 @@
 
   <view
     class="product-content-area"
-    onTouchStart="onContentTouchStart"
-    onTouchMove="onContentTouchMove"
-    onTouchEnd="onContentTouchEnd"
-    onTouchCancel="onContentTouchEnd"
   >
-    <view class="product-carousel">
+    <view a:if="{{categoryBannerUrl}}" class="category-banner">
+      <image class="category-banner-img" src="{{categoryBannerUrl}}" mode="widthFix" />
+    </view>
+
+    <view
+      class="product-carousel"
+      onTouchStart="onContentTouchStart"
+      onTouchMove="onContentTouchMove"
+      onTouchEnd="onContentTouchEnd"
+      onTouchCancel="onContentTouchEnd"
+    >
       <view class="product-carousel-track" style="{{trackStyle}}">
         <view class="product-carousel-page" a:for="{{categoryPages}}" a:key="id">
-          <view a:if="{{item.bannerUrl}}" class="category-banner">
-            <image class="category-banner-img" src="{{item.bannerUrl}}" mode="widthFix" />
-          </view>
-
           <view a:if="{{item.loading}}" class="loading">加载中...</view>
           <view a:elif="{{item.guides.length}}" class="product-grid">
             <view
