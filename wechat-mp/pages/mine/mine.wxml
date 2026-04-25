@@ -40,7 +40,9 @@
     <view class="order-card">
       <view class="order-stat-item" wx:for="{{stats}}" wx:key="key" data-status-group="{{item.key}}" bindtap="onStatTap">
         <view class="order-icon-wrap">
-          <text class="order-icon-text">{{item.iconText}}</text>
+          <view class="order-status-icon {{item.iconClass}}" aria-hidden="true">
+            <view class="order-icon-detail"></view>
+          </view>
           <text wx:if="{{item.value > 0}}" class="order-badge">{{item.value}}</text>
         </view>
         <text class="order-stat-label">{{item.label}}</text>

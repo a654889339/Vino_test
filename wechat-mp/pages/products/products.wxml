@@ -17,6 +17,7 @@
           <view class="cart-outline-wheel cart-outline-wheel-left"></view>
           <view class="cart-outline-wheel cart-outline-wheel-right"></view>
         </view>
+        <text class="products-cart-text">{{cartText}}</text>
         <text wx:if="{{cartCount > 0}}" class="cart-badge">{{cartCount}}</text>
       </view>
     </view>

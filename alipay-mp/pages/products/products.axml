@@ -85,6 +85,7 @@
       <view class="cart-outline-wheel cart-outline-wheel-left"></view>
       <view class="cart-outline-wheel cart-outline-wheel-right"></view>
     </view>
+    <text class="cart-float-text">{{cartText}}</text>
     <text a:if="{{cartCount > 0}}" class="cart-float-badge">{{cartCount}}</text>
   </view>
 

@@ -18,11 +18,11 @@ Page({
     maskedPhone: '',
     isEn: false,
     stats: [
-      { key: 'pendingPay', label: '待付款', value: 0, iconText: '▱' },
-      { key: 'pendingShipment', label: '待发货', value: 0, iconText: '↝' },
-      { key: 'pendingReceipt', label: '待收货', value: 0, iconText: '▣' },
-      { key: 'pendingReview', label: '待评价', value: 0, iconText: '□' },
-      { key: 'afterSales', label: '退款/售后', value: 0, iconText: '↻' },
+      { key: 'pendingPay', label: '待付款', value: 0, iconClass: 'icon-balance-pay' },
+      { key: 'pendingShipment', label: '待发货', value: 0, iconClass: 'icon-logistics' },
+      { key: 'pendingReceipt', label: '待收货', value: 0, iconClass: 'icon-completed' },
+      { key: 'pendingReview', label: '待评价', value: 0, iconClass: 'icon-comment' },
+      { key: 'afterSales', label: '退款/售后', value: 0, iconClass: 'icon-replay' },
     ],
     i18n: {
       myOrders: '我的订单',
@@ -78,11 +78,11 @@ Page({
         cartEmpty: i18n.t('购物车是空的', 'Cart is empty'),
       },
       stats: [
-        { key: 'pendingPay', label: i18n.t('待付款', 'Pending'), value: vals.pendingPay || 0, iconText: '▱' },
-        { key: 'pendingShipment', label: i18n.t('待发货', 'To Ship'), value: vals.pendingShipment || 0, iconText: '↝' },
-        { key: 'pendingReceipt', label: i18n.t('待收货', 'To Receive'), value: vals.pendingReceipt || 0, iconText: '▣' },
-        { key: 'pendingReview', label: i18n.t('待评价', 'To Review'), value: vals.pendingReview || 0, iconText: '□' },
-        { key: 'afterSales', label: i18n.t('退款/售后', 'Refund/After-sales'), value: vals.afterSales || 0, iconText: '↻' },
+        { key: 'pendingPay', label: i18n.t('待付款', 'Pending'), value: vals.pendingPay || 0, iconClass: 'icon-balance-pay' },
+        { key: 'pendingShipment', label: i18n.t('待发货', 'To Ship'), value: vals.pendingShipment || 0, iconClass: 'icon-logistics' },
+        { key: 'pendingReceipt', label: i18n.t('待收货', 'To Receive'), value: vals.pendingReceipt || 0, iconClass: 'icon-completed' },
+        { key: 'pendingReview', label: i18n.t('待评价', 'To Review'), value: vals.pendingReview || 0, iconClass: 'icon-comment' },
+        { key: 'afterSales', label: i18n.t('退款/售后', 'Refund/After-sales'), value: vals.afterSales || 0, iconClass: 'icon-replay' },
       ],
     });
   },
@@ -139,11 +139,11 @@ Page({
   setGoodsOrderStats(values) {
     this.setData({
       stats: [
-        { key: 'pendingPay', label: i18n.t('待付款', 'Pending') || '待付款', value: values.pendingPay || 0, iconText: '▱' },
-        { key: 'pendingShipment', label: i18n.t('待发货', 'To Ship') || '待发货', value: values.pendingShipment || 0, iconText: '↝' },
-        { key: 'pendingReceipt', label: i18n.t('待收货', 'To Receive') || '待收货', value: values.pendingReceipt || 0, iconText: '▣' },
-        { key: 'pendingReview', label: i18n.t('待评价', 'To Review') || '待评价', value: values.pendingReview || 0, iconText: '□' },
-        { key: 'afterSales', label: i18n.t('退款/售后', 'Refund/After-sales') || '退款/售后', value: values.afterSales || 0, iconText: '↻' },
+        { key: 'pendingPay', label: i18n.t('待付款', 'Pending') || '待付款', value: values.pendingPay || 0, iconClass: 'icon-balance-pay' },
+        { key: 'pendingShipment', label: i18n.t('待发货', 'To Ship') || '待发货', value: values.pendingShipment || 0, iconClass: 'icon-logistics' },
+        { key: 'pendingReceipt', label: i18n.t('待收货', 'To Receive') || '待收货', value: values.pendingReceipt || 0, iconClass: 'icon-completed' },
+        { key: 'pendingReview', label: i18n.t('待评价', 'To Review') || '待评价', value: values.pendingReview || 0, iconClass: 'icon-comment' },
+        { key: 'afterSales', label: i18n.t('退款/售后', 'Refund/After-sales') || '退款/售后', value: values.afterSales || 0, iconClass: 'icon-replay' },
       ],
     });
   },

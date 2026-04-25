@@ -62,11 +62,11 @@ Page({
         cartEmpty: i18n.t('购物车是空的', 'Cart is empty'),
       },
       stats: [
-        { key: 'pendingPay', label: i18n.t('待付款', 'Pending'), value: vals.pendingPay || 0, iconText: '▱' },
-        { key: 'pendingShipment', label: i18n.t('待发货', 'To Ship'), value: vals.pendingShipment || 0, iconText: '↝' },
-        { key: 'pendingReceipt', label: i18n.t('待收货', 'To Receive'), value: vals.pendingReceipt || 0, iconText: '▣' },
-        { key: 'pendingReview', label: i18n.t('待评价', 'To Review'), value: vals.pendingReview || 0, iconText: '□' },
-        { key: 'afterSales', label: i18n.t('退款/售后', 'Refund/After-sales'), value: vals.afterSales || 0, iconText: '↻' },
+        { key: 'pendingPay', label: i18n.t('待付款', 'Pending'), value: vals.pendingPay || 0, iconClass: 'icon-balance-pay' },
+        { key: 'pendingShipment', label: i18n.t('待发货', 'To Ship'), value: vals.pendingShipment || 0, iconClass: 'icon-logistics' },
+        { key: 'pendingReceipt', label: i18n.t('待收货', 'To Receive'), value: vals.pendingReceipt || 0, iconClass: 'icon-completed' },
+        { key: 'pendingReview', label: i18n.t('待评价', 'To Review'), value: vals.pendingReview || 0, iconClass: 'icon-comment' },
+        { key: 'afterSales', label: i18n.t('退款/售后', 'Refund/After-sales'), value: vals.afterSales || 0, iconClass: 'icon-replay' },
       ],
       menus: [
         { title: '服务订单', icon: '/images/icons/mine-orders.svg', url: '/pages/orders/orders' },
@@ -138,11 +138,11 @@ Page({
     };
     this.setData({
       stats: [
-        { key: 'pendingPay', label: labels.pendingPay, value: values.pendingPay || 0, iconText: '▱' },
-        { key: 'pendingShipment', label: labels.pendingShipment, value: values.pendingShipment || 0, iconText: '↝' },
-        { key: 'pendingReceipt', label: labels.pendingReceipt, value: values.pendingReceipt || 0, iconText: '▣' },
-        { key: 'pendingReview', label: labels.pendingReview, value: values.pendingReview || 0, iconText: '□' },
-        { key: 'afterSales', label: labels.afterSales, value: values.afterSales || 0, iconText: '↻' },
+        { key: 'pendingPay', label: labels.pendingPay, value: values.pendingPay || 0, iconClass: 'icon-balance-pay' },
+        { key: 'pendingShipment', label: labels.pendingShipment, value: values.pendingShipment || 0, iconClass: 'icon-logistics' },
+        { key: 'pendingReceipt', label: labels.pendingReceipt, value: values.pendingReceipt || 0, iconClass: 'icon-completed' },
+        { key: 'pendingReview', label: labels.pendingReview, value: values.pendingReview || 0, iconClass: 'icon-comment' },
+        { key: 'afterSales', label: labels.afterSales, value: values.afterSales || 0, iconClass: 'icon-replay' },
       ],
     });
   },

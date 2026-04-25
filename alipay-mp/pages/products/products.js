@@ -19,6 +19,7 @@ Page({
     deviceGuides: [],
     categoryBannerUrl: '',
     loading: false,
+    cartText: '',
     cartCount: 0,
     dragOffset: 0,
     trackStyle: 'transform: translate3d(0%, 0, 0); transition: transform 280ms cubic-bezier(0.22, 0.61, 0.36, 1);',
@@ -32,6 +33,7 @@ Page({
     i18n.applyTabBarLabels();
     const refresh = () => {
       i18n.setNavTitle('products.title');
+      this.setData({ cartText: i18n.t('购物车', 'Cart') });
       if (this.data.categories.length) this.refreshLocalizedNames();
       else this.loadCategories();
     };
@@ -88,8 +90,14 @@ Page({
     if (Math.abs(dy) > Math.abs(dx)) return;
     const idx = this.data.activeCategoryIndex || 0;
     const cats = this.data.categories || [];
-    const maxLeft = idx === 0 ? 0 : 120;
-    const maxRight = idx >= cats.length - 1 ? 0 : 120;
+    const isBoundarySwipe = (idx === 0 && dx > 0) || (idx >= cats.length - 1 && dx < 0);
+    if (isBoundarySwipe) {
+      this._dragOffset = 0;
+      this.updateTrackStyle(0, false);
+      return;
+    }
+    const maxLeft = 120;
+    const maxRight = 120;
     this._dragOffset = Math.max(-maxRight, Math.min(maxLeft, dx));
     this.updateTrackStyle(this._dragOffset, false);
   },

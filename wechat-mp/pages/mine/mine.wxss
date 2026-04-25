@@ -185,11 +185,141 @@
   justify-content: center;
 }
 
-.order-icon-text {
+.order-status-icon {
+  position: relative;
+  width: 38rpx;
+  height: 38rpx;
   color: #0f5f46;
-  font-size: 34rpx;
-  font-weight: 700;
-  line-height: 1;
+  box-sizing: border-box;
+}
+
+.order-status-icon::before,
+.order-status-icon::after,
+.order-icon-detail,
+.order-icon-detail::before,
+.order-icon-detail::after {
+  content: '';
+  position: absolute;
+  box-sizing: border-box;
+}
+
+.icon-balance-pay::before {
+  left: 3rpx;
+  top: 8rpx;
+  width: 32rpx;
+  height: 22rpx;
+  border: 3rpx solid currentColor;
+  border-radius: 5rpx;
+}
+
+.icon-balance-pay::after {
+  left: 8rpx;
+  top: 15rpx;
+  width: 22rpx;
+  border-top: 3rpx solid currentColor;
+}
+
+.icon-balance-pay .order-icon-detail {
+  left: 9rpx;
+  bottom: 8rpx;
+  width: 10rpx;
+  border-top: 3rpx solid currentColor;
+}
+
+.icon-logistics::before {
+  left: 3rpx;
+  top: 13rpx;
+  width: 20rpx;
+  height: 14rpx;
+  border: 3rpx solid currentColor;
+  border-radius: 3rpx;
+}
+
+.icon-logistics::after {
+  right: 3rpx;
+  top: 17rpx;
+  width: 13rpx;
+  height: 10rpx;
+  border: 3rpx solid currentColor;
+  border-left: none;
+  border-radius: 0 4rpx 4rpx 0;
+}
+
+.icon-logistics .order-icon-detail::before,
+.icon-logistics .order-icon-detail::after {
+  bottom: 5rpx;
+  width: 6rpx;
+  height: 6rpx;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.icon-logistics .order-icon-detail::before {
+  left: 9rpx;
+}
+
+.icon-logistics .order-icon-detail::after {
+  right: 6rpx;
+}
+
+.icon-completed::before {
+  left: 7rpx;
+  top: 6rpx;
+  width: 24rpx;
+  height: 26rpx;
+  border: 3rpx solid currentColor;
+  border-radius: 5rpx;
+}
+
+.icon-completed::after {
+  left: 13rpx;
+  top: 17rpx;
+  width: 13rpx;
+  height: 8rpx;
+  border-left: 3rpx solid currentColor;
+  border-bottom: 3rpx solid currentColor;
+  transform: rotate(-45deg);
+}
+
+.icon-comment::before {
+  left: 5rpx;
+  top: 7rpx;
+  width: 28rpx;
+  height: 22rpx;
+  border: 3rpx solid currentColor;
+  border-radius: 8rpx;
+}
+
+.icon-comment::after {
+  left: 13rpx;
+  bottom: 5rpx;
+  width: 9rpx;
+  height: 9rpx;
+  border-left: 3rpx solid currentColor;
+  border-bottom: 3rpx solid currentColor;
+  background: #fff;
+  transform: rotate(-35deg);
+}
+
+.icon-replay::before {
+  left: 6rpx;
+  top: 7rpx;
+  width: 26rpx;
+  height: 26rpx;
+  border: 3rpx solid currentColor;
+  border-left-color: transparent;
+  border-radius: 50%;
+  transform: rotate(-35deg);
+}
+
+.icon-replay::after {
+  left: 4rpx;
+  top: 6rpx;
+  width: 11rpx;
+  height: 11rpx;
+  border-left: 3rpx solid currentColor;
+  border-top: 3rpx solid currentColor;
+  transform: rotate(-20deg);
 }
 
 .order-badge {

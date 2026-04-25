@@ -27,6 +27,7 @@ Page({
     noMatchText: '',
     noCategoryProductText: '',
     noConfigText: '',
+    cartText: '',
     cartCount: 0,
     tabScrollKey: '',
     dragOffset: 0,
@@ -57,8 +58,14 @@ Page({
     if (Math.abs(dy) > Math.abs(dx)) return;
     const idx = this.data.activeCategoryIndex || 0;
     const cats = this.data.categories || [];
-    const maxLeft = idx === 0 ? 0 : 120;
-    const maxRight = idx >= cats.length - 1 ? 0 : 120;
+    const isBoundarySwipe = (idx === 0 && dx > 0) || (idx >= cats.length - 1 && dx < 0);
+    if (isBoundarySwipe) {
+      this._dragOffset = 0;
+      this.updateTrackStyle(0, false);
+      return;
+    }
+    const maxLeft = 120;
+    const maxRight = 120;
     this._dragOffset = Math.max(-maxRight, Math.min(maxLeft, dx));
     this.updateTrackStyle(this._dragOffset, false);
   },
@@ -113,6 +120,7 @@ Page({
       noMatchText: i18n.t('products.noMatch'),
       noCategoryProductText: i18n.t('products.noCategoryProduct'),
       noConfigText: i18n.t('products.noConfig'),
+      cartText: i18n.t('购物车', 'Cart'),
     });
   },
 
