@@ -40,10 +40,22 @@ var rawRowTableSpecs = map[string]tableSpec{
 		readonly:  append([]string{"role"}, baseReadonly...),
 		sensitive: []string{"password"},
 	},
-	"orders":           {pk: "id", readonly: baseReadonly},
+	// 订单金额锁死：price/totalPrice 等金额字段不允许任何入口修改
+	"orders": {pk: "id", readonly: append([]string{
+		"orderNo", "userId", "serviceId", "serviceTitle", "serviceTitleEn", "serviceIcon",
+		"price",
+	}, baseReadonly...)},
 	"order_logs":       {pk: "id", readonly: append([]string{"orderId", "changeType", "oldValue", "newValue", "operator"}, baseReadonly...)},
-	"goods_orders":     {pk: "id", readonly: baseReadonly},
-	"goods_order_items":{pk: "id", readonly: baseReadonly},
+	"goods_orders": {pk: "id", readonly: append([]string{
+		"orderNo", "userId",
+		"totalPrice", "currency",
+	}, baseReadonly...)},
+	"goods_order_items": {pk: "id", readonly: append([]string{
+		"orderId", "guideId",
+		"nameSnapshot", "imageUrl",
+		"unitPrice", "originPrice", "currency",
+		"qty", "lineTotal",
+	}, baseReadonly...)},
 	"goods_order_logs": {pk: "id", readonly: append([]string{"orderId", "changeType", "oldValue", "newValue", "operator"}, baseReadonly...)},
 	"services":             {pk: "id", readonly: baseReadonly},
 	"service_categories":   {pk: "id", readonly: baseReadonly},
@@ -56,7 +68,10 @@ var rawRowTableSpecs = map[string]tableSpec{
 	"i18n_texts":           {pk: "id", readonly: baseReadonly},
 	"messages":             {pk: "id", readonly: baseReadonly},
 	"addresses":            {pk: "id", readonly: baseReadonly},
-	"outlet_orders":        {pk: "id", readonly: baseReadonly},
+	"outlet_orders": {pk: "id", readonly: append([]string{
+		"orderNo", "userId", "serviceId", "serviceTitle", "serviceIcon",
+		"price",
+	}, baseReadonly...)},
 	"outlet_order_logs":    {pk: "id", readonly: append([]string{"orderId", "changeType", "oldValue", "newValue", "operator"}, baseReadonly...)},
 	"outlet_services":            {pk: "id", readonly: baseReadonly},
 	"outlet_service_categories":  {pk: "id", readonly: baseReadonly},

@@ -55,7 +55,6 @@ func RegisterRoutes(engine *gin.Engine, cfg *config.Config) {
 		orders.GET("/:id", middleware.Auth(cfg), orderDetail)
 		orders.PUT("/:id/cancel", middleware.Auth(cfg), orderCancel)
 		orders.PUT("/admin/:id/status", middleware.Auth(cfg), middleware.Admin(), orderAdminUpdateStatus)
-		orders.PUT("/admin/:id/price", middleware.Auth(cfg), middleware.Admin(), orderAdminUpdatePrice)
 		orders.POST("/admin/:id/remark", middleware.Auth(cfg), middleware.Admin(), orderAdminAddRemark)
 		orders.GET("/admin/:id/logs", middleware.Auth(cfg), middleware.Admin(), orderAdminLogs)
 	}
@@ -71,7 +70,6 @@ func RegisterRoutes(engine *gin.Engine, cfg *config.Config) {
 		goodsOrders.GET("/admin/items", middleware.Auth(cfg), middleware.Admin(), goodsOrderAdminItems)
 		goodsOrders.GET("/admin/stats", middleware.Auth(cfg), middleware.Admin(), goodsOrderAdminStats)
 		goodsOrders.PUT("/admin/:id/status", middleware.Auth(cfg), middleware.Admin(), goodsOrderAdminUpdateStatus)
-		goodsOrders.PUT("/admin/:id/price", middleware.Auth(cfg), middleware.Admin(), goodsOrderAdminUpdatePrice)
 		goodsOrders.POST("/admin/:id/remark", middleware.Auth(cfg), middleware.Admin(), goodsOrderAdminAddRemark)
 		goodsOrders.GET("/admin/:id/logs", middleware.Auth(cfg), middleware.Admin(), goodsOrderAdminLogs)
 	}
@@ -218,7 +216,6 @@ func RegisterRoutes(engine *gin.Engine, cfg *config.Config) {
 		out.GET("/admin/orders", middleware.Auth(cfg), middleware.Admin(), outletAdminOrderList)
 		out.GET("/admin/orders/stats", middleware.Auth(cfg), middleware.Admin(), outletAdminOrderStats)
 		out.PUT("/admin/orders/:id/status", middleware.Auth(cfg), middleware.Admin(), outletAdminOrderUpdateStatus)
-		out.PUT("/admin/orders/:id/price", middleware.Auth(cfg), middleware.Admin(), outletAdminOrderUpdatePrice)
 		out.POST("/admin/orders/:id/remark", middleware.Auth(cfg), middleware.Admin(), outletAdminOrderRemark)
 		out.GET("/admin/orders/:id/logs", middleware.Auth(cfg), middleware.Admin(), outletAdminOrderLogs)
 		out.GET("/admin/messages/conversations", middleware.Auth(cfg), middleware.Admin(), outletMsgAdminConv)

@@ -503,44 +503,7 @@ func goodsOrderAdminUpdateStatus(c *gin.Context) {
 // goodsOrderAdminUpdatePrice PUT /api/goods-orders/admin/:id/price
 // body: { price }  —— 变更的是订单合计 totalPrice；items 明细保留原快照。
 func goodsOrderAdminUpdatePrice(c *gin.Context) {
-	u, ok := ctxUser(c)
-	if !ok {
-		return
-	}
-	id, ok := parseID(c, "id")
-	if !ok {
-		resp.Err(c, 400, 400, "无效订单")
-		return
-	}
-	var body struct {
-		Price float64 `json:"price"`
-	}
-	if err := c.ShouldBindJSON(&body); err != nil {
-		resp.Err(c, 400, 400, "无效金额")
-		return
-	}
-	if body.Price < 0 || math.IsNaN(body.Price) {
-		resp.Err(c, 400, 400, "无效金额")
-		return
-	}
-	var o models.GoodsOrder
-	if err := db.DB.First(&o, id).Error; err != nil {
-		resp.Err(c, 404, 404, "订单不存在")
-		return
-	}
-	oldP := o.TotalPrice
-	if oldP != body.Price {
-		db.DB.Create(&models.GoodsOrderLog{
-			OrderID:    o.ID,
-			ChangeType: "price",
-			OldValue:   fmt.Sprintf("¥%.2f", oldP),
-			NewValue:   fmt.Sprintf("¥%.2f", body.Price),
-			Operator:   u.Username,
-		})
-	}
-	o.TotalPrice = body.Price
-	db.DB.Save(&o)
-	resp.OK(c, o)
+	resp.Err(c, 403, 403, "订单金额已锁定，不允许修改")
 }
 
 // goodsOrderAdminAddRemark POST /api/goods-orders/admin/:id/remark

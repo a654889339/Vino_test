@@ -563,32 +563,7 @@ func outletAdminOrderUpdateStatus(c *gin.Context) {
 }
 
 func outletAdminOrderUpdatePrice(c *gin.Context) {
-	u, _ := ctxUser(c)
-	id, _ := strconv.Atoi(c.Param("id"))
-	var body struct {
-		Price float64 `json:"price"`
-	}
-	_ = c.ShouldBindJSON(&body)
-	if body.Price < 0 || math.IsNaN(body.Price) {
-		resp.Err(c, 400, 400, "无效金额")
-		return
-	}
-	var o models.OutletOrder
-	if err := db.DB.First(&o, id).Error; err != nil {
-		resp.Err(c, 404, 404, "订单不存在")
-		return
-	}
-	oldP := o.Price
-	if oldP != body.Price {
-		db.DB.Create(&models.OutletOrderLog{
-			OrderID: o.ID, ChangeType: "price",
-			OldValue: fmt.Sprintf("¥%.2f", oldP), NewValue: fmt.Sprintf("¥%.2f", body.Price),
-			Operator: u.Username,
-		})
-	}
-	o.Price = body.Price
-	db.DB.Save(&o)
-	resp.OK(c, o)
+	resp.Err(c, 403, 403, "订单金额已锁定，不允许修改")
 }
 
 func outletAdminOrderRemark(c *gin.Context) {
