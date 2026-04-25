@@ -56,7 +56,11 @@
           <text a:if="{{displayOriginPrice}}" class="price-origin">{{displayOriginPrice}}</text>
         </view>
         <view class="price-cart" onTap="addToCart">
-          <text class="price-cart-icon">🛒</text>
+          <view class="cart-outline-icon price-cart-icon" aria-hidden="true">
+            <view class="cart-outline-basket"></view>
+            <view class="cart-outline-wheel cart-outline-wheel-left"></view>
+            <view class="cart-outline-wheel cart-outline-wheel-right"></view>
+          </view>
           <text class="price-cart-text">加入购物车</text>
         </view>
       </view>
@@ -75,7 +79,11 @@
 
     <view class="footer-bar">
       <view class="footer-cart" onTap="goCart">
-        <text class="footer-cart-icon">🛒</text>
+        <view class="cart-outline-icon footer-cart-icon" aria-hidden="true">
+          <view class="cart-outline-basket"></view>
+          <view class="cart-outline-wheel cart-outline-wheel-left"></view>
+          <view class="cart-outline-wheel cart-outline-wheel-right"></view>
+        </view>
         <text a:if="{{cartCount > 0}}" class="footer-cart-badge">{{cartCount}}</text>
       </view>
       <view class="footer-add" onTap="addToCart">

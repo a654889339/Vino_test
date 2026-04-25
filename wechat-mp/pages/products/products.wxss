@@ -52,7 +52,7 @@
   background: rgba(255, 255, 255, 0.08);
 }
 .cart-icon {
-  font-size: 28rpx;
+  color: #f3f4f6;
 }
 .cart-badge {
   position: absolute;
@@ -307,8 +307,64 @@
 }
 
 .add-cart-icon {
-  font-size: 34rpx;
-  line-height: 1;
+  color: #f97316;
+}
+
+.cart-outline-icon {
+  position: relative;
+  width: 34rpx;
+  height: 34rpx;
+  color: currentColor;
+}
+
+.cart-outline-icon::before {
+  content: '';
+  position: absolute;
+  left: 2rpx;
+  top: 5rpx;
+  width: 9rpx;
+  height: 3rpx;
+  border-top: 3rpx solid currentColor;
+  transform: rotate(24deg);
+  transform-origin: left center;
+}
+
+.cart-outline-basket {
+  position: absolute;
+  left: 8rpx;
+  top: 10rpx;
+  width: 20rpx;
+  height: 13rpx;
+  border: 3rpx solid currentColor;
+  border-top: none;
+  border-radius: 0 0 5rpx 5rpx;
+  box-sizing: border-box;
+}
+
+.cart-outline-basket::before {
+  content: '';
+  position: absolute;
+  left: -2rpx;
+  top: -7rpx;
+  width: 24rpx;
+  border-top: 3rpx solid currentColor;
+}
+
+.cart-outline-wheel {
+  position: absolute;
+  bottom: 3rpx;
+  width: 5rpx;
+  height: 5rpx;
+  background: currentColor;
+  border-radius: 50%;
+}
+
+.cart-outline-wheel-left {
+  left: 11rpx;
+}
+
+.cart-outline-wheel-right {
+  right: 5rpx;
 }
 
 .empty-hint {

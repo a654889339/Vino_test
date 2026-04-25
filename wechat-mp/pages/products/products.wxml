@@ -12,7 +12,11 @@
         confirm-type="search"
       />
       <view class="products-cart-btn" bindtap="goCart">
-        <text class="cart-icon">🛒</text>
+        <view class="cart-outline-icon cart-icon" aria-hidden="true">
+          <view class="cart-outline-basket"></view>
+          <view class="cart-outline-wheel cart-outline-wheel-left"></view>
+          <view class="cart-outline-wheel cart-outline-wheel-right"></view>
+        </view>
         <text wx:if="{{cartCount > 0}}" class="cart-badge">{{cartCount}}</text>
       </view>
     </view>
@@ -74,7 +78,11 @@
                   >{{item.displayOriginPrice}}</text>
                 </view>
                 <view class="add-cart-btn" data-id="{{item.id}}" catchtap="addToCart">
-                  <text class="add-cart-icon">🛒</text>
+                  <view class="cart-outline-icon add-cart-icon" aria-hidden="true">
+                    <view class="cart-outline-basket"></view>
+                    <view class="cart-outline-wheel cart-outline-wheel-left"></view>
+                    <view class="cart-outline-wheel cart-outline-wheel-right"></view>
+                  </view>
                 </view>
               </view>
             </view>

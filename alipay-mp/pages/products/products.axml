@@ -106,7 +106,11 @@
   </view>
 
   <view class="cart-float" onTap="goCart">
-    <text class="cart-float-icon">🛒</text>
+    <view class="cart-outline-icon cart-float-icon" aria-hidden="true">
+      <view class="cart-outline-basket"></view>
+      <view class="cart-outline-wheel cart-outline-wheel-left"></view>
+      <view class="cart-outline-wheel cart-outline-wheel-right"></view>
+    </view>
     <text a:if="{{cartCount > 0}}" class="cart-float-badge">{{cartCount}}</text>
   </view>
 

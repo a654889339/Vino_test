@@ -89,7 +89,11 @@
         <text wx:if="{{displayListPrice}}" class="footer-price-now">{{displayListPrice}}</text>
       </view>
       <view class="footer-btn-cart" bindtap="addToCart">
-        <text>🛒</text>
+        <view class="cart-outline-icon" aria-hidden="true">
+          <view class="cart-outline-basket"></view>
+          <view class="cart-outline-wheel cart-outline-wheel-left"></view>
+          <view class="cart-outline-wheel cart-outline-wheel-right"></view>
+        </view>
         <text>{{addCartLabel}}</text>
       </view>
     </view>

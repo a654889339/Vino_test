@@ -45,13 +45,21 @@
 .price-label { font-size: 14px; color: #666; }
 .price-now { font-size: 22px; font-weight: 800; color: #b91c1c; }
 .price-origin { font-size: 14px; color: #999; text-decoration: line-through; }
-.price-cart { display: flex; align-items: center; gap: 6px; padding: 8px 16px; background: #b91c1c; border-radius: 999rpx; }
-.price-cart-icon { font-size: 16px; }
+.price-cart { display: flex; align-items: center; gap: 6px; padding: 8px 16px; background: #b91c1c; border-radius: 999rpx; white-space: nowrap; }
+.price-cart-icon { color: #fff; }
 .price-cart-text { font-size: 13px; color: #fff; font-weight: 600; }
 
 .footer-bar { position: fixed; left: 0; right: 0; bottom: 0; padding: 10px 16px; padding-bottom: max(10px, env(safe-area-inset-bottom)); background: #fff; border-top: 1px solid rgba(0,0,0,0.06); display: flex; align-items: center; gap: 12px; z-index: 50; }
 .footer-cart { position: relative; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #f3f4f6; }
-.footer-cart-icon { font-size: 22px; }
+.footer-cart-icon { color: #f97316; }
 .footer-cart-badge { position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; line-height: 18px; text-align: center; background: #b91c1c; color: #fff; font-size: 11px; border-radius: 999rpx; padding: 0 5px; }
-.footer-add { flex: 1; height: 44px; line-height: 44px; text-align: center; background: #b91c1c; color: #fff; font-size: 15px; font-weight: 700; border-radius: 999rpx; }
+.footer-add { flex: 1; height: 44px; line-height: 44px; text-align: center; background: #b91c1c; color: #fff; font-size: 15px; font-weight: 700; border-radius: 999rpx; white-space: nowrap; }
 .footer-add:active { opacity: 0.9; }
+
+.cart-outline-icon { position: relative; width: 18px; height: 18px; color: currentColor; flex-shrink: 0; }
+.cart-outline-icon::before { content: ''; position: absolute; left: 1px; top: 3px; width: 5px; height: 2px; border-top: 2px solid currentColor; transform: rotate(24deg); transform-origin: left center; }
+.cart-outline-basket { position: absolute; left: 5px; top: 6px; width: 11px; height: 7px; border: 2px solid currentColor; border-top: none; border-radius: 0 0 3px 3px; box-sizing: border-box; }
+.cart-outline-basket::before { content: ''; position: absolute; left: -1px; top: -5px; width: 13px; border-top: 2px solid currentColor; }
+.cart-outline-wheel { position: absolute; bottom: 2px; width: 3px; height: 3px; background: currentColor; border-radius: 50%; }
+.cart-outline-wheel-left { left: 7px; }
+.cart-outline-wheel-right { right: 3px; }

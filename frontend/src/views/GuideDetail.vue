@@ -131,7 +131,7 @@
             @click="addToCart"
           >
             <van-icon name="cart-o" size="16" />
-            <span>加入购物车</span>
+            <span>{{ t('加入购物车', 'Add to Cart') }}</span>
           </van-button>
           <van-button type="primary" color="#B91C1C" round class="btn-home" @click="goHome">
             {{ t('guideDetail.backHome') }}
@@ -633,6 +633,7 @@ onMounted(async () => {
   color: #b91c1c;
   font-size: 20px;
   font-weight: 800;
+  white-space: nowrap;
 }
 .footer-btns {
   display: flex;
@@ -640,15 +641,30 @@ onMounted(async () => {
   gap: 10px;
   flex: 1;
   justify-content: flex-end;
+  min-width: 0;
 }
 .btn-cart {
-  min-width: 120px;
+  flex: 0 1 132px;
+  min-width: 112px;
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  padding: 0 12px;
+  white-space: nowrap;
 }
 .btn-home {
-  min-width: 100px;
+  flex: 0 1 96px;
+  min-width: 82px;
+  padding: 0 12px;
+  white-space: nowrap;
+}
+.btn-cart :deep(.van-button__content),
+.btn-home :deep(.van-button__content) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  white-space: nowrap;
 }
 
 /* ===== Video Overlay ===== */

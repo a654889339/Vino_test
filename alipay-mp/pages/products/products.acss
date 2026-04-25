@@ -109,5 +109,13 @@
 .product-content-area { width: 100%; min-height: 50vh; }
 
 .cart-float { position: fixed; right: 24rpx; bottom: 160rpx; width: 96rpx; height: 96rpx; border-radius: 50%; background: #fff; box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; z-index: 50; }
-.cart-float-icon { font-size: 40rpx; }
+.cart-float-icon { color: #f97316; }
 .cart-float-badge { position: absolute; top: -4rpx; right: -4rpx; min-width: 36rpx; height: 36rpx; line-height: 36rpx; text-align: center; background: #b91c1c; color: #fff; font-size: 22rpx; border-radius: 999rpx; padding: 0 10rpx; }
+
+.cart-outline-icon { position: relative; width: 40rpx; height: 40rpx; color: currentColor; }
+.cart-outline-icon::before { content: ''; position: absolute; left: 2rpx; top: 6rpx; width: 10rpx; height: 3rpx; border-top: 3rpx solid currentColor; transform: rotate(24deg); transform-origin: left center; }
+.cart-outline-basket { position: absolute; left: 9rpx; top: 12rpx; width: 24rpx; height: 15rpx; border: 3rpx solid currentColor; border-top: none; border-radius: 0 0 5rpx 5rpx; box-sizing: border-box; }
+.cart-outline-basket::before { content: ''; position: absolute; left: -2rpx; top: -8rpx; width: 28rpx; border-top: 3rpx solid currentColor; }
+.cart-outline-wheel { position: absolute; bottom: 4rpx; width: 6rpx; height: 6rpx; background: currentColor; border-radius: 50%; }
+.cart-outline-wheel-left { left: 13rpx; }
+.cart-outline-wheel-right { right: 6rpx; }
