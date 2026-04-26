@@ -16,7 +16,6 @@ import (
 	"vino/backend/internal/services"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 func msgMy(c *gin.Context) {
