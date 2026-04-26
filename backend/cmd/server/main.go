@@ -26,13 +26,36 @@ func main() {
 	if err := db.Connect(cfg); err != nil {
 		log.Fatalf("[Vino] DB connect: %v", err)
 	}
-	if err := db.EnsureAppSchema(); err != nil {
+	schemaDiff, err := db.EnsureAppSchema()
+	if err != nil {
 		log.Fatalf("[Vino] EnsureAppSchema: %v", err)
+	}
+	if schemaDiff != nil {
+		dn := schemaDiff.Database
+		for _, t := range schemaDiff.NewTables {
+			stat.Record("db_add", map[string]interface{}{
+				"source": "db", "action": "db_add", "database": dn, "table": t,
+			})
+		}
+		for _, c := range schemaDiff.ColumnsOnExisting {
+			stat.Record("db_modify", map[string]interface{}{
+				"source": "db", "action": "db_modify", "database": dn, "table": c.Table, "column": c.Column, "reason": "column_added",
+			})
+		}
 	}
 	// 扩展 users.role enum 并在缺省时自动提升首个管理员为超级管理员
 	db.MigrateSuperAdmin()
 	// 在 AutoMigrate 之后扫描当前库全部 BASE TABLE，为仍缺 version 的表幂等补列（含历史表、非 GORM 管理的表）
 	versionMigration := db.MigrateVersionColumns()
+	if len(versionMigration.AddedTables) > 0 {
+		var dname string
+		_ = db.DB.Raw("SELECT DATABASE()").Scan(&dname)
+		for _, t := range versionMigration.AddedTables {
+			stat.Record("db_modify", map[string]interface{}{
+				"source": "db", "action": "db_modify", "database": dname, "table": t, "column": "version", "reason": "version_column_backfill",
+			})
+		}
+	}
 	versionMigrationStatus := "success"
 	if len(versionMigration.FailedTables) > 0 {
 		versionMigrationStatus = "failed"

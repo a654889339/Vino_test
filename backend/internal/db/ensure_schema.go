@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"vino/backend/internal/models"
-	"vino/backend/internal/stat"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -137,23 +136,26 @@ func validatePhysicalColumns(d *gorm.DB, before map[string]map[string]string) er
 	return nil
 }
 
-// diffAndStatSchema 对比迁移前后全库列集合，对「新建表」「在已有表上新增列」分别打点 db_add / db_modify。
-func diffAndStatSchema(databaseName string, before, after map[string]map[string]string) {
-	// 新建表
-	for t, afterCols := range after {
-		_, had := before[t]
-		if !had {
-			stat.Record("db_add", map[string]interface{}{
-				"source":   "db",
-				"action":   "db_add",
-				"database": databaseName,
-				"table":    t,
-			})
-			// 新表不单独对每列打 db_modify
-			_ = afterCols
+// SchemaColumnAdd 表示在**已存在**的表上新增的一列（用于在 main 中打 db_modify 点）。
+type SchemaColumnAdd struct {
+	Table, Column string
+}
+
+// SchemaEnsureDiff 迁移「前后」对业务库的差异（在 main 里转 db_add / db_modify 打点）。
+type SchemaEnsureDiff struct {
+	Database         string
+	NewTables        []string
+	ColumnsOnExisting []SchemaColumnAdd
+}
+
+// computeSchemaDiff 对比 AutoMigrate 前后全库列集合，区分新表与在旧表上新增的列。
+func computeSchemaDiff(databaseName string, before, after map[string]map[string]string) *SchemaEnsureDiff {
+	out := &SchemaEnsureDiff{Database: databaseName}
+	for t := range after {
+		if _, had := before[t]; !had {
+			out.NewTables = append(out.NewTables, t)
 		}
 	}
-	// 在已有表上新增列
 	for t, afterCols := range after {
 		bf, ok := before[t]
 		if !ok {
@@ -161,17 +163,11 @@ func diffAndStatSchema(databaseName string, before, after map[string]map[string]
 		}
 		for col := range afterCols {
 			if _, ex := bf[col]; !ex {
-				stat.Record("db_modify", map[string]interface{}{
-					"source":   "db",
-					"action":   "db_modify",
-					"database": databaseName,
-					"table":    t,
-					"column":   col,
-					"reason":   "column_added",
-				})
+				out.ColumnsOnExisting = append(out.ColumnsOnExisting, SchemaColumnAdd{Table: t, Column: col})
 			}
 		}
 	}
+	return out
 }
 
 func currentDatabaseName(d *gorm.DB) (string, error) {
@@ -182,31 +178,30 @@ func currentDatabaseName(d *gorm.DB) (string, error) {
 	return strings.TrimSpace(name), nil
 }
 
-// EnsureAppSchema 在 AutoMigrate 前校验已存在列类型；执行 AutoMigrate；再比较前后差异并打点；失败时返回错误以终止启动。
-func EnsureAppSchema() error {
+// EnsureAppSchema 在 AutoMigrate 前校验已存在列类型，再执行 AutoMigrate，并返回差异供主程序打点；失败时返回错误以终止启动。
+func EnsureAppSchema() (*SchemaEnsureDiff, error) {
 	if DB == nil {
-		return fmt.Errorf("DB 未初始化")
+		return nil, fmt.Errorf("DB 未初始化")
 	}
 	d := DB
 	dbName, err := currentDatabaseName(d)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	before, err := snapshotTableColumns(d)
 	if err != nil {
-		return fmt.Errorf("schema snapshot(before): %w", err)
+		return nil, fmt.Errorf("schema snapshot(before): %w", err)
 	}
 	if err := validatePhysicalColumns(d, before); err != nil {
-		return err
+		return nil, err
 	}
 	ents := ManagedModelEntities()
 	if err := d.AutoMigrate(ents...); err != nil {
-		return fmt.Errorf("AutoMigrate: %w", err)
+		return nil, fmt.Errorf("AutoMigrate: %w", err)
 	}
 	after, err := snapshotTableColumns(d)
 	if err != nil {
-		return fmt.Errorf("schema snapshot(after): %w", err)
+		return nil, fmt.Errorf("schema snapshot(after): %w", err)
 	}
-	diffAndStatSchema(dbName, before, after)
-	return nil
+	return computeSchemaDiff(dbName, before, after), nil
 }
