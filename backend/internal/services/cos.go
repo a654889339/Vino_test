@@ -18,12 +18,22 @@ import (
 	_ "golang.org/x/image/webp"
 )
 
-const (
-	cosBucket = "itsyourturnmy-1256887166"
-	cosRegion = "ap-singapore"
-)
+// 桶与地域仅由此处与环境变量决定；前端通过 GET /api/media/cos-config 读取 CosBase()，勿硬编码桶域名。
+func cosBucketEffective() string {
+	s := strings.TrimSpace(os.Getenv("VINO_COS_BUCKET"))
+	if s != "" {
+		return s
+	}
+	return "itsyourturnmy-1256887166"
+}
 
-var cosBaseURL = fmt.Sprintf("https://%s.cos.%s.myqcloud.com", cosBucket, cosRegion)
+func cosRegionEffective() string {
+	s := strings.TrimSpace(os.Getenv("VINO_COS_REGION"))
+	if s != "" {
+		return s
+	}
+	return "ap-singapore"
+}
 
 // CosConfigured reports whether COS credentials are set (uploads / backups).
 func CosConfigured() bool {
@@ -32,8 +42,39 @@ func CosConfigured() bool {
 	return sid != "" && sk != ""
 }
 
-// CosBucket returns the configured bucket id (name-appid), for admin responses.
-func CosBucket() string { return cosBucket }
+// CosBucket returns the configured bucket id (name-appid), for admin/SDK 与 cos-config 接口。
+func CosBucket() string { return cosBucketEffective() }
+
+// CosRegion returns COS 地域（如 ap-singapore），与 SDK 一致。
+func CosRegion() string { return cosRegionEffective() }
+
+// CosBase returns https://{bucket}.cos.{region}.myqcloud.com（无末尾斜杠），与上传返回 URL 前缀一致。
+func CosBase() string {
+	return fmt.Sprintf("https://%s.cos.%s.myqcloud.com", cosBucketEffective(), cosRegionEffective())
+}
+
+// CosProxyKeyPrefixWhitelist 为 GET /api/media/cos 代理允许的 object key 前缀；与 IsKeyAllowedForProxy、
+// GET /api/media/cos-config 的 cosProxyAllowedPrefixes 同源。变更时请同步 embed 的 media_asset_catalog 与三端 cosMedia。
+var CosProxyKeyPrefixWhitelist = []string{
+	"vino/uploads/",
+	"vino/main_page/",
+	"vino/main_animation/",
+	"vino/items/",
+}
+
+// CosProxyAllowedPrefixes 返回白名单前缀切片副本（只读）。
+func CosProxyAllowedPrefixes() []string {
+	out := make([]string, len(CosProxyKeyPrefixWhitelist))
+	copy(out, CosProxyKeyPrefixWhitelist)
+	return out
+}
+
+const (
+	// CosMediaConfigTTLMs 建议客户端重新拉取 cos-config 的间隔（毫秒），与三端运行时约定一致。
+	CosMediaConfigTTLMs = 300000
+	// CosMediaImageDisplayCacheTTLMs 建议的展示层媒体内存缓存 TTL（毫秒），如 blob / downloadFile 缓存。
+	CosMediaImageDisplayCacheTTLMs = 300000
+)
 
 func validateBackupKey(key string) error {
 	key = strings.TrimSpace(key)
@@ -69,7 +110,7 @@ func cosClient() (*cos.Client, error) {
 	if sid == "" || sk == "" {
 		return nil, fmt.Errorf("COS not configured")
 	}
-	u, _ := url.Parse(fmt.Sprintf("https://%s.cos.%s.myqcloud.com", cosBucket, cosRegion))
+	u, _ := url.Parse(CosBase())
 	b := &cos.BaseURL{BucketURL: u}
 	return cos.NewClient(b, &http.Client{
 		Transport: &cos.AuthorizationTransport{
@@ -78,8 +119,6 @@ func cosClient() (*cos.Client, error) {
 		},
 	}), nil
 }
-
-func CosBase() string { return cosBaseURL }
 
 var (
 	thumbKeyGoodsOrTypeLarge     = regexp.MustCompile(`^(vino/items/(?:goods|type)/\d+)/large_image(\.[^/.]+)$`)
@@ -192,14 +231,15 @@ func URLToKey(fullURL string) string {
 		return ""
 	}
 	u := strings.TrimSpace(fullURL)
-	if !strings.HasPrefix(u, cosBaseURL+"/") {
+	base := CosBase()
+	if !strings.HasPrefix(u, base+"/") {
 		return ""
 	}
 	q := strings.Index(u, "?")
 	if q >= 0 {
 		u = u[:q]
 	}
-	key := strings.TrimPrefix(u, cosBaseURL+"/")
+	key := strings.TrimPrefix(u, base+"/")
 	if key == "" {
 		return ""
 	}
@@ -246,7 +286,7 @@ func GetThumbURL(originalURL string) string {
 	if tk == "" {
 		return ""
 	}
-	return cosBaseURL + "/" + tk
+	return CosBase() + "/" + tk
 }
 
 const thumbMaxWidth = 400
@@ -308,7 +348,7 @@ func UploadThumbWithContentPrefix(ctx context.Context, buf []byte, filename, con
 	if err != nil {
 		return "", err
 	}
-	return cosBaseURL + "/" + key, nil
+	return CosBase() + "/" + key, nil
 }
 
 // UploadWithThumb 上传原图并生成缩略图（maxWidth 0 使用默认 400）
@@ -364,7 +404,7 @@ func UploadCOSWithContentPrefix(ctx context.Context, buf []byte, filename, conte
 	if err != nil {
 		return "", err
 	}
-	return cosBaseURL + "/" + key, nil
+	return CosBase() + "/" + key, nil
 }
 
 func UploadCOSReader(ctx context.Context, r io.Reader, filename, contentType string) (string, error) {
@@ -390,18 +430,17 @@ func UploadCOSReaderWithContentPrefix(ctx context.Context, r io.Reader, filename
 	if err != nil {
 		return "", err
 	}
-	return cosBaseURL + "/" + key, nil
+	return CosBase() + "/" + key, nil
 }
 
 func IsKeyAllowedForProxy(key string) bool {
 	if key == "" || strings.Contains(key, "..") || strings.Contains(key, "\\") {
 		return false
 	}
-	if strings.HasPrefix(key, "vino/uploads/") ||
-		strings.HasPrefix(key, "vino/main_page/") ||
-		strings.HasPrefix(key, "vino/main_animation/") ||
-		strings.HasPrefix(key, "vino/items/") {
-		return true
+	for _, p := range CosProxyKeyPrefixWhitelist {
+		if strings.HasPrefix(key, p) {
+			return true
+		}
 	}
 	return false
 }

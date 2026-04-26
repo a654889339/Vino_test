@@ -301,6 +301,19 @@ func SeedData(c *gin.Context) {
 	resp.OKMsg(c, fmt.Sprintf("已生成 %d 个用户、%d 个库存商品", users, products))
 }
 
+// MediaCosConfig 公开 COS 媒体运行时契约（桶基址、代理白名单、建议 TTL）；与 services 同源，不含密钥。
+func MediaCosConfig(c *gin.Context) {
+	c.Writer.Header().Set("Cache-Control", "no-store")
+	resp.OK(c, gin.H{
+		"cosHost":                   services.CosBase(),
+		"bucket":                    services.CosBucket(),
+		"region":                    services.CosRegion(),
+		"cosProxyAllowedPrefixes":   services.CosProxyAllowedPrefixes(),
+		"mediaConfigTtlMs":          services.CosMediaConfigTTLMs,
+		"imageDisplayCacheTtlMs":    services.CosMediaImageDisplayCacheTTLMs,
+	})
+}
+
 func MediaCosStream(c *gin.Context) {
 	key := strings.TrimSpace(c.Query("key"))
 	if key == "" {
