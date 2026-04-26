@@ -142,14 +142,14 @@ import { useRouter } from 'vue-router';
 import { cartApi, guideApi } from '@/api';
 import LodImg from '@/components/LodImg.vue';
 import PageThemeLayer from '@/components/PageThemeLayer.vue';
-import { pick, t } from '@/utils/i18n';
+import { pick, t, isEn } from '@/utils/i18n';
+import { resolveMediaUrl, guideProductMediaUrl } from '@/utils/cosMedia.js';
 import { formatPriceDisplay, shouldShowPrice } from '@/utils/currency';
 import { showToast } from 'vant';
 import {
   sortGuidesByDisplayOrder,
   sortCategoriesForSidebar,
 } from '@/utils/productGuideOrder';
-import { resolveMediaUrl } from '@/utils/cosMedia.js';
 
 const router = useRouter();
 
@@ -234,10 +234,13 @@ function fullUrl(url) {
 }
 
 function cardImage(d) {
-  const cover = d && d.coverImage ? String(d.coverImage).trim() : '';
-  const icon = d && d.iconUrl ? String(d.iconUrl).trim() : '';
-  const u = cover || icon;
-  return u ? fullUrl(u) : '';
+  const gid = d && Number(d.id);
+  if (!Number.isFinite(gid) || gid <= 0) return '';
+  const lang = isEn.value ? 'en' : 'zh';
+  const opt = { lang, apiBase: import.meta.env.VITE_API_BASE || '' };
+  const cover = guideProductMediaUrl(gid, 'cover', opt);
+  if (cover) return cover;
+  return guideProductMediaUrl(gid, 'icon', opt);
 }
 
 async function loadCart() {

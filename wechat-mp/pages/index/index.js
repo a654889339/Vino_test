@@ -2,6 +2,7 @@ const app = getApp();
 const { buildSectionSkinContainerStyle } = require('../../utils/sectionSkin.js');
 const i18n = require('../../utils/i18n.js');
 const { normalizeImageUrl } = require('../../utils/image.js');
+const cosMedia = require('../../utils/cosMedia.js');
 
 Page({
   data: {
@@ -97,7 +98,14 @@ Page({
         const list = res.data || [];
         const toFull = (u) => normalizeImageUrl(u, getApp().globalData.baseUrl);
         const myProducts = list.map(item => {
-          const full = item.iconUrl ? toFull(item.iconUrl) : '';
+          const gid = Number(item.guideId);
+          let full = '';
+          if (Number.isFinite(gid) && gid > 0) {
+            const lang = i18n.isEn() ? 'en' : 'zh';
+            full = cosMedia.guideProductMediaUrl(gid, 'icon', { lang, apiBase: getApp().globalData.baseUrl });
+          } else if (item.iconUrl) {
+            full = toFull(item.iconUrl);
+          }
           return {
             ...item,
             categoryName: i18n.pick(item, 'categoryName') || item.categoryName || '',
@@ -175,6 +183,8 @@ Page({
 
   loadHomeConfig() {
     const toFull = (u) => normalizeImageUrl(u, app.globalData.baseUrl);
+    const lang = i18n.isEn() ? 'en' : 'zh';
+    const apiBase = app.globalData.baseUrl;
 
     const pHc = app.request({ url: '/home-config?all=1' }).catch(() => ({ data: [] }));
     const pGuides = app.request({ url: '/guides' }).catch(() => ({ data: [] }));
@@ -243,13 +253,13 @@ Page({
           const path = (row.path || '').trim();
           const g = path ? (guidesBySlug[path] || guidesBySlug[path.toLowerCase()]) : null;
           let title = i18n.pick(row, 'title') || row.title || '';
-          let iconUrl = '';
-          if (g) {
+          let fullIcon = '';
+          if (g && g.id) {
             title = i18n.pick(g, 'name') || title;
-            iconUrl = i18n.pick(g, 'iconUrl') || '';
+            fullIcon = cosMedia.guideProductMediaUrl(g.id, 'icon', { lang, apiBase });
+          } else if (row.imageUrl) {
+            fullIcon = toFull(row.imageUrl);
           }
-          if (!iconUrl && row.imageUrl) iconUrl = row.imageUrl;
-          const fullIcon = iconUrl ? toFull(iconUrl) : '';
           return {
             id: row.id,
             title,
@@ -266,17 +276,17 @@ Page({
           const g = path ? (guidesBySlug[path] || guidesBySlug[path.toLowerCase()]) : null;
           let title = i18n.pick(row, 'title') || row.title || '';
           let subtitle = (i18n.pick(row, 'desc') || row.desc || '').trim();
-          let coverImage = '';
-          let coverThumb = '';
-          if (g) {
+          let coverUrl = '';
+          if (g && g.id) {
             title = i18n.pick(g, 'name') || title;
             subtitle = i18n.pick(g, 'subtitle') || subtitle;
-            coverImage = i18n.pick(g, 'coverImage') || '';
-            coverThumb = i18n.pick(g, 'coverImageThumb') || '';
+            const th = cosMedia.guideProductMediaUrl(g.id, 'cover_thumb', { lang, apiBase });
+            const cv = cosMedia.guideProductMediaUrl(g.id, 'cover', { lang, apiBase });
+            coverUrl = (th || cv || '').trim();
           }
-          if (!coverImage && row.imageUrl) coverImage = row.imageUrl;
-          if (!coverThumb && row.imageUrlThumb) coverThumb = row.imageUrlThumb;
-          const coverUrl = toFull((coverImage || coverThumb || row.imageUrl || row.imageUrlThumb || '').trim());
+          if (!coverUrl) {
+            coverUrl = toFull((row.imageUrlThumb || row.imageUrl || '').trim());
+          }
           return { id: row.id, title, subtitle, path, coverUrl };
         });
 

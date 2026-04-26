@@ -1,9 +1,27 @@
 {
-  "version": 1,
+  "version": 2,
+  "productMedia": {
+    "catalogVersion": 2,
+    "keyPrefixTemplate": "front_page_config/product/{id}/",
+    "notesZh": "device_guides.id 替换 {id}；ToC/小程序用 GET /api/media/catalog 拉取本段，与 cos-config 同样建议内存缓存 5 分钟。展示大图/缩略/图标等默认扩展名见 defaults；实际上传扩展名按 MIME 可能为 webp/jpg 等，迁移后应统一或按需改 defaults。",
+    "defaults": {
+      "cover": "banner_page.jpg",
+      "cover_en": "banner_page_en.jpg",
+      "cover_thumb": "cover_thumbnail.jpg",
+      "cover_thumb_en": "cover_thumbnail_en.jpg",
+      "icon": "icon.png",
+      "icon_en": "icon_en.png",
+      "pdf": "description.pdf",
+      "model3d": "model3d.glb",
+      "decal": "decal.png",
+      "skybox": "model3d_skybox.jpg",
+      "scan": "scan.png"
+    }
+  },
   "downloadDefault": {
     "readVia": "GET /api/media/cos?key={urlEncodedObjectKey}",
-    "notesZh": "浏览器/小程序展示时推荐同源代理；桶 HTTPS 直链在 Web 端 resolveMediaUrl 会改写为上述路径。http 的 /uploads/ 相对路径也会映射到 key=vino/uploads/...。GET /api/media/cos-config 返回 cosHost 与 cosProxyAllowedPrefixes（与 services.CosProxyKeyPrefixWhitelist、IsKeyAllowedForProxy 同源）；变更白名单须同步改 cos.go 白名单与本 catalog 示例。",
-    "keyPrefixExamples": ["vino/uploads/", "vino/main_page/", "vino/main_animation/", "vino/items/goods/", "vino/items/type/"]
+    "notesZh": "浏览器/小程序展示时推荐同源代理；桶 HTTPS 直链在 Web 端 resolveMediaUrl 会改写为上述路径。http 的 /uploads/ 相对路径也会映射到 key=vino/uploads/...。GET /api/media/cos-config 返回 cosHost 与 cosProxyAllowedPrefixes（与 services.CosProxyKeyPrefixWhitelist、IsKeyAllowedForProxy 同源）；GET /api/media/catalog 返回本 JSON（含 productMedia）。变更白名单须同步改 cos.go 白名单与本 catalog 示例。",
+    "keyPrefixExamples": ["vino/uploads/", "vino/main_page/", "vino/main_animation/", "vino/items/", "front_page_config/product/"]
   },
   "rules": [
     {
@@ -48,8 +66,8 @@
         "formFields": ["file", "guideId（可选）", "assetKind（可选）"]
       },
       "cos": {
-        "prefixPattern": "无有效 guideId→vino/uploads；有→vino/items/goods/{guideId}",
-        "namingNotes": "assetKind=icon|icon_en→固定 icon.ext / icon_en.ext；cover|cover_en→large_image* + cover_thumbnail*；cover_thumb|cover_thumb_en→仅缩略图 stem；model3d|model3d_decal|model3d_skybox→固定 glb/png 名；其它图片→guide-{ms}-{rand}{ext}+缩略图；非图→直传随机名",
+        "prefixPattern": "无有效 guideId→vino/uploads；有→front_page_config/product/{guideId}（不以 vino/ 开头）",
+        "namingNotes": "assetKind=icon|icon_en→icon.ext/icon_en.ext；cover|cover_en→banner_page*+cover_thumbnail*；cover_thumb*→cover_thumbnail(_en)；description→description.pdf；model3d→model3d.glb；model3d_decal→decal.png；model3d_skybox→model3d_skybox.jpg；其它图片→guide-{ms}-{rand}{ext}+缩略图",
         "thumbBehavior": "per_asset_kind"
       },
       "download": { "readVia": "api_media_cos_proxy", "notesZh": "商品详情 Web/小程序经 cosMedia 解析" }
@@ -64,8 +82,8 @@
         "formFields": ["JSON body force（可选）"]
       },
       "cos": {
-        "prefixPattern": "vino/items/goods/{id}",
-        "namingNotes": "固定文件名写入桶（覆盖策略见 guideGenerateQR）",
+        "prefixPattern": "front_page_config/product/{id}",
+        "namingNotes": "固定 scan.png（与 guideGenerateQR 一致）",
         "thumbBehavior": "none"
       },
       "download": { "readVia": "api_media_cos_proxy", "notesZh": "返回 URL 存 device_guides.qrcode_url" }

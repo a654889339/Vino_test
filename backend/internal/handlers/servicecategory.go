@@ -11,9 +11,20 @@ import (
 )
 
 func scatList(c *gin.Context) {
+	page, pageSize := adminListPageParams(c)
+	qb := db.DB.Model(&models.ServiceCategory{})
+	var total int64
+	if err := qb.Count(&total).Error; err != nil {
+		resp.Err(c, 500, 500, "统计失败")
+		return
+	}
 	var list []models.ServiceCategory
-	db.DB.Order("sortOrder ASC, id ASC").Find(&list)
-	resp.OK(c, list)
+	offset := (page - 1) * pageSize
+	if err := db.DB.Order("sortOrder ASC, id ASC").Limit(pageSize).Offset(offset).Find(&list).Error; err != nil {
+		resp.Err(c, 500, 500, "查询失败")
+		return
+	}
+	resp.OK(c, gin.H{"list": list, "total": total, "page": page, "pageSize": pageSize})
 }
 
 func scatCreate(c *gin.Context) {

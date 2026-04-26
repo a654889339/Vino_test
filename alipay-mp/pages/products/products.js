@@ -2,7 +2,7 @@ const app = getApp();
 const i18n = require('../../utils/i18n.js');
 const { pick } = i18n;
 const currencyUtil = require('../../utils/currency.js');
-const { resolveMediaUrl } = require('../../utils/cosMedia.js');
+const { resolveMediaUrl, guideProductMediaUrl } = require('../../utils/cosMedia.js');
 
 Page({
   data: {
@@ -135,8 +135,10 @@ Page({
   },
 
   normalizeGuide(g) {
-    const rawIcon = pick(g, 'iconUrl') || '';
-    const rawCover = pick(g, 'coverImage') || '';
+    const lang = i18n.isEn() ? 'en' : 'zh';
+    const opt = { lang, apiBase: app.globalData.baseUrl };
+    const cv = guideProductMediaUrl(g.id, 'cover', opt);
+    const ic = guideProductMediaUrl(g.id, 'icon', opt);
     const listPrice = Number(g && g.listPrice) || 0;
     const originPrice = (g && g.originPrice != null) ? Number(g.originPrice) : 0;
     const sym = (g && g.currency && String(g.currency).trim()) ? String(g.currency).trim() : app.globalData.currencySymbol;
@@ -148,7 +150,7 @@ Page({
       displaySubtitle: pick(g, 'subtitle'),
       displayDescription: pick(g, 'description'),
       slug: g.slug || '',
-      displayImageUrl: resolveMediaUrl(rawCover || rawIcon, app.globalData.baseUrl),
+      displayImageUrl: (cv || ic || '').trim(),
       listPrice,
       originPrice: (g && g.originPrice != null) ? originPrice : null,
       displayListPrice: currencyUtil.formatPriceDisplay(listPrice, sym),

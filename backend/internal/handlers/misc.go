@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -14,6 +15,7 @@ import (
 	"time"
 
 	"vino/backend/internal/config"
+	"vino/backend/internal/configdata"
 	"vino/backend/internal/db"
 	"vino/backend/internal/models"
 	"vino/backend/internal/resp"
@@ -314,6 +316,17 @@ func MediaCosConfig(c *gin.Context) {
 	})
 }
 
+// MediaCatalog 返回嵌入的媒体资源目录（含商品 COS 命名约定），供三端只读拉取；5 分钟公共缓存。
+func MediaCatalog(c *gin.Context) {
+	c.Writer.Header().Set("Cache-Control", "public, max-age=300")
+	var data any
+	if err := json.Unmarshal(configdata.MediaAssetCatalogJSON(), &data); err != nil {
+		resp.Err(c, 500, 500, "catalog invalid")
+		return
+	}
+	resp.OK(c, data)
+}
+
 func MediaCosStream(c *gin.Context) {
 	key := strings.TrimSpace(c.Query("key"))
 	if key == "" {
@@ -413,9 +426,26 @@ func filenameFromCosURL(u string) string {
 }
 
 func I18nList(c *gin.Context) {
+	if c.Query("paged") != "1" {
+		var items []models.I18nText
+		db.DB.Order("`key` ASC").Find(&items)
+		resp.OK(c, items)
+		return
+	}
+	page, pageSize := adminListPageParams(c)
+	qb := db.DB.Model(&models.I18nText{})
+	var total int64
+	if err := qb.Count(&total).Error; err != nil {
+		resp.Err(c, 500, 500, "统计失败")
+		return
+	}
 	var items []models.I18nText
-	db.DB.Order("`key` ASC").Find(&items)
-	resp.OK(c, items)
+	offset := (page - 1) * pageSize
+	if err := db.DB.Order("`key` ASC").Limit(pageSize).Offset(offset).Find(&items).Error; err != nil {
+		resp.Err(c, 500, 500, "查询失败")
+		return
+	}
+	resp.OK(c, gin.H{"list": items, "total": total, "page": page, "pageSize": pageSize})
 }
 
 func I18nBulkUpsert(c *gin.Context) {
@@ -453,9 +483,7 @@ func I18nBulkUpsert(c *gin.Context) {
 			db.DB.Save(&it)
 		}
 	}
-	var items []models.I18nText
-	db.DB.Order("`key` ASC").Find(&items)
-	resp.OK(c, items)
+	resp.OK(c, gin.H{"saved": len(body.Rows), "message": "已保存"})
 }
 
 func I18nUpdate(c *gin.Context) {

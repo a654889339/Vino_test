@@ -36,5 +36,9 @@
       </view>
       <view class="sum">合计 <text class="sum-num">{{order.totalText}}</text></view>
     </view>
+
+    <view a:if="{{order.status === 'pending'}}" class="action-bar action-bar-stack">
+      <view class="btn-cancel" onTap="cancelOrder">取消订单</view>
+    </view>
   </view>
 </view>

@@ -533,11 +533,7 @@ func authUploadAvatar(c *gin.Context, cfg *config.Config) {
 }
 
 func authAdminGetUsers(c *gin.Context) {
-	page := queryInt(c, "page", 1)
-	pageSize := queryInt(c, "pageSize", 50)
-	if pageSize > 200 {
-		pageSize = 200
-	}
+	page, pageSize := adminListPageParams(c)
 	q := strings.TrimSpace(c.Query("q"))
 	searchType := c.Query("searchType")
 

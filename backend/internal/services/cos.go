@@ -60,6 +60,7 @@ var CosProxyKeyPrefixWhitelist = []string{
 	"vino/main_page/",
 	"vino/main_animation/",
 	"vino/items/",
+	"front_page_config/",
 }
 
 // CosProxyAllowedPrefixes 返回白名单前缀切片副本（只读）。
@@ -123,9 +124,12 @@ func cosClient() (*cos.Client, error) {
 var (
 	thumbKeyGoodsOrTypeLarge     = regexp.MustCompile(`^(vino/items/(?:goods|type)/\d+)/large_image(\.[^/.]+)$`)
 	thumbKeyGoodsOrTypeLargeEn   = regexp.MustCompile(`^(vino/items/(?:goods|type)/\d+)/large_image_en(\.[^/.]+)$`)
-	thumbKeyMainPageImage        = regexp.MustCompile(`^(vino/main_page/[^/]+)/image(\.[^/.]+)$`)
-	thumbKeyMainPageImageEn      = regexp.MustCompile(`^(vino/main_page/[^/]+)/image_en(\.[^/.]+)$`)
-	thumbKeyNoDeriveBasePrefixes = regexp.MustCompile(`^(?:icon|icon_en|scan|cover_thumbnail|cover_thumbnail_en)(?:\.|$)`)
+	thumbKeyProductBanner          = regexp.MustCompile(`^(front_page_config/product/\d+)/banner_page(\.[^/.]+)$`)
+	thumbKeyProductBannerEn        = regexp.MustCompile(`^(front_page_config/product/\d+)/banner_page_en(\.[^/.]+)$`)
+	thumbKeyMainPageImage          = regexp.MustCompile(`^(vino/main_page/[^/]+)/image(\.[^/.]+)$`)
+	thumbKeyMainPageImageEn        = regexp.MustCompile(`^(vino/main_page/[^/]+)/image_en(\.[^/.]+)$`)
+	thumbKeyNoDeriveBasePrefixes   = regexp.MustCompile(`^(?:icon|icon_en|scan|cover_thumbnail|cover_thumbnail_en)(?:\.|$)`)
+	thumbKeyProductLeafNoThumb     = regexp.MustCompile(`(?i)^(model3d\.glb|decal\.png|description\.pdf|model3d_skybox\.(jpg|jpeg|png|webp))$`)
 )
 
 // ThumbKeyFromOriginalKey 由原图 object key 推导缩略图 key（任意 vino/* 内容目录，与 Node 一致）
@@ -149,10 +153,19 @@ func ThumbKeyFromOriginalKey(key string) string {
 	if thumbKeyNoDeriveBasePrefixes.MatchString(base) {
 		return ""
 	}
+	if strings.HasPrefix(key, "front_page_config/product/") && thumbKeyProductLeafNoThumb.MatchString(base) {
+		return ""
+	}
 	if m := thumbKeyGoodsOrTypeLarge.FindStringSubmatch(key); len(m) == 3 {
 		return m[1] + "/cover_thumbnail" + m[2]
 	}
 	if m := thumbKeyGoodsOrTypeLargeEn.FindStringSubmatch(key); len(m) == 3 {
+		return m[1] + "/cover_thumbnail_en" + m[2]
+	}
+	if m := thumbKeyProductBanner.FindStringSubmatch(key); len(m) == 3 {
+		return m[1] + "/cover_thumbnail" + m[2]
+	}
+	if m := thumbKeyProductBannerEn.FindStringSubmatch(key); len(m) == 3 {
 		return m[1] + "/cover_thumbnail_en" + m[2]
 	}
 	if m := thumbKeyMainPageImage.FindStringSubmatch(key); len(m) == 3 {
@@ -269,6 +282,9 @@ func isCosOriginalObjectKey(key string) bool {
 		return true
 	}
 	if strings.HasPrefix(key, "vino/items/") {
+		return true
+	}
+	if strings.HasPrefix(key, "front_page_config/") {
 		return true
 	}
 	return false

@@ -2,7 +2,7 @@ const app = getApp();
 const { openManualFromGuide } = require('../../utils/openManual.js');
 const i18n = require('../../utils/i18n.js');
 const currencyUtil = require('../../utils/currency.js');
-const { resolveMediaUrl } = require('../../utils/cosMedia.js');
+const { resolveMediaUrl, guideProductMediaUrl } = require('../../utils/cosMedia.js');
 
 Page({
   data: {
@@ -53,9 +53,15 @@ Page({
         if (navTitle && typeof my.setNavigationBar === 'function') my.setNavigationBar({ title: navTitle });
         const parse = v => { try { return Array.isArray(v) ? v : JSON.parse(v || '[]'); } catch { return []; } };
         const fix = (u) => (u ? resolveMediaUrl(u, app.globalData.baseUrl) : '');
-        if (g.coverImage) g.coverImage = fix(g.coverImage);
-        if (g.coverImageThumb) g.coverImageThumb = fix(g.coverImageThumb);
-        if (g.iconUrl) g.iconUrl = fix(g.iconUrl);
+        const lang = i18n.isEn() ? 'en' : 'zh';
+        const base = app.globalData.baseUrl;
+        const gid = g.id;
+        g.coverImage = guideProductMediaUrl(gid, 'cover', { lang, apiBase: base });
+        g.coverImageThumb = guideProductMediaUrl(gid, 'cover_thumb', { lang, apiBase: base });
+        g.iconUrl = guideProductMediaUrl(gid, 'icon', { lang, apiBase: base });
+        g.model3dUrl = guideProductMediaUrl(gid, 'model3d', { apiBase: base });
+        g.model3dDecalUrl = guideProductMediaUrl(gid, 'decal', { apiBase: base });
+        g.model3dSkyboxUrl = guideProductMediaUrl(gid, 'skybox', { apiBase: base });
         g.displayCoverUrl = g.coverImageThumb || g.coverImage;
         g.displayIconUrl = g.iconUrl || '';
         const mediaItems = parse(g.mediaItems).map(m => {
@@ -125,7 +131,7 @@ Page({
     if (openManualFromGuide(g, this.data.helpItems, app)) return;
     const hasContent =
       (this.data.helpItems && this.data.helpItems.length) ||
-      (g.manualPdfUrl && String(g.manualPdfUrl).trim());
+      !!(g.id && guideProductMediaUrl(g.id, 'pdf', { apiBase: app.globalData.baseUrl }));
     if (!hasContent) {
       my.showToast({ content: '暂无说明书', type: 'none' });
       return;

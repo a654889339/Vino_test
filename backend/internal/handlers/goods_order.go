@@ -199,8 +199,8 @@ func goodsOrderList(c *gin.Context) {
 	if pageSize <= 0 {
 		pageSize = 20
 	}
-	if pageSize > 100 {
-		pageSize = 100
+	if pageSize > adminListMaxPageSize {
+		pageSize = adminListMaxPageSize
 	}
 
 	qb := db.DB.Model(&models.GoodsOrder{}).Where("userId = ?", u.ID)
@@ -384,17 +384,7 @@ func goodsOrderAdminList(c *gin.Context) {
 	status := c.Query("status")
 	orderNo := strings.TrimSpace(c.Query("orderNo"))
 	userID := strings.TrimSpace(c.Query("userId"))
-	page := queryInt(c, "page", 1)
-	pageSize := queryInt(c, "pageSize", 50)
-	if page <= 0 {
-		page = 1
-	}
-	if pageSize <= 0 {
-		pageSize = 50
-	}
-	if pageSize > 200 {
-		pageSize = 200
-	}
+	page, pageSize := adminListPageParams(c)
 	qb := db.DB.Model(&models.GoodsOrder{})
 	if status != "" && status != "all" {
 		qb = qb.Where("status = ?", status)
@@ -461,17 +451,7 @@ func goodsOrderAdminList(c *gin.Context) {
 func goodsOrderAdminItems(c *gin.Context) {
 	orderID := strings.TrimSpace(c.Query("orderId"))
 	orderNo := strings.TrimSpace(c.Query("orderNo"))
-	page := queryInt(c, "page", 1)
-	pageSize := queryInt(c, "pageSize", 50)
-	if page <= 0 {
-		page = 1
-	}
-	if pageSize <= 0 {
-		pageSize = 50
-	}
-	if pageSize > 200 {
-		pageSize = 200
-	}
+	page, pageSize := adminListPageParams(c)
 
 	qb := db.DB.Table("goods_order_items AS i").
 		Joins("LEFT JOIN goods_orders AS o ON o.id = i.orderId")

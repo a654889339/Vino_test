@@ -63,8 +63,8 @@ import { useRouter } from 'vue-router';
 import { showToast } from 'vant';
 import { cartApi } from '@/api';
 import { formatPriceDisplay } from '@/utils/currency';
-import { t } from '@/utils/i18n';
-import { resolveMediaUrl } from '@/utils/cosMedia.js';
+import { t, isEn } from '@/utils/i18n';
+import { resolveMediaUrl, guideProductMediaUrl } from '@/utils/cosMedia.js';
 
 const router = useRouter();
 const loading = ref(true);
@@ -76,10 +76,15 @@ function fullUrl(url) {
   return resolveMediaUrl(url, mediaOpt);
 }
 
-/** 后端 JSON 为 imageUrl；兼容历史/误写的 imageURL */
+/** 购物车行商品图：按 guideId 规则路径，忽略后端缓存的 imageUrl */
 function cartLineImage(row) {
   if (!row) return '';
-  return row.imageUrl || row.imageURL || '';
+  const gid = Number(row.guideId);
+  if (!Number.isFinite(gid) || gid <= 0) return row.imageUrl || row.imageURL || '';
+  const lang = isEn.value ? 'en' : 'zh';
+  const opt = { lang, apiBase: import.meta.env.VITE_API_BASE || '' };
+  const cover = guideProductMediaUrl(gid, 'cover', opt);
+  return cover || guideProductMediaUrl(gid, 'icon', opt);
 }
 
 const currencyHint = computed(() => {

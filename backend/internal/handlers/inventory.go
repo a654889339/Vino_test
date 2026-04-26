@@ -88,11 +88,7 @@ func invListProducts(c *gin.Context) {
 	status := c.Query("status")
 	keyword := strings.TrimSpace(c.Query("keyword"))
 	tag := strings.TrimSpace(c.Query("tag"))
-	page := queryInt(c, "page", 1)
-	pageSize := queryInt(c, "pageSize", 50)
-	if pageSize > 200 {
-		pageSize = 200
-	}
+	page, pageSize := adminListPageParams(c)
 	q := db.DB.Model(&models.InventoryProduct{})
 	if categoryID != "" {
 		q = q.Where("categoryId = ?", categoryID)

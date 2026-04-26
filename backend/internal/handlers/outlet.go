@@ -409,11 +409,7 @@ func outletOrderMy(c *gin.Context) {
 		return
 	}
 	status := c.Query("status")
-	page := queryInt(c, "page", 1)
-	ps := queryInt(c, "pageSize", 10)
-	if ps > 100 {
-		ps = 100
-	}
+	page, ps := adminListPageParams(c)
 	q := db.DB.Model(&models.OutletOrder{}).Where("userId = ?", u.ID)
 	if status != "" && status != "all" {
 		q = q.Where("status = ?", status)
@@ -486,8 +482,7 @@ func outletOrderCancel(c *gin.Context) {
 func outletAdminOrderList(c *gin.Context) {
 	status := c.Query("status")
 	userID := c.Query("userId")
-	page := queryInt(c, "page", 1)
-	ps := queryInt(c, "pageSize", 20)
+	page, ps := adminListPageParams(c)
 	q := db.DB.Model(&models.OutletOrder{})
 	if status != "" && status != "all" {
 		q = q.Where("status = ?", status)
@@ -722,8 +717,18 @@ func outletHCList(c *gin.Context) {
 	if c.Query("all") == "" {
 		q = q.Where("status = ?", "active")
 	}
+	page, pageSize := adminListPageParams(c)
+	var total int64
+	if err := q.Count(&total).Error; err != nil {
+		resp.Err(c, 500, 500, "统计失败")
+		return
+	}
 	var items []models.OutletHomeConfig
-	q.Order("section ASC, sortOrder ASC, id ASC").Find(&items)
+	offset := (page - 1) * pageSize
+	if err := q.Order("section ASC, sortOrder ASC, id ASC").Limit(pageSize).Offset(offset).Find(&items).Error; err != nil {
+		resp.Err(c, 500, 500, "查询失败")
+		return
+	}
 	out := make([]gin.H, 0, len(items))
 	for _, it := range items {
 		raw, _ := json.Marshal(it)
@@ -736,7 +741,7 @@ func outletHCList(c *gin.Context) {
 		o["imageUrlThumb"] = strings.TrimSpace(thumb)
 		out = append(out, o)
 	}
-	resp.OK(c, out)
+	resp.OK(c, gin.H{"list": out, "total": total, "page": page, "pageSize": pageSize})
 }
 
 func outletHCCreate(c *gin.Context) {
@@ -787,9 +792,13 @@ func randomHex6() string {
 
 // --- outlet services ---
 func outletSvcCatList(c *gin.Context) {
+	page, pageSize := adminListPageParams(c)
+	var total int64
+	db.DB.Model(&models.OutletServiceCategory{}).Count(&total)
 	var list []models.OutletServiceCategory
-	db.DB.Order("sortOrder ASC, id ASC").Find(&list)
-	resp.OK(c, list)
+	offset := (page - 1) * pageSize
+	db.DB.Order("sortOrder ASC, id ASC").Limit(pageSize).Offset(offset).Find(&list)
+	resp.OK(c, gin.H{"list": list, "total": total, "page": page, "pageSize": pageSize})
 }
 
 func outletSvcList(c *gin.Context) {
@@ -812,11 +821,24 @@ func outletSvcList(c *gin.Context) {
 }
 
 func outletSvcAdminList(c *gin.Context) {
+	page, pageSize := adminListPageParams(c)
+	qb := db.DB.Model(&models.OutletService{}).
+		Joins("LEFT JOIN outlet_service_categories osc ON osc.id = outlet_services.categoryId")
+	var total int64
+	if err := qb.Count(&total).Error; err != nil {
+		resp.Err(c, 500, 500, "统计失败")
+		return
+	}
 	var rows []models.OutletService
-	db.DB.Model(&models.OutletService{}).Preload("ServiceCategory").
+	offset := (page - 1) * pageSize
+	if err := db.DB.Model(&models.OutletService{}).Preload("ServiceCategory").
 		Joins("LEFT JOIN outlet_service_categories osc ON osc.id = outlet_services.categoryId").
-		Order("osc.sortOrder ASC, outlet_services.sortOrder ASC, outlet_services.id ASC").Find(&rows)
-	resp.OK(c, rows)
+		Order("osc.sortOrder ASC, outlet_services.sortOrder ASC, outlet_services.id ASC").
+		Limit(pageSize).Offset(offset).Find(&rows).Error; err != nil {
+		resp.Err(c, 500, 500, "查询失败")
+		return
+	}
+	resp.OK(c, gin.H{"list": rows, "total": total, "page": page, "pageSize": pageSize})
 }
 
 func outletSvcCatCreate(c *gin.Context) {
@@ -977,62 +999,68 @@ func outletMsgUnread(c *gin.Context) {
 }
 
 func outletMsgAdminConv(c *gin.Context) {
-	var users []models.OutletUser
-	db.DB.Preload("Messages", func(db *gorm.DB) *gorm.DB {
-		return db.Order("createdAt DESC").Limit(1)
-	}).Find(&users)
-	type conv struct {
-		uid                                    int
-		username, nickname, avatar, lastMsg    string
-		lastTime                               time.Time
-		lastSender, lastType                   string
+	page, pageSize := adminListPageParams(c)
+	var total int64
+	if err := db.DB.Raw("SELECT COUNT(*) FROM (SELECT DISTINCT userId FROM outlet_messages) AS d").Scan(&total).Error; err != nil {
+		resp.Err(c, 500, 500, "统计失败")
+		return
 	}
-	var list []conv
-	for _, u := range users {
-		if len(u.Messages) == 0 {
-			continue
-		}
-		last := u.Messages[0]
-		nick := u.Nickname
-		if nick == "" {
-			nick = u.Username
-		}
-		list = append(list, conv{uid: u.ID, username: u.Username, nickname: nick, avatar: u.Avatar, lastMsg: last.Content, lastTime: last.CreatedAt, lastSender: last.Sender, lastType: last.Type})
+	type uidRow struct {
+		UserID int `gorm:"column:userId"`
 	}
-	for i := 0; i < len(list); i++ {
-		for j := i + 1; j < len(list); j++ {
-			if list[i].lastTime.Before(list[j].lastTime) {
-				list[i], list[j] = list[j], list[i]
-			}
-		}
+	var uidRows []uidRow
+	offset := (page - 1) * pageSize
+	if err := db.DB.Raw(`
+SELECT userId FROM (
+  SELECT userId, MAX(createdAt) AS mx FROM outlet_messages GROUP BY userId
+) x ORDER BY x.mx DESC LIMIT ? OFFSET ?
+`, pageSize, offset).Scan(&uidRows).Error; err != nil {
+		resp.Err(c, 500, 500, "查询失败")
+		return
 	}
 	type row struct {
 		UserID int `gorm:"column:userId"`
 		Cnt    int `gorm:"column:cnt"`
 	}
-	var rows []row
-	db.DB.Model(&models.OutletMessage{}).Select("userId, COUNT(id) as cnt").Where("sender = ? AND `read` = ?", "user", false).Group("userId").Scan(&rows)
+	var unreadRows []row
+	_ = db.DB.Model(&models.OutletMessage{}).Select("userId, COUNT(id) as cnt").Where("sender = ? AND `read` = ?", "user", false).Group("userId").Scan(&unreadRows).Error
 	unread := map[int]int{}
-	for _, r := range rows {
+	for _, r := range unreadRows {
 		unread[r.UserID] = r.Cnt
 	}
-	out := make([]gin.H, 0, len(list))
-	for _, it := range list {
+	out := make([]gin.H, 0, len(uidRows))
+	for _, ur := range uidRows {
+		var u models.OutletUser
+		if err := db.DB.Select("id", "username", "nickname", "avatar").First(&u, ur.UserID).Error; err != nil {
+			continue
+		}
+		var last models.OutletMessage
+		if err := db.DB.Where("userId = ?", ur.UserID).Order("createdAt DESC, id DESC").First(&last).Error; err != nil {
+			continue
+		}
+		nick := u.Nickname
+		if nick == "" {
+			nick = u.Username
+		}
 		out = append(out, gin.H{
-			"userId": it.uid, "username": it.username, "nickname": it.nickname, "avatar": it.avatar,
-			"lastMessage": it.lastMsg, "lastTime": it.lastTime, "lastSender": it.lastSender, "lastType": it.lastType,
-			"unread": unread[it.uid],
+			"userId": u.ID, "username": u.Username, "nickname": nick, "avatar": u.Avatar,
+			"lastMessage": last.Content, "lastTime": last.CreatedAt, "lastSender": last.Sender, "lastType": last.Type,
+			"unread": unread[u.ID],
 		})
 	}
-	resp.OK(c, out)
+	resp.OK(c, gin.H{"list": out, "total": total, "page": page, "pageSize": pageSize})
 }
 
 func outletMsgAdminGet(c *gin.Context) {
 	uid, _ := strconv.Atoi(c.Param("userId"))
+	page, pageSize := adminListPageParams(c)
+	var total int64
+	db.DB.Model(&models.OutletMessage{}).Where("userId = ?", uid).Count(&total)
 	var list []models.OutletMessage
-	db.DB.Where("userId = ?", uid).Order("createdAt ASC").Find(&list)
+	offset := (page - 1) * pageSize
+	db.DB.Where("userId = ?", uid).Order("createdAt ASC").Limit(pageSize).Offset(offset).Find(&list)
 	db.DB.Model(&models.OutletMessage{}).Where("userId = ? AND sender = ? AND `read` = ?", uid, "user", false).Update("read", true)
-	resp.OK(c, list)
+	resp.OK(c, gin.H{"list": list, "total": total, "page": page, "pageSize": pageSize})
 }
 
 func outletMsgAdminReply(c *gin.Context) {
@@ -1056,11 +1084,7 @@ func outletMsgAdminReply(c *gin.Context) {
 
 // --- outlet admin users ---
 func outletAdminUsers(c *gin.Context) {
-	page := queryInt(c, "page", 1)
-	ps := queryInt(c, "pageSize", 50)
-	if ps > 200 {
-		ps = 200
-	}
+	page, ps := adminListPageParams(c)
 	q := db.DB.Model(&models.OutletUser{})
 	qw := strings.TrimSpace(c.Query("q"))
 	st := c.Query("searchType")

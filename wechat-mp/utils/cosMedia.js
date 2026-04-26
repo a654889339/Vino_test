@@ -1,10 +1,38 @@
 /**
  * 与 Web frontend/src/utils/cosMedia 一致的媒体 URL 规则；5 分钟仅微信端内存+临时文件路径缓存
+ * cosHost 须与后端 cos.go（VINO_COS_BUCKET + VINO_COS_REGION）一致，由 GET /api/media/cos-config 下发。
  */
-const CACHE_MS = 5 * 60 * 1000;
-const COS_HOST_RE = /^https?:\/\/[^/]+\.cos\.[^/]+\.myqcloud\.com\/?/i;
+const DEFAULT_DISPLAY_CACHE_MS = 5 * 60 * 1000;
 const isMediaCosPath = (s) => typeof s === 'string' && s.includes('/media/cos?key=');
 const filePathByUrl = new Map();
+
+let cosHostPrefix = '';
+let displayCacheTtlMs = DEFAULT_DISPLAY_CACHE_MS;
+
+function setCosMediaConfig(cfg) {
+  const h = cfg && cfg.cosHost;
+  cosHostPrefix = typeof h === 'string' ? h.trim().replace(/\/$/, '') : '';
+  const imgTtl = cfg && cfg.imageDisplayCacheTtlMs;
+  displayCacheTtlMs =
+    typeof imgTtl === 'number' && imgTtl > 0 ? imgTtl : DEFAULT_DISPLAY_CACHE_MS;
+}
+
+function cosUrlToKey(t) {
+  if (!cosHostPrefix) return null;
+  const norm = cosHostPrefix.replace(/\/$/, '');
+  const bases = [norm];
+  if (norm.startsWith('https://')) {
+    bases.push('http://' + norm.slice(8));
+  } else if (norm.startsWith('http://')) {
+    bases.push('https://' + norm.slice(7));
+  }
+  const u = String(t).split('?')[0];
+  for (const b of bases) {
+    if (u === b) return '';
+    if (u.startsWith(b + '/')) return u.slice(b.length + 1);
+  }
+  return null;
+}
 
 function splitForMp(apiBase) {
   const a = (apiBase || '').trim().replace(/\/$/, '');
@@ -15,6 +43,145 @@ function splitForMp(apiBase) {
     return { site, media };
   }
   return { site: '', media: '/api' };
+}
+
+/**
+ * 在 App.onLaunch 中优先调用，再执行依赖媒体代理的初始化。
+ * @param {string} apiBase 如 https://host/api
+ * @param {() => void} [done]
+ */
+function fetchCosMediaConfig(apiBase, done) {
+  const { media } = splitForMp(apiBase);
+  const finish = () => {
+    if (typeof done === 'function') done();
+  };
+  if (typeof wx === 'undefined' || !wx.request) {
+    finish();
+    return;
+  }
+  wx.request({
+    url: media + '/media/cos-config',
+    method: 'GET',
+    header: { 'Content-Type': 'application/json' },
+    success(res) {
+      if (res.statusCode === 200 && res.data && res.data.code === 0 && res.data.data && res.data.data.cosHost) {
+        setCosMediaConfig(res.data.data);
+      }
+      finish();
+    },
+    fail: finish,
+  });
+}
+
+const CATALOG_TTL_MS = 5 * 60 * 1000;
+let mediaCatalog = null;
+let mediaCatalogFetchedAt = 0;
+
+const FALLBACK_PRODUCT_DEFAULTS = {
+  cover: 'banner_page.jpg',
+  cover_en: 'banner_page_en.jpg',
+  cover_thumb: 'cover_thumbnail.jpg',
+  cover_thumb_en: 'cover_thumbnail_en.jpg',
+  icon: 'icon.png',
+  icon_en: 'icon_en.png',
+  pdf: 'description.pdf',
+  model3d: 'model3d.glb',
+  decal: 'decal.png',
+  skybox: 'model3d_skybox.jpg',
+  scan: 'scan.png',
+};
+
+function productDefaults() {
+  const defs = (mediaCatalog && mediaCatalog.productMedia && mediaCatalog.productMedia.defaults) || {};
+  return {
+    cover: defs.cover || FALLBACK_PRODUCT_DEFAULTS.cover,
+    cover_en: defs.cover_en || FALLBACK_PRODUCT_DEFAULTS.cover_en,
+    cover_thumb: defs.cover_thumb || FALLBACK_PRODUCT_DEFAULTS.cover_thumb,
+    cover_thumb_en: defs.cover_thumb_en || FALLBACK_PRODUCT_DEFAULTS.cover_thumb_en,
+    icon: defs.icon || FALLBACK_PRODUCT_DEFAULTS.icon,
+    icon_en: defs.icon_en || FALLBACK_PRODUCT_DEFAULTS.icon_en,
+    pdf: defs.pdf || FALLBACK_PRODUCT_DEFAULTS.pdf,
+    model3d: defs.model3d || FALLBACK_PRODUCT_DEFAULTS.model3d,
+    decal: defs.decal || FALLBACK_PRODUCT_DEFAULTS.decal,
+    skybox: defs.skybox || FALLBACK_PRODUCT_DEFAULTS.skybox,
+    scan: defs.scan || FALLBACK_PRODUCT_DEFAULTS.scan,
+  };
+}
+
+function fetchMediaCatalog(apiBase, done) {
+  const { media } = splitForMp(apiBase);
+  const finish = () => {
+    if (typeof done === 'function') done();
+  };
+  if (typeof wx === 'undefined' || !wx.request) {
+    finish();
+    return;
+  }
+  wx.request({
+    url: media + '/media/catalog',
+    method: 'GET',
+    header: { 'Content-Type': 'application/json' },
+    success(res) {
+      if (res.statusCode === 200 && res.data && res.data.code === 0 && res.data.data) {
+        mediaCatalog = res.data.data;
+        mediaCatalogFetchedAt = Date.now();
+      }
+      finish();
+    },
+    fail: finish,
+  });
+}
+
+function maybeRefreshCatalog(apiBase) {
+  if (Date.now() - mediaCatalogFetchedAt < CATALOG_TTL_MS) return;
+  fetchMediaCatalog(apiBase, () => {});
+}
+
+/**
+ * @param {number|string} guideId
+ * @param {'cover'|'cover_thumb'|'icon'|'pdf'|'model3d'|'decal'|'skybox'|'scan'} role
+ * @param {{ lang?: 'zh'|'en', apiBase?: string }} [opt]
+ */
+function guideProductMediaUrl(guideId, role, opt) {
+  opt = opt || {};
+  maybeRefreshCatalog(opt.apiBase || '');
+  const id = Number(guideId);
+  if (!Number.isFinite(id) || id <= 0) return '';
+  const lang = opt.lang === 'en' ? 'en' : 'zh';
+  const d = productDefaults();
+  let file = '';
+  switch (role) {
+    case 'cover':
+      file = lang === 'en' ? d.cover_en : d.cover;
+      break;
+    case 'cover_thumb':
+      file = lang === 'en' ? d.cover_thumb_en : d.cover_thumb;
+      break;
+    case 'icon':
+      file = lang === 'en' ? d.icon_en : d.icon;
+      break;
+    case 'pdf':
+      file = d.pdf;
+      break;
+    case 'model3d':
+      file = d.model3d;
+      break;
+    case 'decal':
+      file = d.decal;
+      break;
+    case 'skybox':
+      file = d.skybox;
+      break;
+    case 'scan':
+      file = d.scan;
+      break;
+    default:
+      file = '';
+  }
+  if (!file) return '';
+  const key = 'front_page_config/product/' + id + '/' + file;
+  const { media } = splitForMp(opt.apiBase || '');
+  return media + '/media/cos?key=' + encodeURIComponent(key);
 }
 
 /**
@@ -30,9 +197,11 @@ function resolveMediaUrl(u, apiBase) {
   if (!t) return '';
   if (t.includes('/media/cos?key=')) return t;
   const { site, media } = splitForMp(apiBase);
-  if (COS_HOST_RE.test(t)) {
-    const key = t.replace(COS_HOST_RE, '').replace(/^\//, '');
-    return media + '/media/cos?key=' + encodeURIComponent(key);
+
+  const ck = cosUrlToKey(t);
+  if (ck !== null) {
+    if (ck === '') return media + '/media/cos?key=';
+    return media + '/media/cos?key=' + encodeURIComponent(ck);
   }
   if (t.startsWith('http://')) {
     const m = t.match(/\/uploads\/(.+)$/i);
@@ -83,7 +252,7 @@ function downloadFileCached(opts, api) {
       ...opts,
       success: (r) => {
         if (r.statusCode === 200) {
-          filePathByUrl.set(url, { exp: now + CACHE_MS, path: r.tempFilePath });
+          filePathByUrl.set(url, { exp: now + displayCacheTtlMs, path: r.tempFilePath });
         }
         resolve(r.tempFilePath);
       },
@@ -96,4 +265,8 @@ module.exports = {
   resolveMediaUrl,
   normalizeImageUrl,
   downloadFileCached,
+  setCosMediaConfig,
+  fetchCosMediaConfig,
+  fetchMediaCatalog,
+  guideProductMediaUrl,
 };

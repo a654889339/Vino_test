@@ -114,7 +114,7 @@ import { cartApi, goodsOrderApi } from '@/api';
 import PageThemeLayer from '@/components/PageThemeLayer.vue';
 import { copyTextToClipboardSync } from '@/utils/clipboard';
 import { t, isEn, setLang } from '@/utils/i18n';
-import { resolveMediaUrl } from '@/utils/cosMedia.js';
+import { resolveMediaUrl, guideProductMediaUrl } from '@/utils/cosMedia.js';
 
 const userStore = useUserStore();
 const router = useRouter();
@@ -201,7 +201,12 @@ function fullUrl(url) {
 
 function cartLineImage(row) {
   if (!row) return '';
-  return row.imageUrl || row.imageURL || '';
+  const gid = Number(row.guideId);
+  if (!Number.isFinite(gid) || gid <= 0) return row.imageUrl || row.imageURL || '';
+  const lang = isEn.value ? 'en' : 'zh';
+  const opt = { lang, apiBase: import.meta.env.VITE_API_BASE || '' };
+  const cover = guideProductMediaUrl(gid, 'cover', opt);
+  return cover || guideProductMediaUrl(gid, 'icon', opt);
 }
 
 const openGoodsOrders = (statusGroup) => {

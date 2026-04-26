@@ -76,4 +76,10 @@ export const goodsOrderApi = {
   list: (params) => request.get('/goods-orders', { params }),
   detail: (id) => request.get(`/goods-orders/${id}`),
   payWechat: (id) => request.post(`/goods-orders/${id}/pay-wechat`),
+  cancel: (id) => request.post(`/goods-orders/${id}/cancel`),
+};
+
+/** 与 admin.html 同源：后端 embed 的媒体桶规则 JSON。需管理员 JWT，普通用户会 403。 */
+export const mediaAssetCatalogApi = {
+  get: () => request.get('/admin/media-asset-catalog'),
 };

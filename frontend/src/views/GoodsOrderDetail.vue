@@ -45,7 +45,8 @@
         </van-cell>
       </van-cell-group>
 
-      <div v-if="order.status === 'pending'" class="order-actions">
+      <div v-if="order.status === 'pending'" class="order-actions order-actions-stack">
+        <van-button block round plain hairline type="default" @click="cancelOrder">取消订单</van-button>
         <van-button type="primary" color="#B91C1C" block round @click="payOrder">
           去支付
         </van-button>
@@ -57,7 +58,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { showToast } from 'vant';
+import { showToast, showConfirmDialog } from 'vant';
 import { goodsOrderApi } from '@/api';
 import { formatPriceDisplay } from '@/utils/currency';
 import { t } from '@/utils/i18n';
@@ -98,6 +99,23 @@ function orderStatusText(status) {
 
 function isWechatBrowser() {
   return /micromessenger/i.test(navigator.userAgent);
+}
+
+async function cancelOrder() {
+  if (!order.value?.id) return;
+  try {
+    await showConfirmDialog({
+      title: '取消订单',
+      message: '确定取消？未支付订单取消后商品将回到购物车。',
+    });
+    const res = await goodsOrderApi.cancel(order.value.id);
+    showToast(res.message || '已取消');
+    await load();
+  } catch (e) {
+    if (e?.message && e.message !== 'cancel') {
+      showToast(e.message);
+    }
+  }
 }
 
 async function payOrder() {
@@ -235,6 +253,11 @@ onMounted(load);
 .status-tag.cancelled { background: #f3f4f6; color: #4b5563; }
 .order-actions {
   margin: 16px 16px 0;
+}
+.order-actions-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 </style>
 

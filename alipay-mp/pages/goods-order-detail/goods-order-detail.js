@@ -87,4 +87,28 @@ Page({
       })
       .catch(() => this.setData({ order: null, loading: false }));
   },
+
+  cancelOrder() {
+    const order = this.data.order;
+    if (!order || !order.id) return;
+    const id = order.id;
+    my.confirm({
+      title: '取消订单',
+      content: '确定取消？商品将返回购物车。',
+      confirmButtonText: '确定',
+      cancelButtonText: '关闭',
+      success: (res) => {
+        if (!res.confirm) return;
+        app
+          .request({ url: '/goods-orders/' + id + '/cancel', method: 'POST' })
+          .then((body) => {
+            my.showToast({ type: 'success', content: (body && body.message) || '已取消' });
+            this.load();
+          })
+          .catch((err) => {
+            my.showToast({ type: 'fail', content: (err && err.message) || '取消失败' });
+          });
+      },
+    });
+  },
 });

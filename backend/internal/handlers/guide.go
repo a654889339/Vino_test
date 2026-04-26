@@ -81,13 +81,24 @@ func guideDetail(c *gin.Context) {
 }
 
 func guideAdminList(c *gin.Context) {
+	page, pageSize := adminListPageParams(c)
+	qb := db.DB.Model(&models.DeviceGuide{})
+	var total int64
+	if err := qb.Count(&total).Error; err != nil {
+		resp.Err(c, 500, 500, "统计失败")
+		return
+	}
 	var guides []models.DeviceGuide
-	db.DB.Preload("Category").Order("sortOrder ASC, id ASC").Find(&guides)
+	offset := (page - 1) * pageSize
+	if err := db.DB.Preload("Category").Order("sortOrder ASC, id ASC").Limit(pageSize).Offset(offset).Find(&guides).Error; err != nil {
+		resp.Err(c, 500, 500, "查询失败")
+		return
+	}
 	out := make([]gin.H, 0, len(guides))
 	for i := range guides {
 		out = append(out, attachGuideThumbs(&guides[i]))
 	}
-	resp.OK(c, out)
+	resp.OK(c, gin.H{"list": out, "total": total, "page": page, "pageSize": pageSize})
 }
 
 func guideCreate(c *gin.Context) {
@@ -187,7 +198,7 @@ func guideUploadFile(c *gin.Context, cfg *config.Config) {
 		if gid, err := strconv.Atoi(gidStr); err == nil && gid > 0 {
 			var g models.DeviceGuide
 			if err := db.DB.Select("id").First(&g, gid).Error; err == nil {
-				contentPrefix = fmt.Sprintf("vino/items/goods/%d", gid)
+				contentPrefix = fmt.Sprintf("front_page_config/product/%d", gid)
 			}
 		}
 	}
@@ -216,11 +227,12 @@ func guideUploadFile(c *gin.Context, cfg *config.Config) {
 	if ct == "" {
 		ct = "application/octet-stream"
 	}
-	isGoodsPrefix := strings.HasPrefix(contentPrefix, "vino/items/goods/")
-	isIconUpload := isGoodsPrefix && strings.HasPrefix(ct, "image/") && (assetKind == "icon" || assetKind == "icon_en")
-	isCoverPair := isGoodsPrefix && strings.HasPrefix(ct, "image/") && (assetKind == "cover" || assetKind == "cover_en")
-	isCoverThumbOnly := isGoodsPrefix && strings.HasPrefix(ct, "image/") && (assetKind == "cover_thumb" || assetKind == "cover_thumb_en")
-	isModel3D := isGoodsPrefix && (assetKind == "model3d" || assetKind == "model3d_decal" || assetKind == "model3d_skybox")
+	isProductPrefix := strings.HasPrefix(contentPrefix, "front_page_config/product/")
+	isIconUpload := isProductPrefix && strings.HasPrefix(ct, "image/") && (assetKind == "icon" || assetKind == "icon_en")
+	isCoverPair := isProductPrefix && strings.HasPrefix(ct, "image/") && (assetKind == "cover" || assetKind == "cover_en")
+	isCoverThumbOnly := isProductPrefix && strings.HasPrefix(ct, "image/") && (assetKind == "cover_thumb" || assetKind == "cover_thumb_en")
+	isModel3D := isProductPrefix && (assetKind == "model3d" || assetKind == "model3d_decal" || assetKind == "model3d_skybox")
+	isDescriptionPDF := isProductPrefix && assetKind == "description" && (strings.Contains(strings.ToLower(ct), "pdf") || strings.EqualFold(ext, ".pdf"))
 	if isIconUpload {
 		if ext == ".bin" {
 			ext = ".png"
@@ -233,6 +245,17 @@ func guideUploadFile(c *gin.Context, cfg *config.Config) {
 	}
 	ctx := c.Request.Context()
 	// 3D 预览资源：GLB + 贴花图 + 环境图；文件名固定以便去重覆盖，走无缩略图直传。
+	if isDescriptionPDF {
+		filename = "description.pdf"
+		ct = "application/pdf"
+		url, err := services.UploadCOSWithContentPrefix(ctx, buf, filename, ct, contentPrefix)
+		if err != nil {
+			resp.Err(c, 500, 500, "上传失败: "+err.Error())
+			return
+		}
+		resp.OK(c, gin.H{"url": url, "thumbUrl": nil})
+		return
+	}
 	if isModel3D {
 		switch assetKind {
 		case "model3d":
@@ -241,15 +264,22 @@ func guideUploadFile(c *gin.Context, cfg *config.Config) {
 				ct = "model/gltf-binary"
 			}
 		case "model3d_decal":
-			if ext == "" || ext == ".bin" {
-				ext = ".png"
+			ext = ".png"
+			filename = "decal.png"
+			if ct == "" || ct == "application/octet-stream" {
+				ct = "image/png"
 			}
-			filename = "model3d_decal" + ext
 		case "model3d_skybox":
 			if ext == "" || ext == ".bin" {
-				ext = ".png"
+				ext = ".jpg"
+			}
+			if !strings.EqualFold(ext, ".jpg") && !strings.EqualFold(ext, ".jpeg") {
+				ext = ".jpg"
 			}
 			filename = "model3d_skybox" + ext
+			if ct == "" || strings.HasPrefix(ct, "image/") == false {
+				ct = "image/jpeg"
+			}
 		}
 		url, err := services.UploadCOSWithContentPrefix(ctx, buf, filename, ct, contentPrefix)
 		if err != nil {
@@ -270,10 +300,10 @@ func guideUploadFile(c *gin.Context, cfg *config.Config) {
 			return
 		}
 		if isCoverPair {
-			origStem := "large_image"
+			origStem := "banner_page"
 			thumbStem := "cover_thumbnail"
 			if assetKind == "cover_en" {
-				origStem = "large_image_en"
+				origStem = "banner_page_en"
 				thumbStem = "cover_thumbnail_en"
 			}
 			url, thumb, err := services.UploadOriginalAndFlatCoverThumb(ctx, buf, origStem, ext, ct, thumbStem, 0, contentPrefix)
@@ -357,7 +387,7 @@ func guideGenerateQR(c *gin.Context, cfg *config.Config) {
 		return
 	}
 	filename := "scan.png"
-	goodsPrefix := fmt.Sprintf("vino/items/goods/%d", guide.ID)
+	goodsPrefix := fmt.Sprintf("front_page_config/product/%d", guide.ID)
 	url, err := services.UploadCOSWithContentPrefix(c.Request.Context(), png, filename, "image/png", goodsPrefix)
 	if err != nil {
 		resp.Err(c, 500, 1, "生成失败: "+err.Error())

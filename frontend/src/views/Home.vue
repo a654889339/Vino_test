@@ -237,8 +237,9 @@ import { homeConfigApi, authApi, guideApi } from '@/api';
 import LodImg from '@/components/LodImg.vue';
 import PageThemeLayer from '@/components/PageThemeLayer.vue';
 import LangSwitcher from '@/components/LangSwitcher.vue';
-import { detectLangByIp, t, pick } from '@/utils/i18n';
+import { detectLangByIp, t, pick, isEn } from '@/utils/i18n';
 import { resolvePublicUrl } from '@/utils/mediaUrl';
+import { guideProductMediaUrl } from '@/utils/cosMedia.js';
 import { buildSectionSkinLayerStyle, buildSectionSkinContainerStyle } from '@/utils/sectionSkin';
 
 const router = useRouter();
@@ -254,6 +255,23 @@ const addProductLoading = ref(false);
 const vinoImgFailed = reactive({});
 const myProductImgFailed = reactive({});
 const featuredImgFailed = reactive({});
+
+const tocMediaOpt = { apiBase: import.meta.env.VITE_API_BASE || '' };
+function guideRuleCover(g) {
+  const id = g && Number(g.id);
+  if (!Number.isFinite(id) || id <= 0) return { cover: '', thumb: '' };
+  const lang = isEn.value ? 'en' : 'zh';
+  return {
+    cover: guideProductMediaUrl(id, 'cover', { lang, apiBase: tocMediaOpt.apiBase }),
+    thumb: guideProductMediaUrl(id, 'cover_thumb', { lang, apiBase: tocMediaOpt.apiBase }),
+  };
+}
+function guideRuleIcon(g) {
+  const id = g && Number(g.id);
+  if (!Number.isFinite(id) || id <= 0) return '';
+  const lang = isEn.value ? 'en' : 'zh';
+  return guideProductMediaUrl(id, 'icon', { lang, apiBase: tocMediaOpt.apiBase });
+}
 
 function productIconUrl(item) {
   const u = (item && item.iconUrl) || '';
@@ -470,7 +488,7 @@ const myProductsDisplay = computed(() => {
     if (!g) {
       return { ...item };
     }
-    const iconUrl = pick(g, 'iconUrl') || (item.iconUrl || '');
+    const iconUrl = guideRuleIcon(g) || (item.iconUrl || '');
     return {
       ...item,
       iconUrl,
@@ -497,15 +515,14 @@ const featuredRecommendItems = computed(() => {
         coverThumb: i.imageUrlThumb || '',
       };
     }
-    const coverImg = pick(g, 'coverImage') || (i.imageUrl || '');
-    const coverThumb = pick(g, 'coverImageThumb') || (i.imageUrlThumb || '');
+    const rc = guideRuleCover(g);
     return {
       id: i.id,
       title: pick(g, 'name') || (i.title || ''),
       subtitle: pick(g, 'subtitle') || ((i.desc || '').trim()),
       path,
-      coverImage: coverImg || (i.imageUrl || ''),
-      coverThumb: coverThumb || (i.imageUrlThumb || ''),
+      coverImage: rc.cover || (i.imageUrl || ''),
+      coverThumb: rc.thumb || (i.imageUrlThumb || ''),
     };
   });
 });
@@ -546,7 +563,7 @@ const vinoProductItems = computed(() => {
         imageUrlThumb: '',
       };
     }
-    const iconUrl = pick(g, 'iconUrl') || '';
+    const iconUrl = guideRuleIcon(g) || '';
     return {
       id: i.id,
       title: pick(g, 'name') || (i.title || ''),

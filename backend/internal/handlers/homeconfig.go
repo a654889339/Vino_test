@@ -153,22 +153,45 @@ func hcList(c *gin.Context) {
 	if c.Query("all") == "" {
 		q = q.Where("status = ?", "active")
 	}
-	var items []models.HomeConfig
-	q.Order("section ASC, sortOrder ASC, id ASC").Find(&items)
-	out := make([]gin.H, 0, len(items))
-	for _, it := range items {
-		raw, _ := json.Marshal(it)
-		var o gin.H
-		_ = json.Unmarshal(raw, &o)
-		thumb := ""
-		if x, ok := o["imageUrlThumb"].(string); ok {
-			thumb = x
+	buildOut := func(items []models.HomeConfig) []gin.H {
+		out := make([]gin.H, 0, len(items))
+		for _, it := range items {
+			raw, _ := json.Marshal(it)
+			var o gin.H
+			_ = json.Unmarshal(raw, &o)
+			thumb := ""
+			if x, ok := o["imageUrlThumb"].(string); ok {
+				thumb = x
+			}
+			o["imageUrl"] = fixHomeProxyURL(it.ImageURL)
+			o["imageUrlThumb"] = fixHomeProxyURL(strings.TrimSpace(thumb))
+			out = append(out, o)
 		}
-		o["imageUrl"] = fixHomeProxyURL(it.ImageURL)
-		o["imageUrlThumb"] = fixHomeProxyURL(strings.TrimSpace(thumb))
-		out = append(out, o)
+		return out
 	}
-	resp.OK(c, out)
+	// 管理端传 paged=1 时分页；ToC 等不传则保持原数组响应，避免首页/登录只拿到前 50 条。
+	if c.Query("paged") != "1" {
+		var items []models.HomeConfig
+		if err := q.Order("section ASC, sortOrder ASC, id ASC").Find(&items).Error; err != nil {
+			resp.Err(c, 500, 500, "查询失败")
+			return
+		}
+		resp.OK(c, buildOut(items))
+		return
+	}
+	page, pageSize := adminListPageParams(c)
+	var total int64
+	if err := q.Count(&total).Error; err != nil {
+		resp.Err(c, 500, 500, "统计失败")
+		return
+	}
+	var items []models.HomeConfig
+	offset := (page - 1) * pageSize
+	if err := q.Order("section ASC, sortOrder ASC, id ASC").Limit(pageSize).Offset(offset).Find(&items).Error; err != nil {
+		resp.Err(c, 500, 500, "查询失败")
+		return
+	}
+	resp.OK(c, gin.H{"list": buildOut(items), "total": total, "page": page, "pageSize": pageSize})
 }
 
 func hcCreate(c *gin.Context) {

@@ -106,6 +106,28 @@ Page({
       });
   },
 
+  cancelOrder() {
+    const order = this.data.order;
+    if (!order || !order.id) return;
+    const id = order.id;
+    wx.showModal({
+      title: '取消订单',
+      content: '确定取消？商品将返回购物车。',
+      success: (res) => {
+        if (!res.confirm) return;
+        app
+          .request({ url: '/goods-orders/' + id + '/cancel', method: 'POST' })
+          .then((body) => {
+            wx.showToast({ title: (body && body.message) || '已取消', icon: 'success' });
+            this.load();
+          })
+          .catch((err) => {
+            wx.showToast({ title: (err && err.message) || '取消失败', icon: 'none' });
+          });
+      },
+    });
+  },
+
   payOrder() {
     const order = this.data.order;
     if (!order || !order.id) return;

@@ -319,11 +319,7 @@ func orderAdminList(c *gin.Context) {
 	status := c.Query("status")
 	orderNo := strings.TrimSpace(c.Query("orderNo"))
 	userID := strings.TrimSpace(c.Query("userId"))
-	page := queryInt(c, "page", 1)
-	pageSize := queryInt(c, "pageSize", 50)
-	if pageSize > 200 {
-		pageSize = 200
-	}
+	page, pageSize := adminListPageParams(c)
 	qb := db.DB.Model(&models.Order{})
 	if status != "" && status != "all" {
 		qb = qb.Where("status = ?", status)

@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"io"
 	"path"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -106,59 +105,68 @@ func msgUnread(c *gin.Context) {
 }
 
 func msgAdminConversations(c *gin.Context) {
-	var users []models.User
-	db.DB.Preload("Messages", func(db *gorm.DB) *gorm.DB {
-		return db.Order("createdAt DESC").Limit(1)
-	}).Find(&users)
-	type conv struct {
-		userID                                          int
-		username, nickname, avatar, lastMessage       string
-		lastTime                                        time.Time
-		lastSender, lastType                          string
+	page, pageSize := adminListPageParams(c)
+	var total int64
+	if err := db.DB.Raw("SELECT COUNT(*) FROM (SELECT DISTINCT userId FROM messages) AS d").Scan(&total).Error; err != nil {
+		resp.Err(c, 500, 500, "统计失败")
+		return
 	}
-	var list []conv
-	for _, u := range users {
-		if len(u.Messages) == 0 {
-			continue
-		}
-		last := u.Messages[0]
-		nick := u.Nickname
-		if nick == "" {
-			nick = u.Username
-		}
-		list = append(list, conv{
-			userID: u.ID, username: u.Username, nickname: nick, avatar: u.Avatar,
-			lastMessage: last.Content, lastTime: last.CreatedAt, lastSender: last.Sender, lastType: last.Type,
-		})
+	type uidRow struct {
+		UserID int `gorm:"column:userId"`
 	}
-	sort.Slice(list, func(i, j int) bool { return list[i].lastTime.After(list[j].lastTime) })
+	var uidRows []uidRow
+	offset := (page - 1) * pageSize
+	if err := db.DB.Raw(`
+SELECT userId FROM (
+  SELECT userId, MAX(createdAt) AS mx FROM messages GROUP BY userId
+) x ORDER BY x.mx DESC LIMIT ? OFFSET ?
+`, pageSize, offset).Scan(&uidRows).Error; err != nil {
+		resp.Err(c, 500, 500, "查询失败")
+		return
+	}
 	type row struct {
 		UserID int `gorm:"column:userId"`
 		Cnt    int `gorm:"column:cnt"`
 	}
-	var rows []row
-	db.DB.Model(&models.Message{}).Select("userId, COUNT(id) as cnt").Where("sender = ? AND `read` = ?", "user", false).Group("userId").Scan(&rows)
+	var unreadRows []row
+	_ = db.DB.Model(&models.Message{}).Select("userId, COUNT(id) as cnt").Where("sender = ? AND `read` = ?", "user", false).Group("userId").Scan(&unreadRows).Error
 	unread := map[int]int{}
-	for _, r := range rows {
+	for _, r := range unreadRows {
 		unread[r.UserID] = r.Cnt
 	}
-	out := make([]gin.H, 0, len(list))
-	for _, it := range list {
+	out := make([]gin.H, 0, len(uidRows))
+	for _, ur := range uidRows {
+		var u models.User
+		if err := db.DB.Select("id", "username", "nickname", "avatar").First(&u, ur.UserID).Error; err != nil {
+			continue
+		}
+		var last models.Message
+		if err := db.DB.Where("userId = ?", ur.UserID).Order("createdAt DESC, id DESC").First(&last).Error; err != nil {
+			continue
+		}
+		nick := u.Nickname
+		if nick == "" {
+			nick = u.Username
+		}
 		out = append(out, gin.H{
-			"userId": it.userID, "username": it.username, "nickname": it.nickname, "avatar": it.avatar,
-			"lastMessage": it.lastMessage, "lastTime": it.lastTime, "lastSender": it.lastSender, "lastType": it.lastType,
-			"unread": unread[it.userID],
+			"userId": u.ID, "username": u.Username, "nickname": nick, "avatar": u.Avatar,
+			"lastMessage": last.Content, "lastTime": last.CreatedAt, "lastSender": last.Sender, "lastType": last.Type,
+			"unread": unread[u.ID],
 		})
 	}
-	resp.OK(c, out)
+	resp.OK(c, gin.H{"list": out, "total": total, "page": page, "pageSize": pageSize})
 }
 
 func msgAdminGet(c *gin.Context) {
 	userID, _ := strconv.Atoi(c.Param("userId"))
+	page, pageSize := adminListPageParams(c)
+	var total int64
+	db.DB.Model(&models.Message{}).Where("userId = ?", userID).Count(&total)
 	var list []models.Message
-	db.DB.Where("userId = ?", userID).Order("createdAt ASC").Find(&list)
+	offset := (page - 1) * pageSize
+	db.DB.Where("userId = ?", userID).Order("createdAt ASC").Limit(pageSize).Offset(offset).Find(&list)
 	db.DB.Model(&models.Message{}).Where("userId = ? AND sender = ? AND `read` = ?", userID, "user", false).Update("read", true)
-	resp.OK(c, list)
+	resp.OK(c, gin.H{"list": list, "total": total, "page": page, "pageSize": pageSize})
 }
 
 func msgAdminReply(c *gin.Context) {

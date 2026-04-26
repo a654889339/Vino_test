@@ -61,7 +61,7 @@ import { ref, computed, onMounted, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import DOMPurify from 'dompurify';
 import { guideApi } from '@/api';
-import { resolvePublicUrl } from '@/utils/mediaUrl';
+import { guideProductMediaUrl } from '@/utils/cosMedia.js';
 import { showToast } from 'vant';
 import { t } from '@/utils/i18n';
 
@@ -92,11 +92,11 @@ const route = useRoute();
 const loading = ref(true);
 const guide = ref({});
 
-/** 后台字段仍为 manualPdfUrl，前台作为「在线说明书」链接打开（网页或可被浏览器打开的地址） */
+/** 说明书 PDF：按商品 id 规则路径走 COS 代理（与 DB manualPdfUrl 解耦） */
 const manualWebUrl = computed(() => {
-  const u = guide.value.manualPdfUrl;
-  const s = u && String(u).trim() ? String(u).trim() : '';
-  return s ? resolvePublicUrl(s) : '';
+  const id = Number(guide.value && guide.value.id);
+  if (!Number.isFinite(id) || id <= 0) return '';
+  return guideProductMediaUrl(id, 'pdf', { apiBase: import.meta.env.VITE_API_BASE || '' });
 });
 
 const title = computed(() => guide.value.name ? `${guide.value.name} ${t('manual.title')}` : t('manual.title'));

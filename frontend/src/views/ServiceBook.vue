@@ -127,7 +127,7 @@
                     </div>
                     <div class="saved-addr-detail" style="font-family:monospace;font-size:12px">{{ p.productKey }}</div>
                   </div>
-                  <img v-if="p.iconUrl" :src="p.iconUrl" class="my-product-icon" alt="" />
+                  <img v-if="myProductRuleIcon(p)" :src="myProductRuleIcon(p)" class="my-product-icon" alt="" />
                 </div>
               </div>
             </div>
@@ -205,11 +205,24 @@ import { useRoute, useRouter } from 'vue-router';
 import { serviceApi, orderApi, addressApi, authApi, guideApi } from '@/api';
 import { showToast, showDialog } from 'vant';
 import { formatPriceDisplay, shouldShowPrice } from '@/utils/currency';
-import { pick, t } from '@/utils/i18n';
+import { pick, t, isEn } from '@/utils/i18n';
+import { guideProductMediaUrl } from '@/utils/cosMedia.js';
 import { areaList } from '@vant/area-data';
 
 const route = useRoute();
 const router = useRouter();
+const serviceBookMediaOpt = { apiBase: import.meta.env.VITE_API_BASE || '' };
+
+function myProductRuleIcon(p) {
+  if (!p) return '';
+  const gid = Number(p.guideId);
+  if (Number.isFinite(gid) && gid > 0) {
+    const lang = isEn.value ? 'en' : 'zh';
+    return guideProductMediaUrl(gid, 'icon', { lang, apiBase: serviceBookMediaOpt.apiBase });
+  }
+  return p.iconUrl || '';
+}
+
 const loading = ref(true);
 const submitting = ref(false);
 const showInlineCountry = ref(false);

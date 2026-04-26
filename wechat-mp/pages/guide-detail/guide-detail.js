@@ -3,6 +3,7 @@ const { openManualFromGuide } = require('../../utils/openManual.js');
 const i18n = require('../../utils/i18n.js');
 const { normalizeImageUrl } = require('../../utils/image.js');
 const currencyUtil = require('../../utils/currency.js');
+const cosMedia = require('../../utils/cosMedia.js');
 
 Page({
   data: {
@@ -107,9 +108,15 @@ Page({
         this.applyNavBarTitle(g);
         const parse = v => { try { return Array.isArray(v) ? v : JSON.parse(v || '[]'); } catch { return []; } };
         const fix = u => normalizeImageUrl(u, app.globalData.baseUrl);
-        if (g.coverImage) g.coverImage = fix(g.coverImage);
-        if (g.coverImageThumb) g.coverImageThumb = fix(g.coverImageThumb);
-        if (g.iconUrl) g.iconUrl = fix(g.iconUrl);
+        const lang = i18n.isEn() ? 'en' : 'zh';
+        const base = app.globalData.baseUrl;
+        const gid = g.id;
+        g.coverImage = cosMedia.guideProductMediaUrl(gid, 'cover', { lang, apiBase: base });
+        g.coverImageThumb = cosMedia.guideProductMediaUrl(gid, 'cover_thumb', { lang, apiBase: base });
+        g.iconUrl = cosMedia.guideProductMediaUrl(gid, 'icon', { lang, apiBase: base });
+        g.model3dUrl = cosMedia.guideProductMediaUrl(gid, 'model3d', { apiBase: base });
+        g.model3dDecalUrl = cosMedia.guideProductMediaUrl(gid, 'decal', { apiBase: base });
+        g.model3dSkyboxUrl = cosMedia.guideProductMediaUrl(gid, 'skybox', { apiBase: base });
         g.displayCoverUrl = g.coverImageThumb || g.coverImage;
         g.displayIconUrl = g.iconUrl || '';
         const mediaItems = parse(g.mediaItems).map(m => {
@@ -186,7 +193,7 @@ Page({
     if (openManualFromGuide(g, this.data.helpItems, app)) return;
     const hasContent =
       (this.data.helpItems && this.data.helpItems.length) ||
-      (g.manualPdfUrl && String(g.manualPdfUrl).trim());
+      !!(g.id && cosMedia.guideProductMediaUrl(g.id, 'pdf', { apiBase: app.globalData.baseUrl }));
     if (!hasContent) {
       wx.showToast({ title: i18n.t('guideDetail.noManual'), icon: 'none' });
       return;

@@ -15,11 +15,7 @@ import (
 
 // adminListUserCarts GET /api/admin/user-carts — 有购物车内容的用户（非空 cartJson 或存在 cart_items）。
 func adminListUserCarts(c *gin.Context) {
-	page := queryInt(c, "page", 1)
-	pageSize := queryInt(c, "pageSize", 50)
-	if pageSize > 200 {
-		pageSize = 200
-	}
+	page, pageSize := adminListPageParams(c)
 	q := strings.TrimSpace(c.Query("q"))
 	searchType := c.Query("searchType")
 
@@ -104,11 +100,7 @@ func adminListUserCarts(c *gin.Context) {
 
 // adminListCartItems GET /api/admin/cart-items
 func adminListCartItems(c *gin.Context) {
-	page := queryInt(c, "page", 1)
-	pageSize := queryInt(c, "pageSize", 50)
-	if pageSize > 200 {
-		pageSize = 200
-	}
+	page, pageSize := adminListPageParams(c)
 	userID := strings.TrimSpace(c.Query("userId"))
 	guideID := strings.TrimSpace(c.Query("guideId"))
 	kw := strings.TrimSpace(c.Query("q"))
@@ -186,11 +178,7 @@ func adminListGoodsOrderItems(c *gin.Context) {
 	orderNo := strings.TrimSpace(c.Query("orderNo"))
 	userID := strings.TrimSpace(c.Query("userId"))
 	guideID := strings.TrimSpace(c.Query("guideId"))
-	page := queryInt(c, "page", 1)
-	pageSize := queryInt(c, "pageSize", 50)
-	if pageSize > 200 {
-		pageSize = 200
-	}
+	page, pageSize := adminListPageParams(c)
 
 	qb := db.DB.Table("goods_order_items AS i").
 		Joins("LEFT JOIN goods_orders AS o ON o.id = i.orderId").

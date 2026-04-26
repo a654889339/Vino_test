@@ -234,6 +234,8 @@ func goodsOrderAction(method, path string) string {
 		return "goods_order.checkout"
 	case strings.Contains(path, "/pay-wechat"):
 		return "goods_order.pay_wechat"
+	case strings.Contains(path, "/cancel"):
+		return "goods_order.cancel"
 	default:
 		return "goods_order." + strings.ToLower(method)
 	}

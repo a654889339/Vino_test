@@ -601,7 +601,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         </div>
         <div class="order-filters" style="margin-bottom:12px;flex-wrap:wrap;align-items:center;gap:8px">
           <span style="font-size:13px;color:#666">种类：</span>
-          <select class="form-input" id="serviceFilterCategoryId" style="width:140px;display:inline-block;padding:6px 10px" onchange="renderServicesTable()">
+          <select class="form-input" id="serviceFilterCategoryId" style="width:140px;display:inline-block;padding:6px 10px" onchange="loadServices(true)">
             <option value="">全部</option>
           </select>
         </div>
@@ -610,6 +610,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <tbody id="serviceTableBody"></tbody>
         </table>
         <div class="order-empty" id="serviceEmpty" style="display:none">暂无具体服务</div>
+        <div class="pagination" id="servicePagination"></div>
       </div>
     </div>
 
@@ -692,6 +693,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <tbody id="guideTableBody"></tbody>
         </table>
         <div class="order-empty" id="guideEmpty" style="display:none">暂无商品</div>
+        <div class="pagination" id="guidePagination"></div>
       </div>
     </div>
 
@@ -971,6 +973,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <tbody id="i18nTableBody"></tbody>
         </table>
         <div class="order-empty" id="i18nEmpty" style="display:none">暂无翻译条目</div>
+        <div class="pagination" id="i18nPagination"></div>
         <div style="margin-top:12px;text-align:right">
           <button class="btn" onclick="saveAllI18n()" style="background:var(--primary);color:#fff;padding:10px 32px;font-size:15px">保存所有修改</button>
         </div>
@@ -999,6 +1002,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
             <input class="form-input" id="convSearchInput" placeholder="搜索用户名..." oninput="renderConvList()" style="width:100%;padding:6px 10px;font-size:13px;border-radius:8px" />
           </div>
           <div id="convListBody" style="flex:1;overflow-y:auto"></div>
+          <div class="pagination" id="convPagination" style="padding:8px;border-top:1px solid #f0f0f0;flex-shrink:0"></div>
           <div id="convEmpty" style="display:none;text-align:center;padding:40px 16px;color:#999;font-size:13px">暂无留言</div>
         </div>
         <div id="msgChatArea" style="flex:1;background:#fff;border-radius:12px;display:flex;flex-direction:column;border:1px solid #eee">
@@ -2192,8 +2196,8 @@ function switchPage(page) {
   if (page === 'homeConfig') { currentHCPage = 'homeConfig'; loadHomeConfig(); loadGuides(); }
   if (page === 'homeAnimConfig') { currentHCPage = 'homeAnimConfig'; loadHomeConfig(); }
   if (page === 'pageThemeConfig') { currentHCPage = 'pageTheme'; loadHomeConfig(); }
-  if (page === 'i18nConfig') { loadI18nTexts(); }
-  if (page === 'messages') { loadConversations(); startMsgPolling(); }
+  if (page === 'i18nConfig') { loadI18nTexts(true); }
+  if (page === 'messages') { loadConversations(true); startMsgPolling(); }
   if (page === 'debugTocData') { refreshDebugDbStatus(); }
   if (page === 'overview') { loadOrderStats(); loadPageVisitStats(); }
   if (page === 'outletOverview') { loadOutletStats(); loadPageVisitStats(); }
@@ -3658,6 +3662,32 @@ async function unbindUserProduct(userId, productKey) {
 }
 
 let allGuides = [];
+const ADMIN_LIST_PAGE_SIZE = 50;
+let guideListPage = 1;
+
+async function fetchAdminGuideById(id) {
+  try {
+    const res = await api('/guides/' + id);
+    if (res.code === 0) return res.data;
+  } catch (e) { console.warn(e); }
+  return null;
+}
+
+/** 首页商品/甄选推荐弹窗：拉齐全部商品供下拉（种类少，单独接口仍为全量 categories） */
+async function fetchAllGuidesForPicker() {
+  let page = 1;
+  const acc = [];
+  for (;;) {
+    const res = await api('/guides/admin/list?page=' + page + '&pageSize=' + ADMIN_LIST_PAGE_SIZE);
+    if (res.code !== 0) break;
+    const d = res.data || {};
+    const list = d.list || [];
+    for (let i = 0; i < list.length; i++) acc.push(list[i]);
+    if (list.length < ADMIN_LIST_PAGE_SIZE) break;
+    page++;
+  }
+  return acc;
+}
 
 function onGuideTableBodyClick(ev) {
   const el = ev.target && ev.target.closest ? ev.target.closest('[data-guide-action]') : null;
@@ -3671,35 +3701,54 @@ function onGuideTableBodyClick(ev) {
     return;
   }
   if (action === 'guideQrClick') {
-    const g = allGuides.find(x => x.id === id);
-    if (!g) return;
-    showGuideQR(id, g.name || '', g.qrcodeUrl || '');
+    void (async () => {
+      let g = allGuides.find(x => x.id === id);
+      if (!g) g = await fetchAdminGuideById(id);
+      if (!g) return;
+      showGuideQR(id, g.name || '', g.qrcodeUrl || '', g.slug);
+    })();
     return;
   }
-  if (action === 'editGuide') { editGuide(id); return; }
+  if (action === 'editGuide') { void editGuide(id); return; }
   if (action === 'deleteGuide') { deleteGuide(id); return; }
 }
 
-async function loadGuides() {
+async function loadGuides(resetPage) {
+  if (resetPage) guideListPage = 1;
   const tbody = document.getElementById('guideTableBody');
   const empty = document.getElementById('guideEmpty');
+  const pagEl = document.getElementById('guidePagination');
   if (!tbody) return;
   try {
     tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#999">加载中...</td></tr>';
     if (empty) empty.style.display = 'none';
-    const res = await api('/guides/admin/list');
+    if (pagEl) pagEl.innerHTML = '';
+    const res = await api('/guides/admin/list?page=' + guideListPage + '&pageSize=' + ADMIN_LIST_PAGE_SIZE);
     if (res.code !== 0) {
       tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#B91C1C">' + escapeHtml(res.message || '加载失败') + '</td></tr>';
       if (empty) empty.style.display = 'none';
       return;
     }
-    allGuides = Array.isArray(res.data) ? res.data : [];
+    const d = res.data || {};
+    allGuides = d.list || [];
+    const total = d.total || 0;
+    const page = d.page || guideListPage;
+    const pageSize = d.pageSize || ADMIN_LIST_PAGE_SIZE;
     if (!allGuides.length) {
       tbody.innerHTML = '';
       if (empty) empty.style.display = 'block';
+      if (pagEl) pagEl.innerHTML = '';
       return;
     }
     if (empty) empty.style.display = 'none';
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    if (pagEl) {
+      pagEl.innerHTML = totalPages > 1
+        ? '<button class="page-btn" onclick="guideListPage--;loadGuides()" ' + (page <= 1 ? 'disabled' : '') + '>上一页</button>'
+        + '<span class="page-info">' + page + ' / ' + totalPages + '（共 ' + total + ' 条）</span>'
+        + '<button class="page-btn" onclick="guideListPage++;loadGuides()" ' + (page >= totalPages ? 'disabled' : '') + '>下一页</button>'
+        : '<span class="page-info">共 ' + total + ' 条</span>';
+    }
     tbody.innerHTML = allGuides.map(g => {
       const catName = (g.category && g.category.name) ? escapeHtml(g.category.name) : '-';
       const slugCell = g.slug ? '<span style="font-family:monospace">' + escapeHtml(String(g.slug)) + '</span>' : '<span style="color:#ccc">-</span>';
@@ -3748,9 +3797,21 @@ let allCategories = [];
 async function loadCategories() {
   const tbody = document.getElementById('categoryTableBody');
   try {
-    const res = await api('/product-categories');
-    if (res.code === 0) {
-      allCategories = res.data || [];
+    let page = 1;
+    allCategories = [];
+    for (;;) {
+      const res = await api('/product-categories?page=' + page + '&pageSize=' + ADMIN_LIST_PAGE_SIZE);
+      if (res.code !== 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#B91C1C">加载失败</td></tr>';
+        return;
+      }
+      const d = res.data || {};
+      const chunk = d.list || [];
+      for (let i = 0; i < chunk.length; i++) allCategories.push(chunk[i]);
+      if (chunk.length < ADMIN_LIST_PAGE_SIZE) break;
+      page++;
+    }
+    if (allCategories.length) {
       tbody.innerHTML = allCategories.map(c => `<tr>
         <td>${c.id}</td>
         <td><strong>${c.name}</strong></td>
@@ -3763,8 +3824,8 @@ async function loadCategories() {
           <button class="history-btn" style="color:#B91C1C;border-color:#FCA5A5" onclick="deleteCategory(${c.id})">删除</button>
         </td>
       </tr>`).join('');
-      if (!allCategories.length) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#999">暂无种类，请先新增种类</td></tr>';
     }
+    if (!allCategories.length) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#999">暂无种类，请先新增种类</td></tr>';
   } catch { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#B91C1C">加载失败</td></tr>'; }
 }
 
@@ -3882,6 +3943,7 @@ async function uploadCategoryThumbnailEn(input) {
 // ---------- 服务配置 ----------
 let allServiceCategories = [];
 let allServices = [];
+let serviceListPage = 1;
 let adminCurrencySymbol = '¥';
 let serviceCurrencyConfigId = null;
 
@@ -3931,9 +3993,21 @@ async function loadServiceCategories() {
   const tbody = document.getElementById('serviceCategoryTableBody');
   if (!tbody) return;
   try {
-    const res = await api('/service-categories');
-    if (res.code === 0) {
-      allServiceCategories = res.data || [];
+    let page = 1;
+    allServiceCategories = [];
+    for (;;) {
+      const res = await api('/service-categories?page=' + page + '&pageSize=' + ADMIN_LIST_PAGE_SIZE);
+      if (res.code !== 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:#B91C1C">加载失败</td></tr>';
+        return;
+      }
+      const d = res.data || {};
+      const chunk = d.list || [];
+      for (let i = 0; i < chunk.length; i++) allServiceCategories.push(chunk[i]);
+      if (chunk.length < ADMIN_LIST_PAGE_SIZE) break;
+      page++;
+    }
+    if (allServiceCategories.length) {
       tbody.innerHTML = allServiceCategories.map(c => `<tr>
         <td>${c.id}</td>
         <td><strong>${c.name}</strong></td>
@@ -3948,23 +4022,54 @@ async function loadServiceCategories() {
           <button class="history-btn" style="color:#B91C1C;border-color:#FCA5A5" onclick="deleteServiceCategory(${c.id})">删除</button>
         </td>
       </tr>`).join('');
-      if (!allServiceCategories.length) tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:#999">暂无种类，请先新增种类</td></tr>';
+    } else {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:#999">暂无种类，请先新增种类</td></tr>';
     }
-  } catch { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#B91C1C">加载失败</td></tr>'; }
+    var sel = document.getElementById('serviceFilterCategoryId');
+    if (sel) {
+      const cur = sel.value;
+      sel.innerHTML = '<option value="">全部</option>' + (allServiceCategories || []).map(c => '<option value="'+c.id+'">'+escapeHtml(c.name)+'</option>').join('');
+      if (cur && Array.from(sel.options).some(o => o.value === cur)) sel.value = cur;
+    }
+  } catch { tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:#B91C1C">加载失败</td></tr>'; }
 }
 
-async function loadServices() {
+async function loadServices(resetPage) {
+  if (resetPage) serviceListPage = 1;
   const tbody = document.getElementById('serviceTableBody');
   const empty = document.getElementById('serviceEmpty');
+  const pagEl = document.getElementById('servicePagination');
   if (!tbody) return;
   tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:#999">加载中...</td></tr>';
+  if (pagEl) pagEl.innerHTML = '';
   try {
-    const res = await api('/services/admin/list');
+    var filterId = document.getElementById('serviceFilterCategoryId');
+    var categoryId = filterId ? filterId.value : '';
+    const params = new URLSearchParams();
+    params.set('page', String(serviceListPage));
+    params.set('pageSize', String(ADMIN_LIST_PAGE_SIZE));
+    if (categoryId) params.set('categoryId', categoryId);
+    const res = await api('/services/admin/list?' + params.toString());
     if (res.code === 0) {
-      allServices = res.data || [];
-      var sel = document.getElementById('serviceFilterCategoryId');
-      if (sel && sel.options.length <= 1) {
-        sel.innerHTML = '<option value="">全部</option>' + (allServiceCategories || []).map(c => '<option value="'+c.id+'">'+escapeHtml(c.name)+'</option>').join('');
+      const d = res.data || {};
+      allServices = d.list || [];
+      const total = d.total || 0;
+      const page = d.page || serviceListPage;
+      const pageSize = d.pageSize || ADMIN_LIST_PAGE_SIZE;
+      if (!allServices.length) {
+        tbody.innerHTML = '';
+        empty.style.display = 'block';
+        if (pagEl) pagEl.innerHTML = '<span class="page-info">共 ' + total + ' 条</span>';
+        return;
+      }
+      empty.style.display = 'none';
+      const totalPages = Math.max(1, Math.ceil(total / pageSize));
+      if (pagEl) {
+        pagEl.innerHTML = totalPages > 1
+          ? '<button class="page-btn" onclick="serviceListPage--;loadServices()" ' + (page <= 1 ? 'disabled' : '') + '>上一页</button>'
+          + '<span class="page-info">' + page + ' / ' + totalPages + '（共 ' + total + ' 条）</span>'
+          + '<button class="page-btn" onclick="serviceListPage++;loadServices()" ' + (page >= totalPages ? 'disabled' : '') + '>下一页</button>'
+          : '<span class="page-info">共 ' + total + ' 条</span>';
       }
       renderServicesTable();
     }
@@ -3975,9 +4080,7 @@ function renderServicesTable() {
   const tbody = document.getElementById('serviceTableBody');
   const empty = document.getElementById('serviceEmpty');
   if (!tbody) return;
-  var filterId = document.getElementById('serviceFilterCategoryId');
-  var categoryId = filterId ? filterId.value : '';
-  var list = !categoryId ? allServices : allServices.filter(s => String(s.categoryId) === String(categoryId));
+  var list = allServices;
   if (!list.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
   empty.style.display = 'none';
   tbody.innerHTML = list.map(s => `<tr>
@@ -4054,10 +4157,16 @@ async function deleteServiceCategory(id) {
   } catch { alert('删除失败'); }
 }
 
-function openServiceItemEditor(id) {
+async function openServiceItemEditor(id) {
   const sel = document.getElementById('serviceItemCategoryId');
   sel.innerHTML = '<option value="">请选择种类</option>' + (allServiceCategories || []).map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-  const s = id ? allServices.find(x => x.id === id) : null;
+  let s = id ? allServices.find(x => x.id === id) : null;
+  if (id && !s) {
+    try {
+      const res = await api('/services/' + id);
+      if (res.code === 0) s = res.data;
+    } catch (_) {}
+  }
   document.getElementById('serviceItemEditId').value = s ? s.id : '';
   document.getElementById('serviceItemModalTitle').textContent = s ? '编辑服务' : '新增服务';
   document.getElementById('serviceItemCategoryId').value = s ? (s.categoryId || '') : '';
@@ -4088,7 +4197,7 @@ function onSiLangChange() {
   document.getElementById('siLangEn').style.display = lang === 'en' ? '' : 'none';
 }
 
-function editServiceItem(id) { openServiceItemEditor(id); }
+function editServiceItem(id) { void openServiceItemEditor(id); }
 
 function closeServiceItemEditor() { document.getElementById('serviceItemModal').style.display = 'none'; }
 
@@ -4285,6 +4394,7 @@ async function uploadGuideFile(input, targetId) {
     : targetId === 'gModel3DUrl' ? 'model3d'
     : targetId === 'gModel3DDecalUrl' ? 'model3d_decal'
     : targetId === 'gModel3DSkyboxUrl' ? 'model3d_skybox'
+    : targetId === 'gManualPdfUrl' ? 'description'
     : '';
   await runWithUploadOverlay(file.name, async () => {
     try {
@@ -4452,8 +4562,9 @@ function onSkyboxBgColorInput(v) {
 
 function closeGuideEditor() { document.getElementById('guideModal').style.display = 'none'; }
 
-function editGuide(id) {
-  const g = allGuides.find(x => x.id === id);
+async function editGuide(id) {
+  let g = allGuides.find(x => x.id === id);
+  if (!g) g = await fetchAdminGuideById(id);
   if (g) openGuideEditor(g);
 }
 
@@ -4470,8 +4581,6 @@ async function saveGuide() {
   if (!slug) { alert('英文描述不能为空'); return; }
   if (!/^[a-zA-Z0-9_-]+$/.test(slug)) { alert('英文描述只能包含英文字母、数字、下划线和连字符'); return; }
   const editId = id ? parseInt(id) : 0;
-  const dup = allGuides.find(g => g.slug === slug && g.id !== editId);
-  if (dup) { alert('英文描述 "' + slug + '" 已被 "' + dup.name + '" 使用，请更换'); return; }
   const body = {
     categoryId: document.getElementById('gCategoryId').value ? parseInt(document.getElementById('gCategoryId').value, 10) : null,
     name: document.getElementById('gName').value,
@@ -4922,8 +5031,18 @@ async function saveHomeSectionSkin(path) {
 async function loadHomeConfig() {
   try {
     await loadServiceCurrency();
-    const res = await api('/home-config?all=1');
-    allHCItems = res.data || [];
+    let hp = 1;
+    const merged = [];
+    for (;;) {
+      const res = await api('/home-config?all=1&paged=1&page=' + hp + '&pageSize=' + ADMIN_LIST_PAGE_SIZE);
+      if (res.code !== 0) break;
+      const d = res.data || {};
+      const chunk = d.list || [];
+      for (let i = 0; i < chunk.length; i++) merged.push(chunk[i]);
+      if (chunk.length < ADMIN_LIST_PAGE_SIZE) break;
+      hp++;
+    }
+    allHCItems = merged;
     const offsetItem = allHCItems.find(i => i.section === 'homeSectionOffset' && i.status === 'active');
     const offsetEl = document.getElementById('hcSectionOffsetPx');
     if (offsetEl) offsetEl.value = (offsetItem && offsetItem.title !== undefined && offsetItem.title !== '') ? String(offsetItem.title).trim() : '0';
@@ -5306,12 +5425,10 @@ function renderFeaturedRecommendTable() {
 }
 
 async function openVinoHomeProductEditor(id, section) {
+  let pickerGuides = allGuides;
   try {
-    if (!allGuides || !allGuides.length) {
-      const res = await api('/guides/admin/list');
-      if (res.code === 0) allGuides = res.data || [];
-    }
-  } catch { allGuides = allGuides || []; }
+    pickerGuides = await fetchAllGuidesForPicker();
+  } catch (_) { pickerGuides = allGuides || []; }
   var sec = section || 'vinoProduct';
   if (id) {
     var rowPick = (allHCItems || []).find(function (i) { return i.id === parseInt(id, 10); });
@@ -5330,7 +5447,7 @@ async function openVinoHomeProductEditor(id, section) {
     const p = String(i.path || '').trim();
     if (p) taken.add(p);
   });
-  const opts = (allGuides || []).filter(function (g) {
+  const opts = (pickerGuides || []).filter(function (g) {
     return g.status === 'active' && g.slug && String(g.slug).trim() && (!taken.has(String(g.slug).trim()));
   }).map(function (g) {
     return '<option value="'+g.id+'">'+escapeHtml(g.name)+' ('+escapeHtml(String(g.slug).trim())+')</option>';
@@ -5340,7 +5457,7 @@ async function openVinoHomeProductEditor(id, section) {
     const row = (allHCItems || []).find(function (i) { return i.id === parseInt(id, 10); });
     sel.disabled = true;
     if (row && row.path) {
-      const g = (allGuides || []).find(function (x) { return String(x.slug).trim() === String(row.path).trim(); });
+      const g = (pickerGuides || []).find(function (x) { return String(x.slug).trim() === String(row.path).trim(); });
       if (g) sel.value = String(g.id);
     }
     document.getElementById('vinoHomeSortOrder').value = row ? (row.sortOrder ?? 0) : 0;
@@ -5362,19 +5479,17 @@ async function saveVinoHomeProduct() {
   const pickSec = (document.getElementById('vinoHomePickSection') && document.getElementById('vinoHomePickSection').value) || 'vinoProduct';
   const sortOrder = parseInt(document.getElementById('vinoHomeSortOrder').value, 10) || 0;
   const status = document.getElementById('vinoHomeStatus').value || 'active';
-  if (id && (!allGuides || !allGuides.length)) {
-    try {
-      const res = await api('/guides/admin/list');
-      if (res.code === 0) allGuides = res.data || [];
-    } catch { allGuides = allGuides || []; }
-  }
+  let pickerGuides = allGuides;
+  try {
+    pickerGuides = await fetchAllGuidesForPicker();
+  } catch (_) { pickerGuides = allGuides || []; }
   if (id) {
     const existing = (allHCItems || []).find(function (i) { return i.id === parseInt(id, 10); });
     if (!existing) { alert('记录不存在'); return; }
     try {
       let body = Object.assign({}, existing, { sortOrder: sortOrder, status: status });
       const slug = String(existing.path || '').trim();
-      const g = (allGuides || []).find(function (x) { return String(x.slug || '').trim() === slug; });
+      const g = (pickerGuides || []).find(function (x) { return String(x.slug || '').trim() === slug; });
       if (g) {
         if (pickSec === 'featuredRecommend') {
           body.icon = '';
@@ -5397,7 +5512,7 @@ async function saveVinoHomeProduct() {
   }
   const guideId = document.getElementById('vinoHomeGuideSelect').value;
   if (!guideId) { alert('请选择商品'); return; }
-  const g = (allGuides || []).find(function (x) { return x.id === parseInt(guideId, 10); });
+  const g = (pickerGuides || []).find(function (x) { return x.id === parseInt(guideId, 10); });
   if (!g) { alert('商品不存在'); return; }
   const slug = g.slug != null ? String(g.slug).trim() : '';
   if (!slug) { alert('该商品缺少英文路径(slug)，请先在商品管理中补全'); return; }
@@ -5765,6 +5880,8 @@ async function deleteHC(id) {
 
 /* ===== Messages / Chat ===== */
 let conversations = [];
+let convListPage = 1;
+let convListTotal = 0;
 let currentChatUserId = null;
 let msgConvPollTimer = null;   // 会话列表轮询（留言板页面打开期间）
 let msgChatPollTimer = null;   // 当前会话消息轮询（选中某用户对话期间）
@@ -5788,12 +5905,31 @@ function stopChatPoll() {
   if (msgChatPollTimer) { clearInterval(msgChatPollTimer); msgChatPollTimer = null; }
 }
 
-async function loadConversations() {
+async function loadConversations(resetPage) {
+  if (resetPage) convListPage = 1;
+  const pagEl = document.getElementById('convPagination');
   try {
-    const res = await api('/messages/admin/conversations');
-    conversations = res.data || [];
+    const res = await api('/messages/admin/conversations?page=' + convListPage + '&pageSize=' + ADMIN_LIST_PAGE_SIZE);
+    const d = (res && res.code === 0 && res.data) ? res.data : {};
+    conversations = d.list || [];
+    convListTotal = d.total || 0;
+    const page = d.page || convListPage;
+    const pageSize = d.pageSize || ADMIN_LIST_PAGE_SIZE;
+    const totalPages = Math.max(1, Math.ceil(convListTotal / pageSize));
+    if (pagEl) {
+      pagEl.innerHTML = totalPages > 1
+        ? '<button class="page-btn" type="button" onclick="convListPage--;loadConversations()" ' + (page <= 1 ? 'disabled' : '') + '>上一页</button>'
+        + '<span class="page-info">' + page + ' / ' + totalPages + '（共 ' + convListTotal + ' 人）</span>'
+        + '<button class="page-btn" type="button" onclick="convListPage++;loadConversations()" ' + (page >= totalPages ? 'disabled' : '') + '>下一页</button>'
+        : '<span class="page-info">共 ' + convListTotal + ' 人</span>';
+    }
     renderConvList();
-  } catch { conversations = []; renderConvList(); }
+  } catch {
+    conversations = [];
+    convListTotal = 0;
+    if (pagEl) pagEl.innerHTML = '';
+    renderConvList();
+  }
 }
 
 function renderConvList() {
@@ -5835,8 +5971,16 @@ async function openChat(userId) {
   document.getElementById('chatInputArea').style.display = '';
   renderConvList();
   try {
-    const res = await api('/messages/admin/' + userId);
-    const msgs = res.data || [];
+    let p = 1;
+    const msgs = [];
+    for (;;) {
+      const res = await api('/messages/admin/' + userId + '?page=' + p + '&pageSize=' + ADMIN_LIST_PAGE_SIZE);
+      const d = (res && res.code === 0 && res.data) ? res.data : {};
+      const part = d.list || [];
+      for (let i = 0; i < part.length; i++) msgs.push(part[i]);
+      if (part.length < ADMIN_LIST_PAGE_SIZE) break;
+      p++;
+    }
     lastMsgCount = msgs.length;
     renderChatMessages(msgs, conv);
     if (conv) conv.unread = 0;
@@ -5848,8 +5992,16 @@ async function openChat(userId) {
 // 静默刷新当前会话：仅在消息数变化时更新 DOM，避免频繁重绘
 async function refreshChat(userId) {
   try {
-    const res = await api('/messages/admin/' + userId);
-    const msgs = res.data || [];
+    let p = 1;
+    const msgs = [];
+    for (;;) {
+      const res = await api('/messages/admin/' + userId + '?page=' + p + '&pageSize=' + ADMIN_LIST_PAGE_SIZE);
+      const d = (res && res.code === 0 && res.data) ? res.data : {};
+      const part = d.list || [];
+      for (let i = 0; i < part.length; i++) msgs.push(part[i]);
+      if (part.length < ADMIN_LIST_PAGE_SIZE) break;
+      p++;
+    }
     if (msgs.length === lastMsgCount) return;
     lastMsgCount = msgs.length;
     const conv = conversations.find(c => c.userId === userId);
@@ -5923,10 +6075,9 @@ let currentQRUrl = '';
 let currentQRName = '';
 let currentQRGuideId = 0;
 
-function showGuideQR(id, name, existingUrl) {
+function showGuideQR(id, name, existingUrl, slugOpt) {
   const baseUrl = window.location.origin.replace(':5202', ':5201');
-  const g = allGuides.find(x => x.id === id);
-  const slug = (g && g.slug) ? g.slug : id;
+  const slug = slugOpt != null && String(slugOpt).trim() ? String(slugOpt).trim() : id;
   currentQRUrl = baseUrl + '/guide/' + slug;
   currentQRName = name;
   currentQRGuideId = id;
@@ -6570,12 +6721,27 @@ function stopOutletMsgPolling() { if (outletMsgPollTimer) { clearInterval(outlet
 
 /* ========== I18n Translation Config ========== */
 let i18nData = [];
+let i18nListPage = 1;
 
-async function loadI18nTexts() {
+async function loadI18nTexts(resetPage) {
+  if (resetPage) i18nListPage = 1;
+  const pagEl = document.getElementById('i18nPagination');
   try {
-    const res = await api('/i18n');
+    const res = await api('/i18n?paged=1&page=' + i18nListPage + '&pageSize=' + ADMIN_LIST_PAGE_SIZE);
     if (res.code !== 0) return;
-    i18nData = res.data || [];
+    const d = res.data || {};
+    i18nData = d.list || [];
+    const total = d.total || 0;
+    const page = d.page || i18nListPage;
+    const pageSize = d.pageSize || ADMIN_LIST_PAGE_SIZE;
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    if (pagEl) {
+      pagEl.innerHTML = totalPages > 1
+        ? '<button class="page-btn" type="button" onclick="i18nListPage--;loadI18nTexts()" ' + (page <= 1 ? 'disabled' : '') + '>上一页</button>'
+        + '<span class="page-info">' + page + ' / ' + totalPages + '（共 ' + total + ' 条）</span>'
+        + '<button class="page-btn" type="button" onclick="i18nListPage++;loadI18nTexts()" ' + (page >= totalPages ? 'disabled' : '') + '>下一页</button>'
+        : '<span class="page-info">共 ' + total + ' 条</span>';
+    }
     renderI18nTable(i18nData);
   } catch (e) { console.error('loadI18nTexts', e); }
 }
@@ -6621,7 +6787,11 @@ async function saveAllI18n() {
   if (!rows.length) { alert('无修改'); return; }
   try {
     const res = await api('/i18n/bulk', { method: 'POST', body: { rows } });
-    if (res.code === 0) { i18nData = res.data; renderI18nTable(i18nData); alert('保存成功 (' + rows.length + ' 条)'); }
+    if (res.code === 0) {
+      await loadI18nTexts();
+      const msg = (res.data && res.data.message) ? res.data.message : '保存成功';
+      alert(msg + '（' + rows.length + ' 条）');
+    }
     else alert('保存失败: ' + (res.message || ''));
   } catch (e) { alert('保存失败: ' + e.message); }
 }
@@ -6649,8 +6819,7 @@ async function submitI18nAdd() {
   try {
     const res = await api('/i18n/bulk', { method: 'POST', body: { rows: [{ key, zh, en }] } });
     if (res.code === 0) {
-      i18nData = res.data;
-      renderI18nTable(i18nData);
+      await loadI18nTexts(true);
       document.getElementById('i18nAddModal').style.display = 'none';
     } else alert('添加失败: ' + (res.message || ''));
   } catch (e) { alert('添加失败: ' + e.message); }

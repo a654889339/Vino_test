@@ -9,18 +9,18 @@
       <div class="hero-block">
         <div class="hero-section">
           <div v-if="guide.showcaseVideo" class="hero-video-wrap" @click="playVideo(fullUrl(guide.showcaseVideo))">
-            <LodImg v-if="guide.coverImage" :src="fullUrl(guide.coverImage)" :thumb="guide.coverImageThumb ? fullUrl(guide.coverImageThumb) : ''" class="hero-img" />
+            <LodImg v-if="heroCoverSrc" :src="heroCoverSrc" :thumb="heroCoverThumbSrc" class="hero-img" />
             <div v-else class="hero-placeholder" :style="{ background: guide.gradient }">
-              <LodImg v-if="guide.iconUrl" :src="guide.iconUrl" style="width:64px;height:64px;object-fit:contain" />
+              <LodImg v-if="heroIconSrc" :src="heroIconSrc" style="width:64px;height:64px;object-fit:contain" />
               <van-icon v-else :name="guide.icon" size="64" color="#fff" />
             </div>
             <div class="hero-play-btn"><van-icon name="play-circle" size="48" color="#fff" /></div>
           </div>
-          <div v-else-if="guide.coverImage" class="hero-img-wrap" @click="previewImage(fullUrl(guide.coverImage))">
-            <LodImg :src="fullUrl(guide.coverImage)" :thumb="guide.coverImageThumb ? fullUrl(guide.coverImageThumb) : ''" class="hero-img" />
+          <div v-else-if="heroCoverSrc" class="hero-img-wrap" @click="previewImage(heroCoverSrc)">
+            <LodImg :src="heroCoverSrc" :thumb="heroCoverThumbSrc" class="hero-img" />
           </div>
           <div v-else class="hero-gradient" :style="{ background: guide.gradient }">
-            <LodImg v-if="guide.iconUrl" :src="guide.iconUrl" style="width:64px;height:64px;object-fit:contain" />
+            <LodImg v-if="heroIconSrc" :src="heroIconSrc" style="width:64px;height:64px;object-fit:contain" />
             <van-icon v-else :name="guide.icon" size="64" color="#fff" />
             <h2>{{ displayGuideName }}</h2>
           </div>
@@ -147,10 +147,10 @@ import { ref, computed, onMounted, defineAsyncComponent } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { showImagePreview, showToast } from 'vant';
 import { guideApi, cartApi } from '@/api';
-import { t, pick } from '@/utils/i18n';
+import { t, pick, isEn } from '@/utils/i18n';
 import { formatPriceDisplay, shouldShowPrice } from '@/utils/currency';
 import LodImg from '@/components/LodImg.vue';
-import { resolveMediaUrl } from '@/utils/cosMedia.js';
+import { resolveMediaUrl, guideProductMediaUrl } from '@/utils/cosMedia.js';
 
 const ProductModelViewer = defineAsyncComponent(() =>
   import('@/components/ProductModelViewer.vue')
@@ -168,11 +168,38 @@ const cartLines = ref([]);
 const mediaOpt = { apiBase: import.meta.env.VITE_API_BASE || '' };
 const fullUrl = (url) => resolveMediaUrl(url, mediaOpt);
 
-const model3DEnabled = computed(() => !!(guide.value && guide.value.model3dEnabled && guide.value.model3dUrl));
+const guideNumericId = computed(() => {
+  const n = Number(guide.value && guide.value.id);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+});
+const productLang = computed(() => (isEn.value ? 'en' : 'zh'));
+const heroCoverSrc = computed(() => {
+  const id = guideNumericId.value;
+  if (!id) return '';
+  return guideProductMediaUrl(id, 'cover', { lang: productLang.value, apiBase: mediaOpt.apiBase });
+});
+const heroCoverThumbSrc = computed(() => {
+  const id = guideNumericId.value;
+  if (!id) return '';
+  return guideProductMediaUrl(id, 'cover_thumb', { lang: productLang.value, apiBase: mediaOpt.apiBase });
+});
+const heroIconSrc = computed(() => {
+  const id = guideNumericId.value;
+  if (!id) return '';
+  return guideProductMediaUrl(id, 'icon', { lang: productLang.value, apiBase: mediaOpt.apiBase });
+});
+
+const model3DEnabled = computed(() => !!(guide.value && guide.value.model3dEnabled && guideNumericId.value));
 // 3D 资源走后端 COS 代理（同源），避免直接请求腾讯云 COS 触发 CORS（Three.js 贴图/GLB 都需要 crossOrigin）。
-const model3DModelURL = computed(() => fullUrl(guide.value.model3dUrl || ''));
-const model3DDecalURL = computed(() => fullUrl(guide.value.model3dDecalUrl || ''));
-const model3DSkyboxURL = computed(() => fullUrl(guide.value.model3dSkyboxUrl || ''));
+const model3DModelURL = computed(() =>
+  guideNumericId.value ? guideProductMediaUrl(guideNumericId.value, 'model3d', { apiBase: mediaOpt.apiBase }) : ''
+);
+const model3DDecalURL = computed(() =>
+  guideNumericId.value ? guideProductMediaUrl(guideNumericId.value, 'decal', { apiBase: mediaOpt.apiBase }) : ''
+);
+const model3DSkyboxURL = computed(() =>
+  guideNumericId.value ? guideProductMediaUrl(guideNumericId.value, 'skybox', { apiBase: mediaOpt.apiBase }) : ''
+);
 const model3DBGColor = computed(() => {
   const v = (guide.value && guide.value.model3dSkyboxBgColor) ? String(guide.value.model3dSkyboxBgColor).trim() : '';
   return v || '#1a1a2e';

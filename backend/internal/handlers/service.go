@@ -41,12 +41,30 @@ func svcDetail(c *gin.Context) {
 }
 
 func svcAdminList(c *gin.Context) {
+	page, pageSize := adminListPageParams(c)
+	qb := db.DB.Model(&models.Service{}).
+		Joins("LEFT JOIN service_categories sc ON sc.id = services.categoryId")
+	if cid := strings.TrimSpace(c.Query("categoryId")); cid != "" {
+		if id, err := strconv.Atoi(cid); err == nil && id > 0 {
+			qb = qb.Where("services.categoryId = ?", id)
+		}
+	}
+	var total int64
+	if err := qb.Count(&total).Error; err != nil {
+		resp.Err(c, 500, 500, "统计失败")
+		return
+	}
 	var rows []models.Service
-	db.DB.Model(&models.Service{}).Preload("ServiceCategory").
+	offset := (page - 1) * pageSize
+	if err := db.DB.Model(&models.Service{}).Preload("ServiceCategory").
 		Joins("LEFT JOIN service_categories sc ON sc.id = services.categoryId").
 		Order("sc.sortOrder ASC, services.sortOrder ASC, services.id ASC").
-		Find(&rows)
-	resp.OK(c, rows)
+		Limit(pageSize).Offset(offset).
+		Find(&rows).Error; err != nil {
+		resp.Err(c, 500, 500, "查询失败")
+		return
+	}
+	resp.OK(c, gin.H{"list": rows, "total": total, "page": page, "pageSize": pageSize})
 }
 
 func svcCreate(c *gin.Context) {

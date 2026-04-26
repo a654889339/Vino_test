@@ -37,7 +37,8 @@
       <view class="sum">合计 <text class="sum-num">{{order.totalText}}</text></view>
     </view>
 
-    <view wx:if="{{order.status === 'pending'}}" class="action-bar">
+    <view wx:if="{{order.status === 'pending'}}" class="action-bar action-bar-stack">
+      <view class="btn-cancel" bindtap="cancelOrder">取消订单</view>
       <view class="btn-pay" bindtap="payOrder">去支付</view>
     </view>
   </view>

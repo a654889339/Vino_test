@@ -1,6 +1,7 @@
 const app = getApp();
 const { openManual } = require('../../utils/openManual.js');
 const i18n = require('../../utils/i18n.js');
+const cosMedia = require('../../utils/cosMedia.js');
 
 Page({
   data: {
@@ -47,10 +48,14 @@ Page({
       .then(res => {
         const g = res.data || {};
         const parse = v => { try { return Array.isArray(v) ? v : JSON.parse(v || '[]'); } catch { return []; } };
+        const gid = Number(g.id);
+        const pdf = Number.isFinite(gid) && gid > 0
+          ? cosMedia.guideProductMediaUrl(gid, 'pdf', { apiBase: app.globalData.baseUrl })
+          : '';
         this.setData({
           guideName: g.name || '',
           helpItems: parse(g.helpItems),
-          manualPdfUrl: (g.manualPdfUrl && String(g.manualPdfUrl).trim()) || '',
+          manualPdfUrl: pdf,
           loading: false,
         });
       })

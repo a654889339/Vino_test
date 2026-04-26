@@ -3,7 +3,7 @@ const { sortGuidesByDisplayOrder, sortCategoriesForSidebar } = require('../../ut
 const i18n = require('../../utils/i18n.js');
 const { pick } = i18n;
 const currencyUtil = require('../../utils/currency.js');
-const { resolveMediaUrl } = require('../../utils/cosMedia.js');
+const { resolveMediaUrl, guideProductMediaUrl } = require('../../utils/cosMedia.js');
 
 Page({
   data: {
@@ -228,10 +228,10 @@ Page({
         const raw = res.data || [];
         const sorted = sortGuidesByDisplayOrder(raw, cat.name);
         const list = sorted.map((g) => {
-          const rawIcon = pick(g, 'iconUrl') || '';
-          const rawCover = pick(g, 'coverImage') || '';
-          const iconUrl = rawIcon ? resolveMediaUrl(rawIcon, app.globalData.baseUrl) : '';
-          const coverUrl = rawCover ? resolveMediaUrl(rawCover, app.globalData.baseUrl) : '';
+          const lang = i18n.isEn() ? 'en' : 'zh';
+          const opt = { lang, apiBase: app.globalData.baseUrl };
+          const coverUrl = guideProductMediaUrl(g.id, 'cover', opt);
+          const iconUrl = guideProductMediaUrl(g.id, 'icon', opt);
           const img = (coverUrl || iconUrl || '').trim();
           const sym = (g && g.currency && String(g.currency).trim()) ? String(g.currency).trim() : app.globalData.currencySymbol;
           const listPrice = Number(g && g.listPrice) || 0;

@@ -21,6 +21,7 @@ func RegisterRoutes(engine *gin.Engine, cfg *config.Config) {
 	api.GET("/app/status", AppStatus)
 
 	api.GET("/media/cos-config", MediaCosConfig)
+	api.GET("/media/catalog", MediaCatalog)
 	api.GET("/media/cos", MediaCosStream)
 	api.POST("/analytics/page-view", AnalyticsPageView)
 	api.GET("/admin/page-visit-stats", middleware.Auth(cfg), middleware.Admin(), AnalyticsStats)

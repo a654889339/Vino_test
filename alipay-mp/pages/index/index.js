@@ -1,6 +1,6 @@
 const app = getApp();
 const { buildSectionSkinContainerStyle } = require('../../utils/sectionSkin.js');
-const { resolveMediaUrl } = require('../../utils/cosMedia.js');
+const { resolveMediaUrl, guideProductMediaUrl } = require('../../utils/cosMedia.js');
 const i18n = require('../../utils/i18n.js');
 
 function getToken() {
@@ -86,12 +86,22 @@ Page({
       .then(res => {
         const list = res.data || [];
         const toFull = (u) => resolveMediaUrl(u, app.globalData.baseUrl);
-        const myProducts = list.map(item => ({
-          ...item,
-          categoryName: i18n.pick(item, 'categoryName') || item.categoryName || '',
-          productName: i18n.pick(item, 'productName') || item.productName || '',
-          iconUrl: item.iconUrl ? toFull(item.iconUrl) : '',
-        }));
+        const myProducts = list.map((item) => {
+          const gid = Number(item.guideId);
+          let iconUrl = '';
+          if (Number.isFinite(gid) && gid > 0) {
+            const lang = i18n.isEn() ? 'en' : 'zh';
+            iconUrl = guideProductMediaUrl(gid, 'icon', { lang, apiBase: app.globalData.baseUrl });
+          } else if (item.iconUrl) {
+            iconUrl = toFull(item.iconUrl);
+          }
+          return {
+            ...item,
+            categoryName: i18n.pick(item, 'categoryName') || item.categoryName || '',
+            productName: i18n.pick(item, 'productName') || item.productName || '',
+            iconUrl,
+          };
+        });
         this.setData({ myProducts });
       })
       .catch(() => this.setData({ myProducts: [] }));
@@ -162,6 +172,8 @@ Page({
 
   loadHomeConfig() {
     const toFull = (u) => resolveMediaUrl(u, app.globalData.baseUrl);
+    const lang = i18n.isEn() ? 'en' : 'zh';
+    const apiBase = app.globalData.baseUrl;
 
     const pHc = app.request({ url: '/home-config?all=1' }).catch(() => ({ data: [] }));
     const pGuides = app.request({ url: '/guides' }).catch(() => ({ data: [] }));
@@ -205,16 +217,17 @@ Page({
           const g = path ? (guidesBySlug[path] || guidesBySlug[path.toLowerCase()]) : null;
           let title = i18n.pick(row, 'title') || row.title || '';
           let iconUrl = '';
-          if (g) {
+          if (g && g.id) {
             title = i18n.pick(g, 'name') || title;
-            iconUrl = i18n.pick(g, 'iconUrl') || '';
+            iconUrl = guideProductMediaUrl(g.id, 'icon', { lang, apiBase });
+          } else if (row.imageUrl) {
+            iconUrl = toFull(row.imageUrl);
           }
-          if (!iconUrl && row.imageUrl) iconUrl = row.imageUrl;
           return {
             id: row.id,
             title,
             path,
-            iconUrl: iconUrl ? toFull(iconUrl) : '',
+            iconUrl,
           };
         });
 
@@ -225,17 +238,17 @@ Page({
           const g = path ? (guidesBySlug[path] || guidesBySlug[path.toLowerCase()]) : null;
           let title = i18n.pick(row, 'title') || row.title || '';
           let subtitle = (i18n.pick(row, 'desc') || row.desc || '').trim();
-          let coverImage = '';
-          let coverThumb = '';
-          if (g) {
+          let coverUrl = '';
+          if (g && g.id) {
             title = i18n.pick(g, 'name') || title;
             subtitle = i18n.pick(g, 'subtitle') || subtitle;
-            coverImage = i18n.pick(g, 'coverImage') || '';
-            coverThumb = i18n.pick(g, 'coverImageThumb') || '';
+            const th = guideProductMediaUrl(g.id, 'cover_thumb', { lang, apiBase });
+            const cv = guideProductMediaUrl(g.id, 'cover', { lang, apiBase });
+            coverUrl = (th || cv || '').trim();
           }
-          if (!coverImage && row.imageUrl) coverImage = row.imageUrl;
-          if (!coverThumb && row.imageUrlThumb) coverThumb = row.imageUrlThumb;
-          const coverUrl = toFull((coverImage || coverThumb || row.imageUrl || row.imageUrlThumb || '').trim());
+          if (!coverUrl) {
+            coverUrl = toFull((row.imageUrlThumb || row.imageUrl || '').trim());
+          }
           return { id: row.id, title, subtitle, path, coverUrl };
         });
 

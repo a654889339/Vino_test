@@ -20,6 +20,7 @@ function getJwtExpMs(token) {
 
 const currencyUtil = require('./utils/currency.js');
 const i18n = require('./utils/i18n.js');
+const cosMedia = require('./utils/cosMedia.js');
 const { BASE_URL } = require('./config.js');
 
 /** 检测明显错误的 API 根地址，避免只看到「连接被拒绝 / 域名无法解析」 */
@@ -68,19 +69,23 @@ App({
 
   onLaunch() {
     warnIfBadApiBase(this.globalData.baseUrl);
-    this.checkAppStatus();
-    this.loadCurrencySymbol();
-    i18n.loadI18nTexts();
-    const token = wx.getStorageSync('vino_token');
-    if (token) {
-      const expMs = getJwtExpMs(token);
-      if (expMs != null && Date.now() >= expMs) {
-        this.clearToken();
-        return;
+    const app = this;
+    cosMedia.fetchCosMediaConfig(app.globalData.baseUrl, () => {
+      cosMedia.fetchMediaCatalog(app.globalData.baseUrl, () => {});
+      app.checkAppStatus();
+      app.loadCurrencySymbol();
+      i18n.loadI18nTexts();
+      const token = wx.getStorageSync('vino_token');
+      if (token) {
+        const expMs = getJwtExpMs(token);
+        if (expMs != null && Date.now() >= expMs) {
+          app.clearToken();
+          return;
+        }
+        app.globalData.token = token;
+        app.fetchProfile();
       }
-      this.globalData.token = token;
-      this.fetchProfile();
-    }
+    });
   },
 
   checkAppStatus() {
