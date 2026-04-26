@@ -20,10 +20,15 @@ func RegisterRoutes(engine *gin.Engine, cfg *config.Config) {
 	api.GET("/health", Health)
 	api.GET("/app/status", AppStatus)
 
+	api.GET("/media/cos-config", MediaCosConfig)
 	api.GET("/media/cos", MediaCosStream)
 	api.POST("/analytics/page-view", AnalyticsPageView)
 	api.GET("/admin/page-visit-stats", middleware.Auth(cfg), middleware.Admin(), AnalyticsStats)
 	api.GET("/admin/db-catalog", middleware.Auth(cfg), middleware.Admin(), adminGetDbCatalog)
+	api.GET("/admin/user-carts", middleware.Auth(cfg), middleware.Admin(), adminListUserCarts)
+	api.GET("/admin/cart-items", middleware.Auth(cfg), middleware.Admin(), adminListCartItems)
+	api.GET("/admin/goods-order-items", middleware.Auth(cfg), middleware.Admin(), adminListGoodsOrderItems)
+	api.GET("/admin/media-asset-catalog", middleware.Auth(cfg), middleware.Admin(), adminMediaAssetCatalog)
 
 	auth := api.Group("/auth")
 	{
@@ -63,6 +68,7 @@ func RegisterRoutes(engine *gin.Engine, cfg *config.Config) {
 	goodsOrders := api.Group("/goods-orders")
 	{
 		goodsOrders.POST("/checkout", middleware.Auth(cfg), goodsOrderCheckout)
+		goodsOrders.POST("/:id/cancel", middleware.Auth(cfg), goodsOrderUserCancel)
 		goodsOrders.POST("/:id/pay-wechat", middleware.Auth(cfg), func(c *gin.Context) { goodsOrderPayWechatPrepay(c, cfg) })
 		goodsOrders.GET("", middleware.Auth(cfg), goodsOrderList)
 		goodsOrders.GET("/:id", middleware.Auth(cfg), goodsOrderDetail)

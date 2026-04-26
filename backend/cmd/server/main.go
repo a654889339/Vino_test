@@ -12,6 +12,7 @@ import (
 	"vino/backend/internal/db"
 	"vino/backend/internal/handlers"
 	"vino/backend/internal/middleware"
+	"vino/backend/internal/models"
 	"vino/backend/internal/stat"
 
 	"github.com/gin-contrib/cors"
@@ -42,6 +43,11 @@ func main() {
 				"source": "db", "action": "db_modify", "database": dn, "table": c.Table, "column": c.Column, "reason": "column_added",
 			})
 		}
+	}
+	var cartItemRows int64
+	if err := db.DB.Model(&models.CartItem{}).Count(&cartItemRows).Error; err == nil && cartItemRows == 0 {
+		log.Printf("[Vino] cart_items 为空，从 users.cartJson 回填…")
+		handlers.BackfillCartItemsForAllUsers()
 	}
 	// 扩展 users.role enum 并在缺省时自动提升首个管理员为超级管理员
 	db.MigrateSuperAdmin()

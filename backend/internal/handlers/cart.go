@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
+	"log"
 	"strings"
 
 	"vino/backend/internal/db"
@@ -9,7 +11,54 @@ import (
 	"vino/backend/internal/resp"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
+
+// ErrCartMixedCurrency 购物车中存在多种非空币种（与 PUT /api/cart 校验一致）。
+var ErrCartMixedCurrency = errors.New("购物车不支持混币种商品")
+
+// validateCartLinesCurrency 校验多行购物车商品币种一致（空币种不参与约束）。tx 可为 nil 表示使用默认 db.DB。
+func validateCartLinesCurrency(tx *gorm.DB, items []cartLineIn) error {
+	if len(items) == 0 {
+		return nil
+	}
+	if tx == nil {
+		tx = db.DB
+	}
+	ids := make([]int, 0, len(items))
+	for _, it := range items {
+		if it.GuideID > 0 {
+			ids = append(ids, it.GuideID)
+		}
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	var rows []struct {
+		ID       int    `gorm:"column:id"`
+		Currency string `gorm:"column:currency"`
+	}
+	_ = tx.Model(&models.DeviceGuide{}).Select("id", "currency").Where("id IN ?", ids).Find(&rows).Error
+	cMap := map[int]string{}
+	for _, r := range rows {
+		cMap[r.ID] = strings.TrimSpace(r.Currency)
+	}
+	seen := ""
+	for _, it := range items {
+		cur := strings.TrimSpace(cMap[it.GuideID])
+		if cur == "" {
+			continue
+		}
+		if seen == "" {
+			seen = cur
+			continue
+		}
+		if !strings.EqualFold(seen, cur) {
+			return ErrCartMixedCurrency
+		}
+	}
+	return nil
+}
 
 type cartLineIn struct {
 	GuideID int `json:"guideId"`
@@ -48,6 +97,58 @@ func parseUserCartJSON(raw *string) []cartLineIn {
 		out = append(out, it)
 	}
 	return out
+}
+
+// ReplaceCartItemsFromCartJSON 事务内将 userId 对应的 cart_items 全量替换为 cartJson 解析结果（与 mergeCartLines 规则一致）。
+func ReplaceCartItemsFromCartJSON(tx *gorm.DB, userID int, cartJSON *string) error {
+	if err := tx.Where("userId = ?", userID).Delete(&models.CartItem{}).Error; err != nil {
+		return err
+	}
+	merged := mergeCartLines(parseUserCartJSON(cartJSON))
+	for _, it := range merged {
+		var g models.DeviceGuide
+		name := ""
+		unit := 0.0
+		cur := ""
+		if err := tx.Select("id", "name", "listPrice", "currency").First(&g, it.GuideID).Error; err == nil {
+			name = strings.TrimSpace(g.Name)
+			unit = g.ListPrice
+			if unit < 0 {
+				unit = 0
+			}
+			cur = strings.TrimSpace(g.Currency)
+		}
+		row := models.CartItem{
+			UserID:            userID,
+			GuideID:           it.GuideID,
+			Qty:               it.Qty,
+			NameSnapshot:      name,
+			UnitPriceSnapshot: unit,
+			CurrencySnapshot:  cur,
+		}
+		if err := tx.Create(&row).Error; err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// BackfillCartItemsForAllUsers 扫描 cartJson 非空的用户并写入 cart_items（用于空表一次性回填）。
+func BackfillCartItemsForAllUsers() {
+	var users []models.User
+	if err := db.DB.Select("id", "cartJson").Where("(cartJson IS NOT NULL AND TRIM(cartJson) != '' AND cartJson != ?)", "[]").Find(&users).Error; err != nil {
+		log.Printf("[Vino] BackfillCartItemsForAllUsers: list users: %v", err)
+		return
+	}
+	for _, u := range users {
+		uid := u.ID
+		cj := u.CartJSON
+		if err := db.DB.Transaction(func(tx *gorm.DB) error {
+			return ReplaceCartItemsFromCartJSON(tx, uid, cj)
+		}); err != nil {
+			log.Printf("[Vino] BackfillCartItemsForAllUsers userId=%d: %v", uid, err)
+		}
+	}
 }
 
 func mergeCartLines(items []cartLineIn) []cartLineIn {
@@ -139,41 +240,9 @@ func mePutCart(c *gin.Context) {
 		return
 	}
 	merged := mergeCartLines(body.Items)
-
-	// 禁止混币种：按 guideId 查询对应的 DeviceGuide.currency
-	if len(merged) > 0 {
-		ids := make([]int, 0, len(merged))
-		for _, it := range merged {
-			if it.GuideID > 0 {
-				ids = append(ids, it.GuideID)
-			}
-		}
-		if len(ids) > 0 {
-			var rows []struct {
-				ID       int    `gorm:"column:id"`
-				Currency string `gorm:"column:currency"`
-			}
-			_ = db.DB.Model(&models.DeviceGuide{}).Select("id", "currency").Where("id IN ?", ids).Find(&rows).Error
-			cMap := map[int]string{}
-			for _, r := range rows {
-				cMap[r.ID] = strings.TrimSpace(r.Currency)
-			}
-			seen := ""
-			for _, it := range merged {
-				cur := strings.TrimSpace(cMap[it.GuideID])
-				if cur == "" {
-					continue
-				}
-				if seen == "" {
-					seen = cur
-					continue
-				}
-				if !strings.EqualFold(seen, cur) {
-					resp.Err(c, 400, 400, "购物车不支持混币种商品")
-					return
-				}
-			}
-		}
+	if err := validateCartLinesCurrency(nil, merged); err != nil {
+		resp.Err(c, 400, 400, err.Error())
+		return
 	}
 
 	b, err := json.Marshal(merged)
@@ -183,6 +252,12 @@ func mePutCart(c *gin.Context) {
 	}
 	s := string(b)
 	if err := db.DB.Exec("UPDATE `users` SET `cartJson` = ? WHERE `id` = ?", s, u.ID).Error; err != nil {
+		resp.Err(c, 500, 500, "保存失败")
+		return
+	}
+	if err := db.DB.Transaction(func(tx *gorm.DB) error {
+		return ReplaceCartItemsFromCartJSON(tx, u.ID, &s)
+	}); err != nil {
 		resp.Err(c, 500, 500, "保存失败")
 		return
 	}

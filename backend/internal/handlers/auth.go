@@ -704,6 +704,7 @@ func authAdminDeleteUser(c *gin.Context) {
 		tx.Where("userId = ?", userID).Delete(&models.Address{})
 		tx.Where("userId = ?", userID).Delete(&models.Message{})
 		tx.Where("userId = ?", userID).Delete(&models.UserProduct{})
+		tx.Where("userId = ?", userID).Delete(&models.CartItem{})
 		return tx.Delete(&models.User{}, userID).Error
 	})
 	if err != nil {

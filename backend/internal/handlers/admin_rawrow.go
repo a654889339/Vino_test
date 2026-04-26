@@ -64,6 +64,10 @@ var rawRowTableSpecs = map[string]tableSpec{
 	"inventory_products":   {pk: "id", readonly: baseReadonly},
 	"inventory_categories": {pk: "id", readonly: baseReadonly},
 	"user_products":        {pk: "id", readonly: baseReadonly},
+	"cart_items": {pk: "id", readonly: append([]string{
+		"userId", "guideId", "qty",
+		"nameSnapshot", "unitPriceSnapshot", "currencySnapshot",
+	}, baseReadonly...)},
 	"home_configs":         {pk: "id", readonly: baseReadonly},
 	"i18n_texts":           {pk: "id", readonly: baseReadonly},
 	"messages":             {pk: "id", readonly: baseReadonly},

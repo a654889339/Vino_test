@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"strconv"
@@ -20,6 +21,9 @@ import (
 	"gorm.io/gorm"
 )
 
+// errGoodsOrderCancelRace 事务内将订单置为取消时受影响行数为 0（并发支付或已取消）。
+var errGoodsOrderCancelRace = errors.New("goods_order_cancel_race")
+
 func genGoodsOrderNo() string {
 	now := time.Now()
 	var b [4]byte
@@ -29,6 +33,7 @@ func genGoodsOrderNo() string {
 }
 
 // goodsOrderCheckout POST /api/goods-orders/checkout
+// 以用户 DB 中整份 cartJson 为准生成订单并清空车；与前端「勾选展示」关系见 .cursor/skills/vino-cart-goods-order/SKILL.md。
 // body: { contactName, contactPhone, address, remark }
 func goodsOrderCheckout(c *gin.Context) {
 	u, ok := ctxUser(c)
@@ -165,6 +170,9 @@ func goodsOrderCheckout(c *gin.Context) {
 		if err := tx.Exec("UPDATE `users` SET `cartJson` = ? WHERE `id` = ?", empty, u.ID).Error; err != nil {
 			return err
 		}
+		if err := ReplaceCartItemsFromCartJSON(tx, u.ID, &empty); err != nil {
+			return err
+		}
 		out = o
 		out.Items = orderItems
 		return nil
@@ -227,6 +235,78 @@ func goodsOrderDetail(c *gin.Context) {
 		return
 	}
 	resp.OK(c, o)
+}
+
+// goodsOrderUserCancel POST /api/goods-orders/:id/cancel — 待付款取消并将订单行合并回 cartJson。
+func goodsOrderUserCancel(c *gin.Context) {
+	u, ok := ctxUser(c)
+	if !ok {
+		return
+	}
+	id, ok := parseID(c, "id")
+	if !ok {
+		resp.Err(c, 400, 400, "参数错误")
+		return
+	}
+
+	var o models.GoodsOrder
+	if err := db.DB.Preload("Items").First(&o, id).Error; err != nil {
+		resp.Err(c, 404, 404, "订单不存在")
+		return
+	}
+	if o.UserID != u.ID {
+		resp.Err(c, 403, 403, "无权操作该订单")
+		return
+	}
+	if o.Status != "pending" {
+		resp.Err(c, 400, 400, "仅待付款订单可取消")
+		return
+	}
+
+	err := db.DB.Transaction(func(tx *gorm.DB) error {
+		res := tx.Model(&models.GoodsOrder{}).Where("id = ? AND userId = ? AND status = ?", id, u.ID, "pending").Update("status", "cancelled")
+		if res.Error != nil {
+			return res.Error
+		}
+		if res.RowsAffected != 1 {
+			return errGoodsOrderCancelRace
+		}
+
+		var user models.User
+		if err := tx.Select("id", "cartJson").First(&user, u.ID).Error; err != nil {
+			return err
+		}
+		cur := parseUserCartJSON(user.CartJSON)
+		for _, line := range o.Items {
+			cur = append(cur, cartLineIn{GuideID: line.GuideID, Qty: line.Qty})
+		}
+		merged := mergeCartLines(cur)
+		if err := validateCartLinesCurrency(tx, merged); err != nil {
+			return err
+		}
+		b, err := json.Marshal(merged)
+		if err != nil {
+			return err
+		}
+		mergedStr := string(b)
+		if err := tx.Exec("UPDATE `users` SET `cartJson` = ? WHERE `id` = ?", mergedStr, u.ID).Error; err != nil {
+			return err
+		}
+		return ReplaceCartItemsFromCartJSON(tx, u.ID, &mergedStr)
+	})
+	if err != nil {
+		if errors.Is(err, errGoodsOrderCancelRace) {
+			resp.Err(c, 409, 409, "订单状态已变更，请刷新后重试")
+			return
+		}
+		if errors.Is(err, ErrCartMixedCurrency) {
+			resp.Err(c, 400, 400, "恢复购物车后将出现混币种，请先调整购物车后再取消订单")
+			return
+		}
+		resp.Err(c, 500, 500, "取消失败")
+		return
+	}
+	resp.OKMsg(c, "已取消订单，商品已回到购物车")
 }
 
 // goodsOrderPayWechatPrepay POST /api/goods-orders/:id/pay-wechat

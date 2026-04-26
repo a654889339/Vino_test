@@ -1657,6 +1657,97 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       </div>
     </div>
 
+    <!-- 商品订单明细管理（goods_order_items 行表） -->
+    <div class="dash-page" id="page-goodsOrderItems">
+      <div class="dash-section">
+        <div class="section-header">
+          <div>
+            <h3>商品订单明细</h3>
+            <p style="font-size:12px;color:#666;margin:4px 0 0 0">物理表：<code>goods_order_items</code>（关联 <code>goods_orders</code>、<code>device_guides</code>）</p>
+          </div>
+          <button class="refresh-btn" onclick="adminGoiMgrPage=1;loadAdminGoodsOrderItemsPage()">刷新</button>
+        </div>
+        <div class="order-filters" style="flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:12px">
+          <span style="font-size:13px;color:#666">订单ID：</span>
+          <input type="number" id="adminGoiSearchOrderId" class="form-input" placeholder="精确" style="width:90px;padding:6px 10px" min="1" onkeydown="if(event.key==='Enter'){adminGoiMgrPage=1;loadAdminGoodsOrderItemsPage()}" />
+          <span style="font-size:13px;color:#666">订单号：</span>
+          <input type="text" id="adminGoiSearchOrderNo" class="form-input" placeholder="模糊" style="width:140px;padding:6px 10px" onkeydown="if(event.key==='Enter'){adminGoiMgrPage=1;loadAdminGoodsOrderItemsPage()}" />
+          <span style="font-size:13px;color:#666">用户ID：</span>
+          <input type="number" id="adminGoiSearchUserId" class="form-input" placeholder="精确" style="width:90px;padding:6px 10px" min="1" onkeydown="if(event.key==='Enter'){adminGoiMgrPage=1;loadAdminGoodsOrderItemsPage()}" />
+          <span style="font-size:13px;color:#666">商品ID：</span>
+          <input type="number" id="adminGoiSearchGuideId" class="form-input" placeholder="精确" style="width:90px;padding:6px 10px" min="1" onkeydown="if(event.key==='Enter'){adminGoiMgrPage=1;loadAdminGoodsOrderItemsPage()}" />
+          <button type="button" class="refresh-btn" onclick="adminGoiMgrPage=1;loadAdminGoodsOrderItemsPage()">搜索</button>
+          <button type="button" class="refresh-btn" style="background:#64748b" onclick="['adminGoiSearchOrderId','adminGoiSearchOrderNo','adminGoiSearchUserId','adminGoiSearchGuideId'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});adminGoiMgrPage=1;loadAdminGoodsOrderItemsPage()">重置</button>
+        </div>
+        <table class="order-table">
+          <thead><tr><th>行ID</th><th>订单ID</th><th>订单号</th><th>用户ID</th><th>商品ID</th><th>商品名(库)</th><th>名称快照</th><th>数量</th><th>单价</th><th>小计</th><th>操作</th></tr></thead>
+          <tbody id="adminGoiMgrTableBody"></tbody>
+        </table>
+        <div class="order-empty" id="adminGoiMgrEmpty" style="display:none">暂无明细</div>
+        <div class="pagination" id="adminGoiMgrPagination"></div>
+      </div>
+    </div>
+
+    <!-- 用户购物车管理 -->
+    <div class="dash-page" id="page-userCarts">
+      <div class="dash-section">
+        <div class="section-header">
+          <div>
+            <h3>有购物车数据的用户</h3>
+            <p style="font-size:12px;color:#666;margin:4px 0 0 0">物理表：<code>users.cartJson</code> 与 <code>cart_items</code> 双写；本页列出非空车或仍有明细行的用户。</p>
+          </div>
+          <button class="refresh-btn" onclick="userCartMgrPage=1;loadUserCarts()">刷新</button>
+        </div>
+        <div class="order-filters" style="flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:12px">
+          <span style="font-size:13px;color:#666">检索：</span>
+          <select id="userCartSearchType" class="form-input" style="width:120px;padding:6px 10px">
+            <option value="">全部</option>
+            <option value="id">用户ID</option>
+            <option value="username">用户名</option>
+            <option value="phone">手机号</option>
+          </select>
+          <input type="text" id="userCartSearchKeyword" class="form-input" placeholder="关键词" style="width:200px;padding:6px 10px" onkeydown="if(event.key==='Enter'){userCartMgrPage=1;loadUserCarts()}" />
+          <button type="button" class="refresh-btn" onclick="userCartMgrPage=1;loadUserCarts()">搜索</button>
+          <button type="button" class="refresh-btn" style="background:#64748b" onclick="document.getElementById('userCartSearchKeyword').value='';document.getElementById('userCartSearchType').value='';userCartMgrPage=1;loadUserCarts()">重置</button>
+        </div>
+        <table class="order-table">
+          <thead><tr><th>用户ID</th><th>用户名</th><th>手机</th><th>cartJson 摘要</th><th>cart_items 行数</th><th>注册时间</th></tr></thead>
+          <tbody id="userCartMgrTableBody"></tbody>
+        </table>
+        <div class="order-empty" id="userCartMgrEmpty" style="display:none">暂无数据</div>
+        <div class="pagination" id="userCartMgrPagination"></div>
+      </div>
+    </div>
+
+    <!-- 购物车商品明细管理 -->
+    <div class="dash-page" id="page-cartItems">
+      <div class="dash-section">
+        <div class="section-header">
+          <div>
+            <h3>购物车行明细</h3>
+            <p style="font-size:12px;color:#666;margin:4px 0 0 0">物理表：<code>cart_items</code></p>
+          </div>
+          <button class="refresh-btn" onclick="adminCartItemMgrPage=1;loadAdminCartItems()">刷新</button>
+        </div>
+        <div class="order-filters" style="flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:12px">
+          <span style="font-size:13px;color:#666">用户ID：</span>
+          <input type="number" id="adminCiSearchUserId" class="form-input" placeholder="精确" style="width:90px;padding:6px 10px" min="1" onkeydown="if(event.key==='Enter'){adminCartItemMgrPage=1;loadAdminCartItems()}" />
+          <span style="font-size:13px;color:#666">商品ID：</span>
+          <input type="number" id="adminCiSearchGuideId" class="form-input" placeholder="精确" style="width:90px;padding:6px 10px" min="1" onkeydown="if(event.key==='Enter'){adminCartItemMgrPage=1;loadAdminCartItems()}" />
+          <span style="font-size:13px;color:#666">关键词：</span>
+          <input type="text" id="adminCiSearchQ" class="form-input" placeholder="用户名/商品名/快照" style="width:180px;padding:6px 10px" onkeydown="if(event.key==='Enter'){adminCartItemMgrPage=1;loadAdminCartItems()}" />
+          <button type="button" class="refresh-btn" onclick="adminCartItemMgrPage=1;loadAdminCartItems()">搜索</button>
+          <button type="button" class="refresh-btn" style="background:#64748b" onclick="['adminCiSearchUserId','adminCiSearchGuideId','adminCiSearchQ'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});adminCartItemMgrPage=1;loadAdminCartItems()">重置</button>
+        </div>
+        <table class="order-table">
+          <thead><tr><th>行ID</th><th>用户ID</th><th>用户名</th><th>商品ID</th><th>商品名</th><th>数量</th><th>单价快照</th><th>币种</th><th>名称快照</th><th>操作</th></tr></thead>
+          <tbody id="adminCartItemMgrTableBody"></tbody>
+        </table>
+        <div class="order-empty" id="adminCartItemMgrEmpty" style="display:none">暂无数据</div>
+        <div class="pagination" id="adminCartItemMgrPagination"></div>
+      </div>
+    </div>
+
     <!-- ========== Outlet Pages ========== -->
     <!-- Outlet Overview -->
     <div class="dash-page" id="page-outletOverview">
@@ -1882,6 +1973,12 @@ const goodsOrderPageSize = 50;
 let goodsOrderFilter = 'all';
 let goodsOrderItemPage = 1;
 const goodsOrderItemPageSize = 50;
+let adminGoiMgrPage = 1;
+const adminGoiMgrPageSize = 50;
+let userCartMgrPage = 1;
+const userCartMgrPageSize = 50;
+let adminCartItemMgrPage = 1;
+const adminCartItemMgrPageSize = 50;
 let currentLogKind = 'order';
 
 function jumpUserPageGo() {
@@ -1958,7 +2055,7 @@ let currentHCPage = 'homeConfig';
 let currentGroup = 'ToC';
 
 const pageCfgPages = ['overview','guides','serviceConfig','homeConfig','homeAnimConfig','pageThemeConfig','i18nConfig','messages'];
-const dataMgrPages = ['orders','goodsOrders','users','inventory'];
+const dataMgrPages = ['orders','goodsOrders','goodsOrderItems','users','userCarts','cartItems','inventory'];
 const outletPages = ['outletOverview','outletOrders','outletUsers','outletServiceConfig','outletHomeConfig','outletHomeAnimConfig','outletMineConfig','outletMessages'];
 const debugPages = ['debugTocData','debugTocPage','debugFeatureFlags'];
 
@@ -1968,7 +2065,8 @@ const pageCfgNavItems = [
   {page:'pageThemeConfig',label:'页面基础配置'},{page:'i18nConfig',label:'语言翻译'},{page:'messages',label:'留言板'}
 ];
 const dataMgrNavItems = [
-  {page:'orders',label:'服务订单管理'},{page:'goodsOrders',label:'商品订单管理'},{page:'users',label:'用户管理'},{page:'inventory',label:'商品库存'}
+  {page:'orders',label:'服务订单管理'},{page:'goodsOrders',label:'商品订单管理'},{page:'goodsOrderItems',label:'商品订单明细管理'},
+  {page:'users',label:'用户管理'},{page:'userCarts',label:'用户购物车管理'},{page:'cartItems',label:'购物车商品明细管理'},{page:'inventory',label:'商品库存'}
 ];
 const outletNavItems = [
   {page:'outletOverview',label:'概览'},{page:'outletOrders',label:'订单管理'},{page:'outletUsers',label:'用户管理'},
@@ -2084,7 +2182,10 @@ function switchPage(page) {
   if (page !== 'outletMessages') { stopOutletMsgPolling(); outletCurrentChatUserId = null; }
   if (page === 'orders') loadOrders();
   if (page === 'goodsOrders') { loadGoodsOrderStats(); loadGoodsOrders(); }
+  if (page === 'goodsOrderItems') { adminGoiMgrPage = 1; loadAdminGoodsOrderItemsPage(); }
   if (page === 'users') { userPage = 1; loadUsers(); }
+  if (page === 'userCarts') { userCartMgrPage = 1; loadUserCarts(); }
+  if (page === 'cartItems') { adminCartItemMgrPage = 1; loadAdminCartItems(); }
   if (page === 'guides') { loadCategories(); loadGuides(); }
   if (page === 'serviceConfig') { loadServiceCategories(); loadServices(); }
   if (page === 'inventory') { invProductPage = 1; loadInventoryCategories(); loadInventoryProducts(); }
@@ -2763,6 +2864,167 @@ async function loadGoodsOrderItems() {
     }
   } catch (e) {
     tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:#B91C1C">加载失败：' + escapeHtml(e && e.message || e) + '</td></tr>';
+  }
+}
+
+async function loadAdminGoodsOrderItemsPage() {
+  const tbody = document.getElementById('adminGoiMgrTableBody');
+  const empty = document.getElementById('adminGoiMgrEmpty');
+  const pagination = document.getElementById('adminGoiMgrPagination');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:30px;color:#999">加载中...</td></tr>';
+  if (empty) empty.style.display = 'none';
+  try {
+    const params = new URLSearchParams({ page: adminGoiMgrPage, pageSize: adminGoiMgrPageSize });
+    const oid = document.getElementById('adminGoiSearchOrderId') && document.getElementById('adminGoiSearchOrderId').value.trim();
+    const ono = document.getElementById('adminGoiSearchOrderNo') && document.getElementById('adminGoiSearchOrderNo').value.trim();
+    const uid = document.getElementById('adminGoiSearchUserId') && document.getElementById('adminGoiSearchUserId').value.trim();
+    const gid = document.getElementById('adminGoiSearchGuideId') && document.getElementById('adminGoiSearchGuideId').value.trim();
+    if (oid) params.set('orderId', oid);
+    if (ono) params.set('orderNo', ono);
+    if (uid) params.set('userId', uid);
+    if (gid) params.set('guideId', gid);
+    const res = await api('/admin/goods-order-items?' + params);
+    if (!res || res.code !== 0) {
+      tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:30px;color:#B91C1C">加载失败：' + escapeHtml((res && res.message) || '未知错误') + '</td></tr>';
+      return;
+    }
+    const data = res.data || {};
+    const list = data.list || [];
+    const total = Number(data.total || 0);
+    const page = Number(data.page || adminGoiMgrPage);
+    const pageSize = Number(data.pageSize || adminGoiMgrPageSize);
+    if (!list.length) {
+      tbody.innerHTML = '';
+      if (empty) empty.style.display = 'block';
+    } else {
+      if (empty) empty.style.display = 'none';
+      tbody.innerHTML = list.map(it => `<tr>
+        <td style="font-weight:600">${it.id}</td>
+        <td>${it.orderId != null ? it.orderId : '-'}</td>
+        <td style="font-size:12px;word-break:break-all">${escapeHtml(it.orderNo || '-')}</td>
+        <td>${it.userId != null ? it.userId : '-'}</td>
+        <td>${it.guideId != null ? it.guideId : '-'}</td>
+        <td style="font-size:12px;max-width:120px;word-break:break-all">${escapeHtml(it.guideName || '-')}</td>
+        <td style="font-size:12px;max-width:140px;word-break:break-all">${escapeHtml(it.nameSnapshot || '-')}</td>
+        <td>${it.qty || 0}</td>
+        <td style="color:var(--primary);font-weight:600">${formatAdminPrice(it.unitPrice)}</td>
+        <td style="color:var(--primary);font-weight:600">${formatAdminPrice(it.lineTotal)}</td>
+        <td><button class="detail-btn" onclick="openRawRowViewModal('goods_order_items',${it.id})">详情</button></td>
+      </tr>`).join('');
+    }
+    const totalPages = Math.ceil(total / pageSize);
+    if (pagination) {
+      pagination.innerHTML = totalPages > 1 ? `
+        <button class="page-btn" onclick="adminGoiMgrPage--;loadAdminGoodsOrderItemsPage()" ${page <= 1 ? 'disabled' : ''}>上一页</button>
+        <span class="page-info">${page} / ${totalPages}（共 ${total} 条）</span>
+        <button class="page-btn" onclick="adminGoiMgrPage++;loadAdminGoodsOrderItemsPage()" ${page >= totalPages ? 'disabled' : ''}>下一页</button>` : `<span class="page-info">共 ${total} 条</span>`;
+    }
+  } catch (e) {
+    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:30px;color:#B91C1C">加载失败：' + escapeHtml(e && e.message || e) + '</td></tr>';
+  }
+}
+
+async function loadUserCarts() {
+  const tbody = document.getElementById('userCartMgrTableBody');
+  const empty = document.getElementById('userCartMgrEmpty');
+  const pagination = document.getElementById('userCartMgrPagination');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:#999">加载中...</td></tr>';
+  if (empty) empty.style.display = 'none';
+  try {
+    const params = new URLSearchParams({ page: userCartMgrPage, pageSize: userCartMgrPageSize });
+    const kw = document.getElementById('userCartSearchKeyword') && document.getElementById('userCartSearchKeyword').value.trim();
+    const st = document.getElementById('userCartSearchType') && document.getElementById('userCartSearchType').value;
+    if (kw && st) { params.set('q', kw); params.set('searchType', st); }
+    const res = await api('/admin/user-carts?' + params);
+    if (!res || res.code !== 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:#B91C1C">加载失败：' + escapeHtml((res && res.message) || '未知错误') + '</td></tr>';
+      return;
+    }
+    const data = res.data || {};
+    const list = data.list || [];
+    const total = Number(data.total || 0);
+    const page = Number(data.page || userCartMgrPage);
+    const pageSize = Number(data.pageSize || userCartMgrPageSize);
+    if (!list.length) {
+      tbody.innerHTML = '';
+      if (empty) empty.style.display = 'block';
+    } else {
+      if (empty) empty.style.display = 'none';
+      tbody.innerHTML = list.map(it => `<tr>
+        <td>${it.id}</td>
+        <td>${escapeHtml(it.username || '')}</td>
+        <td>${escapeHtml(it.phone || '')}</td>
+        <td style="font-size:11px;max-width:320px;word-break:break-all">${escapeHtml(it.cartJsonSnippet || '')}</td>
+        <td>${it.cartItemCount != null ? it.cartItemCount : 0}</td>
+        <td style="font-size:12px">${it.createdAt ? formatDateTime(it.createdAt) : '-'}</td>
+      </tr>`).join('');
+    }
+    const totalPages = Math.ceil(total / pageSize);
+    if (pagination) {
+      pagination.innerHTML = totalPages > 1 ? `
+        <button class="page-btn" onclick="userCartMgrPage--;loadUserCarts()" ${page <= 1 ? 'disabled' : ''}>上一页</button>
+        <span class="page-info">${page} / ${totalPages}（共 ${total} 条）</span>
+        <button class="page-btn" onclick="userCartMgrPage++;loadUserCarts()" ${page >= totalPages ? 'disabled' : ''}>下一页</button>` : `<span class="page-info">共 ${total} 条</span>`;
+    }
+  } catch (e) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:#B91C1C">加载失败：' + escapeHtml(e && e.message || e) + '</td></tr>';
+  }
+}
+
+async function loadAdminCartItems() {
+  const tbody = document.getElementById('adminCartItemMgrTableBody');
+  const empty = document.getElementById('adminCartItemMgrEmpty');
+  const pagination = document.getElementById('adminCartItemMgrPagination');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:#999">加载中...</td></tr>';
+  if (empty) empty.style.display = 'none';
+  try {
+    const params = new URLSearchParams({ page: adminCartItemMgrPage, pageSize: adminCartItemMgrPageSize });
+    const uid = document.getElementById('adminCiSearchUserId') && document.getElementById('adminCiSearchUserId').value.trim();
+    const gid = document.getElementById('adminCiSearchGuideId') && document.getElementById('adminCiSearchGuideId').value.trim();
+    const q = document.getElementById('adminCiSearchQ') && document.getElementById('adminCiSearchQ').value.trim();
+    if (uid) params.set('userId', uid);
+    if (gid) params.set('guideId', gid);
+    if (q) params.set('q', q);
+    const res = await api('/admin/cart-items?' + params);
+    if (!res || res.code !== 0) {
+      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:#B91C1C">加载失败：' + escapeHtml((res && res.message) || '未知错误') + '</td></tr>';
+      return;
+    }
+    const data = res.data || {};
+    const list = data.list || [];
+    const total = Number(data.total || 0);
+    const page = Number(data.page || adminCartItemMgrPage);
+    const pageSize = Number(data.pageSize || adminCartItemMgrPageSize);
+    if (!list.length) {
+      tbody.innerHTML = '';
+      if (empty) empty.style.display = 'block';
+    } else {
+      if (empty) empty.style.display = 'none';
+      tbody.innerHTML = list.map(it => `<tr>
+        <td style="font-weight:600">${it.id}</td>
+        <td>${it.userId}</td>
+        <td>${escapeHtml(it.username || '-')}</td>
+        <td>${it.guideId}</td>
+        <td style="font-size:12px;max-width:120px;word-break:break-all">${escapeHtml(it.guideName || '-')}</td>
+        <td>${it.qty}</td>
+        <td style="color:var(--primary);font-weight:600">${formatAdminPrice(it.unitPriceSnapshot)}</td>
+        <td>${escapeHtml(it.currencySnapshot || '')}</td>
+        <td style="font-size:11px;max-width:160px;word-break:break-all">${escapeHtml(it.nameSnapshot || '')}</td>
+        <td><button class="detail-btn" onclick="openRawRowViewModal('cart_items',${it.id})">详情</button></td>
+      </tr>`).join('');
+    }
+    const totalPages = Math.ceil(total / pageSize);
+    if (pagination) {
+      pagination.innerHTML = totalPages > 1 ? `
+        <button class="page-btn" onclick="adminCartItemMgrPage--;loadAdminCartItems()" ${page <= 1 ? 'disabled' : ''}>上一页</button>
+        <span class="page-info">${page} / ${totalPages}（共 ${total} 条）</span>
+        <button class="page-btn" onclick="adminCartItemMgrPage++;loadAdminCartItems()" ${page >= totalPages ? 'disabled' : ''}>下一页</button>` : `<span class="page-info">共 ${total} 条</span>`;
+    }
+  } catch (e) {
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:#B91C1C">加载失败：' + escapeHtml(e && e.message || e) + '</td></tr>';
   }
 }
 
@@ -6643,6 +6905,11 @@ async function submitRawRowEdit() {
         'users': () => typeof loadUsers === 'function' && loadUsers(),
         'orders': () => typeof loadOrders === 'function' && loadOrders(),
         'goods_orders': () => typeof loadGoodsOrders === 'function' && loadGoodsOrders(),
+        'goods_order_items': () => {
+          if (typeof loadAdminGoodsOrderItemsPage === 'function') loadAdminGoodsOrderItemsPage();
+          if (typeof loadGoodsOrderItems === 'function') loadGoodsOrderItems();
+        },
+        'cart_items': () => typeof loadAdminCartItems === 'function' && loadAdminCartItems(),
         'device_guides': () => typeof loadGuides === 'function' && loadGuides(),
         'product_categories': () => typeof loadCategories === 'function' && loadCategories(),
         'services': () => typeof loadServices === 'function' && loadServices(),

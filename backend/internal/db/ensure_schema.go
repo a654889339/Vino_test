@@ -36,6 +36,7 @@ func ManagedModelEntities() []any {
 		&models.InventoryCategory{},
 		&models.InventoryProduct{},
 		&models.UserProduct{},
+		&models.CartItem{},
 		&models.OutletServiceCategory{},
 		&models.OutletService{},
 		&models.OutletHomeConfig{},
