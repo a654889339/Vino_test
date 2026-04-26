@@ -12,7 +12,10 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, onUnmounted } from 'vue';
+import { getBlobUrlForDisplay, revokeIfCachedBlob } from '@/utils/cosMedia.js';
+
+const API_OPT = { apiBase: import.meta.env.VITE_API_BASE || '' };
 
 const props = defineProps({
   src: { type: String, default: '' },
@@ -22,31 +25,95 @@ const props = defineProps({
   imgStyle: { type: [String, Object], default: undefined },
 });
 
-const displaySrc = ref(props.thumb || props.src);
+const displaySrc = ref('');
+const loadGen = ref(0);
+const showingThumb = ref(false);
+/** 当前 <img> 的 blob: 或用于 revoke 的 URL，便于卸载时与失败回退时释放 */
+let currentObjectUrl = '';
 
-function loadFull() {
-  if (!props.src || props.src === displaySrc.value) return;
-  const img = new Image();
-  img.onload = () => { displaySrc.value = props.src; };
-  img.src = props.src;
+function releaseCurrentBlob() {
+  if (currentObjectUrl && currentObjectUrl.startsWith('blob:')) {
+    revokeIfCachedBlob(currentObjectUrl);
+  }
+  currentObjectUrl = '';
+}
+
+async function urlForRender(raw) {
+  if (!raw) return '';
+  return getBlobUrlForDisplay(raw, API_OPT);
+}
+
+async function applyFromProps() {
+  const g = ++loadGen.value;
+  const thumb = (props.thumb && String(props.thumb).trim()) ? String(props.thumb) : '';
+  const src = (props.src && String(props.src).trim()) ? String(props.src) : '';
+  if (!thumb && !src) {
+    displaySrc.value = '';
+    showingThumb.value = false;
+    return;
+  }
+  if (thumb && src) {
+    const u = await urlForRender(thumb);
+    if (g !== loadGen.value) return;
+    releaseCurrentBlob();
+    if (u.startsWith('blob:')) currentObjectUrl = u;
+    displaySrc.value = u;
+    showingThumb.value = true;
+    return;
+  }
+  showingThumb.value = false;
+  const u = await urlForRender(src);
+  if (g !== loadGen.value) return;
+  releaseCurrentBlob();
+  if (u.startsWith('blob:')) currentObjectUrl = u;
+  displaySrc.value = u;
+}
+
+async function loadFull() {
+  if (!props.src) return;
+  const g = loadGen.value;
+  const u = await urlForRender(props.src);
+  if (g !== loadGen.value) return;
+  releaseCurrentBlob();
+  if (u.startsWith('blob:')) currentObjectUrl = u;
+  showingThumb.value = false;
+  displaySrc.value = u;
 }
 
 function onLoad() {
-  if (props.thumb && props.src && displaySrc.value === props.thumb) loadFull();
+  if (showingThumb.value && props.src) {
+    void loadFull();
+  }
 }
 
 function onError() {
-  if (props.src && displaySrc.value !== props.src) {
-    displaySrc.value = props.src;
+  if (showingThumb.value && props.src) {
+    void loadFull();
+    return;
+  }
+  if (props.src) {
+    void (async () => {
+      const g = loadGen.value;
+      const u = await urlForRender(props.src);
+      if (g !== loadGen.value) return;
+      releaseCurrentBlob();
+      if (u.startsWith('blob:')) currentObjectUrl = u;
+      displaySrc.value = u;
+    })();
   }
 }
 
 watch(
   () => [props.src, props.thumb],
   () => {
-    displaySrc.value = props.thumb || props.src;
-    if (props.thumb && props.src) loadFull();
+    void applyFromProps();
   },
-  { immediate: false }
+  { immediate: true }
 );
+
+onUnmounted(() => {
+  loadGen.value += 1;
+  releaseCurrentBlob();
+  displaySrc.value = '';
+});
 </script>

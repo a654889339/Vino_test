@@ -3,13 +3,7 @@ const { sortGuidesByDisplayOrder, sortCategoriesForSidebar } = require('../../ut
 const i18n = require('../../utils/i18n.js');
 const { pick } = i18n;
 const currencyUtil = require('../../utils/currency.js');
-
-function resolveMediaUrl(u) {
-  if (!u || !String(u).trim()) return '';
-  const s = String(u).trim();
-  if (s.startsWith('http')) return s;
-  return app.globalData.baseUrl.replace('/api', '') + s;
-}
+const { resolveMediaUrl } = require('../../utils/cosMedia.js');
 
 Page({
   data: {
@@ -165,7 +159,7 @@ Page({
     let url = '';
     if (cat) {
       const tu = pick(cat, 'thumbnailUrl');
-      if (tu) url = resolveMediaUrl(tu);
+      if (tu) url = resolveMediaUrl(tu, app.globalData.baseUrl);
     }
     this.setData({ categoryBannerUrl: url });
   },
@@ -179,7 +173,7 @@ Page({
     }) : guides;
     let bannerUrl = '';
     const tu = pick(cat, 'thumbnailUrl');
-    if (tu) bannerUrl = resolveMediaUrl(tu);
+    if (tu) bannerUrl = resolveMediaUrl(tu, app.globalData.baseUrl);
     return {
       id: cat.id,
       displayName: cat.displayName,
@@ -231,14 +225,13 @@ Page({
     this.rebuildCategoryPages();
     app.request({ url: '/guides', data: { categoryId: cat.id } })
       .then(res => {
-        const base = app.globalData.baseUrl.replace('/api', '');
         const raw = res.data || [];
         const sorted = sortGuidesByDisplayOrder(raw, cat.name);
         const list = sorted.map((g) => {
           const rawIcon = pick(g, 'iconUrl') || '';
           const rawCover = pick(g, 'coverImage') || '';
-          const iconUrl = rawIcon ? (rawIcon.startsWith('http') ? rawIcon : base + rawIcon) : '';
-          const coverUrl = rawCover ? (rawCover.startsWith('http') ? rawCover : base + rawCover) : '';
+          const iconUrl = rawIcon ? resolveMediaUrl(rawIcon, app.globalData.baseUrl) : '';
+          const coverUrl = rawCover ? resolveMediaUrl(rawCover, app.globalData.baseUrl) : '';
           const img = (coverUrl || iconUrl || '').trim();
           const sym = (g && g.currency && String(g.currency).trim()) ? String(g.currency).trim() : app.globalData.currencySymbol;
           const listPrice = Number(g && g.listPrice) || 0;

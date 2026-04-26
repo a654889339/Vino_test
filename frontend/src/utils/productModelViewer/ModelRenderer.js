@@ -4,6 +4,16 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DecalProjector } from './DecalShader.js';
+import { fetchCosMediaCached, getBlobUrlForDisplay } from '../cosMedia.js';
+
+const MEDIA_OPT = { apiBase: import.meta.env.VITE_API_BASE || '' };
+
+function absolutizeFetchUrl(u) {
+  if (!u || typeof u !== 'string') return u;
+  if (u.startsWith('http://') || u.startsWith('https://')) return u;
+  if (typeof location !== 'undefined' && u.startsWith('/')) return location.origin + u;
+  return u;
+}
 
 export class ModelRenderer {
   constructor(canvas, options = {}) {
@@ -71,7 +81,7 @@ export class ModelRenderer {
   }
 
   loadModel(url) {
-    return fetch(url)
+    return fetchCosMediaCached(absolutizeFetchUrl(url))
       .then((r) => {
         if (!r.ok) throw new Error(`加载模型失败: ${r.status}`);
         const ct = (r.headers.get('content-type') || '').toLowerCase();
@@ -135,42 +145,45 @@ export class ModelRenderer {
   }
 
   applyDecal(url, options = {}) {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        if (this._disposed) return;
-        const tex = new THREE.Texture(img);
-        tex.colorSpace = THREE.SRGBColorSpace;
-        tex.needsUpdate = true;
+    return (async () => {
+      const src = await getBlobUrlForDisplay(url, MEDIA_OPT);
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          if (this._disposed) return;
+          const tex = new THREE.Texture(img);
+          tex.colorSpace = THREE.SRGBColorSpace;
+          tex.needsUpdate = true;
 
-        let cylinderRadius = 1.0;
-        if (this._currentModel) {
-          const box = new THREE.Box3().setFromObject(this._currentModel);
-          const size = box.getSize(new THREE.Vector3());
-          cylinderRadius = (size.x + size.z) / 4;
-        }
+          let cylinderRadius = 1.0;
+          if (this._currentModel) {
+            const box = new THREE.Box3().setFromObject(this._currentModel);
+            const size = box.getSize(new THREE.Vector3());
+            cylinderRadius = (size.x + size.z) / 4;
+          }
 
-        if (this._decal) this._decal.dispose();
-        this._decal = new DecalProjector(tex, {
-          ...options,
-          cylinderRadius,
-          textureWidth: img.width,
-          textureHeight: img.height,
-        });
+          if (this._decal) this._decal.dispose();
+          this._decal = new DecalProjector(tex, {
+            ...options,
+            cylinderRadius,
+            textureWidth: img.width,
+            textureHeight: img.height,
+          });
 
-        if (options.angle !== undefined) this._decal.setAngle(options.angle);
-        if (options.height !== undefined) this._decal.setHeight(options.height);
+          if (options.angle !== undefined) this._decal.setAngle(options.angle);
+          if (options.height !== undefined) this._decal.setHeight(options.height);
 
-        if (this._currentModel) this._decal.applyToModel(this._currentModel);
+          if (this._currentModel) this._decal.applyToModel(this._currentModel);
 
-        this._startLoop();
-        setTimeout(() => this._stopLoop(), 120);
-        resolve();
-      };
-      img.onerror = () => reject(new Error('贴花图加载失败'));
-      img.src = url;
-    });
+          this._startLoop();
+          setTimeout(() => this._stopLoop(), 120);
+          resolve();
+        };
+        img.onerror = () => reject(new Error('贴花图加载失败'));
+        img.src = src;
+      });
+    })();
   }
 
   updateDecal(angle, height, scaleX = 1.0, scaleY = 1.0) {
@@ -326,16 +339,25 @@ export class ModelRenderer {
   }
 
   _loadEnvMap(url, showSkybox) {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      if (this._disposed) return;
-      this._applyEnvImage(img, showSkybox);
-    };
-    img.onerror = () => {
-      console.warn('[ModelRenderer] envMap load failed:', url);
-    };
-    img.src = url;
+    (async () => {
+      let src = url;
+      try {
+        src = await getBlobUrlForDisplay(url, MEDIA_OPT);
+      } catch (e) {
+        console.warn('[ModelRenderer] envMap resolve failed:', url, e);
+        return;
+      }
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        if (this._disposed) return;
+        this._applyEnvImage(img, showSkybox);
+      };
+      img.onerror = () => {
+        console.warn('[ModelRenderer] envMap load failed:', url);
+      };
+      img.src = src;
+    })();
   }
 
   _applyEnvImage(img, showSkybox) {

@@ -114,6 +114,7 @@ import { cartApi, goodsOrderApi } from '@/api';
 import PageThemeLayer from '@/components/PageThemeLayer.vue';
 import { copyTextToClipboardSync } from '@/utils/clipboard';
 import { t, isEn, setLang } from '@/utils/i18n';
+import { resolveMediaUrl } from '@/utils/cosMedia.js';
 
 const userStore = useUserStore();
 const router = useRouter();
@@ -193,11 +194,9 @@ const emptyGoodsOrderStats = () => ({
   afterSales: 0,
 });
 
-const BASE = import.meta.env.VITE_API_BASE || '';
+const mediaOpt = { apiBase: import.meta.env.VITE_API_BASE || '' };
 function fullUrl(url) {
-  if (!url) return '';
-  if (url.startsWith('http')) return url;
-  return BASE.replace('/api', '') + url;
+  return resolveMediaUrl(url, mediaOpt);
 }
 
 function cartLineImage(row) {

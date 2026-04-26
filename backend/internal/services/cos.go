@@ -423,7 +423,8 @@ func StreamCosObjectToResponse(ctx context.Context, key string, w http.ResponseW
 		ct = "application/octet-stream"
 	}
 	w.Header().Set("Content-Type", ct)
-	w.Header().Set("Cache-Control", "public, max-age=300")
+	// 对象读缓存由 Web/小程序在客户端 5 分钟实现；本接口不启用 HTTP 代理缓存
+	w.Header().Set("Cache-Control", "no-store")
 	_, err = io.Copy(w, resp.Body)
 	return err
 }

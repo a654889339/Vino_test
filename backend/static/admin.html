@@ -106,9 +106,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)}
 .section-header h3{margin:0;padding:0;border:none;font-size:16px;font-weight:600}
 .db-page-schema-panel{margin-bottom:14px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;overflow:hidden}
-.db-page-schema-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;font-size:12px;color:#334155;cursor:pointer;user-select:none}
+.db-page-schema-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:8px 12px;font-size:12px;color:#334155;cursor:pointer;user-select:none}
 .db-page-schema-head:hover{background:#f1f5f9}
-.db-page-schema-toggle{color:#0f172a;font-weight:600;flex-shrink:0}
+.db-page-schema-head-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.db-page-schema-title{font-weight:600;color:#0f172a}
+.db-page-schema-summary{font-size:11px;color:#64748b;line-height:1.4;word-break:break-word}
+.db-page-schema-toggle{color:#0f172a;font-weight:600;flex-shrink:0;padding-top:2px}
 .db-page-schema-body{padding:0 10px 10px 10px;max-height:50vh;overflow:auto;font-size:12px}
 .db-page-schema-body code{background:#e2e8f0;padding:1px 5px;border-radius:4px}
 .db-tbl{margin-top:6px}
@@ -324,7 +327,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   <div class="dash-body">
     <div class="db-page-schema-panel" id="adminPageDbPanel">
       <div class="db-page-schema-head" onclick="toggleAdminDbPanel()">
-        <span>本页涉及 MySQL 库与表结构</span>
+        <div class="db-page-schema-head-main">
+          <span class="db-page-schema-title">本页涉及 MySQL 库与表结构</span>
+          <span class="db-page-schema-summary" id="adminPageDbPanelSummary">—</span>
+        </div>
         <span class="db-page-schema-toggle" id="adminPageDbPanelToggle">展开</span>
       </div>
       <div class="db-page-schema-body" id="adminPageDbPanelBody" style="display:none"></div>
@@ -2067,12 +2073,33 @@ function switchPage(page) {
 
 let dbCatalogCache = null;
 let adminDbPanelExpanded = false;
+const ADMIN_DB_SESSION_EXPAND = 'vinoAdminDbPanelSessionAutoExpand';
 async function loadAdminDbCatalog() {
   if (dbCatalogCache) return dbCatalogCache;
   const res = await api('/admin/db-catalog', { method: 'GET' });
   if (res.code !== 0) throw new Error(res.message || '数据字典加载失败');
   dbCatalogCache = res.data;
   return dbCatalogCache;
+}
+function setAdminPageDbPanelSummary(text) {
+  const el = document.getElementById('adminPageDbPanelSummary');
+  if (el) { el.textContent = text == null || text === '' ? '—' : String(text); }
+}
+function _tableListSummary(tables) {
+  if (!tables || !tables.length) return '（本页无映射表名）';
+  const max = 12;
+  const t = tables.slice(0, max);
+  const rest = tables.length > max ? ' 等共 ' + tables.length + ' 张' : '（共 ' + tables.length + ' 张表）';
+  return '本页表：' + t.join(', ') + (tables.length > max ? ' …' : '') + rest;
+}
+function maybeAutoExpandAdminDbPanelFirstSession() {
+  if (sessionStorage.getItem(ADMIN_DB_SESSION_EXPAND)) return;
+  sessionStorage.setItem(ADMIN_DB_SESSION_EXPAND, '1');
+  adminDbPanelExpanded = true;
+  const b = document.getElementById('adminPageDbPanelBody');
+  const t = document.getElementById('adminPageDbPanelToggle');
+  if (b) b.style.display = 'block';
+  if (t) t.textContent = '收起';
 }
 function toggleAdminDbPanel() {
   const b = document.getElementById('adminPageDbPanelBody');
@@ -2083,7 +2110,7 @@ function toggleAdminDbPanel() {
   if (t) t.textContent = adminDbPanelExpanded ? '收起' : '展开';
   if (adminDbPanelExpanded) {
     const act = document.querySelector('.dash-nav-item.active');
-    if (act && act.dataset && act.dataset.page) { updateAdminPageDbPanel(act.dataset.page); }
+    if (act && act.dataset && act.dataset.page) { void updateAdminPageDbPanel(act.dataset.page); }
   }
 }
 function _escSchema(s) {
@@ -2094,18 +2121,27 @@ async function updateAdminPageDbPanel(page) {
   const body = document.getElementById('adminPageDbPanelBody');
   if (!body) return;
   body.style.display = adminDbPanelExpanded ? 'block' : 'none';
+  setAdminPageDbPanelSummary('加载中…');
   body.innerHTML = '<div style="color:#64748b">加载中…</div>';
   try {
     const d = await loadAdminDbCatalog();
     const pages = d.pages || [];
     const found = pages.find(p => p.page === page) || null;
-    if (!found) { body.innerHTML = '无本页表映射。'; body.style.display = adminDbPanelExpanded ? 'block' : 'none'; return; }
+    if (!found) {
+      setAdminPageDbPanelSummary('无本页表映射（请在后端 adminPageTableMap 补充此页 id）');
+      body.innerHTML = '无本页表映射。';
+      body.style.display = adminDbPanelExpanded ? 'block' : 'none';
+      return;
+    }
     const database = d.database || '—';
     const tables = found.tables || [];
     if (page === 'debugFeatureFlags' && (!tables || tables.length === 0)) {
+      setAdminPageDbPanelSummary('库 ' + database + ' · 功能开关为内存/配置，无独立 ToC 业务表');
       body.innerHTML = '<div>主库 <code>'+_escSchema(database)+'</code>。本页为功能开关（内存/服务配置，无独立 ToC 业务表）。</div>';
+      body.style.display = adminDbPanelExpanded ? 'block' : 'none';
       return;
     }
+    setAdminPageDbPanelSummary('库 ' + database + ' · ' + _tableListSummary(tables));
     let html = '<div>MySQL 主库 <code>'+_escSchema(database)+'</code>。本页「<strong>'+_escSchema(found.label || '')+'</strong>」涉及 <strong>'+tables.length+'</strong> 张表（本页去重后）。GORM 全量业务表数：'+(d.managedTableCount||'—')+'。</div>';
     for (const tn of tables) {
       const cols = (d.tableColumns && d.tableColumns[tn]) || [];
@@ -2119,6 +2155,7 @@ async function updateAdminPageDbPanel(page) {
     }
     body.innerHTML = html;
   } catch (e) {
+    setAdminPageDbPanelSummary('加载失败');
     body.innerHTML = '<div style="color:#B91C1C">'+_escSchema(e && e.message ? e.message : '加载失败')+'</div>';
   }
   body.style.display = adminDbPanelExpanded ? 'block' : 'none';
@@ -2240,11 +2277,20 @@ function showDashboard(user) {
   loadOrderStats();
   loadPageVisitStats();
   loadServiceCurrency();
+  void (async function() {
+    try {
+      maybeAutoExpandAdminDbPanelFirstSession();
+      await updateAdminPageDbPanel('overview');
+    } catch (e) {
+      setAdminPageDbPanelSummary('数据字典加载失败，请检查登录与 /api/admin/db-catalog');
+    }
+  })();
 }
 
 function handleLogout() {
   token = null; currentUser = null;
   dbCatalogCache = null;
+  try { sessionStorage.removeItem(ADMIN_DB_SESSION_EXPAND); } catch (e) { /* ignore */ }
   localStorage.removeItem('vino_admin_token');
   document.getElementById('authPage').style.display = '';
   document.getElementById('dashboard').style.display = 'none';

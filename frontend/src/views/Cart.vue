@@ -64,17 +64,16 @@ import { showToast } from 'vant';
 import { cartApi } from '@/api';
 import { formatPriceDisplay } from '@/utils/currency';
 import { t } from '@/utils/i18n';
+import { resolveMediaUrl } from '@/utils/cosMedia.js';
 
 const router = useRouter();
 const loading = ref(true);
 const lines = ref([]);
 const totalPrice = ref(0);
 
-const BASE = import.meta.env.VITE_API_BASE || '';
+const mediaOpt = { apiBase: import.meta.env.VITE_API_BASE || '' };
 function fullUrl(url) {
-  if (!url) return '';
-  if (url.startsWith('http')) return url;
-  return BASE.replace('/api', '') + url;
+  return resolveMediaUrl(url, mediaOpt);
 }
 
 /** 后端 JSON 为 imageUrl；兼容历史/误写的 imageURL */

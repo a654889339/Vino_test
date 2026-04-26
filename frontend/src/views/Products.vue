@@ -149,6 +149,7 @@ import {
   sortGuidesByDisplayOrder,
   sortCategoriesForSidebar,
 } from '@/utils/productGuideOrder';
+import { resolveMediaUrl } from '@/utils/cosMedia.js';
 
 const router = useRouter();
 
@@ -227,11 +228,9 @@ function onMainTouchEnd(e) {
   }
 }
 
-const BASE = import.meta.env.VITE_API_BASE || '';
+const mediaOpt = { apiBase: import.meta.env.VITE_API_BASE || '' };
 function fullUrl(url) {
-  if (!url) return '';
-  if (url.startsWith('http')) return url;
-  return BASE.replace('/api', '') + url;
+  return resolveMediaUrl(url, mediaOpt);
 }
 
 function cardImage(d) {

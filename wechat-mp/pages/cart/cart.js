@@ -1,6 +1,7 @@
 const app = getApp();
 const i18n = require('../../utils/i18n.js');
 const currencyUtil = require('../../utils/currency.js');
+const { resolveMediaUrl } = require('../../utils/cosMedia.js');
 
 Page({
   data: {
@@ -34,7 +35,7 @@ Page({
         const sym = app.globalData.currencySymbol;
         const lines = (d.items || []).map((x) => ({
           ...x,
-          imageUrl: x.imageUrl ? (String(x.imageUrl).startsWith('http') ? x.imageUrl : app.globalData.baseUrl.replace('/api', '') + x.imageUrl) : '',
+          imageUrl: x.imageUrl ? resolveMediaUrl(x.imageUrl, app.globalData.baseUrl) : '',
           priceText: currencyUtil.formatPriceDisplay(x.listPrice, x.currency || sym) || '未定价',
         }));
         const totalText = currencyUtil.formatPriceDisplay(d.totalPrice || 0, sym) || '—';

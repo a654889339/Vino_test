@@ -1,6 +1,7 @@
 const app = getApp();
 const i18n = require('../../utils/i18n.js');
 const currencyUtil = require('../../utils/currency.js');
+const { resolveMediaUrl } = require('../../utils/cosMedia.js');
 
 function formatTime(s) {
   if (!s) return '';
@@ -13,9 +14,7 @@ function formatTime(s) {
 function itemDisplayImageUrl(it, baseUrl) {
   const raw = (it && (it.imageUrl || it.imageURL) ? String(it.imageUrl || it.imageURL) : '').trim();
   if (!raw) return '';
-  if (raw.indexOf('http') === 0) return raw;
-  const base = (baseUrl || '').replace(/\/api\/?$/, '');
-  return base + (raw.charAt(0) === '/' ? raw : '/' + raw);
+  return resolveMediaUrl(raw, baseUrl);
 }
 
 function orderStatusText(status) {

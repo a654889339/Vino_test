@@ -61,17 +61,16 @@ import { showToast } from 'vant';
 import { goodsOrderApi } from '@/api';
 import { formatPriceDisplay } from '@/utils/currency';
 import { t } from '@/utils/i18n';
+import { resolveMediaUrl } from '@/utils/cosMedia.js';
 
 const route = useRoute();
 const router = useRouter();
 const loading = ref(true);
 const order = ref(null);
 
-const BASE = import.meta.env.VITE_API_BASE || '';
+const mediaOpt = { apiBase: import.meta.env.VITE_API_BASE || '' };
 function fullUrl(url) {
-  if (!url) return '';
-  if (url.startsWith('http')) return url;
-  return BASE.replace('/api', '') + (url.startsWith('/') ? url : `/${url}`);
+  return resolveMediaUrl(url, mediaOpt);
 }
 function itemLineImage(row) {
   if (!row) return '';

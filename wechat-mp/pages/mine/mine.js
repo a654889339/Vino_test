@@ -1,5 +1,6 @@
 const app = getApp();
 const i18n = require('../../utils/i18n.js');
+const { resolveMediaUrl } = require('../../utils/cosMedia.js');
 
 const GOODS_ORDER_STAT_GROUPS = {
   pendingPay: ['pending'],
@@ -183,7 +184,7 @@ Page({
         const d = res.data || {};
         const items = (d.items || []).slice(0, 3).map((x) => ({
           ...x,
-          imageUrl: x.imageUrl ? (String(x.imageUrl).startsWith('http') ? x.imageUrl : app.globalData.baseUrl.replace('/api', '') + x.imageUrl) : '',
+          imageUrl: x.imageUrl ? resolveMediaUrl(x.imageUrl, app.globalData.baseUrl) : '',
         }));
         const total = Number(d.totalCount || (d.items || []).reduce((sum, x) => sum + (Number(x.qty) || 0), 0));
         this.setData({ cartPreviewItems: items, cartTotalCount: total });

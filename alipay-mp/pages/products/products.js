@@ -2,13 +2,7 @@ const app = getApp();
 const i18n = require('../../utils/i18n.js');
 const { pick } = i18n;
 const currencyUtil = require('../../utils/currency.js');
-
-function resolveMediaUrl(u) {
-  if (!u || !String(u).trim()) return '';
-  const s = String(u).trim();
-  if (s.startsWith('http')) return s;
-  return app.globalData.baseUrl.replace('/api', '') + s;
-}
+const { resolveMediaUrl } = require('../../utils/cosMedia.js');
 
 Page({
   data: {
@@ -154,7 +148,7 @@ Page({
       displaySubtitle: pick(g, 'subtitle'),
       displayDescription: pick(g, 'description'),
       slug: g.slug || '',
-      displayImageUrl: resolveMediaUrl(rawCover || rawIcon),
+      displayImageUrl: resolveMediaUrl(rawCover || rawIcon, app.globalData.baseUrl),
       listPrice,
       originPrice: (g && g.originPrice != null) ? originPrice : null,
       displayListPrice: currencyUtil.formatPriceDisplay(listPrice, sym),
@@ -185,7 +179,7 @@ Page({
     return {
       id: cat.id,
       displayName: cat.displayName || pick(cat, 'name'),
-      bannerUrl: tu ? resolveMediaUrl(tu) : '',
+      bannerUrl: tu ? resolveMediaUrl(tu, app.globalData.baseUrl) : '',
       guides,
       loading: !!this.categoryLoadingMap[cat.id],
     };

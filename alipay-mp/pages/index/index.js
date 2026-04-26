@@ -1,5 +1,6 @@
 const app = getApp();
 const { buildSectionSkinContainerStyle } = require('../../utils/sectionSkin.js');
+const { resolveMediaUrl } = require('../../utils/cosMedia.js');
 const i18n = require('../../utils/i18n.js');
 
 function getToken() {
@@ -84,13 +85,7 @@ Page({
     app.request({ url: '/auth/my-products' })
       .then(res => {
         const list = res.data || [];
-        const base = (app.globalData.baseUrl || '').replace(/\/api\/?$/, '');
-        const toFull = (u) => {
-          if (!u || typeof u !== 'string') return u || '';
-          const t = String(u).trim();
-          if (t.startsWith('http')) return t;
-          return base + (t.startsWith('/') ? t : '/' + t);
-        };
+        const toFull = (u) => resolveMediaUrl(u, app.globalData.baseUrl);
         const myProducts = list.map(item => ({
           ...item,
           categoryName: i18n.pick(item, 'categoryName') || item.categoryName || '',
@@ -166,13 +161,7 @@ Page({
   },
 
   loadHomeConfig() {
-    const base = (app.globalData.baseUrl || '').replace(/\/api\/?$/, '');
-    const toFull = (u) => {
-      if (!u || typeof u !== 'string') return u || '';
-      const t = u.trim();
-      if (t.startsWith('http://') || t.startsWith('https://')) return t;
-      return base + (t.startsWith('/') ? t : '/' + t);
-    };
+    const toFull = (u) => resolveMediaUrl(u, app.globalData.baseUrl);
 
     const pHc = app.request({ url: '/home-config?all=1' }).catch(() => ({ data: [] }));
     const pGuides = app.request({ url: '/guides' }).catch(() => ({ data: [] }));
