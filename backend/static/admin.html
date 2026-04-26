@@ -114,6 +114,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .db-page-schema-toggle{color:#0f172a;font-weight:600;flex-shrink:0;padding-top:2px}
 .db-page-schema-body{padding:0 10px 10px 10px;max-height:50vh;overflow:auto;font-size:12px}
 .db-page-schema-body code{background:#e2e8f0;padding:1px 5px;border-radius:4px}
+.media-catalog-panel{margin-bottom:14px;border:1px solid #dbeafe;border-radius:8px;background:#f0f9ff;overflow:hidden}
+.media-catalog-body{max-height:60vh}
+.media-catalog-body .mc-default{margin-bottom:10px;padding:8px;background:#e0f2fe;border-radius:6px;font-size:11px;color:#0c4a6e;line-height:1.45}
+.media-catalog-body table.mc-rules{width:100%;border-collapse:collapse;font-size:11px}
+.media-catalog-body .mc-rules th,.media-catalog-body .mc-rules td{padding:6px 8px;border:1px solid #bae6fd;text-align:left;vertical-align:top;word-break:break-word}
+.media-catalog-body .mc-rules th{background:#7dd3fc;color:#0f172a;font-weight:600}
 .db-tbl{margin-top:6px}
 .db-tbl table{width:100%;border-collapse:collapse}
 .db-tbl th,.db-tbl td{padding:4px 6px;border:1px solid #e2e8f0;text-align:left;word-break:break-all}
@@ -305,7 +311,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   <div class="dash-layout">
   <div class="dash-sidebar-mask" id="dashSidebarMask" onclick="closeSidebarIfMobile()"></div>
   <div class="dash-sidebar" id="dashSidebar">
-    <div class="dash-sidebar-item active" id="sidebarToC" onclick="switchGroup('ToC')">To C管理</div>
+    <div class="dash-sidebar-item" id="sidebarDataMgr" onclick="switchGroup('DataMgr')">数据管理</div>
+    <div class="dash-sidebar-item active" id="sidebarToC" onclick="switchGroup('ToC')">页面配置</div>
     <div class="dash-sidebar-item" id="sidebarOutlet" onclick="switchGroup('Outlet')">服务商/分销商管理</div>
     <div class="dash-sidebar-item" id="sidebarDebug" onclick="switchGroup('Debug')">调试窗口</div>
   </div>
@@ -334,6 +341,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <span class="db-page-schema-toggle" id="adminPageDbPanelToggle">展开</span>
       </div>
       <div class="db-page-schema-body" id="adminPageDbPanelBody" style="display:none"></div>
+    </div>
+    <div class="media-catalog-panel" id="mediaCatalogPanel">
+      <div class="db-page-schema-head" onclick="toggleMediaCatalogPanel()">
+        <div class="db-page-schema-head-main">
+          <span class="db-page-schema-title">COS 媒体上传 / 下载规则表</span>
+          <span class="db-page-schema-summary" id="mediaCatalogSummary">后端 embed 单一配置源，GET /api/admin/media-asset-catalog</span>
+        </div>
+        <span class="db-page-schema-toggle" id="mediaCatalogToggle">展开</span>
+      </div>
+      <div class="db-page-schema-body media-catalog-body" id="mediaCatalogBody" style="display:none"></div>
     </div>
     <!-- Overview Page -->
     <div class="dash-page active" id="page-overview">
@@ -433,11 +450,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       </div>
     </div>
 
-    <!-- 调试窗口：To C 页面配置 -->
+    <!-- 调试窗口：页面配置 -->
     <div class="dash-page" id="page-debugTocPage">
       <div class="dash-section">
-        <h3>To C页面配置调试窗口</h3>
-        <p style="font-size:13px;color:#666;margin-bottom:16px">以下入口与「To C 管理」顶栏一致，便于从此处集中跳转调试前台页面与文案。</p>
+        <h3>页面配置调试窗口</h3>
+        <p style="font-size:13px;color:#666;margin-bottom:16px">以下入口与「页面配置」顶栏一致，便于从此处集中跳转调试前台页面与文案。</p>
         <div style="display:flex;flex-wrap:wrap;gap:10px">
           <button type="button" class="refresh-btn" onclick="switchGroup('ToC'); switchPage('homeConfig')">首页配置</button>
           <button type="button" class="refresh-btn" onclick="switchGroup('ToC'); switchPage('homeAnimConfig')">首页动画配置</button>
@@ -1940,15 +1957,18 @@ async function api(path, options = {}) {
 let currentHCPage = 'homeConfig';
 let currentGroup = 'ToC';
 
-const tocPages = ['overview','orders','goodsOrders','users','guides','serviceConfig','inventory','homeConfig','homeAnimConfig','pageThemeConfig','i18nConfig','messages'];
+const pageCfgPages = ['overview','guides','serviceConfig','homeConfig','homeAnimConfig','pageThemeConfig','i18nConfig','messages'];
+const dataMgrPages = ['orders','goodsOrders','users','inventory'];
 const outletPages = ['outletOverview','outletOrders','outletUsers','outletServiceConfig','outletHomeConfig','outletHomeAnimConfig','outletMineConfig','outletMessages'];
 const debugPages = ['debugTocData','debugTocPage','debugFeatureFlags'];
 
-const tocNavItems = [
-  {page:'overview',label:'概览'},{page:'orders',label:'服务订单管理'},{page:'goodsOrders',label:'商品订单管理'},{page:'users',label:'用户管理'},
-  {page:'guides',label:'商品配置'},{page:'serviceConfig',label:'服务配置'},{page:'inventory',label:'商品库存'},
+const pageCfgNavItems = [
+  {page:'overview',label:'概览'},{page:'guides',label:'商品配置'},{page:'serviceConfig',label:'服务配置'},
   {page:'homeConfig',label:'首页配置'},{page:'homeAnimConfig',label:'首页动画配置'},
   {page:'pageThemeConfig',label:'页面基础配置'},{page:'i18nConfig',label:'语言翻译'},{page:'messages',label:'留言板'}
+];
+const dataMgrNavItems = [
+  {page:'orders',label:'服务订单管理'},{page:'goodsOrders',label:'商品订单管理'},{page:'users',label:'用户管理'},{page:'inventory',label:'商品库存'}
 ];
 const outletNavItems = [
   {page:'outletOverview',label:'概览'},{page:'outletOrders',label:'订单管理'},{page:'outletUsers',label:'用户管理'},
@@ -1957,7 +1977,7 @@ const outletNavItems = [
 ];
 const debugNavItems = [
   {page:'debugTocData',label:'ToC 数据调试窗口'},
-  {page:'debugTocPage',label:'To C页面配置调试窗口'},
+  {page:'debugTocPage',label:'页面配置调试窗口'},
   {page:'debugFeatureFlags',label:'功能开关'}
 ];
 
@@ -2005,13 +2025,20 @@ function switchGroup(group) {
   let firstPage, items;
   if (group === 'ToC') {
     firstPage = 'overview';
-    items = tocNavItems;
+    items = pageCfgNavItems;
+    try { history.replaceState(null, '', '/'); } catch (e) {}
+  } else if (group === 'DataMgr') {
+    firstPage = 'orders';
+    items = dataMgrNavItems;
+    try { history.replaceState(null, '', '/datamgr'); } catch (e) {}
   } else if (group === 'Outlet') {
     firstPage = 'outletOverview';
     items = outletNavItems;
+    try { history.replaceState(null, '', '/'); } catch (e) {}
   } else {
     firstPage = 'debugTocData';
     items = debugNavItems;
+    try { history.replaceState(null, '', '/'); } catch (e) {}
   }
   renderTopNav(items, firstPage);
   switchPage(firstPage);
@@ -2025,8 +2052,16 @@ function switchPage(page) {
   if (navItem) navItem.classList.add('active');
   const pageEl = document.getElementById('page-' + page);
   if (pageEl) pageEl.classList.add('active');
-  if (tocPages.includes(page)) {
+  const sdm = document.getElementById('sidebarDataMgr');
+  if (pageCfgPages.includes(page)) {
     document.getElementById('sidebarToC').classList.add('active');
+    document.getElementById('sidebarOutlet').classList.remove('active');
+    if (sdm) sdm.classList.remove('active');
+    const sd = document.getElementById('sidebarDebug');
+    if (sd) sd.classList.remove('active');
+  } else if (dataMgrPages.includes(page)) {
+    if (sdm) sdm.classList.add('active');
+    document.getElementById('sidebarToC').classList.remove('active');
     document.getElementById('sidebarOutlet').classList.remove('active');
     const sd = document.getElementById('sidebarDebug');
     if (sd) sd.classList.remove('active');
@@ -2034,6 +2069,7 @@ function switchPage(page) {
   if (outletPages.includes(page)) {
     document.getElementById('sidebarOutlet').classList.add('active');
     document.getElementById('sidebarToC').classList.remove('active');
+    if (sdm) sdm.classList.remove('active');
     const sd = document.getElementById('sidebarDebug');
     if (sd) sd.classList.remove('active');
   }
@@ -2042,6 +2078,7 @@ function switchPage(page) {
     if (sd) sd.classList.add('active');
     document.getElementById('sidebarToC').classList.remove('active');
     document.getElementById('sidebarOutlet').classList.remove('active');
+    if (sdm) sdm.classList.remove('active');
   }
   if (page !== 'messages') { stopMsgPolling(); currentChatUserId = null; }
   if (page !== 'outletMessages') { stopOutletMsgPolling(); outletCurrentChatUserId = null; }
@@ -2161,6 +2198,53 @@ async function updateAdminPageDbPanel(page) {
   body.style.display = adminDbPanelExpanded ? 'block' : 'none';
 }
 
+let mediaCatalogExpanded = false;
+let mediaCatalogLoaded = false;
+function toggleMediaCatalogPanel() {
+  const b = document.getElementById('mediaCatalogBody');
+  const t = document.getElementById('mediaCatalogToggle');
+  if (!b) return;
+  mediaCatalogExpanded = !mediaCatalogExpanded;
+  b.style.display = mediaCatalogExpanded ? 'block' : 'none';
+  if (t) t.textContent = mediaCatalogExpanded ? '收起' : '展开';
+  if (mediaCatalogExpanded) { void ensureMediaCatalogRendered(); }
+}
+function _escCell(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+async function ensureMediaCatalogRendered() {
+  const body = document.getElementById('mediaCatalogBody');
+  if (!body || mediaCatalogLoaded) return;
+  body.innerHTML = '<div style="color:#64748b">加载规则表…</div>';
+  try {
+    const res = await api('/admin/media-asset-catalog', { method: 'GET' });
+    if (res.code !== 0) throw new Error(res.message || '加载失败');
+    const d = res.data || {};
+    const ver = d.version != null ? String(d.version) : '—';
+    const dd = d.downloadDefault || {};
+    let html = '<div class="mc-default"><strong>版本</strong> ' + _escCell(ver) + ' · <strong>默认下载</strong> ' + _escCell(dd.readVia || '') + '<br/>' + _escCell(dd.notesZh || '') + '</div>';
+    html += '<table class="mc-rules"><thead><tr><th>模块</th><th>说明</th><th>上传</th><th>COS 前缀 / 命名</th><th>缩略图策略</th><th>下载</th></tr></thead><tbody>';
+    const rules = Array.isArray(d.rules) ? d.rules : [];
+    for (const r of rules) {
+      const up = r.upload || {};
+      const cos = r.cos || {};
+      const dl = r.download || {};
+      const pathStr = (up.method || '') + ' ' + (up.path || '');
+      const fields = Array.isArray(up.formFields) ? up.formFields.join(', ') : (up.formFields || '');
+      html += '<tr><td>' + _escCell(r.module || '') + '</td><td>' + _escCell(r.labelZh || '') + '</td><td><code>' + _escCell(pathStr.trim()) + '</code><div style="margin-top:4px;color:#64748b">' + _escCell(fields) + '</div></td><td>' + _escCell(cos.prefixPattern || '') + '<div style="margin-top:4px;color:#475569">' + _escCell(cos.namingNotes || '') + '</div></td><td>' + _escCell(cos.thumbBehavior || '') + '</td><td>' + _escCell(dl.readVia || '') + '<div style="margin-top:4px;color:#64748b">' + _escCell(dl.notesZh || '') + '</div></td></tr>';
+    }
+    html += '</tbody></table>';
+    body.innerHTML = html;
+    mediaCatalogLoaded = true;
+    const sum = document.getElementById('mediaCatalogSummary');
+    if (sum) sum.textContent = '已加载 v' + ver + '，共 ' + rules.length + ' 条规则（与 Go embed 同源）';
+  } catch (e) {
+    mediaCatalogLoaded = false;
+    body.innerHTML = '<div style="color:#B91C1C">' + _escCell(e && e.message ? e.message : '加载失败') + '</div>';
+  }
+}
+
 async function loadFeatureFlags() {
   const result = document.getElementById('ffSaveResult');
   if (result) { result.style.color = '#64748b'; result.textContent = '加载中...'; }
@@ -2270,12 +2354,13 @@ function showDashboard(user) {
   // 调试窗口（日志备份 / db 备份 / db 恢复 / 切库）仅超级管理员可见
   const debugSidebar = document.getElementById('sidebarDebug');
   if (debugSidebar) debugSidebar.style.display = isSuperAdminRole(user.role) ? '' : 'none';
-  currentGroup = 'ToC';
-  document.querySelectorAll('.dash-sidebar-item').forEach(s => s.classList.remove('active'));
-  document.getElementById('sidebarToC').classList.add('active');
-  renderTopNav(tocNavItems, 'overview');
-  loadOrderStats();
-  loadPageVisitStats();
+  const p = String(location.pathname || '/').replace(/\/$/, '') || '/';
+  const isDataMgrEntry = p === '/datamgr' || p.endsWith('/datamgr');
+  if (isDataMgrEntry) {
+    switchGroup('DataMgr');
+  } else {
+    switchGroup('ToC');
+  }
   loadServiceCurrency();
   void (async function() {
     try {
@@ -2290,6 +2375,12 @@ function showDashboard(user) {
 function handleLogout() {
   token = null; currentUser = null;
   dbCatalogCache = null;
+  mediaCatalogLoaded = false;
+  mediaCatalogExpanded = false;
+  const mcB = document.getElementById('mediaCatalogBody');
+  const mcT = document.getElementById('mediaCatalogToggle');
+  if (mcB) { mcB.style.display = 'none'; mcB.innerHTML = ''; }
+  if (mcT) mcT.textContent = '展开';
   try { sessionStorage.removeItem(ADMIN_DB_SESSION_EXPAND); } catch (e) { /* ignore */ }
   localStorage.removeItem('vino_admin_token');
   document.getElementById('authPage').style.display = '';
