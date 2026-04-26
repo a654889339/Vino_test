@@ -7,6 +7,7 @@ import (
 
 	"vino/backend/internal/config"
 	"vino/backend/internal/models"
+	"vino/backend/internal/stat"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -117,6 +118,16 @@ WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = 'version'`,
 			result.FailedTables[table] = err.Error()
 			continue
 		}
+		var dname string
+		_ = DB.Raw("SELECT DATABASE()").Scan(&dname)
+		stat.Record("db_modify", map[string]interface{}{
+			"source":   "db",
+			"action":   "db_modify",
+			"database": dname,
+			"table":    table,
+			"column":   "version",
+			"reason":   "version_column_backfill",
+		})
 		result.AddedTables = append(result.AddedTables, table)
 	}
 	if len(result.AddedTables) > 0 {
@@ -126,32 +137,9 @@ WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = 'version'`,
 }
 
 func AutoMigrate() error {
-	return DB.AutoMigrate(
-		&models.User{},
-		&models.OutletUser{},
-		&models.Order{},
-		&models.OrderLog{},
-		&models.GoodsOrder{},
-		&models.GoodsOrderItem{},
-		&models.GoodsOrderLog{},
-		&models.OutletOrder{},
-		&models.OutletOrderLog{},
-		&models.ServiceCategory{},
-		&models.Service{},
-		&models.ProductCategory{},
-		&models.HomeConfig{},
-		&models.DeviceGuide{},
-		&models.Address{},
-		&models.OutletAddress{},
-		&models.Message{},
-		&models.OutletMessage{},
-		&models.InventoryCategory{},
-		&models.InventoryProduct{},
-		&models.UserProduct{},
-		&models.OutletServiceCategory{},
-		&models.OutletService{},
-		&models.OutletHomeConfig{},
-		&models.PageVisitDaily{},
-		&models.I18nText{},
-	)
+	ents := ManagedModelEntities()
+	if len(ents) == 0 {
+		return nil
+	}
+	return DB.AutoMigrate(ents...)
 }

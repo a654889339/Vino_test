@@ -23,6 +23,7 @@ func RegisterRoutes(engine *gin.Engine, cfg *config.Config) {
 	api.GET("/media/cos", MediaCosStream)
 	api.POST("/analytics/page-view", AnalyticsPageView)
 	api.GET("/admin/page-visit-stats", middleware.Auth(cfg), middleware.Admin(), AnalyticsStats)
+	api.GET("/admin/db-catalog", middleware.Auth(cfg), middleware.Admin(), adminGetDbCatalog)
 
 	auth := api.Group("/auth")
 	{
