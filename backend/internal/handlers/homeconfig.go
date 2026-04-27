@@ -34,7 +34,7 @@ var (
 func resolveHomeConfigUpload(section string) (prefix string, flatLayout bool, err error) {
 	s := strings.TrimSpace(section)
 	if s == "" {
-		// 兼容未传 section 的上传（如门店服务图标），与历史行为一致：vino/uploads + 随机名 + thumb 子目录
+		// 未传 section 的上传使用通用目录：vino/uploads + 随机名 + thumb 子目录。
 		return "vino/uploads", false, nil
 	}
 	switch s {

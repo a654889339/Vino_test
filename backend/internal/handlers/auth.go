@@ -341,12 +341,61 @@ func authBindPhone(c *gin.Context, cfg *config.Config) {
 		resp.Err(c, 404, 404, "用户不存在")
 		return
 	}
+	// 若已绑定且与新手机号不同，必须先验证码解绑。
+	if strings.TrimSpace(user.Phone) != "" && strings.TrimSpace(user.Phone) != normalized {
+		resp.Err(c, 400, 400, "该账号已绑定手机号，请先验证码解绑后再绑定新手机号")
+		return
+	}
 	user.Phone = normalized
 	if err := db.DB.Model(&user).Update("phone", normalized).Error; err != nil {
 		resp.Err(c, 500, 500, err.Error())
 		return
 	}
 	resp.JSON(c, 0, gin.H{"data": user, "message": "绑定成功"})
+}
+
+func authUnbindPhone(c *gin.Context, cfg *config.Config) {
+	_ = cfg
+	u, ok := ctxUser(c)
+	if !ok {
+		return
+	}
+	var body struct {
+		Phone string `json:"phone"`
+		Code  string `json:"code"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil || strings.TrimSpace(body.Phone) == "" || strings.TrimSpace(body.Code) == "" {
+		resp.Err(c, 400, 400, "手机号和验证码不能为空")
+		return
+	}
+	normalized := services.NormalizePhone(body.Phone)
+	if len(normalized) != 11 || normalized[0] != '1' {
+		resp.Err(c, 400, 400, "手机号格式不正确")
+		return
+	}
+	var user models.User
+	if err := db.DB.First(&user, u.ID).Error; err != nil {
+		resp.Err(c, 404, 404, "用户不存在")
+		return
+	}
+	if strings.TrimSpace(user.Phone) == "" {
+		resp.Err(c, 400, 400, "该账号未绑定手机号")
+		return
+	}
+	if strings.TrimSpace(user.Phone) != normalized {
+		resp.Err(c, 400, 400, "手机号不匹配当前账号绑定的手机号")
+		return
+	}
+	if ok2, msg := services.SMSVerify(body.Phone, strings.TrimSpace(body.Code)); !ok2 {
+		resp.Err(c, 400, 400, msg)
+		return
+	}
+	user.Phone = ""
+	if err := db.DB.Model(&user).Update("phone", "").Error; err != nil {
+		resp.Err(c, 500, 500, err.Error())
+		return
+	}
+	resp.JSON(c, 0, gin.H{"data": user, "message": "解绑成功"})
 }
 
 func authWxLogin(c *gin.Context, cfg *config.Config) {

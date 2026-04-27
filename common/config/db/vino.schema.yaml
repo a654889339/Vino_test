@@ -1,0 +1,34 @@
+project: vino
+source: Vino_test/backend/internal/models/* TableName()
+notes: >
+  以 Vino Go 后端模型的 TableName() 汇总；用于“全表结构契约”的入口。
+  详细列结构以模型与运行中 information_schema 为准。
+tables:
+  - users
+  - outlet_users
+  - orders
+  - order_logs
+  - outlet_orders
+  - outlet_order_logs
+  - goods_orders
+  - goods_order_items
+  - goods_order_logs
+  - service_categories
+  - services
+  - product_categories
+  - home_configs
+  - device_guides
+  - addresses
+  - outlet_addresses
+  - messages
+  - outlet_messages
+  - inventory_categories
+  - inventory_products
+  - user_products
+  - cart_items
+  - outlet_service_categories
+  - outlet_services
+  - outlet_home_configs
+  - page_visit_daily
+  - i18n_texts
+

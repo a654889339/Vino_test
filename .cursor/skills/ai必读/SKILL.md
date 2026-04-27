@@ -123,17 +123,17 @@ Vino_test 的主用户表 `users` 支持三种角色：
 
 ## 5. 数据库列变更与版本号（version）
 
-凡涉及 **新增列、改列语义、删列、或需对历史行补默认值/改格式** 的变更，**必须**同时维护 **版本号 `version`**，并在 **读取 DB 数据时按版本做升级**，避免老数据与新老代码混用导致静默错误。
+凡涉及 **新增列、改列语义、删列、或需对既有行补默认值/改格式** 的变更，**必须**同时维护 **版本号 `version`**，并在 **读取 DB 数据时按版本做升级**，避免数据形态与代码预期不一致导致静默错误。
 
 ### 5.1 版本放哪里
 
 - **推荐（全局）**：在专用表（如 `app_meta`，`key='schema_version'` / 单列 `version`）存**整数** schema 版本；启动或首次访问时检查并执行迁移链。
-- **可选（按实体）**：若某业务表行级历史差异大，可在该表增加 **`data_version`（或沿用单列 `version`）** 整型字段，表示**该行**的数据形态版本；读该行时若 `version < 当前代码期望版本`，则走升级逻辑并 **写回** 新版本号。
-- **当前项目统一要求**：所有持久化业务表都必须保留 `version INT NOT NULL DEFAULT 0` 列；新增 GORM 模型时嵌入 `models.Versioned`，历史/非 GORM 表由启动迁移幂等补齐。`version=0` 表示未升级的基线数据，后续读路径按具体业务的当前版本链处理。
-- **启动时自动补列（与读路径兼容）**：`backend/cmd/server/main.go` 在 **`db.AutoMigrate()` 与 `db.MigrateSuperAdmin()` 之后** 调用 `db.MigrateVersionColumns()`（实现见 `backend/internal/db/db.go`）。该函数查询当前库 `INFORMATION_SCHEMA` 下全部 `BASE TABLE`，若某表无 `version` 列则执行 `ALTER TABLE ... ADD COLUMN version INT NOT NULL DEFAULT 0`，可安全重复执行。结果会通过打点 `action = system.schema.version_columns` 记录（含 `addedTables` / `failedTables`）。因此**仅新增 `version` 列且默认 0** 时，已有读路径通常无需改代码；当某次业务变更需要按行区分数据形态时，再在对应 handler 中实现 `NormalizeXxx` / `UpgradeXxx`，并在升级完成后把该行的 `version` 写回为**大于 0**的当前期望版本。
+- **可选（按实体）**：若某业务表行级数据形态差异大，可在该表增加 **`data_version`（或沿用单列 `version`）** 整型字段，表示**该行**的数据形态版本；读该行时若 `version < 当前代码期望版本`，则走升级逻辑并 **写回** 新版本号。
+- **当前项目统一要求**：所有持久化业务表都必须保留 `version INT NOT NULL DEFAULT 0` 列；新增 GORM 模型时嵌入 `models.Versioned`，非 GORM 表由启动迁移幂等补齐。`version=0` 表示基线数据，后续读路径按具体业务的当前版本链处理。
+- **启动时自动补列**：`backend/cmd/server/main.go` 在 **`db.AutoMigrate()` 与 `db.MigrateSuperAdmin()` 之后** 调用 `db.MigrateVersionColumns()`（实现见 `backend/internal/db/db.go`）。该函数查询当前库 `INFORMATION_SCHEMA` 下全部 `BASE TABLE`，若某表无 `version` 列则执行 `ALTER TABLE ... ADD COLUMN version INT NOT NULL DEFAULT 0`，可安全重复执行。结果会通过打点 `action = system.schema.version_columns` 记录（含 `addedTables` / `failedTables`）。因此**仅新增 `version` 列且默认 0** 时，已有读路径通常无需改代码；当某次业务变更需要按行区分数据形态时，再在对应 handler 中实现 `NormalizeXxx` / `UpgradeXxx`，并在升级完成后把该行的 `version` 写回为**大于 0**的当前期望版本。
 - **模型与后台编辑**：行级 `version` 定义在 `backend/internal/models/version.go`（`Versioned` 嵌入结构体）。后台通用 `raw-row` 将 `version` 列为只读，避免人工改乱升级语义（`backend/internal/handlers/admin_rawrow.go` 的 `baseReadonly`）。
 
-具体选用哪种由任务决定，但**禁止**只加列、不写版本、也不在读路径做兼容。
+具体选用哪种由任务决定，但**禁止**只加列、不写版本、也不在读路径做版本处理。
 
 ### 5.2 新增列时的必做项
 

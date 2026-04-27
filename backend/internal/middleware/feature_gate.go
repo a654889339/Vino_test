@@ -37,18 +37,6 @@ func FeatureGate() gin.HandlerFunc {
 			c.Next()
 			return
 		}
-		if p == "/api/media/cos-config" && m == http.MethodGet {
-			c.Next()
-			return
-		}
-		if p == "/api/media/catalog" && m == http.MethodGet {
-			c.Next()
-			return
-		}
-		if p == "/api/media/cos" && m == http.MethodGet {
-			c.Next()
-			return
-		}
 		if p == "/api/auth/login" && m == http.MethodPost {
 			c.Next()
 			return

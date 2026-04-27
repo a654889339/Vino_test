@@ -146,7 +146,7 @@ func orderMyOrders(c *gin.Context) {
 	var rows []models.Order
 	qb.Order("createdAt DESC").Limit(pageSize).Offset((page - 1) * pageSize).Find(&rows)
 
-	// 历史订单在 orders.serviceTitleEn 空字段时，回读 services.titleEn 补全，
+	// orders.serviceTitleEn 为空时，回读 services.titleEn 补全，
 	// 避免英文端显示中文的 serviceTitle。仅补齐响应字段，不回写 DB。
 	enBySvcID := map[int]string{}
 	svcIDs := make([]int, 0)
@@ -468,11 +468,15 @@ func orderAdminLogs(c *gin.Context) {
 }
 
 // WechatPayNotify 微信支付回调（需在 main 中注册于 raw body 解析之后）
-func WechatPayNotify(c *gin.Context) {
+func WechatPayNotify(c *gin.Context, cfg *config.Config) {
 	var body map[string]interface{}
 	raw, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		c.JSON(400, gin.H{"code": "FAIL", "message": "invalid body"})
+		return
+	}
+	if err := services.VerifyNotifySignature(cfg, c.Request.Header, raw); err != nil {
+		c.JSON(401, gin.H{"code": "FAIL", "message": "signature"})
 		return
 	}
 	if err := json.Unmarshal(raw, &body); err != nil {
@@ -484,7 +488,7 @@ func WechatPayNotify(c *gin.Context) {
 		c.JSON(200, gin.H{"code": "SUCCESS", "message": "成功"})
 		return
 	}
-	data, err := services.DecryptNotifyResource(res)
+	data, err := services.DecryptNotifyResource(cfg, res)
 	if err != nil {
 		c.JSON(500, gin.H{"code": "FAIL", "message": "decrypt"})
 		return

@@ -2,13 +2,13 @@
 name: product-3d-preview
 description: >-
   Vino_test 商品详情（DeviceGuide）3D 预览端到端：后台开关、GLB/贴花/天空盒 COS 上传、Web Three.js 全屏 overlay、微信自定义组件、支付宝文案兜底；
-  Web 经 /api/media/cos 同源代理规避 CORS；i18n 键、SQL 在 Windows 下勿管道乱码、双重 UTF-8 修复脚本。
+  Web 对 COS 桶公网直链 + 桶 CORS；i18n 键、SQL 在 Windows 下勿管道乱码、双重 UTF-8 修复脚本。
   在用户或任务提到 3D 预览、model3d、GLB、贴花、天空盒、GuideDetail 3D、ProductModelViewer、model-viewer、preview3D 时使用。
 ---
 
 # 商品 3D 预览（Vino_test）
 
-本 Skill 汇总仓库内**已实现**的「商品详情 3D 预览」：数据字段、上传、各端 UI、CORS、i18n 与常见故障。**不**替代 COS 桶级 CORS 文档；Web 端以**同源代理**为主方案。
+本 Skill 汇总仓库内**已实现**的「商品详情 3D 预览」：数据字段、上传、各端 UI、CORS、i18n 与常见故障。**不**替代 COS 桶级 CORS 配置；媒体不经 `/api/media/*`。
 
 ## 何时查阅
 
@@ -58,12 +58,11 @@ description: >-
 
 ---
 
-## Web：CORS 与同源代理
+## Web：CORS 与桶直链
 
-Three.js 常设 `crossOrigin='anonymous'`；COS 若未对站点 Origin 配 CORS，直链会失败。
+Three.js 常设 `crossOrigin='anonymous'`；**须在 COS 控制台**为站点 Origin 配好 CORS（`GET`、头 `*`，见厂商文档），否则 GLB/纹理会失败。媒体直链自 `vino.media.yaml` / 包内配置，不经后端 `/api/media/*`（该路由已撤）。
 
-**实现**：`frontend/src/views/GuideDetail.vue` 内将 `https?://*.cos.*.myqcloud.com/` 改写为同源 **`(BASE 或 /api)/media/cos?key=<URL 中对象键>`**（`encodeURIComponent`）。  
-**后端**：`GET /api/media/cos` → `MediaCosStream`（如 `backend/internal/handlers/misc.go`，路由见 `router.go`）。
+**实现参考**：`frontend/src/utils/cosMedia.js`（`resolveMediaUrl` / `guideProductMediaUrl`）、`GuideDetail.vue` / `ProductModelViewer` 使用 `fetchCosMediaCached` 对**桶公网** URL 跨源拉取并缓存（`credentials: omit`）。
 
 ---
 
@@ -121,7 +120,7 @@ sudo docker exec -i vino-mysql mysql --default-character-set=utf8mb4 -uroot -p<P
 | 现象 | 优先检查 |
 |------|-----------|
 | `3D é¢„è§ˆ` 等乱码 | DB 双重编码；执行 `i18n_3d_preview_fix.sql`；重启 `vino-backend` |
-| 模型/纹理失败、CORS | Web 是否改写为 `/api/media/cos?key=`；DB 中 URL 与 COS 对象键是否一致 |
+| 模型/纹理失败、CORS | 桶 CORS 与直链可访问性；`cosMedia` 是否已注入桶基址；DB/规则 URL 与对象键是否一致 |
 | 后台上传异常 | `assetKind`；GLB 是否误走图片/缩略图分支 |
 | 微信白屏/超时 | 合法域名、`downloadFile`、GLB 体积与网络 |
 
@@ -129,4 +128,4 @@ sudo docker exec -i vino-mysql mysql --default-character-set=utf8mb4 -uroot -p<P
 
 ## 参考
 
-历史对齐思路可参考本机 `F:/zhikeweilai` 的 3D 预览实现；本仓库路径与接口以当前文件为准。
+本仓库路径与接口以当前文件为准。

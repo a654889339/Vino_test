@@ -47,7 +47,7 @@ func Reopen(cfg *config.Config) error {
 }
 
 // MigrateSuperAdmin 幂等地：
-//  1. 将 users.role 列 enum 扩展为 ('user','admin','super_admin')，兼容旧表结构；
+//  1. 确保 users.role 列 enum 包含 ('user','admin','super_admin')；
 //  2. 若当前无任何 super_admin，则把最早的 admin 自动升为 super_admin，避免
 //     新功能上线后无人拥有超级权限。其余情况不改动任何用户数据。
 func MigrateSuperAdmin() {

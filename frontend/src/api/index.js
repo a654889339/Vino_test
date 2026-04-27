@@ -13,6 +13,7 @@ export const authApi = {
     return request.post('/auth/upload-avatar', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
   },
   bindPhone: (data) => request.post('/auth/bind-phone', data),
+  unbindPhone: (data) => request.post('/auth/unbind-phone', data),
   myProducts: () => request.get('/auth/my-products'),
   bindProduct: (data) => request.post('/auth/bind-product', data),
   bindByQrImage: (file) => {

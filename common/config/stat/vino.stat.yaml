@@ -1,0 +1,5 @@
+# 与 Vino 仓 common/config/stat/vino.stat.yaml 保持逐字一致
+timezone: Asia/Shanghai
+uploader:
+  enabled: true
+  tick_seconds: 60

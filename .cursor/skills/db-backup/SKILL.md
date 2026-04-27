@@ -31,12 +31,12 @@ description: >-
 > - 日/手动路径：`db_save/{db}/YYYY-MM/DD.sql.gz`
 > - 小时/进程内路径：`db_save/{db}/YYYY-MM-DD/HH.sql.gz`
 >
-> 两种路径**不会互相覆盖**；管理端按钮跟随 `cfg.DB.Name`（切主库后跟随切换），宿主机脚本固定读 `.env` 的 `DB_NAME`。**不再产生扁平历史路径 `db_save/YYYY-MM/DD.sql.gz`**，但恢复侧仅要求 `/db_save/` 前缀，历史对象仍可用于恢复。
+> 两种路径**不会互相覆盖**；管理端按钮跟随 `cfg.DB.Name`（切主库后跟随切换），宿主机脚本固定读 `.env` 的 `DB_NAME`。恢复侧要求 `/db_save/{db}/` 前缀。
 
 **设计原则（吸收自跨项目实践）**
 
 - 备份上传走 **已配置的腾讯云 COS 凭证**（`COS_SECRET_ID` / `COS_SECRET_KEY`），**勿**把密钥写入 Skill 或提交 Git。
-- `mysqldump` 客户端须与 **MySQL 8 `caching_sha2_password`** 兼容：`backend/Dockerfile` 使用 **mysql-client**（Alpine community），**避免**仅用 `mariadb-client`（缺插件会导致 1045 / `caching_sha2_password.so` 找不到）。
+- `mysqldump` 客户端须支持 **MySQL 8 `caching_sha2_password`**：`backend/Dockerfile` 使用 **mysql-client**（Alpine community），**避免**仅用 `mariadb-client`（缺插件会导致 1045 / `caching_sha2_password.so` 找不到）。
 - 对象键统一在 **`db_save/`** 前缀下，与审计类备份（`log/backend/` 等）区分，见 `services/cos.go` 中 `validateBackupKey`。
 
 ---
@@ -116,7 +116,7 @@ description: >-
 ### 流程（顺序）
 
 1. `source` `.env`。
-2. `docker exec -e MYSQL_PWD=... vino-mysql mysqldump ... --databases "$DB_NAME"`（在 **MySQL 官方镜像内**执行客户端，避免宿主 MariaDB 与 MySQL 8 认证不兼容）。
+2. `docker exec -e MYSQL_PWD=... vino-mysql mysqldump ... --databases "$DB_NAME"`（在 **MySQL 官方镜像内**执行客户端，避免宿主 MariaDB 与 MySQL 8 认证插件不匹配）。
 3. 管道 **`gzip -c`** 写入临时文件。
 4. **`coscli cp`** 上传到 `cos://${COS_BUCKET}/db_save/${DB_NAME}/${YYYY-MM}/${DD}.sql.gz`。
 
@@ -131,7 +131,7 @@ description: >-
 - **主库名段**：`adminPostDbBackup` / `StartHourlyDbBackup` 均用 `cfg.DB.Name`（跟随 `active_db` 文件）；脚本用 `.env` 的 `DB_NAME`。均需匹配 `^[A-Za-z0-9_]{1,64}$`，否则拒绝上传。
 - **校验**：`PutBackupObject` / `validateBackupKey` 允许前缀 `db_save/`（及 `log/backend/` 等），见 `backend/internal/services/cos.go`。
 - **桶**：默认与业务上传共用（环境变量 `COS_*`），新加坡地域等以实际 `.env` 为准。
-- **历史路径**：扁平路径 `db_save/YYYY-MM/DD.sql.gz` 不再生成，但恢复接口按 `/db_save/` 前缀校验，老对象仍可恢复。
+- **路径要求**：恢复接口要求 `/db_save/{主库名}/` 前缀。
 
 ---
 

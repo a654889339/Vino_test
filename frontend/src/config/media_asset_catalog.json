@@ -1,0 +1,172 @@
+{
+  "version": 2,
+  "productMedia": {
+    "catalogVersion": 2,
+    "keyPrefixTemplate": "front_page_config/product/{id}/",
+    "notesZh": "device_guides.id 替换 {id}；ToC/小程序自包内/构建期嵌入的 media_asset_catalog 读 defaults。展示大图/缩略/图标等默认扩展名见 defaults；实际上传扩展名按 MIME 可能为 webp/jpg 等。",
+    "defaults": {
+      "cover": "banner_page.jpg",
+      "cover_en": "banner_page_en.jpg",
+      "cover_thumb": "cover_thumbnail.jpg",
+      "cover_thumb_en": "cover_thumbnail_en.jpg",
+      "icon": "icon.png",
+      "icon_en": "icon_en.png",
+      "pdf": "description.pdf",
+      "model3d": "model3d.glb",
+      "decal": "decal.png",
+      "skybox": "model3d_skybox.jpg",
+      "scan": "scan.png"
+    }
+  },
+  "downloadDefault": {
+    "readVia": "https://{bucket}/... 桶公网直链",
+    "notesZh": "展示仅走 COS 公网 HTTPS；vino.media.yaml 的 ossPublicBaseDefault 与包内配置对齐。改本文件请同步 `backend/internal/configdata/media_asset_catalog.json` 与三端。变更白名单须同步 cos.go。",
+    "keyPrefixExamples": ["vino/uploads/", "vino/main_page/", "vino/main_animation/", "vino/items/", "front_page_config/product/"]
+  },
+  "rules": [
+    {
+      "id": "toc_home_config_upload",
+      "module": "ToC 首页/动画/页面基础等",
+      "labelZh": "home_configs 图片上传（管理后台）",
+      "upload": {
+        "method": "POST",
+        "path": "/api/home-config/upload",
+        "formFields": ["file", "section（可选）", "role（flat 板块必填）"]
+      },
+      "cos": {
+        "prefixPattern": "见 section：tabbar→vino/main_page；splash|headerLogo|homeBg→vino/main_animation；其它合法 section→vino/main_page/{section}；未传 section→vino/uploads",
+        "namingNotes": "非 flat：{homeconfig-}{ms}-{rand}{ext}，thumb 子路径；flat：role 为 image/image_en 时用 UploadOriginalAndFlatCoverThumb（cover_thumbnail）；cover_thumbnail* 为固定文件名",
+        "thumbBehavior": "mixed_tabbar_animation_flat"
+      },
+      "download": { "readVia": "api_media_cos_proxy", "notesZh": "与 downloadDefault 一致" }
+    },
+    {
+      "id": "outlet_home_config_upload",
+      "module": "服务商首页/动画/个人中心等",
+      "labelZh": "outlet_home_configs 图片上传",
+      "upload": {
+        "method": "POST",
+        "path": "/api/outlet/home-config/upload",
+        "formFields": ["file", "section", "role"]
+      },
+      "cos": {
+        "prefixPattern": "与 ToC 相同逻辑，随机文件前缀为 outlet-homeconfig-",
+        "namingNotes": "复用 homeConfigImageUpload(c, \"outlet-homeconfig-\")",
+        "thumbBehavior": "mixed_tabbar_animation_flat"
+      },
+      "download": { "readVia": "api_media_cos_proxy", "notesZh": "同 ToC" }
+    },
+    {
+      "id": "guide_admin_upload",
+      "module": "商品配置 DeviceGuide",
+      "labelZh": "后台商品资源上传",
+      "upload": {
+        "method": "POST",
+        "path": "/api/guides/admin/upload",
+        "formFields": ["file", "guideId（可选）", "assetKind（可选）"]
+      },
+      "cos": {
+        "prefixPattern": "无有效 guideId→vino/uploads；有→front_page_config/product/{guideId}（不以 vino/ 开头）",
+        "namingNotes": "assetKind=icon|icon_en→icon.ext/icon_en.ext；cover|cover_en→banner_page*+cover_thumbnail*；cover_thumb*→cover_thumbnail(_en)；description→description.pdf；model3d→model3d.glb；model3d_decal→decal.png；model3d_skybox→model3d_skybox.jpg；其它图片→guide-{ms}-{rand}{ext}+缩略图",
+        "thumbBehavior": "per_asset_kind"
+      },
+      "download": { "readVia": "api_media_cos_proxy", "notesZh": "商品详情 Web/小程序经 cosMedia 解析" }
+    },
+    {
+      "id": "guide_admin_qrcode",
+      "module": "商品配置",
+      "labelZh": "后台生成绑定二维码 PNG",
+      "upload": {
+        "method": "POST",
+        "path": "/api/guides/:id/qrcode",
+        "formFields": ["JSON body force（可选）"]
+      },
+      "cos": {
+        "prefixPattern": "front_page_config/product/{id}",
+        "namingNotes": "固定 scan.png（与 guideGenerateQR 一致）",
+        "thumbBehavior": "none"
+      },
+      "download": { "readVia": "api_media_cos_proxy", "notesZh": "返回 URL 存 device_guides.qrcode_url" }
+    },
+    {
+      "id": "product_category_upload",
+      "module": "商品分类",
+      "labelZh": "种类缩略图",
+      "upload": {
+        "method": "POST",
+        "path": "/api/product-categories/upload",
+        "formFields": ["file", "categoryId"]
+      },
+      "cos": {
+        "prefixPattern": "vino/items/type/{categoryId}",
+        "namingNotes": "large_image{ext} + cover_thumbnail（UploadOriginalAndFlatCoverThumb）",
+        "thumbBehavior": "large_plus_cover_thumb"
+      },
+      "download": { "readVia": "api_media_cos_proxy", "notesZh": "同 downloadDefault" }
+    },
+    {
+      "id": "auth_upload_avatar",
+      "module": "ToC 用户",
+      "labelZh": "用户头像",
+      "upload": {
+        "method": "POST",
+        "path": "/api/auth/upload-avatar",
+        "formFields": ["avatar"]
+      },
+      "cos": {
+        "prefixPattern": "vino/uploads（defaultContentPrefix）",
+        "namingNotes": "avatar_{16hex随机}{ext}",
+        "thumbBehavior": "none"
+      },
+      "download": { "readVia": "api_media_cos_proxy", "notesZh": "profile 展示走 resolveMediaUrl" }
+    },
+    {
+      "id": "outlet_auth_avatar",
+      "module": "服务商用户",
+      "labelZh": "门店/分销商头像",
+      "upload": {
+        "method": "POST",
+        "path": "/api/outlet/auth/avatar",
+        "formFields": ["avatar"]
+      },
+      "cos": {
+        "prefixPattern": "vino/uploads",
+        "namingNotes": "outlet_avatar_{16hex}{ext}",
+        "thumbBehavior": "none"
+      },
+      "download": { "readVia": "api_media_cos_proxy", "notesZh": "同 ToC 头像" }
+    },
+    {
+      "id": "message_upload_image",
+      "module": "留言板 ToC",
+      "labelZh": "用户聊天图片",
+      "upload": {
+        "method": "POST",
+        "path": "/api/messages/upload-image",
+        "formFields": ["image"]
+      },
+      "cos": {
+        "prefixPattern": "vino/uploads",
+        "namingNotes": "chat_{ms}_{8hex}{ext}",
+        "thumbBehavior": "none"
+      },
+      "download": { "readVia": "api_media_cos_proxy", "notesZh": "消息内容存 URL 字符串" }
+    },
+    {
+      "id": "outlet_message_upload_image",
+      "module": "留言板 服务商",
+      "labelZh": "门店用户聊天图片",
+      "upload": {
+        "method": "POST",
+        "path": "/api/outlet/messages/upload-image",
+        "formFields": ["image"]
+      },
+      "cos": {
+        "prefixPattern": "vino/uploads",
+        "namingNotes": "outlet_chat_{ms}_{8hex}{ext}",
+        "thumbBehavior": "none"
+      },
+      "download": { "readVia": "api_media_cos_proxy", "notesZh": "同 ToC 留言图" }
+    }
+  ]
+}

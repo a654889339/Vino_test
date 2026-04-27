@@ -1,6 +1,6 @@
 module vino/backend
 
-go 1.22
+go 1.25.0
 
 require (
 	github.com/disintegration/imaging v1.6.2
@@ -18,13 +18,20 @@ require (
 	github.com/xuri/excelize/v2 v2.8.1
 	golang.org/x/crypto v0.25.0
 	golang.org/x/image v0.18.0
+	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/datatypes v1.2.4
 	gorm.io/driver/mysql v1.5.7
 	gorm.io/gorm v1.25.12
+	shared/cosbase v0.0.0
+	shared/dbbase v0.0.0
+	shared/logbase v0.0.0
+	shared/phoneverifycode v0.0.0
+	shared/statbase v0.0.0
 )
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
+	github.com/aliyun/aliyun-oss-go-sdk v2.2.7+incompatible // indirect
 	github.com/bytedance/sonic v1.11.6 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect
 	github.com/clbanning/mxj v1.8.4 // indirect
@@ -64,9 +71,19 @@ require (
 	golang.org/x/net v0.24.0 // indirect
 	golang.org/x/sys v0.22.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
+	golang.org/x/time v0.15.0 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/protobuf v1.34.0 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/mail.v2 v2.3.1 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace shared/cosbase => ../common/backend/cos_base
+
+replace shared/dbbase => ../common/backend/db_base
+
+replace shared/logbase => ../common/backend/log_base
+
+replace shared/phoneverifycode => ../common/backend/phone_verify_code
+
+replace shared/statbase => ../common/backend/stat_base

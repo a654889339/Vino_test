@@ -1,19 +1,19 @@
 package handlers
 
 import (
-	"bytes"
-	"compress/gzip"
 	"context"
 	"database/sql"
 	"fmt"
 	"os"
-	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
+	"shared/dbbase"
 	"vino/backend/internal/audit"
 	"vino/backend/internal/config"
 	"vino/backend/internal/db"
+	"vino/backend/internal/dbbackup"
 	"vino/backend/internal/models"
 	"vino/backend/internal/resp"
 	"vino/backend/internal/services"
@@ -22,6 +22,18 @@ import (
 	"github.com/gin-gonic/gin"
 	// _ "github.com/go-sql-driver/mysql" 已在同 package 的 admin_db_ops.go 匿名导入
 )
+
+func loadDbBackupConfigForOps(project string) *dbbase.FileConfig {
+	path := strings.TrimSpace(os.Getenv("DB_BACKUP_CONFIG"))
+	if path == "" {
+		path = filepath.Join("..", "common", "config", "db", project+".db.yaml")
+	}
+	fc, err := dbbase.LoadFileConfig(path)
+	if err != nil {
+		return nil
+	}
+	return fc
+}
 
 // dbTableCount 反映某张表精确行数；统计失败时 Rows=-1 并在 Note 说明。
 type dbTableCount struct {
@@ -88,7 +100,7 @@ type dbBackupResult struct {
 // runDbBackupCore 执行一次「mysqldump → gzip → PutBackupObject → COUNT(*)」。
 // cosKey 为空时使用默认「日路径」db_save/{dbname}/YYYY-MM/DD.sql.gz（手动触发）；
 // 传入时原样使用（例如调度器的 db_save/{dbname}/YYYY-MM-DD/HH.sql.gz）。
-func runDbBackupCore(ctx context.Context, cfg *config.Config, cosKey string) (*dbBackupResult, error) {
+func runDbBackupCore(ctx context.Context, cfg *config.Config, cosKey string, dumpMode string) (*dbBackupResult, error) {
 	if !cfg.COSConfigured() {
 		return nil, fmt.Errorf("COS 未配置，无法上传数据库备份")
 	}
@@ -98,100 +110,37 @@ func runDbBackupCore(ctx context.Context, cfg *config.Config, cosKey string) (*d
 		return nil, fmt.Errorf("当前主库名不合法，拒绝写入 COS：%s", dbSeg)
 	}
 
-	dumpArgs := []string{
-		"-u" + cfg.DB.User,
-		"--single-transaction",
-		"--routines",
-		"--events",
-		"--set-gtid-purged=OFF",
-		"--databases",
-		dbSeg,
+	override := strings.TrimSpace(cosKey)
+	loc := audit.LogLocation()
+	hour := time.Now().In(loc).Truncate(time.Hour)
+	if override == "" {
+		now := time.Now().In(loc)
+		override = fmt.Sprintf("db_save/%s/%s/%s.sql.gz", dbSeg, now.Format("2006-01"), now.Format("02"))
 	}
 
-	useDocker := false
-	if _, statErr := os.Stat("/var/run/docker.sock"); statErr == nil {
-		if _, lookErr := exec.LookPath("docker"); lookErr == nil {
-			useDocker = true
-		}
+	put := func(ctx context.Context, key string, body []byte, contentType string) error {
+		return services.PutBackupObject(ctx, key, body, contentType)
+	}
+	gzKey, gzLen, sqlLen, err := dbbase.RunHourlyBackup(ctx, dbbase.RunHourlyParams{
+		DBHost: cfg.DB.Host, DBPort: cfg.DB.Port, DBUser: cfg.DB.User, DBPassword: cfg.DB.Password,
+		DBName:            dbSeg,
+		Location:          loc,
+		Hour:              hour,
+		ObjectKeyOverride: override,
+		DumpMode:          dumpMode,
+		ContainerName:     dbbackup.MysqlExecContainer(),
+		Put:               put,
+	})
+	if err != nil {
+		return nil, err
 	}
 
-	var cmd *exec.Cmd
-	if useDocker {
-		container := strings.TrimSpace(os.Getenv("MYSQL_DUMP_CONTAINER"))
-		if container == "" {
-			container = "vino-mysql"
-		}
-		args := append([]string{
-			"exec",
-			"-e", "MYSQL_PWD=" + cfg.DB.Password,
-			container,
-			"mysqldump",
-		}, dumpArgs...)
-		cmd = exec.CommandContext(ctx, "docker", args...)
-	} else {
-		if _, err := exec.LookPath("mysqldump"); err != nil {
-			return nil, fmt.Errorf("未挂载 /var/run/docker.sock 且容器内未找到 mysqldump；请挂载 docker.sock（推荐，走 mysql:8.0 容器）或在镜像中安装兼容 caching_sha2 的 mysql-client")
-		}
-		args := append([]string{
-			"-h" + cfg.DB.Host,
-			"-P" + fmt.Sprintf("%d", cfg.DB.Port),
-		}, dumpArgs...)
-		cmd = exec.CommandContext(ctx, "mysqldump", args...)
-		var env []string
-		for _, e := range os.Environ() {
-			if strings.HasPrefix(e, "MYSQL_PWD=") {
-				continue
-			}
-			env = append(env, e)
-		}
-		cmd.Env = append(env, "MYSQL_PWD="+cfg.DB.Password)
-	}
-
-	var sqlOut, sqlErr bytes.Buffer
-	cmd.Stdout = &sqlOut
-	cmd.Stderr = &sqlErr
-	if err := cmd.Run(); err != nil {
-		msg := strings.TrimSpace(sqlErr.String())
-		if len(msg) > 500 {
-			msg = msg[:500] + "…"
-		}
-		if msg == "" {
-			msg = err.Error()
-		}
-		if useDocker {
-			return nil, fmt.Errorf("mysqldump(docker exec) 失败: %s", msg)
-		}
-		return nil, fmt.Errorf("mysqldump 失败: %s", msg)
-	}
-	if sqlOut.Len() == 0 {
-		return nil, fmt.Errorf("mysqldump 输出为空")
-	}
-
-	var gzBuf bytes.Buffer
-	gw := gzip.NewWriter(&gzBuf)
-	if _, err := gw.Write(sqlOut.Bytes()); err != nil {
-		return nil, fmt.Errorf("gzip 压缩失败: %w", err)
-	}
-	if err := gw.Close(); err != nil {
-		return nil, fmt.Errorf("gzip 结束失败: %w", err)
-	}
-
-	// 默认「日路径」由 handler 使用；调度器会传入「小时路径」。
-	if cosKey == "" {
-		now := time.Now().In(time.Local)
-		cosKey = fmt.Sprintf("db_save/%s/%s/%s.sql.gz", dbSeg, now.Format("2006-01"), now.Format("02"))
-	}
-	if err := services.PutBackupObject(ctx, cosKey, gzBuf.Bytes(), "application/gzip"); err != nil {
-		return nil, fmt.Errorf("上传 COS 失败: %w", err)
-	}
-
-	// 行数统计非关键路径；失败只写 note 不返回 error。
 	tables, totalRows, tablesNote := collectTableRowCounts(ctx, cfg)
 	elapsed := time.Since(start)
 	return &dbBackupResult{
-		CosKey:       cosKey,
-		Bytes:        gzBuf.Len(),
-		SqlBytes:     sqlOut.Len(),
+		CosKey:       gzKey,
+		Bytes:        gzLen,
+		SqlBytes:     sqlLen,
 		Database:     dbSeg,
 		Bucket:       services.CosBucket(),
 		ElapsedMs:    elapsed.Milliseconds(),
@@ -203,12 +152,18 @@ func runDbBackupCore(ctx context.Context, cfg *config.Config, cosKey string) (*d
 	}, nil
 }
 
-// POST /api/admin/ops/db-backup — 优先在 MySQL 官方容器内 mysqldump（兼容 caching_sha2_password），
-// 回退到 backend 容器内本机 mysqldump（Alpine mysql-client 实为 MariaDB，仅作兜底）。gzip 后上传至 COS db_save/。
+// POST /api/admin/ops/db-backup — 优先在 MySQL 官方容器内 mysqldump（支持 caching_sha2_password），
+// 失败时改用 backend 容器内本机 mysqldump。gzip 后上传至 COS db_save/。
 func adminPostDbBackup(c *gin.Context, cfg *config.Config) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 25*time.Minute)
 	defer cancel()
-	res, err := runDbBackupCore(ctx, cfg, "")
+	fc := loadDbBackupConfigForOps("vino")
+	dumpMode := ""
+	if fc != nil {
+		dumpMode = fc.Mysqldump.Mode
+		dbbackup.SetMysqlDumpContainerFromYAML(fc.Mysqldump.ContainerName)
+	}
+	res, err := runDbBackupCore(ctx, cfg, "", dumpMode)
 	if err != nil {
 		// 503 vs 500 由错误内容里的关键字区分，保持与重构前对外行为一致
 		msg := err.Error()
@@ -241,12 +196,12 @@ func AdminGetFeatureFlags(c *gin.Context) {
 	// Return current flags (default if not set in DB).
 	flags := services.GetFeatureFlags()
 	resp.OK(c, gin.H{
-		"maintenanceMode":     flags.MaintenanceMode,
-		"enableRegister":      flags.EnableRegister,
-		"enableCreateOrder":   flags.EnableCreateOrder,
+		"maintenanceMode":        flags.MaintenanceMode,
+		"enableRegister":         flags.EnableRegister,
+		"enableCreateOrder":      flags.EnableCreateOrder,
 		"enableCreateGoodsOrder": flags.EnableGoodsOrder,
-		"enableCreateAddress": flags.EnableCreateAddr,
-		"updatedAtUnixMs":     flags.UpdatedAtUnixMs,
+		"enableCreateAddress":    flags.EnableCreateAddr,
+		"updatedAtUnixMs":        flags.UpdatedAtUnixMs,
 	})
 }
 

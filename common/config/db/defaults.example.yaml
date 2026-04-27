@@ -1,0 +1,9 @@
+# 占位：复制为 rmelamine.db.yaml / vino.db.yaml 或经 DB_BACKUP_CONFIG 指向。
+scheduler:
+  enabled: true
+  tick_seconds: 60
+  timezone: Asia/Shanghai
+  catch_up_missed_hours: true
+mysqldump:
+  mode: docker # docker|local
+  container_name: ""

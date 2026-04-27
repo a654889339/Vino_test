@@ -1,6 +1,7 @@
 const app = getApp();
 const i18n = require('../../utils/i18n.js');
 const currencyUtil = require('../../utils/currency.js');
+const { createWechatPayRunner } = require('../../../common/wechat-mp/pay/index.js');
 const { resolveMediaUrl } = require('../../utils/cosMedia.js');
 
 function formatTime(s) {
@@ -89,21 +90,11 @@ Page({
   },
 
   doWechatPay(orderId) {
-    return app.request({ url: '/goods-orders/' + orderId + '/pay-wechat', method: 'POST' })
-      .then((res) => {
-        const params = res.data;
-        return new Promise((resolve, reject) => {
-          wx.requestPayment({
-            timeStamp: params.timeStamp,
-            nonceStr: params.nonceStr,
-            package: params.package,
-            signType: params.signType,
-            paySign: params.paySign,
-            success: () => resolve('ok'),
-            fail: (err) => reject(err || new Error('支付失败')),
-          });
-        });
-      });
+    const runner = createWechatPayRunner({
+      requestPrepay: (id) =>
+        app.request({ url: '/goods-orders/' + id + '/pay-wechat', method: 'POST' }).then((r) => (r && r.data) || {}),
+    });
+    return runner.pay(orderId);
   },
 
   cancelOrder() {

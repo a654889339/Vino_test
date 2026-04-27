@@ -1,6 +1,7 @@
 const app = getApp();
 const { formatPriceDisplay } = require('../../utils/currency.js');
 const i18n = require('../../utils/i18n.js');
+const { createWechatPayRunner } = require('../../../common/wechat-mp/pay/index.js');
 
 function getStatusMap() {
   return {
@@ -112,30 +113,18 @@ Page({
   payOrder(e) {
     const id = e.currentTarget.dataset.id;
     if (!id) return;
-    app
-      .request({ method: 'POST', url: `/orders/${id}/pay-wechat` })
-      .then((res) => {
-        const p = res.data || {};
-        wx.requestPayment({
-          timeStamp: p.timeStamp,
-          nonceStr: p.nonceStr,
-          package: p.package,
-          signType: p.signType || 'RSA',
-          paySign: p.paySign,
-          success: () => {
-            wx.showToast({ title: i18n.t('orders.paySuccess'), icon: 'success' });
-            this.loadOrders();
-          },
-          fail: (err) => {
-            const msg = (err && err.errMsg) || '';
-            if (msg.indexOf('cancel') !== -1) return;
-            wx.showToast({ title: i18n.t('orders.payIncomplete'), icon: 'none' });
-          },
-        });
+    const runner = createWechatPayRunner({
+      requestPrepay: (oid) =>
+        app.request({ method: 'POST', url: `/orders/${oid}/pay-wechat` }).then((r) => (r && r.data) || {}),
+    });
+    runner
+      .pay(id)
+      .then((r) => {
+        if (r && r.cancelled) return;
+        wx.showToast({ title: i18n.t('orders.paySuccess'), icon: 'success' });
+        this.loadOrders();
       })
-      .catch((err) => {
-        wx.showToast({ title: err.message || i18n.t('orders.payFailed'), icon: 'none' });
-      });
+      .catch((err) => wx.showToast({ title: (err && err.message) || i18n.t('orders.payFailed'), icon: 'none' }));
   },
 
   cancelOrder(e) {

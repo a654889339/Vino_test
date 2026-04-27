@@ -1,0 +1,14 @@
+# 微信支付基建配置示例。仅保存非敏感字段与敏感 env 名，不提交密钥值。
+enabled: false
+appId: ""
+mchId: ""
+mchSerialNoEnv: WECHAT_PAY_MCH_SERIAL_NO
+apiV3KeyEnv: WECHAT_PAY_API_V3_KEY
+privateKeyEnv: WECHAT_PAY_PRIVATE_KEY
+privateKeyPathEnv: WECHAT_PAY_PRIVATE_KEY_PATH
+platformCertEnv: WECHAT_PAY_PLATFORM_CERT
+platformCertPathEnv: WECHAT_PAY_PLATFORM_CERT_PATH
+notifyUrl: ""
+notifyRoute: ""
+prepayRoutes: []
+

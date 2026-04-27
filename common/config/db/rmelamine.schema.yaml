@@ -1,0 +1,21 @@
+project: r-melamine
+source: internal/db/schema_register.go
+notes: >
+  以 GORM 模型注册表为准（启动 AutoMigrate 自举的全量表清单）。
+  本文件用于“全表结构契约”的人读/工具读入口；详细列结构以模型与运行中 information_schema 为准。
+tables:
+  - users
+  - carts
+  - cart_items
+  - user_addresses
+  - user_item_3d_decal
+  - products
+  - orders
+  - order_items
+  - eco_points
+  - eco_points_ledger
+  - categories
+  - wishlists
+  - home_configs
+  - i18n_entries
+

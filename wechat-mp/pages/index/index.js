@@ -1,7 +1,7 @@
 const app = getApp();
 const { buildSectionSkinContainerStyle } = require('../../utils/sectionSkin.js');
 const i18n = require('../../utils/i18n.js');
-const { normalizeImageUrl } = require('../../utils/image.js');
+const { normalizeImageUrl } = require('../../utils/cosMedia.js');
 const cosMedia = require('../../utils/cosMedia.js');
 
 Page({

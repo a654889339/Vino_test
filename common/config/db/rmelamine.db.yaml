@@ -1,0 +1,8 @@
+scheduler:
+  enabled: true
+  tick_seconds: 60
+  timezone: Asia/Shanghai
+  catch_up_missed_hours: true
+mysqldump:
+  mode: docker
+  container_name: r-melamine-mysql

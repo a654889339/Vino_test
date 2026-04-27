@@ -85,7 +85,7 @@ func svcCreate(c *gin.Context) {
 		return
 	}
 	// 校验 categoryId 对应的种类必须存在，避免撞到 services_ibfk_1 外键约束导致的 MySQL 1452，
-	// 并把 Category 冗余字段同步为种类的 key/Name，便于旧前端（按 category 字符串过滤）继续工作。
+	// 并把 Category 冗余字段同步为种类的 key/Name。
 	if s.CategoryID != nil {
 		var cat models.ServiceCategory
 		if err := db.DB.First(&cat, *s.CategoryID).Error; err != nil {

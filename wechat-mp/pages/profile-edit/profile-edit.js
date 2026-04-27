@@ -10,6 +10,7 @@ Page({
     maskedPhone: '',
     bindPhone: '',
     bindCode: '',
+    unbindCode: '',
     smsCountdown: 0,
     sendingSmsCode: false,
     labelAvatar: '',
@@ -88,12 +89,12 @@ Page({
 
   onBindPhoneInput(e) {
     const field = e.currentTarget.dataset.field;
-    const value = (e.detail.value || '').replace(/\D/g, '').slice(0, field === 'bindCode' ? 6 : 11);
+    const value = (e.detail.value || '').replace(/\D/g, '').slice(0, (field === 'bindCode' || field === 'unbindCode') ? 6 : 11);
     this.setData({ [field]: value });
   },
 
   onSendBindCode() {
-    const phone = (this.data.bindPhone || '').trim();
+    const phone = (this.data.userPhone || '').trim() ? (this.data.userPhone || '').trim() : (this.data.bindPhone || '').trim();
     if (!/^1\d{10}$/.test(phone)) {
       wx.showToast({ title: i18n.t('profileEdit.errPhone'), icon: 'none' });
       return;
@@ -152,12 +153,43 @@ Page({
       });
   },
 
+  onSubmitUnbindPhone() {
+    const phone = (this.data.userPhone || '').trim();
+    const code = (this.data.unbindCode || '').trim();
+    if (!/^1\d{10}$/.test(phone)) {
+      wx.showToast({ title: i18n.t('profileEdit.errPhone'), icon: 'none' });
+      return;
+    }
+    if (!code || code.length !== 6) {
+      wx.showToast({ title: i18n.t('profileEdit.errCode'), icon: 'none' });
+      return;
+    }
+    app.request({
+      method: 'POST',
+      url: '/auth/unbind-phone',
+      data: { phone, code },
+    })
+      .then((res) => {
+        const user = res.data || {};
+        app.globalData.userInfo = user;
+        this.setData({
+          userInfo: user,
+          userPhone: user.phone || '',
+          maskedPhone: user.phone ? user.phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2') : '',
+          unbindCode: '',
+        });
+        wx.showToast({ title: '解绑成功', icon: 'success' });
+      })
+      .catch((err) => {
+        wx.showToast({ title: err.message || '解绑失败', icon: 'none' });
+      });
+  },
+
   onChangePhoneTap() {
     this.setData({
       bindPhone: '',
       bindCode: '',
-      userPhone: '',
-      maskedPhone: '',
+      unbindCode: '',
     });
   },
 

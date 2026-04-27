@@ -25,8 +25,28 @@
       <div class="edit-row edit-row-phone">
         <span class="edit-label">{{ t('profileEdit.phone') }}</span>
         <template v-if="userPhone">
-          <span class="phone-masked">{{ maskedPhone }}</span>
-          <span class="edit-link" @click="onChangePhone">{{ t('profileEdit.changePhone') }}</span>
+          <div class="bind-phone-inline">
+            <span class="phone-masked">{{ maskedPhone }}</span>
+            <input
+              v-model="unbindCode"
+              type="tel"
+              class="bind-code-input"
+              :placeholder="t('profileEdit.codePh')"
+              maxlength="6"
+            />
+            <van-button
+              size="small"
+              class="btn-get-code"
+              :disabled="smsCountdown > 0 || sendingSmsCode"
+              :loading="sendingSmsCode"
+              @click="onSendBindCode"
+            >
+              {{ smsCountdown > 0 ? smsCountdown + 's' : t('profileEdit.sendSms') }}
+            </van-button>
+            <van-button size="small" type="warning" class="btn-bind-phone" @click="onSubmitUnbindPhone">
+              {{ t('解绑', 'Unbind') }}
+            </van-button>
+          </div>
         </template>
         <template v-else>
           <div class="bind-phone-inline">
@@ -79,6 +99,7 @@ const nickname = ref('');
 const userPhone = ref('');
 const bindPhone = ref('');
 const bindCode = ref('');
+const unbindCode = ref('');
 const smsCountdown = ref(0);
 const sendingSmsCode = ref(false);
 let countdownTimer = null;
@@ -156,7 +177,9 @@ const onNicknameBlur = async () => {
 };
 
 const onSendBindCode = async () => {
-  const phone = bindPhone.value.replace(/\D/g, '').slice(0, 11);
+  const phone = (userPhone.value || '').trim()
+    ? String(userPhone.value).replace(/\D/g, '').slice(0, 11)
+    : bindPhone.value.replace(/\D/g, '').slice(0, 11);
   if (!/^1\d{10}$/.test(phone)) {
     showToast(t('请输入正确的11位手机号', 'Please enter a valid 11-digit phone number'));
     return;
@@ -202,10 +225,32 @@ const onSubmitBindPhone = async () => {
   }
 };
 
+const onSubmitUnbindPhone = async () => {
+  const phone = String(userPhone.value || '').replace(/\D/g, '').slice(0, 11);
+  const code = unbindCode.value.replace(/\D/g, '').slice(0, 6);
+  if (!/^1\d{10}$/.test(phone)) {
+    showToast(t('请输入正确的11位手机号', 'Please enter a valid 11-digit phone number'));
+    return;
+  }
+  if (code.length !== 6) {
+    showToast(t('请输入6位验证码', 'Please enter 6-digit code'));
+    return;
+  }
+  try {
+    await authApi.unbindPhone({ phone, code });
+    await userStore.fetchProfile();
+    userPhone.value = '';
+    unbindCode.value = '';
+    showToast(t('解绑成功', 'Phone unbound successfully'));
+  } catch (err) {
+    showToast(err.message || t('解绑失败', 'Unbind failed'));
+  }
+};
+
 const onChangePhone = () => {
-  userPhone.value = '';
   bindPhone.value = '';
   bindCode.value = '';
+  unbindCode.value = '';
 };
 </script>
 

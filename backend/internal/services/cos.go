@@ -13,12 +13,15 @@ import (
 	"regexp"
 	"strings"
 
+	"vino/backend/internal/vinomediacfg"
+
 	"github.com/disintegration/imaging"
 	cos "github.com/tencentyun/cos-go-sdk-v5"
 	_ "golang.org/x/image/webp"
+	"shared/cosbase"
 )
 
-// 桶与地域仅由此处与环境变量决定；前端通过 GET /api/media/cos-config 读取 CosBase()，勿硬编码桶域名。
+// 桶与地域仅由此处与环境变量决定；公网基址以 common vino.media.yaml 的 ossPublicBaseDefault 为真源，勿在业务中硬编码桶域名。
 func cosBucketEffective() string {
 	s := strings.TrimSpace(os.Getenv("VINO_COS_BUCKET"))
 	if s != "" {
@@ -42,7 +45,7 @@ func CosConfigured() bool {
 	return sid != "" && sk != ""
 }
 
-// CosBucket returns the configured bucket id (name-appid), for admin/SDK 与 cos-config 接口。
+// CosBucket returns the configured bucket id (name-appid), for admin/SDK 等。
 func CosBucket() string { return cosBucketEffective() }
 
 // CosRegion returns COS 地域（如 ap-singapore），与 SDK 一致。
@@ -53,8 +56,7 @@ func CosBase() string {
 	return fmt.Sprintf("https://%s.cos.%s.myqcloud.com", cosBucketEffective(), cosRegionEffective())
 }
 
-// CosProxyKeyPrefixWhitelist 为 GET /api/media/cos 代理允许的 object key 前缀；与 IsKeyAllowedForProxy、
-// GET /api/media/cos-config 的 cosProxyAllowedPrefixes 同源。变更时请同步 embed 的 media_asset_catalog 与三端 cosMedia。
+// CosProxyKeyPrefixWhitelist 与 vino.media.yaml 的 cosProxyAllowedPrefixes 同源。变更请同步三端与 embed catalog。
 var CosProxyKeyPrefixWhitelist = []string{
 	"vino/uploads/",
 	"vino/main_page/",
@@ -88,21 +90,31 @@ func validateBackupKey(key string) error {
 	return fmt.Errorf("backup key must use log/backend/, log/stat/ or db_save/ prefix")
 }
 
+func storageClient() (cosbase.StorageClient, error) {
+	provider := cosbase.ProviderTencent
+	if f := vinomediacfg.Get(); f != nil && strings.TrimSpace(f.CloudProvider) != "" {
+		provider = strings.TrimSpace(f.CloudProvider)
+	}
+	return cosbase.NewStorageClient(cosbase.StorageConfig{
+		CloudProvider: provider,
+		BucketName:    cosBucketEffective(),
+		Region:        cosRegionEffective(),
+		PublicBase:    CosBase(),
+		SecretID:      os.Getenv("COS_SECRET_ID"),
+		SecretKey:     os.Getenv("COS_SECRET_KEY"),
+	})
+}
+
 // PutBackupObject uploads a private object (audit hourly logs, DB dump). No public-read ACL.
 func PutBackupObject(ctx context.Context, key string, body []byte, contentType string) error {
 	if err := validateBackupKey(key); err != nil {
 		return err
 	}
-	c, err := cosClient()
+	c, err := storageClient()
 	if err != nil {
 		return err
 	}
-	_, err = c.Object.Put(ctx, key, bytes.NewReader(body), &cos.ObjectPutOptions{
-		ObjectPutHeaderOptions: &cos.ObjectPutHeaderOptions{
-			ContentType: contentType,
-		},
-	})
-	return err
+	return c.PutBytes(ctx, key, body, contentType)
 }
 
 func cosClient() (*cos.Client, error) {
@@ -124,12 +136,12 @@ func cosClient() (*cos.Client, error) {
 var (
 	thumbKeyGoodsOrTypeLarge     = regexp.MustCompile(`^(vino/items/(?:goods|type)/\d+)/large_image(\.[^/.]+)$`)
 	thumbKeyGoodsOrTypeLargeEn   = regexp.MustCompile(`^(vino/items/(?:goods|type)/\d+)/large_image_en(\.[^/.]+)$`)
-	thumbKeyProductBanner          = regexp.MustCompile(`^(front_page_config/product/\d+)/banner_page(\.[^/.]+)$`)
-	thumbKeyProductBannerEn        = regexp.MustCompile(`^(front_page_config/product/\d+)/banner_page_en(\.[^/.]+)$`)
-	thumbKeyMainPageImage          = regexp.MustCompile(`^(vino/main_page/[^/]+)/image(\.[^/.]+)$`)
-	thumbKeyMainPageImageEn        = regexp.MustCompile(`^(vino/main_page/[^/]+)/image_en(\.[^/.]+)$`)
-	thumbKeyNoDeriveBasePrefixes   = regexp.MustCompile(`^(?:icon|icon_en|scan|cover_thumbnail|cover_thumbnail_en)(?:\.|$)`)
-	thumbKeyProductLeafNoThumb     = regexp.MustCompile(`(?i)^(model3d\.glb|decal\.png|description\.pdf|model3d_skybox\.(jpg|jpeg|png|webp))$`)
+	thumbKeyProductBanner        = regexp.MustCompile(`^(front_page_config/product/\d+)/banner_page(\.[^/.]+)$`)
+	thumbKeyProductBannerEn      = regexp.MustCompile(`^(front_page_config/product/\d+)/banner_page_en(\.[^/.]+)$`)
+	thumbKeyMainPageImage        = regexp.MustCompile(`^(vino/main_page/[^/]+)/image(\.[^/.]+)$`)
+	thumbKeyMainPageImageEn      = regexp.MustCompile(`^(vino/main_page/[^/]+)/image_en(\.[^/.]+)$`)
+	thumbKeyNoDeriveBasePrefixes = regexp.MustCompile(`^(?:icon|icon_en|scan|cover_thumbnail|cover_thumbnail_en)(?:\.|$)`)
+	thumbKeyProductLeafNoThumb   = regexp.MustCompile(`(?i)^(model3d\.glb|decal\.png|description\.pdf|model3d_skybox\.(jpg|jpeg|png|webp))$`)
 )
 
 // ThumbKeyFromOriginalKey 由原图 object key 推导缩略图 key（任意 vino/* 内容目录，与 Node 一致）
@@ -450,15 +462,10 @@ func UploadCOSReaderWithContentPrefix(ctx context.Context, r io.Reader, filename
 }
 
 func IsKeyAllowedForProxy(key string) bool {
-	if key == "" || strings.Contains(key, "..") || strings.Contains(key, "\\") {
+	if err := cosbase.ValidateKey(key); err != nil {
 		return false
 	}
-	for _, p := range CosProxyKeyPrefixWhitelist {
-		if strings.HasPrefix(key, p) {
-			return true
-		}
-	}
-	return false
+	return cosbase.KeyMatchesAllowedPrefix(CosProxyKeyPrefixWhitelist, key)
 }
 
 func StreamCosObjectToResponse(ctx context.Context, key string, w http.ResponseWriter) error {

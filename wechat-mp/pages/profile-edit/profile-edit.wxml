@@ -14,8 +14,12 @@
     <view class="edit-row edit-row-phone">
       <text class="edit-label">{{labelPhone}}</text>
       <block wx:if="{{userPhone}}">
-        <text class="phone-masked">{{maskedPhone}}</text>
-        <text class="edit-link" bindtap="onChangePhoneTap">{{changeText}}</text>
+        <view class="bind-phone-inline">
+          <text class="phone-masked">{{maskedPhone}}</text>
+          <input class="bind-code-input" type="number" placeholder="{{codePh}}" maxlength="6" value="{{unbindCode}}" data-field="unbindCode" bindinput="onBindPhoneInput" />
+          <button class="btn-get-code" disabled="{{smsCountdown > 0 || sendingSmsCode}}" bindtap="onSendBindCode">{{smsCountdown > 0 ? (smsCountdown + 's') : getCodeText}}</button>
+          <button class="btn-bind-phone" bindtap="onSubmitUnbindPhone">解绑</button>
+        </view>
       </block>
       <block wx:else>
         <view class="bind-phone-inline">

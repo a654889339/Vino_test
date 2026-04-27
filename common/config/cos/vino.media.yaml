@@ -1,0 +1,16 @@
+project: vino
+cosRuleConfigPath: /cosRuleConfig/*project*.media.yaml
+cosRuleConfigVersion: 0
+cosRuleConfigCheckTime: 60
+cloudProvider: tencent
+# 与 services.CosBase() 一致的桶 HTTPS 公网根（无尾斜杠）；三端以 GET /api/media/cos-config 返回为准，本处为真源
+ossPublicBaseDefault: https://itsyourturnmy-1256887166.cos.ap-singapore.myqcloud.com
+imageDisplayCacheTtlMs: 300000
+mediaConfigTtlMs: 300000
+cosProxyAllowedPrefixes:
+  - vino/uploads/
+  - vino/main_page/
+  - vino/main_animation/
+  - vino/items/
+  - front_page_config/
+productMediaNote: DeviceGuide 等路径见后端 embed catalog 与三端 cosMedia

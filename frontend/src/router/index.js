@@ -119,7 +119,7 @@ const router = createRouter({
 });
 
 // Vite 每次构建会重命名 assets/*.js 的哈希文件名。
-// 老标签页仍引用旧文件名，部署后点击跳转会 404 并抛出：
+// 浏览器若还持有已失效的哈希文件名，点击跳转会 404 并抛出：
 //   "Failed to fetch dynamically imported module: .../assets/Xxx-<hash>.js"
 // 这里捕获该错误并用硬刷新加载最新 index.html + 新哈希资源。
 const RELOAD_FLAG_KEY = '__vino_chunk_reload_ts__';

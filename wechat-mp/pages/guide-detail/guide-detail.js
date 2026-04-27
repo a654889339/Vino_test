@@ -1,7 +1,7 @@
 const app = getApp();
 const { openManualFromGuide } = require('../../utils/openManual.js');
 const i18n = require('../../utils/i18n.js');
-const { normalizeImageUrl } = require('../../utils/image.js');
+const { normalizeImageUrl } = require('../../utils/cosMedia.js');
 const currencyUtil = require('../../utils/currency.js');
 const cosMedia = require('../../utils/cosMedia.js');
 

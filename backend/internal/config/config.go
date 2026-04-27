@@ -17,7 +17,7 @@ type Config struct {
 		BackendDir string
 		StatDir    string
 	}
-	JWT     struct {
+	JWT struct {
 		Secret    string
 		ExpiresIn string
 	}
@@ -32,10 +32,22 @@ type Config struct {
 		AppID     string
 		AppSecret string
 	}
+	WeChatPay struct {
+		Enabled          bool
+		AppID            string
+		MchID            string
+		APIV3Key         string
+		PrivateKeyPath   string
+		PrivateKey       string
+		MchSerialNo      string
+		NotifyURL        string
+		PlatformCertPath string
+		PlatformCert     string
+	}
 	Alipay struct {
-		AppID       string
-		PrivateKey  string
-		PublicKey   string
+		AppID      string
+		PrivateKey string
+		PublicKey  string
 	}
 	Email struct {
 		Enabled  bool
@@ -45,15 +57,6 @@ type Config struct {
 		Password string
 		From     string
 		FromName string
-	}
-	SMS struct {
-		Enabled           bool
-		SecretID          string
-		SecretKey         string
-		SmsSdkAppID       string
-		SignName          string
-		TemplateID        string
-		CodeExpireMinutes int
 	}
 	FrontendURL string
 	// DBActiveNameFile 持久化「当前主库」文件路径；切换主库后写入，重启时读取优先于 DB_NAME。
@@ -91,6 +94,16 @@ func Load() *Config {
 	c.DB.Password = getenv("DB_PASSWORD", "vino_secret_2024")
 	c.Wechat.AppID = getenv("WECHAT_APPID", "")
 	c.Wechat.AppSecret = getenv("WECHAT_SECRET", "")
+	c.WeChatPay.Enabled = getenv("WECHAT_PAY_ENABLED", "false") == "true"
+	c.WeChatPay.AppID = getenv("WECHAT_PAY_APPID", c.Wechat.AppID)
+	c.WeChatPay.MchID = getenv("WECHAT_PAY_MCH_ID", "")
+	c.WeChatPay.APIV3Key = getenv("WECHAT_PAY_API_V3_KEY", "")
+	c.WeChatPay.PrivateKeyPath = getenv("WECHAT_PAY_PRIVATE_KEY_PATH", "")
+	c.WeChatPay.PrivateKey = getenv("WECHAT_PAY_PRIVATE_KEY", "")
+	c.WeChatPay.MchSerialNo = getenv("WECHAT_PAY_MCH_SERIAL_NO", "")
+	c.WeChatPay.NotifyURL = getenv("WECHAT_PAY_NOTIFY_URL", "")
+	c.WeChatPay.PlatformCertPath = getenv("WECHAT_PAY_PLATFORM_CERT_PATH", "")
+	c.WeChatPay.PlatformCert = getenv("WECHAT_PAY_PLATFORM_CERT", "")
 	c.Alipay.AppID = getenv("ALIPAY_APPID", "")
 	c.Alipay.PrivateKey = strings.ReplaceAll(getenv("ALIPAY_PRIVATE_KEY", ""), "\\n", "\n")
 	c.Alipay.PublicKey = strings.ReplaceAll(getenv("ALIPAY_PUBLIC_KEY", ""), "\\n", "\n")
@@ -101,13 +114,6 @@ func Load() *Config {
 	c.Email.Password = getenv("EMAIL_PASSWORD", "")
 	c.Email.From = getenv("EMAIL_FROM", "")
 	c.Email.FromName = getenv("EMAIL_FROM_NAME", "Vino服务")
-	c.SMS.Enabled = getenv("SMS_ENABLED", "false") == "true"
-	c.SMS.SecretID = getenv("TENCENT_SMS_SECRET_ID", "")
-	c.SMS.SecretKey = getenv("TENCENT_SMS_SECRET_KEY", "")
-	c.SMS.SmsSdkAppID = getenv("TENCENT_SMS_APP_ID", "")
-	c.SMS.SignName = getenv("TENCENT_SMS_SIGN_NAME", "Vino服务")
-	c.SMS.TemplateID = getenv("TENCENT_SMS_TEMPLATE_ID", "")
-	c.SMS.CodeExpireMinutes = atoi(getenv("SMS_CODE_EXPIRE_MINUTES", "5"), 5)
 	c.FrontendURL = getenv("FRONTEND_URL", "http://106.54.50.88:5201")
 	c.Log.BackendDir = getenv("LOG_BACKEND_DIR", "data/logs/backend")
 	c.Log.StatDir = getenv("LOG_STAT_DIR", "data/logs/stat")

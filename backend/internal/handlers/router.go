@@ -20,9 +20,7 @@ func RegisterRoutes(engine *gin.Engine, cfg *config.Config) {
 	api.GET("/health", Health)
 	api.GET("/app/status", AppStatus)
 
-	api.GET("/media/cos-config", MediaCosConfig)
-	api.GET("/media/catalog", MediaCatalog)
-	api.GET("/media/cos", MediaCosStream)
+	// 媒体不经过本服务：/api/media/* 已撤销；客户端从 COS 公网直链与包内 vino.media.yaml、media_asset_catalog 读取约定。
 	api.POST("/analytics/page-view", AnalyticsPageView)
 	api.GET("/admin/page-visit-stats", middleware.Auth(cfg), middleware.Admin(), AnalyticsStats)
 	api.GET("/admin/db-catalog", middleware.Auth(cfg), middleware.Admin(), adminGetDbCatalog)
@@ -38,6 +36,7 @@ func RegisterRoutes(engine *gin.Engine, cfg *config.Config) {
 		auth.POST("/register", func(c *gin.Context) { authRegister(c, cfg) })
 		auth.POST("/login", func(c *gin.Context) { authLogin(c, cfg) })
 		auth.POST("/bind-phone", middleware.Auth(cfg), func(c *gin.Context) { authBindPhone(c, cfg) })
+		auth.POST("/unbind-phone", middleware.Auth(cfg), func(c *gin.Context) { authUnbindPhone(c, cfg) })
 		auth.POST("/wx-login", func(c *gin.Context) { authWxLogin(c, cfg) })
 		auth.POST("/alipay-login", func(c *gin.Context) { authAlipayLogin(c, cfg) })
 		auth.GET("/profile", middleware.Auth(cfg), authGetProfile)

@@ -1,0 +1,9 @@
+scheduler:
+  enabled: true
+  tick_seconds: 60
+  timezone: Asia/Shanghai
+  # false：与迁移前 Vino 仅「整点小时变化触发一次」一致；true 则与 R-Melamine 一样补跑错过的整点
+  catch_up_missed_hours: false
+mysqldump:
+  mode: docker
+  container_name: vino-mysql

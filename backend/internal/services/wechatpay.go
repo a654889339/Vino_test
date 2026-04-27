@@ -22,9 +22,17 @@ import (
 	"vino/backend/internal/config"
 )
 
-func loadWechatPayPrivateKey() *rsa.PrivateKey {
-	raw := os.Getenv("WECHAT_PAY_PRIVATE_KEY")
-	if raw == "" {
+func loadWechatPayPrivateKey(cfg *config.Config) *rsa.PrivateKey {
+	raw := ""
+	if cfg != nil {
+		raw = strings.TrimSpace(cfg.WeChatPay.PrivateKey)
+		if raw == "" && cfg.WeChatPay.PrivateKeyPath != "" {
+			if b, err := os.ReadFile(cfg.WeChatPay.PrivateKeyPath); err == nil {
+				raw = string(b)
+			}
+		}
+	}
+	if strings.TrimSpace(raw) == "" {
 		return nil
 	}
 	if !strings.Contains(raw, "BEGIN") {
@@ -49,17 +57,19 @@ func loadWechatPayPrivateKey() *rsa.PrivateKey {
 }
 
 func IsWechatPayConfigured(cfg *config.Config) bool {
-	return cfg.Wechat.AppID != "" &&
-		os.Getenv("WECHAT_PAY_MCH_ID") != "" &&
-		os.Getenv("WECHAT_PAY_SERIAL_NO") != "" &&
-		len(os.Getenv("WECHAT_PAY_API_V3_KEY")) == 32 &&
-		loadWechatPayPrivateKey() != nil &&
-		os.Getenv("WECHAT_PAY_NOTIFY_URL") != ""
+	return cfg != nil &&
+		cfg.WeChatPay.Enabled &&
+		cfg.WeChatPay.AppID != "" &&
+		cfg.WeChatPay.MchID != "" &&
+		cfg.WeChatPay.MchSerialNo != "" &&
+		len(cfg.WeChatPay.APIV3Key) == 32 &&
+		loadWechatPayPrivateKey(cfg) != nil &&
+		cfg.WeChatPay.NotifyURL != ""
 }
 
-func buildPayAuth(method, urlPath, bodyStr string, pk *rsa.PrivateKey) (string, error) {
-	mchid := os.Getenv("WECHAT_PAY_MCH_ID")
-	serial := os.Getenv("WECHAT_PAY_SERIAL_NO")
+func buildPayAuth(cfg *config.Config, method, urlPath, bodyStr string, pk *rsa.PrivateKey) (string, error) {
+	mchid := cfg.WeChatPay.MchID
+	serial := cfg.WeChatPay.MchSerialNo
 	ts := fmt.Sprintf("%d", time.Now().Unix())
 	nonce := make([]byte, 16)
 	_, _ = rand.Read(nonce)
@@ -76,22 +86,22 @@ func buildPayAuth(method, urlPath, bodyStr string, pk *rsa.PrivateKey) (string, 
 }
 
 func JsapiPrepay(cfg *config.Config, outTradeNo, description string, totalFen int, openid string) (map[string]interface{}, error) {
-	pk := loadWechatPayPrivateKey()
+	pk := loadWechatPayPrivateKey(cfg)
 	if pk == nil {
 		return nil, fmt.Errorf("no private key")
 	}
 	urlPath := "/v3/pay/transactions/jsapi"
 	body := map[string]interface{}{
-		"appid":        cfg.Wechat.AppID,
-		"mchid":        os.Getenv("WECHAT_PAY_MCH_ID"),
+		"appid":        cfg.WeChatPay.AppID,
+		"mchid":        cfg.WeChatPay.MchID,
 		"description":  description,
 		"out_trade_no": outTradeNo,
-		"notify_url":   os.Getenv("WECHAT_PAY_NOTIFY_URL"),
+		"notify_url":   cfg.WeChatPay.NotifyURL,
 		"amount":       map[string]interface{}{"total": totalFen, "currency": "CNY"},
 		"payer":        map[string]interface{}{"openid": openid},
 	}
 	bodyStr, _ := json.Marshal(body)
-	auth, err := buildPayAuth("POST", urlPath, string(bodyStr), pk)
+	auth, err := buildPayAuth(cfg, "POST", urlPath, string(bodyStr), pk)
 	if err != nil {
 		return nil, err
 	}
@@ -113,11 +123,11 @@ func JsapiPrepay(cfg *config.Config, outTradeNo, description string, totalFen in
 }
 
 func BuildMiniProgramPayParams(cfg *config.Config, prepayID string) (map[string]interface{}, error) {
-	pk := loadWechatPayPrivateKey()
+	pk := loadWechatPayPrivateKey(cfg)
 	if pk == nil {
 		return nil, fmt.Errorf("no private key")
 	}
-	appID := cfg.Wechat.AppID
+	appID := cfg.WeChatPay.AppID
 	ts := fmt.Sprintf("%d", time.Now().Unix())
 	nonce := make([]byte, 16)
 	_, _ = rand.Read(nonce)
@@ -140,11 +150,11 @@ func BuildMiniProgramPayParams(cfg *config.Config, prepayID string) (map[string]
 }
 
 // DecryptNotifyResource 解密微信支付 APIv3 回调 resource（AES-256-GCM）
-func DecryptNotifyResource(res map[string]interface{}) (map[string]interface{}, error) {
+func DecryptNotifyResource(cfg *config.Config, res map[string]interface{}) (map[string]interface{}, error) {
 	ciphertext, _ := res["ciphertext"].(string)
 	ad, _ := res["associated_data"].(string)
 	nonceStr, _ := res["nonce"].(string)
-	keyStr := os.Getenv("WECHAT_PAY_API_V3_KEY")
+	keyStr := cfg.WeChatPay.APIV3Key
 	if len(keyStr) != 32 {
 		return nil, fmt.Errorf("invalid api v3 key")
 	}
@@ -171,6 +181,48 @@ func DecryptNotifyResource(res map[string]interface{}) (map[string]interface{}, 
 		return nil, err
 	}
 	return out, nil
+}
+
+func VerifyNotifySignature(cfg *config.Config, headers http.Header, body []byte) error {
+	certText := ""
+	if cfg != nil {
+		certText = strings.TrimSpace(cfg.WeChatPay.PlatformCert)
+		if certText == "" && cfg.WeChatPay.PlatformCertPath != "" {
+			b, err := os.ReadFile(cfg.WeChatPay.PlatformCertPath)
+			if err != nil {
+				return err
+			}
+			certText = string(b)
+		}
+	}
+	if certText == "" {
+		return fmt.Errorf("微信支付平台证书未配置")
+	}
+	block, _ := pem.Decode([]byte(certText))
+	if block == nil {
+		return fmt.Errorf("微信支付平台证书 PEM 无效")
+	}
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return err
+	}
+	pub, ok := cert.PublicKey.(*rsa.PublicKey)
+	if !ok {
+		return fmt.Errorf("微信支付平台证书不是 RSA")
+	}
+	ts := headers.Get("Wechatpay-Timestamp")
+	nonce := headers.Get("Wechatpay-Nonce")
+	sigB64 := headers.Get("Wechatpay-Signature")
+	if ts == "" || nonce == "" || sigB64 == "" {
+		return fmt.Errorf("微信支付回调签名头缺失")
+	}
+	sig, err := base64.StdEncoding.DecodeString(sigB64)
+	if err != nil {
+		return err
+	}
+	msg := ts + "\n" + nonce + "\n" + string(body) + "\n"
+	h := sha256.Sum256([]byte(msg))
+	return rsa.VerifyPKCS1v15(pub, crypto.SHA256, h[:], sig)
 }
 
 func init() {

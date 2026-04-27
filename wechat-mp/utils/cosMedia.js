@@ -1,13 +1,19 @@
 /**
- * 与 Web frontend/src/utils/cosMedia 一致的媒体 URL 规则；5 分钟仅微信端内存+临时文件路径缓存
- * cosHost 须与后端 cos.go（VINO_COS_BUCKET + VINO_COS_REGION）一致，由 GET /api/media/cos-config 下发。
+ * 与 Web frontend 一致：URL 规则来自 common/frontend/cos_base/paths.js；桶/白名单与 common/config/cos + GET /api/media/cos-config 同构。
  */
+const paths = require('../../common/frontend/cos_base/paths.cjs');
 const DEFAULT_DISPLAY_CACHE_MS = 5 * 60 * 1000;
-const isMediaCosPath = (s) => typeof s === 'string' && s.includes('/media/cos?key=');
 const filePathByUrl = new Map();
 
 let cosHostPrefix = '';
+let cosProxyAllowedPrefixes = [];
 let displayCacheTtlMs = DEFAULT_DISPLAY_CACHE_MS;
+
+const isMediaCosPath = (s) => {
+  if (typeof s !== 'string') return false;
+  const t = s.trim();
+  return !!(cosHostPrefix && (t === cosHostPrefix || t.startsWith(`${cosHostPrefix}/`)));
+};
 
 function setCosMediaConfig(cfg) {
   const h = cfg && cfg.cosHost;
@@ -15,6 +21,10 @@ function setCosMediaConfig(cfg) {
   const imgTtl = cfg && cfg.imageDisplayCacheTtlMs;
   displayCacheTtlMs =
     typeof imgTtl === 'number' && imgTtl > 0 ? imgTtl : DEFAULT_DISPLAY_CACHE_MS;
+}
+
+function getCosPublicBase() {
+  return cosHostPrefix;
 }
 
 function cosUrlToKey(t) {
@@ -46,8 +56,8 @@ function splitForMp(apiBase) {
 }
 
 /**
- * 在 App.onLaunch 中优先调用，再执行依赖媒体代理的初始化。
- * @param {string} apiBase 如 https://host/api
+ * 在 App.onLaunch 中优先调用：GET /api/media/cos-config。
+ * @param {string} apiBase 与 config.BASE_URL 一致，如 http://host:5202/api
  * @param {() => void} [done]
  */
 function fetchCosMediaConfig(apiBase, done) {
@@ -64,8 +74,25 @@ function fetchCosMediaConfig(apiBase, done) {
     method: 'GET',
     header: { 'Content-Type': 'application/json' },
     success(res) {
-      if (res.statusCode === 200 && res.data && res.data.code === 0 && res.data.data && res.data.data.cosHost) {
-        setCosMediaConfig(res.data.data);
+      if (res.statusCode === 200 && res.data && res.data.code === 0 && res.data.data) {
+        const d = res.data.data;
+        const raw =
+          d.ossPublicBaseDefault != null && String(d.ossPublicBaseDefault).trim() !== ''
+            ? String(d.ossPublicBaseDefault).trim()
+            : d.cosHost != null
+              ? String(d.cosHost).trim()
+              : '';
+        if (raw) {
+          const n = raw.replace(/\/$/, '');
+          const imgT = d.imageDisplayCacheTtlMs;
+          setCosMediaConfig({
+            cosHost: n,
+            imageDisplayCacheTtlMs: typeof imgT === 'number' && imgT > 0 ? imgT : displayCacheTtlMs,
+          });
+        }
+        if (d.cosProxyAllowedPrefixes && d.cosProxyAllowedPrefixes.length) {
+          cosProxyAllowedPrefixes = d.cosProxyAllowedPrefixes;
+        }
       }
       finish();
     },
@@ -180,12 +207,12 @@ function guideProductMediaUrl(guideId, role, opt) {
   }
   if (!file) return '';
   const key = 'front_page_config/product/' + id + '/' + file;
-  const { media } = splitForMp(opt.apiBase || '');
-  return media + '/media/cos?key=' + encodeURIComponent(key);
+  if (!cosHostPrefix) return '';
+  return `${cosHostPrefix}/${key.split('/').map(encodeURIComponent).join('/')}`;
 }
 
 /**
- * 统一媒体 URL；COS/上传类走与 Web 相同代理路径
+ * 统一媒体 URL
  * @param {string} u
  * @param {string} apiBase 如 https://host/api
  * @returns {string}
@@ -195,32 +222,36 @@ function resolveMediaUrl(u, apiBase) {
   if (typeof u !== 'string') u = String(u);
   const t = u.trim();
   if (!t) return '';
-  if (t.includes('/media/cos?key=')) return t;
-  const { site, media } = splitForMp(apiBase);
+  if (cosHostPrefix) {
+    const d = paths.toDirectStorageUrl(t, {
+      getPublicBase: () => String(cosHostPrefix).replace(/\/+$/, ''),
+      getPrefixes: () => cosProxyAllowedPrefixes,
+    });
+    if (d) return d;
+  }
+  const { site } = splitForMp(apiBase);
 
   const ck = cosUrlToKey(t);
   if (ck !== null) {
-    if (ck === '') return media + '/media/cos?key=';
-    return media + '/media/cos?key=' + encodeURIComponent(ck);
+    if (ck === '') return cosHostPrefix || '';
+    if (cosHostPrefix) return `${cosHostPrefix}/${ck.split('/').map(encodeURIComponent).join('/')}`;
   }
   if (t.startsWith('http://')) {
     const m = t.match(/\/uploads\/(.+)$/i);
-    if (m) {
-      return media + '/media/cos?key=' + encodeURIComponent('vino/uploads/' + m[1]);
+    if (m && cosHostPrefix) {
+      const key = `vino/uploads/${m[1]}`;
+      return `${cosHostPrefix}/${key.split('/').map(encodeURIComponent).join('/')}`;
     }
     return t.replace(/^http:\/\//i, 'https://');
   }
   if (t.startsWith('https://')) return t;
-  if (t.startsWith('/uploads/')) {
-    return media + '/media/cos?key=' + encodeURIComponent('vino' + t);
+  if (t.startsWith('/uploads/') && cosHostPrefix) {
+    return `${cosHostPrefix}/${('vino' + t).split('/').filter(Boolean).map(encodeURIComponent).join('/')}`;
   }
   if (t.startsWith('/')) return (site || '') + t;
   return (site || '') + '/' + t;
 }
 
-/**
- * 兼容原 image.js 导出名
- */
 function normalizeImageUrl(u, apiBase) {
   return resolveMediaUrl(u, apiBase);
 }
@@ -266,6 +297,7 @@ module.exports = {
   normalizeImageUrl,
   downloadFileCached,
   setCosMediaConfig,
+  getCosPublicBase,
   fetchCosMediaConfig,
   fetchMediaCatalog,
   guideProductMediaUrl,

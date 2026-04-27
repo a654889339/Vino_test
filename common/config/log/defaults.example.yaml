@@ -1,0 +1,5 @@
+# local_dir: data/logs/backend
+# timezone: Asia/Shanghai
+# uploader:
+#   enabled: true
+#   tick_seconds: 60

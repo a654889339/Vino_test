@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-// NormalizePhone 与 Node smsService.normalizePhone 一致；并抽取数字，兼容 86 前缀、空格、短横线等。
+// NormalizePhone 抽取数字并规范化 +86 前缀、空格、短横线等。
 func NormalizePhone(phone string) string {
 	p := strings.TrimSpace(phone)
 	p = strings.ReplaceAll(p, " ", "")
@@ -53,20 +53,10 @@ type emailSendRec struct {
 	lastSend int64
 }
 
-type smsRec struct {
-	code      string
-	expiresAt int64
-	used      bool
-}
-
 var (
 	emailMu    sync.Mutex
 	emailCodes = map[string]*emailRec{}
 	emailSendM = map[string]*emailSendRec{}
-
-	smsMu    sync.Mutex
-	smsCodes = map[string]*smsRec{}
-	smsSendM = map[string]int64{}
 )
 
 const (
@@ -75,7 +65,6 @@ const (
 	emailMaxPerHour   = 5
 	emailMaxAttempts  = 5
 	emailLockDuration = 30 * time.Minute
-	smsCooldown       = 60 * time.Second
 )
 
 func genEmailCode() string {
@@ -86,16 +75,6 @@ func genEmailCode() string {
 		n = -n
 	}
 	return fmt.Sprintf("%06d", n%1000000)
-}
-
-func genSMSCode() string {
-	b := make([]byte, 2)
-	_, _ = rand.Read(b)
-	n := int(b[0])<<8 | int(b[1])
-	if n < 0 {
-		n = -n
-	}
-	return fmt.Sprintf("%06d", 100000+n%900000)
 }
 
 func EmailCanSend(email string) error {
@@ -171,51 +150,10 @@ func EmailVerify(email, code string) (bool, string) {
 	return true, ""
 }
 
-func SMSCanSend(phone string) error {
-	smsMu.Lock()
-	defer smsMu.Unlock()
-	key := NormalizePhone(phone)
-	last := smsSendM[key]
-	if last == 0 {
-		return nil
-	}
-	if time.Since(time.Unix(0, last)) < smsCooldown {
-		wait := int((smsCooldown - time.Since(time.Unix(0, last))).Seconds()) + 1
-		return fmt.Errorf("发送过于频繁，请 %d 秒后再试", wait)
-	}
-	return nil
-}
-
-func SMSSetCode(phone, code string, expire time.Duration) {
-	smsMu.Lock()
-	defer smsMu.Unlock()
-	key := NormalizePhone(phone)
-	smsCodes[key] = &smsRec{
-		code:      code,
-		expiresAt: time.Now().Add(expire).UnixNano(),
-		used:      false,
-	}
-	smsSendM[key] = time.Now().UnixNano()
-}
-
 func SMSVerify(phone, code string) (bool, string) {
-	smsMu.Lock()
-	defer smsMu.Unlock()
-	key := NormalizePhone(phone)
-	vc := smsCodes[key]
-	if vc == nil {
-		return false, "请先获取验证码"
+	s := phoneVerifyServiceUnsafe()
+	if s == nil {
+		return false, "短信验证码服务未初始化"
 	}
-	if vc.used {
-		return false, "验证码已使用，请重新获取"
-	}
-	if time.Now().UnixNano() > vc.expiresAt {
-		delete(smsCodes, key)
-		return false, "验证码已过期，请重新获取"
-	}
-	if vc.code != code {
-		return false, "验证码错误"
-	}
-	vc.used = true
-	return true, ""
+	return s.VerifySMSCode(phone, code)
 }

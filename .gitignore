@@ -12,6 +12,10 @@ Thumbs.db
 *.swo
 coverage/
 .nyc_output/
+
+# 由 scripts/sync-common-to-miniprograms.mjs 生成，上传前执行同步脚本
+wechat-mp/common/
+alipay-mp/common/
 deploy/*.pem
 node_modules/
 package.json

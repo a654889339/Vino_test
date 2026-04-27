@@ -1,15 +1,40 @@
 /**
- * COS 读统一入口：与 wechat/alipay 小程序 utils/cosMedia 行为一致
- * - 本桶直链（前缀来自 GET /api/media/cos-config 的 cosHost，与后端 cos.go 一致）、/uploads 相对路径一律走同源 GET /api/media/cos?key=...
- * - 5 分钟仅内存缓存；后端接口对 COS 直读已 no-store
+ * COS 读统一入口：与 wechat/alipay 小程序一致。
+ * - 桶公网基址优先 GET /api/media/cos-config；失败时读包内 common/config/cos/vino.media.yaml（与后端真源一致）；
+ * - 最后 VITE_COS_PUBLIC_BASE 仅作本地开发兜底。
  */
+import { parseVinoMediaYamlDefaults } from '@cos_base/parseVinoMediaYaml.js';
+import vinoMediaYamlRaw from '../../../common/config/cos/vino.media.yaml?raw';
+
 const DEFAULT_DISPLAY_CACHE_MS = 5 * 60 * 1000;
-const isMediaCosPath = (s) => typeof s === 'string' && s.includes('/media/cos?key=');
+
+/** 构建期嵌入仓内 vino.media.yaml，与 GET /api/media/cos-config 同源 */
+const bundledYamlMediaDefaults = (() => {
+  try {
+    return parseVinoMediaYamlDefaults(vinoMediaYamlRaw);
+  } catch {
+    return { ossPublicBaseDefault: '', cosProxyAllowedPrefixes: [] };
+  }
+})();
+
+function envCosBase() {
+  if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_COS_PUBLIC_BASE) {
+    return String(import.meta.env.VITE_COS_PUBLIC_BASE).trim().replace(/\/$/, '');
+  }
+  return '';
+}
+
+/** 是否走本桶直链，用于 fetch 内存缓存分支 */
+const isMediaCosPath = (s) => {
+  if (typeof s !== 'string') return false;
+  const t = s.trim();
+  return !!(cosHostPrefix && (t.startsWith(`${cosHostPrefix}/`) || t === cosHostPrefix));
+};
+
 const entryByKey = new Map();
 
-/** 与后端 CosBase() 一致的前缀，由 initCosMediaFromServer / setCosMediaConfig 注入 */
+/** 公网基址，由 initCosMediaFromServer（cos-config）或 VITE_ 兜底注入 */
 let cosHostPrefix = '';
-/** 与 GET /api/media/cos-config 的 imageDisplayCacheTtlMs 对齐，用于 blob/Response 内存缓存 */
 let displayCacheTtlMs = DEFAULT_DISPLAY_CACHE_MS;
 
 export function setCosMediaConfig(cfg) {
@@ -72,19 +97,61 @@ function splitForWeb(optApiBase) {
 }
 
 /**
- * 启动时拉取 /api/media/cos-config 并注入 cosHost（与后端桶一致）。
- * @param {string|undefined} [optApiBase]
- * @returns {Promise<void>}
+ * 从 GET /api/media/cos-config 拉取 ossPublicBaseDefault；失败时用 VITE_COS_PUBLIC_BASE。
+ * @param {string|undefined} [optApiBase] 同 initMediaCatalogFromServer
  */
 export async function initCosMediaFromServer(optApiBase) {
   const { media } = splitForWeb(optApiBase);
+  let url;
+  if (media.startsWith('http')) {
+    url = media.replace(/\/$/, '') + '/media/cos-config';
+  } else if (typeof location !== 'undefined') {
+    const m = media.startsWith('/') ? media : '/' + media;
+    url = location.origin + m + '/media/cos-config';
+  } else {
+    url = (media || '/api').replace(/\/$/, '') + '/media/cos-config';
+  }
   try {
-    const r = await fetch(media + '/media/cos-config', { credentials: 'include' });
-    if (!r.ok) return;
-    const j = await r.json();
-    if (j && j.code === 0 && j.data) setCosMediaConfig(j.data);
-  } catch (err) {
+    const r = await fetch(url, { credentials: 'include', cache: 'no-store' });
+    if (r.ok) {
+      const j = await r.json();
+      if (j && j.code === 0 && j.data) {
+        const d = j.data;
+        const raw =
+          d.ossPublicBaseDefault != null && String(d.ossPublicBaseDefault).trim() !== ''
+            ? String(d.ossPublicBaseDefault).trim()
+            : d.cosHost != null
+              ? String(d.cosHost).trim()
+              : '';
+        if (raw) {
+          const n = raw.replace(/\/$/, '');
+          const imgT = d.imageDisplayCacheTtlMs;
+          setCosMediaConfig({
+            cosHost: n,
+            imageDisplayCacheTtlMs: typeof imgT === 'number' && imgT > 0 ? imgT : displayCacheTtlMs,
+          });
+        }
+      }
+    }
+  } catch (_) {
     // ignore
+  }
+  if (!cosHostPrefix && bundledYamlMediaDefaults && bundledYamlMediaDefaults.ossPublicBaseDefault) {
+    const n = String(bundledYamlMediaDefaults.ossPublicBaseDefault).trim().replace(/\/$/, '');
+    const ttl =
+      bundledYamlMediaDefaults.imageDisplayCacheTtlMs ||
+      bundledYamlMediaDefaults.mediaConfigTtlMs ||
+      displayCacheTtlMs;
+    setCosMediaConfig({
+      cosHost: n,
+      imageDisplayCacheTtlMs: typeof ttl === 'number' && ttl > 0 ? ttl : displayCacheTtlMs,
+    });
+  }
+  if (!cosHostPrefix) {
+    const b = envCosBase();
+    if (b) {
+      setCosMediaConfig({ cosHost: b, imageDisplayCacheTtlMs: displayCacheTtlMs });
+    }
   }
 }
 
@@ -148,7 +215,7 @@ function maybeRefreshCatalog(optApiBase) {
 }
 
 /**
- * 商品 DeviceGuide 媒体：按 catalog 约定拼同源代理 URL（忽略 DB 内旧 URL）。
+ * 商品 DeviceGuide 媒体：按 catalog 约定拼媒体 URL。
  * @param {number|string} guideId device_guides.id
  * @param {'cover'|'cover_thumb'|'icon'|'pdf'|'model3d'|'decal'|'skybox'|'scan'} role
  * @param {{ lang?: 'zh'|'en', apiBase?: string }} [opt]
@@ -191,8 +258,8 @@ export function guideProductMediaUrl(guideId, role, opt = {}) {
   }
   if (!file) return '';
   const key = `front_page_config/product/${id}/${file}`;
-  const { media } = splitForWeb(opt.apiBase);
-  return `${media}/media/cos?key=${encodeURIComponent(key)}`;
+  if (!cosHostPrefix) return '';
+  return `${cosHostPrefix}/${key.split('/').map(encodeURIComponent).join('/')}`;
 }
 
 /**
@@ -205,24 +272,37 @@ export function resolveMediaUrl(u, opt = {}) {
   if (typeof u !== 'string') u = String(u);
   const t = u.trim();
   if (!t) return '';
-  if (t.includes('/media/cos?key=')) return t;
-  const { site, media } = splitForWeb(opt.apiBase);
+  if (t.includes('/media/cos?key=') || t.includes('/api/media/cos?key=')) {
+    if (!cosHostPrefix) return t;
+    try {
+      const urlObj = new URL(t, 'https://local.invalid');
+      const k = urlObj.searchParams.get('key');
+      if (k) {
+        const dec = decodeURIComponent(k);
+        return `${cosHostPrefix}/${dec.split('/').map(encodeURIComponent).join('/')}`;
+      }
+    } catch (e) {
+      /* ignore */
+    }
+  }
+  const { site, media: _m } = splitForWeb(opt.apiBase);
 
   const ck = cosUrlToKey(t);
   if (ck !== null) {
-    if (ck === '') return media + '/media/cos?key=';
-    return media + '/media/cos?key=' + encodeURIComponent(ck);
+    if (ck === '') return cosHostPrefix || '';
+    if (cosHostPrefix) return `${cosHostPrefix}/${ck.split('/').map(encodeURIComponent).join('/')}`;
   }
   if (t.startsWith('http://')) {
     const m = t.match(/\/uploads\/(.+)$/i);
-    if (m) {
-      return media + '/media/cos?key=' + encodeURIComponent('vino/uploads/' + m[1]);
+    if (m && cosHostPrefix) {
+      const key = `vino/uploads/${m[1]}`;
+      return `${cosHostPrefix}/${key.split('/').map(encodeURIComponent).join('/')}`;
     }
     return t.replace(/^http:\/\//i, 'https://');
   }
   if (t.startsWith('https://')) return t;
-  if (t.startsWith('/uploads/')) {
-    return media + '/media/cos?key=' + encodeURIComponent('vino' + t);
+  if (t.startsWith('/uploads/') && cosHostPrefix) {
+    return `${cosHostPrefix}/${('vino' + t).split('/').map(encodeURIComponent).join('/')}`;
   }
   if (t.startsWith('/')) return site + t;
   return site + '/' + t;
@@ -339,3 +419,4 @@ export function revokeIfCachedBlob(maybeObjectUrl) {
     // ignore
   }
 }
+

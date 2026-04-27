@@ -19,6 +19,7 @@ import (
 
 	"vino/backend/internal/config"
 	"vino/backend/internal/db"
+	"vino/backend/internal/dbbackup"
 	"vino/backend/internal/dbgate"
 	"vino/backend/internal/resp"
 	"vino/backend/internal/services"
@@ -31,7 +32,7 @@ var (
 	dbNameIdent = regexp.MustCompile(`^[A-Za-z0-9_]{1,64}$`)
 	// mysqldump 在 MySQL 8 里会输出：`CREATE DATABASE /*!32312 IF NOT EXISTS*/ `vino_db` /*!40100 ... */;`
 	// 因此正则里要能跳过任意 `/*!... */` 版本化注释块，否则抓不到库名，导致后续 rewrite 失效、
-	// 整份 dump 被原样注入、`USE ` 把建表/灌数切到了旧主库（restore_* 壳库因而 0 张表）。
+	// 整份 dump 被原样注入、`USE ` 把建表/灌数切到了源主库（restore_* 壳库因而 0 张表）。
 	createDatabaseNameRe = regexp.MustCompile("(?is)CREATE\\s+DATABASE(?:\\s+/\\*![^*]+\\*/)*(?:\\s+IF\\s+NOT\\s+EXISTS)?(?:\\s+/\\*![^*]+\\*/)*\\s+`([^`]+)`")
 	createDatabaseBareRe = regexp.MustCompile(`(?is)CREATE\s+DATABASE(?:\s+/\*![^*]+\*/)*(?:\s+IF\s+NOT\s+EXISTS)?(?:\s+/\*![^*]+\*/)*\s+([A-Za-z0-9_]+)\s*(?:;|/\*|$)`)
 	// 用于「在导入前彻底删除 dump 里的 CREATE DATABASE / USE 语句」，最稳妥：
@@ -82,7 +83,7 @@ func adminGetDbStatus(c *gin.Context, cfg *config.Config) {
 		"cosBaseUrl":         base,
 		"restoreMaxBytes":    cfg.DBRestoreMaxBytes,
 		"restoreUrlExamples": examples,
-		"restorePathNote":    "当前对象键规则：db_save/{主库名}/YYYY-MM/DD.sql.gz（管理端按钮与宿主机 cron 统一）。填写完整 HTTPS URL，path 须以 /db_save/ 开头；历史扁平路径 db_save/YYYY-MM/DD.sql.gz 亦可用于恢复，但不再产生新对象。",
+		"restorePathNote":    "当前对象键规则：db_save/{主库名}/YYYY-MM/DD.sql.gz（管理端按钮与宿主机 cron 统一）。填写完整 HTTPS URL，path 须以 /db_save/{主库名}/ 开头。",
 	})
 }
 
@@ -135,8 +136,8 @@ func adminPostDbRestore(c *gin.Context, cfg *config.Config) {
 		if perr != nil {
 			return perr
 		}
-		// 双保险：先尝试把 dump 里的库名替换成新库名（兼容老行为），
-		// 再**彻底剥离** `CREATE DATABASE ...;` 和 `USE \`xxx\`;` 两种顶层语句。
+		// 先尝试把 dump 里的库名替换成新库名，
+		// 再彻底剥离 `CREATE DATABASE ...;` 和 `USE \`xxx\`;` 两种顶层语句。
 		// 我们已在 importToDatabase 中预建目标库并用 `mysql -D newDb` 指定默认库，
 		// 一旦 dump 里的 USE 语句未被正确改写，就会把 CREATE TABLE/INSERT 落回**原主库**，
 		// restore_* 壳库反而保持空——这是 2026-04-20 版本确诊的真实事故。
@@ -221,8 +222,9 @@ func validateRestoreURL(raw string) (*url.URL, error) {
 	if err != nil || u.Host == "" || (u.Scheme != "http" && u.Scheme != "https") {
 		return nil, fmt.Errorf("url 无效")
 	}
-	if !strings.HasPrefix(u.Path, "/db_save/") {
-		return nil, fmt.Errorf("路径须以 /db_save/ 开头")
+	parts := strings.Split(strings.Trim(u.Path, "/"), "/")
+	if len(parts) < 4 || parts[0] != "db_save" || !dbNameIdent.MatchString(parts[1]) {
+		return nil, fmt.Errorf("路径须以 /db_save/{主库名}/ 开头")
 	}
 	return u, nil
 }
@@ -342,7 +344,7 @@ func pickUnusedRestoreDBName(ctx context.Context, cfg *config.Config, base strin
 			return candidate, nil
 		}
 	}
-	return "", fmt.Errorf("库 %s 等连续名称均已存在（请删除旧 restore 库或稍后重试）", base)
+	return "", fmt.Errorf("库 %s 等连续名称均已存在（请删除已有 restore 库或稍后重试）", base)
 }
 
 // adminDSN 返回连到 MySQL 实例的 DSN（可指定库名；空串表示不带库名）。
@@ -407,10 +409,7 @@ func importToDatabase(ctx context.Context, cfg *config.Config, dbName, sqlText s
 	if _, err := exec.LookPath("docker"); err != nil {
 		return fmt.Errorf("容器内未找到 docker CLI")
 	}
-	container := strings.TrimSpace(os.Getenv("MYSQL_DUMP_CONTAINER"))
-	if container == "" {
-		container = "vino-mysql"
-	}
+	container := dbbackup.MysqlExecContainer()
 	// 1) 建库
 	createSQL := fmt.Sprintf("CREATE DATABASE IF NOT EXISTS `%s` DEFAULT CHARACTER SET utf8mb4 DEFAULT COLLATE utf8mb4_unicode_ci;", dbName)
 	if err := runMysqlClient(ctx, cfg, container, "", createSQL); err != nil {

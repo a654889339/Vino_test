@@ -1,0 +1,21 @@
+# 作为 PHONE_VERIFY_CODE_CONFIG 的示例；请复制为 <project>.yaml 并填写真实值（勿提交密钥）。
+# 总开关：默认关闭。可用环境变量 PHONE_VERIFY_ENABLED 覆盖。
+enabled: false
+provider: tencent # tencent | aliyun
+policy:
+  code_expire_minutes: 5
+  cooldown_seconds: 60
+tencent:
+  secret_id: ""
+  secret_key: ""
+  sms_sdk_app_id: ""
+  sign_name: ""
+  template_id: ""
+  region: "ap-guangzhou"
+aliyun:
+  access_key_id: ""
+  access_key_secret: ""
+  endpoint: ""
+  sign_name: ""
+  template_code: ""
+

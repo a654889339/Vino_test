@@ -3,7 +3,7 @@
   "productMedia": {
     "catalogVersion": 2,
     "keyPrefixTemplate": "front_page_config/product/{id}/",
-    "notesZh": "device_guides.id 替换 {id}；ToC/小程序用 GET /api/media/catalog 拉取本段，与 cos-config 同样建议内存缓存 5 分钟。展示大图/缩略/图标等默认扩展名见 defaults；实际上传扩展名按 MIME 可能为 webp/jpg 等，迁移后应统一或按需改 defaults。",
+    "notesZh": "device_guides.id 替换 {id}；ToC/小程序自包内/构建期嵌入的 media_asset_catalog 读 defaults。展示大图/缩略/图标等默认扩展名见 defaults；实际上传扩展名按 MIME 可能为 webp/jpg 等。",
     "defaults": {
       "cover": "banner_page.jpg",
       "cover_en": "banner_page_en.jpg",
@@ -19,8 +19,8 @@
     }
   },
   "downloadDefault": {
-    "readVia": "GET /api/media/cos?key={urlEncodedObjectKey}",
-    "notesZh": "浏览器/小程序展示时推荐同源代理；桶 HTTPS 直链在 Web 端 resolveMediaUrl 会改写为上述路径。http 的 /uploads/ 相对路径也会映射到 key=vino/uploads/...。GET /api/media/cos-config 返回 cosHost 与 cosProxyAllowedPrefixes（与 services.CosProxyKeyPrefixWhitelist、IsKeyAllowedForProxy 同源）；GET /api/media/catalog 返回本 JSON（含 productMedia）。变更白名单须同步改 cos.go 白名单与本 catalog 示例。",
+    "readVia": "https://{bucket}/... 桶公网直链",
+    "notesZh": "展示仅走 COS 公网 HTTPS；vino.media.yaml 的 ossPublicBaseDefault 与包内配置对齐。改本文件请同步 `frontend/src/config/media_asset_catalog.json` 与三端。变更白名单须同步 cos.go。",
     "keyPrefixExamples": ["vino/uploads/", "vino/main_page/", "vino/main_animation/", "vino/items/", "front_page_config/product/"]
   },
   "rules": [

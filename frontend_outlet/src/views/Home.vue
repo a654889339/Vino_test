@@ -278,9 +278,9 @@ function myProductVantName(item) {
   return 'photo-o';
 }
 
-/** 商品配置 slug（后台 guideSlug / 兼容 guide），用于跳转 /guide/{slug} */
+/** 商品配置 slug（后台 guideSlug），用于跳转 /guide/{slug} */
 function productGuideSlug(item) {
-  const s = item && (item.guideSlug != null && item.guideSlug !== '' ? item.guideSlug : item.guide);
+  const s = item && item.guideSlug;
   return s != null ? String(s).trim() : '';
 }
 

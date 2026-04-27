@@ -46,8 +46,8 @@ func ManagedModelEntities() []any {
 }
 
 var (
-	reIntWidth  = regexp.MustCompile(`(?i)(tinyint|smallint|mediumint|int|bigint)\s*\(\d+\)`)
-	reUnifyWS   = regexp.MustCompile(`\s+`)
+	reIntWidth = regexp.MustCompile(`(?i)(tinyint|smallint|mediumint|int|bigint)\s*\(\d+\)`)
+	reUnifyWS  = regexp.MustCompile(`\s+`)
 )
 
 // normalizeMySQLTypeForCompare 在比对「GORM 期望的列类型」与 information_schema 的 COLUMN_TYPE 时
@@ -61,7 +61,9 @@ func normalizeMySQLTypeForCompare(s string) string {
 
 func fullDataTypeSQL(d *gorm.DB, field *schema.Field) string {
 	migr := d.Migrator()
-	if mm, ok := migr.(interface{ FullDataTypeOf(*schema.Field) clause.Expr }); ok {
+	if mm, ok := migr.(interface {
+		FullDataTypeOf(*schema.Field) clause.Expr
+	}); ok {
 		return strings.TrimSpace(mm.FullDataTypeOf(field).SQL)
 	}
 	return ""
@@ -91,7 +93,7 @@ WHERE TABLE_SCHEMA = DATABASE()
 	return out, nil
 }
 
-// validatePhysicalColumns 若表/列已存在，则与 GORM 预期类型做比对；已存在但类型不可兼容则失败。
+// validatePhysicalColumns 若表/列已存在，则与 GORM 预期类型做比对；类型不符合预期则失败。
 func validatePhysicalColumns(d *gorm.DB, before map[string]map[string]string) error {
 	for _, m := range ManagedModelEntities() {
 		stmt := &gorm.Statement{DB: d}
@@ -127,7 +129,7 @@ func validatePhysicalColumns(d *gorm.DB, before map[string]map[string]string) er
 			if strings.EqualFold(ne, na) {
 				continue
 			}
-			// 兼容 MySQL 对 mediumtext/longtext 与 text 的细微显示差异
+			// MySQL 对 mediumtext/longtext 与 text 的显示存在细微差异。
 			if strings.HasPrefix(ne, "varchar") && strings.HasPrefix(na, "varchar") && ne == na {
 				continue
 			}
@@ -144,8 +146,8 @@ type SchemaColumnAdd struct {
 
 // SchemaEnsureDiff 迁移「前后」对业务库的差异（在 main 里转 db_add / db_modify 打点）。
 type SchemaEnsureDiff struct {
-	Database         string
-	NewTables        []string
+	Database          string
+	NewTables         []string
 	ColumnsOnExisting []SchemaColumnAdd
 }
 

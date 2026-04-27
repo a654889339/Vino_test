@@ -20,6 +20,7 @@ import (
 	"vino/backend/internal/models"
 	"vino/backend/internal/resp"
 	"vino/backend/internal/services"
+	"vino/backend/internal/vinomediacfg"
 
 	"github.com/gin-gonic/gin"
 )
@@ -303,16 +304,46 @@ func SeedData(c *gin.Context) {
 	resp.OKMsg(c, fmt.Sprintf("已生成 %d 个用户、%d 个库存商品", users, products))
 }
 
-// MediaCosConfig 公开 COS 媒体运行时契约（桶基址、代理白名单、建议 TTL）；与 services 同源，不含密钥。
+// MediaCosConfig 返回仓内 vino.media.yaml 的 ossPublicBaseDefault 及白名单等；与三端 setCosMediaConfig 约定一致。
 func MediaCosConfig(c *gin.Context) {
 	c.Writer.Header().Set("Cache-Control", "no-store")
-	resp.OK(c, gin.H{
-		"cosHost":                   services.CosBase(),
-		"bucket":                    services.CosBucket(),
-		"region":                    services.CosRegion(),
-		"cosProxyAllowedPrefixes":   services.CosProxyAllowedPrefixes(),
-		"mediaConfigTtlMs":          services.CosMediaConfigTTLMs,
-		"imageDisplayCacheTtlMs":    services.CosMediaImageDisplayCacheTTLMs,
+	f := vinomediacfg.Get()
+	base := strings.TrimSpace(services.CosBase())
+	if f != nil {
+		if s := strings.TrimSpace(f.OssPublicBaseDefault); s != "" {
+			base = strings.TrimRight(s, "/")
+		}
+	}
+	prefixes := services.CosProxyAllowedPrefixes()
+	mediaTTL := services.CosMediaConfigTTLMs
+	imgTTL := services.CosMediaImageDisplayCacheTTLMs
+	project := "vino"
+	cloudProvider := ""
+	if f != nil {
+		if len(f.CosProxyAllowedPrefixes) > 0 {
+			prefixes = f.CosProxyAllowedPrefixes
+		}
+		if f.MediaConfigTtlMs > 0 {
+			mediaTTL = f.MediaConfigTtlMs
+		}
+		if f.ImageDisplayCacheTtlMs > 0 {
+			imgTTL = f.ImageDisplayCacheTtlMs
+		}
+		if s := strings.TrimSpace(f.Project); s != "" {
+			project = s
+		}
+		if s := strings.TrimSpace(f.CloudProvider); s != "" {
+			cloudProvider = s
+		}
+	}
+	resp.OK(c, map[string]any{
+		"project":                 project,
+		"cloudProvider":           cloudProvider,
+		"ossPublicBaseDefault":   base,
+		"cosHost":                 base,
+		"cosProxyAllowedPrefixes": prefixes,
+		"mediaConfigTtlMs":        mediaTTL,
+		"imageDisplayCacheTtlMs":  imgTTL,
 	})
 }
 
@@ -327,22 +358,10 @@ func MediaCatalog(c *gin.Context) {
 	resp.OK(c, data)
 }
 
+// MediaCosStream 原 GET /api/media/cos?key=，已停用；须通过 COS 公网/签名 URL 直取对象。
 func MediaCosStream(c *gin.Context) {
-	key := strings.TrimSpace(c.Query("key"))
-	if key == "" {
-		resp.Err(c, 400, 400, "缺少 key")
-		return
-	}
-	decoded, err := url.QueryUnescape(key)
-	if err != nil {
-		c.Status(400)
-		return
-	}
-	if !services.IsKeyAllowedForProxy(decoded) {
-		resp.Err(c, 400, 400, "非法 key")
-		return
-	}
-	_ = services.StreamCosObjectToResponse(c.Request.Context(), decoded, c.Writer)
+	c.Header("Cache-Control", "no-store")
+	resp.Err(c, 410, 410, "已禁止经本服务拉流 COS 对象，请使用与桶一致的 HTTPS 公网/签名直链")
 }
 
 func AdminGenerateThumbs(c *gin.Context, cfg *config.Config) {

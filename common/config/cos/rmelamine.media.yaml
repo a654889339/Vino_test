@@ -1,0 +1,29 @@
+project: r-melamine
+cosRuleConfigPath: /cosRuleConfig/*project*.media.yaml
+cosRuleConfigVersion: 0
+cosRuleConfigCheckTime: 60
+cloudProvider: aliyun
+ossPublicBaseDefault: https://r-melamine.oss-cn-shanghai.aliyuncs.com
+imageDisplayCacheTtlMs: 300000
+mediaConfigTtlMs: 300000
+cosProxyAllowedPrefixes:
+  - front_page_config/
+  - user_diy_3d/
+  - user_avatar/
+  - trolley/
+  - order/
+productMedia:
+  dirPattern: front_page_config/product/%d/
+  mainPageStem: main_page
+  mainPageExts:
+    - .jpg
+    - .jpeg
+    - .png
+    - .webp
+    - .gif
+  uploadSlots:
+    - main_page
+    - intro
+    - model_3d
+    - skybox
+  mainPageKeyTpl: front_page_config/product/%d/main_page<ext>
