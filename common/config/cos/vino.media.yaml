@@ -7,14 +7,6 @@ cloudProvider: tencent
 ossPublicBaseDefault: https://itsyourturnmy-1256887166.cos.ap-singapore.myqcloud.com
 imageDisplayCacheTtlMs: 300000
 mediaConfigTtlMs: 300000
-cosProxyAllowedPrefixes:
-  - vino/uploads/
-  - vino/main_page/
-  - vino/main_animation/
-  - vino/items/
-  - front_page_config/
-productMediaNote: DeviceGuide 等路径见后端 embed catalog 与三端 cosMedia
-
 # FrontPageConfig：首页轮播等（客户端按 Root + 子目录 + id 拼 COS URL 直拉）
 frontPageConfig:
   Root: front_page_config
@@ -48,3 +40,8 @@ frontPageConfig:
 
   # pdf
   DescriptionPdf: product/{product_id}/desc_{lang}.pdf
+
+userConfig:
+  Root: user_config
+  # 占位符：{userid} 为用户 id（与 users.id / outlet_users.id 一致）
+  Avatar: "{userid}/avatar.png"

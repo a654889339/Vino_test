@@ -232,3 +232,27 @@ func FrontPageProductDescriptionPdfKey(productID int, lang string) (string, erro
 	return buildFrontPageKey(rel)
 }
 
+// UserAvatarKey 返回用户头像 COS object key（userConfig.Root + "/" + 渲染后的 Avatar 模板）。
+func UserAvatarKey(userID int) (string, error) {
+	if userID <= 0 {
+		return "", fmt.Errorf("invalid user id")
+	}
+	f := vinomediacfg.Get()
+	if f == nil || f.UserConfig == nil {
+		return "", fmt.Errorf("userConfig 未配置")
+	}
+	root := strings.Trim(strings.TrimSpace(f.UserConfig.Root), "/")
+	if root == "" {
+		return "", fmt.Errorf("userConfig.Root 不能为空")
+	}
+	rel, err := renderTemplateStrict(
+		strings.TrimSpace(f.UserConfig.Avatar),
+		map[string]string{"userid": fmt.Sprintf("%d", userID)},
+		"userid",
+	)
+	if err != nil {
+		return "", err
+	}
+	return root + "/" + rel, nil
+}
+

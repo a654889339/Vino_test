@@ -2,7 +2,6 @@ export {
   normalizeOverEncodedPath,
   extractObjectKey,
   toProxyUrl,
-  toDirectStorageUrl,
   resolveMediaUrl,
   resolvedUrlUsesMediaProxyPath,
 } from './paths.mjs';

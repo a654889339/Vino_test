@@ -56,20 +56,14 @@ func CosBase() string {
 	return fmt.Sprintf("https://%s.cos.%s.myqcloud.com", cosBucketEffective(), cosRegionEffective())
 }
 
-// CosProxyKeyPrefixWhitelist 与 vino.media.yaml 的 cosProxyAllowedPrefixes 同源。变更请同步三端与 embed catalog。
+// CosProxyKeyPrefixWhitelist：/api/media/cos 代理可读对象 key 前缀（安全边界）；与仓内业务落盘路径一致。
 var CosProxyKeyPrefixWhitelist = []string{
 	"vino/uploads/",
 	"vino/main_page/",
 	"vino/main_animation/",
 	"vino/items/",
 	"front_page_config/",
-}
-
-// CosProxyAllowedPrefixes 返回白名单前缀切片副本（只读）。
-func CosProxyAllowedPrefixes() []string {
-	out := make([]string, len(CosProxyKeyPrefixWhitelist))
-	copy(out, CosProxyKeyPrefixWhitelist)
-	return out
+	"user_config/",
 }
 
 const (

@@ -20,6 +20,7 @@ import (
 	"vino/backend/internal/services"
 
 	"github.com/gin-gonic/gin"
+	"shared/cosbase"
 	"gorm.io/gorm"
 )
 
@@ -308,19 +309,32 @@ func outletUploadAvatar(c *gin.Context, cfg *config.Config) {
 		return
 	}
 	defer f.Close()
-	buf, _ := io.ReadAll(f)
-	ext := path.Ext(fh.Filename)
-	if ext == "" {
-		ext = ".png"
+	buf, err := io.ReadAll(f)
+	if err != nil {
+		resp.Err(c, 500, 500, "读取失败")
+		return
 	}
-	b := make([]byte, 8)
-	_, _ = crand.Read(b)
-	filename := "outlet_avatar_" + hex.EncodeToString(b) + ext
+	fullKey, err := services.UserAvatarKey(u.ID)
+	if err != nil {
+		resp.Err(c, 500, 500, err.Error())
+		return
+	}
 	ct := fh.Header.Get("Content-Type")
-	if ct == "" {
-		ct = "image/png"
+	if err := cosbase.ValidateUploadMatchesKey(fullKey, fh.Filename, ct); err != nil {
+		resp.Err(c, 400, 400, err.Error())
+		return
 	}
-	url, err := services.UploadCOS(c.Request.Context(), buf, filename, ct)
+	contentType, err := cosbase.ImageContentTypeFromKey(fullKey)
+	if err != nil {
+		resp.Err(c, 400, 400, err.Error())
+		return
+	}
+	contentPrefix, file := services.ContentPrefixAndFileFromKey(fullKey)
+	if contentPrefix == "" || file == "" {
+		resp.Err(c, 500, 500, "userConfig 路径非法")
+		return
+	}
+	url, err := services.UploadCOSWithContentPrefix(c.Request.Context(), buf, file, contentType, contentPrefix)
 	if err != nil {
 		resp.Err(c, 500, 500, "上传失败")
 		return

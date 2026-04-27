@@ -9,7 +9,6 @@ import (
 	"image"
 	"io"
 	"net/url"
-	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -23,6 +22,7 @@ import (
 
 	"github.com/disintegration/imaging"
 	"github.com/gin-gonic/gin"
+	"shared/cosbase"
 	zxing "github.com/makiuchi-d/gozxing"
 	"github.com/makiuchi-d/gozxing/qrcode"
 	"gorm.io/gorm"
@@ -561,18 +561,27 @@ func authUploadAvatar(c *gin.Context, cfg *config.Config) {
 		resp.Err(c, 500, 500, "读取失败")
 		return
 	}
-	ext := path.Ext(fh.Filename)
-	if ext == "" {
-		ext = ".png"
+	fullKey, err := services.UserAvatarKey(u.ID)
+	if err != nil {
+		resp.Err(c, 500, 500, err.Error())
+		return
 	}
-	rnd := make([]byte, 8)
-	_, _ = rand.Read(rnd)
-	filename := "avatar_" + hex.EncodeToString(rnd) + ext
 	ct := fh.Header.Get("Content-Type")
-	if ct == "" {
-		ct = "image/png"
+	if err := cosbase.ValidateUploadMatchesKey(fullKey, fh.Filename, ct); err != nil {
+		resp.Err(c, 400, 400, err.Error())
+		return
 	}
-	url, err := services.UploadCOS(c.Request.Context(), buf, filename, ct)
+	contentType, err := cosbase.ImageContentTypeFromKey(fullKey)
+	if err != nil {
+		resp.Err(c, 400, 400, err.Error())
+		return
+	}
+	contentPrefix, file := services.ContentPrefixAndFileFromKey(fullKey)
+	if contentPrefix == "" || file == "" {
+		resp.Err(c, 500, 500, "userConfig 路径非法")
+		return
+	}
+	url, err := services.UploadCOSWithContentPrefix(c.Request.Context(), buf, file, contentType, contentPrefix)
 	if err != nil {
 		resp.Err(c, 500, 500, "上传失败")
 		return

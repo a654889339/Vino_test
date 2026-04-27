@@ -1,12 +1,10 @@
 /**
- * 与 Web、微信相同：URL 规则见 common/frontend/cos_base/paths.js；桶/白名单与 common/config/cos + GET /api/media/cos-config 同构。
+ * 与 Web、微信相同：桶基址与 GET /api/media/cos-config 同构；相对路径与 /uploads/ 兼容与 Web 对齐。
  */
-const paths = require('../../common/frontend/cos_base/paths.cjs');
 const DEFAULT_DISPLAY_CACHE_MS = 5 * 60 * 1000;
 const filePathByUrl = new Map();
 
 let cosHostPrefix = '';
-let cosProxyAllowedPrefixes = [];
 let displayCacheTtlMs = DEFAULT_DISPLAY_CACHE_MS;
 const DEFAULT_FRONT_PAGE_CONFIG = {
   root: 'front_page_config',
@@ -175,9 +173,6 @@ function fetchCosMediaConfig(apiBase, done) {
             imageDisplayCacheTtlMs: typeof imgT === 'number' && imgT > 0 ? imgT : displayCacheTtlMs,
           });
         }
-        if (d.cosProxyAllowedPrefixes && d.cosProxyAllowedPrefixes.length) {
-          cosProxyAllowedPrefixes = d.cosProxyAllowedPrefixes;
-        }
         if (d.frontPageConfig && typeof d.frontPageConfig === 'object') {
           setFrontPageConfig({
             root: d.frontPageConfig.root,
@@ -313,12 +308,14 @@ function resolveMediaUrl(u, apiBase) {
   if (typeof u !== 'string') u = String(u);
   const t = u.trim();
   if (!t) return '';
-  if (cosHostPrefix) {
-    const d = paths.toDirectStorageUrl(t, {
-      getPublicBase: () => String(cosHostPrefix).replace(/\/+$/, ''),
-      getPrefixes: () => cosProxyAllowedPrefixes,
-    });
-    if (d) return d;
+  if (t.includes('/media/cos?key=') || t.includes('/api/media/cos?key=')) {
+    if (t.startsWith('/')) {
+      const { site } = splitForMp(apiBase);
+      return (site || '') + t;
+    }
+    if (t.startsWith('http://') || t.startsWith('https://')) return t;
+    const { site } = splitForMp(apiBase);
+    return (site || '') + '/' + t.replace(/^\/+/, '');
   }
   const { site } = splitForMp(apiBase);
 

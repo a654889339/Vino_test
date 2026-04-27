@@ -52,15 +52,6 @@ export function createMediaRuntimeStore(options) {
     }
   }
 
-  function getCosProxyAllowedPrefixes() {
-    hydrateFromStorage();
-    const fb = getFallbackDefaults();
-    if (memory?.merged?.cosProxyAllowedPrefixes?.length) {
-      return memory.merged.cosProxyAllowedPrefixes;
-    }
-    return fb.cosProxyAllowedPrefixes || [];
-  }
-
   function getOssPublicBase() {
     hydrateFromStorage();
     const fb = getFallbackDefaults();
@@ -175,7 +166,6 @@ export function createMediaRuntimeStore(options) {
   }
 
   return {
-    getCosProxyAllowedPrefixes,
     getOssPublicBase,
     getProductMediaRules,
     getMediaConfigTtlMs,

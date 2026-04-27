@@ -16,7 +16,10 @@ type File struct {
 	OssPublicBaseDefault    string   `yaml:"ossPublicBaseDefault"`
 	MediaConfigTtlMs        int      `yaml:"mediaConfigTtlMs"`
 	ImageDisplayCacheTtlMs  int      `yaml:"imageDisplayCacheTtlMs"`
-	CosProxyAllowedPrefixes []string `yaml:"cosProxyAllowedPrefixes"`
+	UserConfig              *struct {
+		Root   string `yaml:"Root"`
+		Avatar string `yaml:"Avatar"`
+	} `yaml:"userConfig"`
 	FrontPageConfig         *struct {
 		Root                     string `yaml:"Root"`
 		Logo                     string `yaml:"Logo"`
@@ -69,8 +72,5 @@ func Get() *File {
 		return nil
 	}
 	cp := *loc
-	if len(loc.CosProxyAllowedPrefixes) > 0 {
-		cp.CosProxyAllowedPrefixes = append([]string(nil), loc.CosProxyAllowedPrefixes...)
-	}
 	return &cp
 }

@@ -6,7 +6,6 @@
  * @returns {{
  *   project?: string,
  *   ossPublicBaseDefault: string,
- *   cosProxyAllowedPrefixes: string[],
  *   imageDisplayCacheTtlMs: number,
  *   mediaConfigTtlMs: number,
  *   cosRuleConfigPath?: string,
@@ -18,7 +17,6 @@ export function parseVinoMediaYamlDefaults(yamlText) {
   const text = String(yamlText || '');
   const out = {
     ossPublicBaseDefault: '',
-    cosProxyAllowedPrefixes: [],
     imageDisplayCacheTtlMs: 0,
     mediaConfigTtlMs: 0,
   };
@@ -50,25 +48,6 @@ export function parseVinoMediaYamlDefaults(yamlText) {
   if (vVer) out.cosRuleConfigVersion = vVer;
   const chk = numScalar('cosRuleConfigCheckTime');
   if (chk) out.cosRuleConfigCheckTime = chk;
-
-  const blockStart = text.match(/^\s*cosProxyAllowedPrefixes:\s*$/m);
-  if (blockStart && blockStart.index != null) {
-    const from = blockStart.index + blockStart[0].length;
-    const rest = text.slice(from);
-    const lines = rest.split(/\r?\n/);
-    for (const line of lines) {
-      if (/^\s*-\s+/.test(line)) {
-        let item = line.replace(/^\s*-\s+/, '').trim();
-        item = item.replace(/\s+#.*$/, '');
-        if ((item.startsWith('"') && item.endsWith('"')) || (item.startsWith("'") && item.endsWith("'"))) {
-          item = item.slice(1, -1);
-        }
-        if (item) out.cosProxyAllowedPrefixes.push(item);
-        continue;
-      }
-      if (/^\s*\S+:\s*/.test(line) && !/^\s*-\s+/.test(line)) break;
-    }
-  }
 
   return out;
 }

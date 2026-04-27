@@ -13,7 +13,7 @@ const bundledYamlMediaDefaults = (() => {
   try {
     return parseVinoMediaYamlDefaults(vinoMediaYamlRaw);
   } catch {
-    return { ossPublicBaseDefault: '', cosProxyAllowedPrefixes: [] };
+    return { ossPublicBaseDefault: '' };
   }
 })();
 

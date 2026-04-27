@@ -304,7 +304,7 @@ func SeedData(c *gin.Context) {
 	resp.OKMsg(c, fmt.Sprintf("已生成 %d 个用户、%d 个库存商品", users, products))
 }
 
-// MediaCosConfig 返回仓内 vino.media.yaml 的 ossPublicBaseDefault 及白名单等；与三端 setCosMediaConfig 约定一致。
+// MediaCosConfig 返回仓内 vino.media.yaml 的 ossPublicBaseDefault、TTL、frontPageConfig、userConfig 等；与三端 setCosMediaConfig 约定一致。
 func MediaCosConfig(c *gin.Context) {
 	c.Writer.Header().Set("Cache-Control", "no-store")
 	f := vinomediacfg.Get()
@@ -314,15 +314,11 @@ func MediaCosConfig(c *gin.Context) {
 			base = strings.TrimRight(s, "/")
 		}
 	}
-	prefixes := services.CosProxyAllowedPrefixes()
 	mediaTTL := services.CosMediaConfigTTLMs
 	imgTTL := services.CosMediaImageDisplayCacheTTLMs
 	project := "vino"
 	cloudProvider := ""
 	if f != nil {
-		if len(f.CosProxyAllowedPrefixes) > 0 {
-			prefixes = f.CosProxyAllowedPrefixes
-		}
 		if f.MediaConfigTtlMs > 0 {
 			mediaTTL = f.MediaConfigTtlMs
 		}
@@ -341,9 +337,22 @@ func MediaCosConfig(c *gin.Context) {
 		"cloudProvider":           cloudProvider,
 		"ossPublicBaseDefault":   base,
 		"cosHost":                 base,
-		"cosProxyAllowedPrefixes": prefixes,
 		"mediaConfigTtlMs":        mediaTTL,
 		"imageDisplayCacheTtlMs":  imgTTL,
+		"userConfig": func() any {
+			if f == nil || f.UserConfig == nil {
+				return nil
+			}
+			root := strings.Trim(strings.TrimSpace(f.UserConfig.Root), "/")
+			av := strings.Trim(strings.TrimSpace(f.UserConfig.Avatar), "/")
+			if root == "" && av == "" {
+				return nil
+			}
+			return map[string]any{
+				"root":   root,
+				"avatar": av,
+			}
+		}(),
 		"frontPageConfig": func() any {
 			if f == nil || f.FrontPageConfig == nil {
 				return nil
