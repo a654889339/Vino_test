@@ -21,7 +21,10 @@ func RegisterRoutes(engine *gin.Engine, cfg *config.Config) {
 	api.GET("/app/status", AppStatus)
 	api.GET("/homepage", Homepage)
 
-	// 媒体不经过本服务：/api/media/* 已撤销；客户端从 COS 公网直链与包内 vino.media.yaml、media_asset_catalog 读取约定。
+	// 媒体对象不经本服务拉流：/api/media/cos 仅返回 410；但仍保留 /api/media/cos-config 与 /api/media/catalog 供三端拉取规则。
+	api.GET("/media/cos-config", MediaCosConfig)
+	api.GET("/media/catalog", MediaCatalog)
+	api.GET("/media/cos", MediaCosStream)
 	api.POST("/analytics/page-view", AnalyticsPageView)
 	api.GET("/admin/page-visit-stats", middleware.Auth(cfg), middleware.Admin(), AnalyticsStats)
 	api.GET("/admin/db-catalog", middleware.Auth(cfg), middleware.Admin(), adminGetDbCatalog)
