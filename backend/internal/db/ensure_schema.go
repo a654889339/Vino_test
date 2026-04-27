@@ -182,66 +182,6 @@ func currentDatabaseName(d *gorm.DB) (string, error) {
 	return strings.TrimSpace(name), nil
 }
 
-func ensureFrontPageHomepageCarouselPrimaryKey(d *gorm.DB) error {
-	const tableName = "frontPageConfig_HomepageCarousel"
-	if !d.Migrator().HasTable(tableName) {
-		return nil
-	}
-	if !d.Migrator().HasColumn(&models.FrontPageConfigHomepageCarousel{}, "language") {
-		return nil
-	}
-	var invalidCount int64
-	if err := d.Table(tableName).
-		Where("`key` IS NULL OR TRIM(`key`) = '' OR `language` IS NULL OR `language` NOT IN ?", []string{"zh", "en"}).
-		Count(&invalidCount).Error; err != nil {
-		return fmt.Errorf("validate %s language: %w", tableName, err)
-	}
-	if invalidCount > 0 {
-		return fmt.Errorf("%s 存在空 key 或非法 language，需先清理旧数据后再启用强校验", tableName)
-	}
-	var duplicateCount int64
-	if err := d.Raw(`
-SELECT COUNT(*) FROM (
-  SELECT ` + "`key`, `language`" + `
-  FROM ` + "`frontPageConfig_HomepageCarousel`" + `
-  GROUP BY ` + "`key`, `language`" + `
-  HAVING COUNT(*) > 1
-) dup
-`).Scan(&duplicateCount).Error; err != nil {
-		return fmt.Errorf("validate %s duplicate key/language: %w", tableName, err)
-	}
-	if duplicateCount > 0 {
-		return fmt.Errorf("%s 存在重复 key+language，无法建立联合主键", tableName)
-	}
-	type keyCol struct {
-		ColumnName string
-		Ordinal    int
-	}
-	var rows []keyCol
-	if err := d.Raw(`
-SELECT COLUMN_NAME AS column_name, ORDINAL_POSITION AS ordinal
-FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
-WHERE TABLE_SCHEMA = DATABASE()
-  AND TABLE_NAME = ?
-  AND CONSTRAINT_NAME = 'PRIMARY'
-ORDER BY ORDINAL_POSITION ASC
-`, tableName).Scan(&rows).Error; err != nil {
-		return fmt.Errorf("read %s primary key: %w", tableName, err)
-	}
-	if len(rows) == 2 && rows[0].ColumnName == "key" && rows[1].ColumnName == "language" {
-		return nil
-	}
-	if len(rows) > 0 {
-		if err := d.Exec("ALTER TABLE `frontPageConfig_HomepageCarousel` DROP PRIMARY KEY").Error; err != nil {
-			return fmt.Errorf("drop %s old primary key: %w", tableName, err)
-		}
-	}
-	if err := d.Exec("ALTER TABLE `frontPageConfig_HomepageCarousel` ADD PRIMARY KEY (`key`, `language`)").Error; err != nil {
-		return fmt.Errorf("add %s composite primary key: %w", tableName, err)
-	}
-	return nil
-}
-
 // EnsureAppSchema 在 AutoMigrate 前校验已存在列类型，再执行 AutoMigrate，并返回差异供主程序打点；失败时返回错误以终止启动。
 func EnsureAppSchema() (*SchemaEnsureDiff, error) {
 	if DB == nil {
@@ -262,9 +202,6 @@ func EnsureAppSchema() (*SchemaEnsureDiff, error) {
 	ents := ManagedModelEntities()
 	if err := d.AutoMigrate(ents...); err != nil {
 		return nil, fmt.Errorf("AutoMigrate: %w", err)
-	}
-	if err := ensureFrontPageHomepageCarouselPrimaryKey(d); err != nil {
-		return nil, err
 	}
 	after, err := snapshotTableColumns(d)
 	if err != nil {
