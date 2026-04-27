@@ -940,7 +940,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
               <div style="font-weight:600;margin-bottom:6px">首页轮播图（按 ID 列表）</div>
               <div style="font-size:13px;color:#666;line-height:1.6">
                 该轮播不再使用 <code>home_configs(section=homeBg)</code>。后台仅维护轮播 <strong>id + language</strong> 列表（表 <code>frontPageConfig_HomepageCarousel</code>），并将图片上传到 COS 固定路径：<br/>
-                <code>{frontPageConfig.Root}/{frontPageConfig.HomepageCarousel}/{id}_{language}.png</code>
+                <code>{frontPageConfig.Root}/{frontPageConfig.HomepageCarousel}/{id}_{language}.jpg</code>
               </div>
             </div>
             <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
@@ -950,8 +950,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
                 <option value="en">en</option>
               </select>
               <button class="btn" onclick="addHomepageCarouselKey()" style="background:#2563EB;color:#fff">新增ID</button>
-              <label class="btn" style="background:#059669;color:#fff;cursor:pointer;margin:0">上传 PNG<input id="hpCarouselFile" type="file" accept="image/png" style="display:none" onchange="uploadHomepageCarouselForKey()" /></label>
-              <input id="hpCarouselRowFile" type="file" accept="image/png" style="display:none" onchange="uploadHomepageCarouselForRow()" />
+              <label class="btn" style="background:#059669;color:#fff;cursor:pointer;margin:0">上传 JPG<input id="hpCarouselFile" type="file" accept="image/jpeg,.jpg,.jpeg" style="display:none" onchange="uploadHomepageCarouselForKey()" /></label>
+              <input id="hpCarouselRowFile" type="file" accept="image/jpeg,.jpg,.jpeg" style="display:none" onchange="uploadHomepageCarouselForRow()" />
               <button class="btn" onclick="refreshHomepageCarouselAdmin()" style="background:var(--primary);color:#fff">刷新</button>
             </div>
           </div>
@@ -5031,7 +5031,7 @@ function homepageCarouselUrlByKey(key, language) {
   if (!k || !lang || !hpCarouselCosHost) return '';
   const root = (hpCarouselFrontCfg && hpCarouselFrontCfg.root) || 'front_page_config';
   const hc = (hpCarouselFrontCfg && hpCarouselFrontCfg.homepageCarousel) || 'Homepagecarousel';
-  const parts = [root, hc, k + '_' + lang + '.png'].map(encSeg);
+  const parts = [root, hc, k + '_' + lang + '.jpg'].map(encSeg);
   return hpCarouselCosHost + '/' + parts.join('/');
 }
 
@@ -5104,8 +5104,8 @@ async function uploadHomepageCarouselForRow() {
   if (!key || (lang !== 'zh' && lang !== 'en')) { if (fileInput) fileInput.value=''; return; }
   if (!file) return;
   if (hpCarouselUploading) { if (fileInput) fileInput.value=''; return; }
-  if (!/\\.png$/i.test(file.name || '') && !(file.type || '').toLowerCase().includes('png')) {
-    alert('仅支持 PNG 图片'); if (fileInput) fileInput.value=''; return;
+  if (!/\.jpe?g$/i.test(file.name || '') && !(file.type || '').toLowerCase().includes('jpeg')) {
+    alert('仅支持 JPG 图片'); if (fileInput) fileInput.value=''; return;
   }
   hpCarouselUploading = true;
   hpCarouselUploadingItemKey = homepageCarouselItemToken(key, lang);
@@ -5175,8 +5175,8 @@ async function uploadHomepageCarouselForKey() {
   if (lang !== 'zh' && lang !== 'en') { alert('请选择语言'); if (fileInput) fileInput.value=''; return; }
   if (!file) return;
   if (hpCarouselUploading) { if (fileInput) fileInput.value=''; return; }
-  if (!/\.png$/i.test(file.name || '') && !(file.type || '').toLowerCase().includes('png')) {
-    alert('仅支持 PNG 图片'); if (fileInput) fileInput.value=''; return;
+  if (!/\.jpe?g$/i.test(file.name || '') && !(file.type || '').toLowerCase().includes('jpeg')) {
+    alert('仅支持 JPG 图片'); if (fileInput) fileInput.value=''; return;
   }
   hpCarouselUploading = true;
   hpCarouselUploadingItemKey = homepageCarouselItemToken(key, lang);

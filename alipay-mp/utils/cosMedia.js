@@ -42,7 +42,7 @@ function homepageCarouselUrl(id, lang) {
   if (!k || (language !== 'zh' && language !== 'en')) return '';
   const root = (frontPageConfig && frontPageConfig.root) || DEFAULT_FRONT_PAGE_CONFIG.root;
   const carousel = (frontPageConfig && frontPageConfig.homepageCarousel) || DEFAULT_FRONT_PAGE_CONFIG.homepageCarousel;
-  const key = `${root}/${carousel}/${k}_${language}.png`;
+  const key = `${root}/${carousel}/${k}_${language}.jpg`;
   // 小程序统一走后端同源媒体接口（baseUrl 通常已包含 /api）
   return `/media/cos?key=${encodeURIComponent(key)}`;
 }

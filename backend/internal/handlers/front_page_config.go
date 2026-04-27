@@ -247,9 +247,9 @@ func AdminHomepageCarouselDelete(c *gin.Context) {
 	resp.OK(c, gin.H{"items": frontPageHomepageItemsSnapshot()})
 }
 
-var errOnlyPNG = errors.New("仅支持 PNG 图片")
+var errOnlyJPG = errors.New("仅支持 JPG 图片")
 
-// AdminHomepageCarouselUpload uploads image to fixed COS key: {Root}/{HomepageCarousel}/{id}_{language}.png
+// AdminHomepageCarouselUpload uploads image to fixed COS key: {Root}/{HomepageCarousel}/{id}_{language}.jpg
 func AdminHomepageCarouselUpload(c *gin.Context) {
 	key := strings.TrimSpace(c.Param("key"))
 	if key == "" {
@@ -268,8 +268,8 @@ func AdminHomepageCarouselUpload(c *gin.Context) {
 	}
 	ext := strings.ToLower(path.Ext(fh.Filename))
 	ct := strings.ToLower(strings.TrimSpace(fh.Header.Get("Content-Type")))
-	if ext != ".png" && !strings.Contains(ct, "png") {
-		resp.Err(c, 400, 1, errOnlyPNG.Error())
+	if ext != ".jpg" && ext != ".jpeg" && !strings.Contains(ct, "jpeg") && !strings.Contains(ct, "jpg") {
+		resp.Err(c, 400, 1, errOnlyJPG.Error())
 		return
 	}
 	f, err := fh.Open()
@@ -295,8 +295,8 @@ func AdminHomepageCarouselUpload(c *gin.Context) {
 		return
 	}
 
-	filename := key + "_" + lang + ".png"
-	urlu, err := services.UploadCOSWithContentPrefix(c.Request.Context(), buf, filename, "image/png", prefix)
+	filename := key + "_" + lang + ".jpg"
+	urlu, err := services.UploadCOSWithContentPrefix(c.Request.Context(), buf, filename, "image/jpeg", prefix)
 	if err != nil {
 		// If COS isn't configured, surface a clearer message for admin.
 		if !services.CosConfigured() {
