@@ -258,6 +258,19 @@ const myProductImgFailed = reactive({});
 const featuredImgFailed = reactive({});
 
 const tocMediaOpt = { apiBase: import.meta.env.VITE_API_BASE || '' };
+function homepageLang() {
+  return isEn.value ? 'en' : 'zh';
+}
+
+async function loadHomepageCarouselIds() {
+  const lang = homepageLang();
+  const r = await fetch('/api/homepage?lang=' + encodeURIComponent(lang), { credentials: 'include', cache: 'no-store' });
+  if (!r.ok) throw new Error(String(r.status));
+  const j = await r.json();
+  const ids = (j && j.data && j.data.ids) || [];
+  homepageCarouselIds.value = Array.isArray(ids) ? ids.map(x => String(x).trim()).filter(Boolean) : [];
+}
+
 function guideRuleCover(g) {
   const id = g && Number(g.id);
   if (!Number.isFinite(id) || id <= 0) return { cover: '', thumb: '' };
@@ -323,19 +336,15 @@ async function loadMyProducts() {
 }
 
 onMounted(async () => {
-  detectLangByIp();
+  await detectLangByIp();
   try {
-    const [hcRes, gRes, hpRes] = await Promise.all([
+    const [hcRes, gRes] = await Promise.all([
       homeConfigApi.list(),
       guideApi.list().catch(() => ({ data: [] })),
-      fetch('/api/homepage', { credentials: 'include', cache: 'no-store' })
-        .then(r => (r && r.ok ? r.json() : null))
-        .catch(() => null),
+      loadHomepageCarouselIds().catch(() => { homepageCarouselIds.value = []; }),
     ]);
     allItems.value = hcRes.data || [];
     guidesList.value = gRes.data || [];
-    const ids = (hpRes && (hpRes.data?.ids || hpRes.ids || hpRes.data)) || [];
-    homepageCarouselIds.value = Array.isArray(ids) ? ids.map(x => String(x).trim()).filter(Boolean) : [];
   } catch {
     try {
       const res = await homeConfigApi.list();
@@ -345,6 +354,12 @@ onMounted(async () => {
     homepageCarouselIds.value = [];
   }
   await loadMyProducts();
+});
+
+watch(isEn, () => {
+  void loadHomepageCarouselIds().catch(() => {
+    homepageCarouselIds.value = [];
+  });
 });
 
 function onAddProductClick() {
@@ -431,13 +446,15 @@ const headerLogoUrl = computed(() => {
 });
 const heroBgList = computed(() => {
   const ids = homepageCarouselIds.value || [];
+  const lang = homepageLang();
   return ids
-    .map(id => ({ url: homepageCarouselUrl(id), thumb: '' }))
+    .map(id => ({ url: homepageCarouselUrl(id, lang), thumb: '' }))
     .filter(i => i.url);
 });
 const heroBgFallback = computed(() => {
   const ids = homepageCarouselIds.value || [];
-  return ids.length ? homepageCarouselUrl(ids[0]) : '';
+  const lang = homepageLang();
+  return ids.length ? homepageCarouselUrl(ids[0], lang) : '';
 });
 const navSectionTitle = computed(() => {
   const item = allItems.value.find(i => i.section === 'navSectionTitle' && i.status === 'active');

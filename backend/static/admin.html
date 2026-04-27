@@ -939,12 +939,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
             <div style="flex:1;min-width:260px">
               <div style="font-weight:600;margin-bottom:6px">首页轮播图（按 ID 列表）</div>
               <div style="font-size:13px;color:#666;line-height:1.6">
-                该轮播不再使用 <code>home_configs(section=homeBg)</code>。后台仅维护轮播 <strong>id</strong> 列表（表 <code>frontPageConfig_HomepageCarousel</code>），并将图片上传到 COS 固定路径：<br/>
-                <code>{frontPageConfig.Root}/{frontPageConfig.HomepageCarousel}/{id}.png</code>
+                该轮播不再使用 <code>home_configs(section=homeBg)</code>。后台仅维护轮播 <strong>id + language</strong> 列表（表 <code>frontPageConfig_HomepageCarousel</code>），并将图片上传到 COS 固定路径：<br/>
+                <code>{frontPageConfig.Root}/{frontPageConfig.HomepageCarousel}/{id}_{language}.png</code>
               </div>
             </div>
             <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
               <input id="hpCarouselNewKey" class="form-input" style="width:160px" placeholder="轮播图ID(如 1)" />
+              <select id="hpCarouselNewLang" class="form-input" style="width:110px">
+                <option value="zh">zh</option>
+                <option value="en">en</option>
+              </select>
               <button class="btn" onclick="addHomepageCarouselKey()" style="background:#2563EB;color:#fff">新增ID</button>
               <label class="btn" style="background:#059669;color:#fff;cursor:pointer;margin:0">上传 PNG<input id="hpCarouselFile" type="file" accept="image/png" style="display:none" onchange="uploadHomepageCarouselForKey()" /></label>
               <input id="hpCarouselRowFile" type="file" accept="image/png" style="display:none" onchange="uploadHomepageCarouselForRow()" />
@@ -953,7 +957,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           </div>
           <div style="margin-top:10px">
             <table class="order-table" style="margin:0">
-              <thead><tr><th style="width:140px">ID(key)</th><th>预览</th><th style="width:120px">操作</th></tr></thead>
+              <thead><tr><th style="width:140px">ID(key)</th><th style="width:100px">语言</th><th>预览</th><th style="width:120px">操作</th></tr></thead>
               <tbody id="hpCarouselBody"></tbody>
             </table>
             <div class="order-empty" id="hpCarouselEmpty" style="display:none">暂无轮播 ID</div>
@@ -4989,11 +4993,11 @@ let hcFilterSection = 'all';
 let hcAnimFilterSection = 'all';
 const HOME_CONFIG_SECTIONS = ['navLg', 'navSm', 'myProducts'];
 const HOME_ANIM_SECTIONS = ['splash', 'headerLogo', 'homeBg'];
-let hpCarouselIds = [];
+let hpCarouselItems = [];
 let hpCarouselCosHost = '';
 let hpCarouselFrontCfg = { root: 'front_page_config', homepageCarousel: 'Homepagecarousel' };
-let hpCarouselUploadKey = '';
-let hpCarouselUploadingKey = '';
+let hpCarouselUploadItem = null;
+let hpCarouselUploadingItemKey = '';
 let hpCarouselUploading = false;
 
 function encSeg(s) {
@@ -5017,12 +5021,17 @@ async function ensureHomepageCarouselCosConfig() {
   } catch (e) {}
 }
 
-function homepageCarouselUrlByKey(key) {
+function homepageCarouselItemToken(key, language) {
+  return String(key || '').trim() + '|' + String(language || '').trim();
+}
+
+function homepageCarouselUrlByKey(key, language) {
   const k = String(key || '').trim();
-  if (!k || !hpCarouselCosHost) return '';
+  const lang = String(language || '').trim();
+  if (!k || !lang || !hpCarouselCosHost) return '';
   const root = (hpCarouselFrontCfg && hpCarouselFrontCfg.root) || 'front_page_config';
   const hc = (hpCarouselFrontCfg && hpCarouselFrontCfg.homepageCarousel) || 'Homepagecarousel';
-  const parts = [root, hc, k + '.png'].map(encSeg);
+  const parts = [root, hc, k + '_' + lang + '.png'].map(encSeg);
   return hpCarouselCosHost + '/' + parts.join('/');
 }
 
@@ -5030,10 +5039,14 @@ async function refreshHomepageCarouselAdmin() {
   await ensureHomepageCarouselCosConfig();
   try {
     const res = await api('/admin/front-page/homepage-carousel');
-    const ids = (res && res.ids) || (res && res.data && res.data.ids) || [];
-    hpCarouselIds = Array.isArray(ids) ? ids.map(x => String(x).trim()).filter(Boolean) : [];
+    const items = res && res.data && res.data.items;
+    hpCarouselItems = Array.isArray(items)
+      ? items
+        .map(x => ({ key: String((x && x.key) || '').trim(), language: String((x && x.language) || '').trim() }))
+        .filter(x => x.key && (x.language === 'zh' || x.language === 'en'))
+      : [];
   } catch (e) {
-    hpCarouselIds = [];
+    hpCarouselItems = [];
   }
   renderHomepageCarouselAdmin();
 }
@@ -5043,34 +5056,39 @@ function renderHomepageCarouselAdmin() {
   const body = document.getElementById('hpCarouselBody');
   const empty = document.getElementById('hpCarouselEmpty');
   if (!panel || !body) return;
-  const list = hpCarouselIds || [];
+  const list = hpCarouselItems || [];
   if (!list.length) {
     body.innerHTML = '';
     if (empty) empty.style.display = 'block';
     return;
   }
   if (empty) empty.style.display = 'none';
-  body.innerHTML = list.map(k => {
-    const url = homepageCarouselUrlByKey(k);
-    const isUploading = hpCarouselUploading && hpCarouselUploadingKey === String(k || '').trim();
+  body.innerHTML = list.map(item => {
+    const k = String(item.key || '').trim();
+    const lang = String(item.language || '').trim();
+    const token = homepageCarouselItemToken(k, lang);
+    const url = homepageCarouselUrlByKey(k, lang);
+    const isUploading = hpCarouselUploading && hpCarouselUploadingItemKey === token;
     const img = isUploading
       ? `<span style="display:inline-flex;align-items:center;gap:8px;color:#64748b;font-size:13px"><span class="spinner"></span>上传中...</span>`
       : (url ? `<img src="${url}" style="max-width:140px;max-height:54px;border-radius:6px;object-fit:cover;border:1px solid #eee;background:#fafafa" />` : '-');
     return `<tr>
       <td style="font-family:monospace">${escapeHtml(k)}</td>
+      <td style="font-family:monospace">${escapeHtml(lang)}</td>
       <td>${img}</td>
       <td style="white-space:nowrap">
-        <button class="btn btn-sm" ${hpCarouselUploading?'disabled':''} onclick="pickHomepageCarouselUpload('${escapeHtml(k)}')" style="background:#059669;color:#fff;margin-right:6px;${hpCarouselUploading?'opacity:.6;cursor:not-allowed':''}">上传</button>
-        <button class="btn btn-sm" ${hpCarouselUploading?'disabled':''} onclick="deleteHomepageCarouselKey('${escapeHtml(k)}')" style="background:#DC2626;color:#fff;${hpCarouselUploading?'opacity:.6;cursor:not-allowed':''}">删除</button>
+        <button class="btn btn-sm" ${hpCarouselUploading?'disabled':''} onclick="pickHomepageCarouselUpload('${escapeHtml(k)}','${escapeHtml(lang)}')" style="background:#059669;color:#fff;margin-right:6px;${hpCarouselUploading?'opacity:.6;cursor:not-allowed':''}">上传</button>
+        <button class="btn btn-sm" ${hpCarouselUploading?'disabled':''} onclick="deleteHomepageCarouselKey('${escapeHtml(k)}','${escapeHtml(lang)}')" style="background:#DC2626;color:#fff;${hpCarouselUploading?'opacity:.6;cursor:not-allowed':''}">删除</button>
       </td>
     </tr>`;
   }).join('');
 }
 
-function pickHomepageCarouselUpload(key) {
+function pickHomepageCarouselUpload(key, language) {
   const k = String(key || '').trim();
-  if (!k) return;
-  hpCarouselUploadKey = k;
+  const lang = String(language || '').trim();
+  if (!k || (lang !== 'zh' && lang !== 'en')) return;
+  hpCarouselUploadItem = { key: k, language: lang };
   const fileInput = document.getElementById('hpCarouselRowFile');
   if (fileInput) {
     fileInput.value = '';
@@ -5079,20 +5097,22 @@ function pickHomepageCarouselUpload(key) {
 }
 
 async function uploadHomepageCarouselForRow() {
-  const key = String(hpCarouselUploadKey || '').trim();
+  const key = String((hpCarouselUploadItem && hpCarouselUploadItem.key) || '').trim();
+  const lang = String((hpCarouselUploadItem && hpCarouselUploadItem.language) || '').trim();
   const fileInput = document.getElementById('hpCarouselRowFile');
   const file = fileInput && fileInput.files ? fileInput.files[0] : null;
-  if (!key) { if (fileInput) fileInput.value=''; return; }
+  if (!key || (lang !== 'zh' && lang !== 'en')) { if (fileInput) fileInput.value=''; return; }
   if (!file) return;
   if (hpCarouselUploading) { if (fileInput) fileInput.value=''; return; }
   if (!/\\.png$/i.test(file.name || '') && !(file.type || '').toLowerCase().includes('png')) {
     alert('仅支持 PNG 图片'); if (fileInput) fileInput.value=''; return;
   }
   hpCarouselUploading = true;
-  hpCarouselUploadingKey = key;
+  hpCarouselUploadingItemKey = homepageCarouselItemToken(key, lang);
   renderHomepageCarouselAdmin();
   const fd = new FormData();
   fd.append('file', file);
+  fd.append('language', lang);
   try {
     const token = localStorage.getItem('vino_admin_token') || '';
     const r = await fetch(API + '/admin/front-page/homepage-carousel/' + encodeURIComponent(key) + '/upload', {
@@ -5108,8 +5128,8 @@ async function uploadHomepageCarouselForRow() {
     alert('上传失败：' + (e && e.message ? e.message : ''));
     if (fileInput) fileInput.value = '';
   } finally {
-    hpCarouselUploadKey = '';
-    hpCarouselUploadingKey = '';
+    hpCarouselUploadItem = null;
+    hpCarouselUploadingItemKey = '';
     hpCarouselUploading = false;
     renderHomepageCarouselAdmin();
   }
@@ -5117,10 +5137,13 @@ async function uploadHomepageCarouselForRow() {
 
 async function addHomepageCarouselKey() {
   const inp = document.getElementById('hpCarouselNewKey');
+  const langInp = document.getElementById('hpCarouselNewLang');
   const key = inp ? String(inp.value || '').trim() : '';
+  const language = langInp ? String(langInp.value || '').trim() : '';
   if (!key) { alert('请输入轮播图ID'); return; }
+  if (language !== 'zh' && language !== 'en') { alert('请选择语言'); return; }
   try {
-    await api('/admin/front-page/homepage-carousel', { method: 'POST', body: { key } });
+    await api('/admin/front-page/homepage-carousel', { method: 'POST', body: { key, language } });
     if (inp) inp.value = '';
     await refreshHomepageCarouselAdmin();
   } catch (e) {
@@ -5128,12 +5151,13 @@ async function addHomepageCarouselKey() {
   }
 }
 
-async function deleteHomepageCarouselKey(key) {
+async function deleteHomepageCarouselKey(key, language) {
   const k = String(key || '').trim();
-  if (!k) return;
-  if (!confirm('确认删除轮播ID：' + k + '？（仅删除ID，不会删除COS文件）')) return;
+  const lang = String(language || '').trim();
+  if (!k || (lang !== 'zh' && lang !== 'en')) return;
+  if (!confirm('确认删除轮播ID：' + k + ' / ' + lang + '？（仅删除ID，不会删除COS文件）')) return;
   try {
-    await api('/admin/front-page/homepage-carousel/' + encodeURIComponent(k), { method: 'DELETE' });
+    await api('/admin/front-page/homepage-carousel/' + encodeURIComponent(k) + '?lang=' + encodeURIComponent(lang), { method: 'DELETE' });
     await refreshHomepageCarouselAdmin();
   } catch (e) {
     alert('删除失败：' + (e && e.message ? e.message : ''));
@@ -5142,20 +5166,24 @@ async function deleteHomepageCarouselKey(key) {
 
 async function uploadHomepageCarouselForKey() {
   const inp = document.getElementById('hpCarouselNewKey');
+  const langInp = document.getElementById('hpCarouselNewLang');
   const fileInput = document.getElementById('hpCarouselFile');
   const key = inp ? String(inp.value || '').trim() : '';
+  const lang = langInp ? String(langInp.value || '').trim() : '';
   const file = fileInput && fileInput.files ? fileInput.files[0] : null;
   if (!key) { alert('请先在输入框填写轮播图ID'); if (fileInput) fileInput.value=''; return; }
+  if (lang !== 'zh' && lang !== 'en') { alert('请选择语言'); if (fileInput) fileInput.value=''; return; }
   if (!file) return;
   if (hpCarouselUploading) { if (fileInput) fileInput.value=''; return; }
   if (!/\.png$/i.test(file.name || '') && !(file.type || '').toLowerCase().includes('png')) {
     alert('仅支持 PNG 图片'); if (fileInput) fileInput.value=''; return;
   }
   hpCarouselUploading = true;
-  hpCarouselUploadingKey = key;
+  hpCarouselUploadingItemKey = homepageCarouselItemToken(key, lang);
   renderHomepageCarouselAdmin();
   const fd = new FormData();
   fd.append('file', file);
+  fd.append('language', lang);
   try {
     const token = localStorage.getItem('vino_admin_token') || '';
     const r = await fetch(API + '/admin/front-page/homepage-carousel/' + encodeURIComponent(key) + '/upload', {
@@ -5171,7 +5199,7 @@ async function uploadHomepageCarouselForKey() {
     alert('上传失败：' + (e && e.message ? e.message : ''));
     if (fileInput) fileInput.value = '';
   } finally {
-    hpCarouselUploadingKey = '';
+    hpCarouselUploadingItemKey = '';
     hpCarouselUploading = false;
     renderHomepageCarouselAdmin();
   }

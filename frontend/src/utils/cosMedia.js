@@ -63,11 +63,12 @@ export function getFrontPageConfig() {
   return { ...frontPageConfig };
 }
 
-export function homepageCarouselUrl(id) {
+export function homepageCarouselUrl(id, lang) {
   const k = String(id == null ? '' : id).trim();
-  if (!k) return '';
+  const language = String(lang || '').trim();
+  if (!k || (language !== 'zh' && language !== 'en')) return '';
   const { root, homepageCarousel } = frontPageConfig || DEFAULT_FRONT_PAGE_CONFIG;
-  const key = `${root}/${homepageCarousel}/${k}.png`;
+  const key = `${root}/${homepageCarousel}/${k}_${language}.png`;
   // Web 端用同源 /api/media/cos 拉取对象，规避 COS CORS。
   return `/api/media/cos?key=${encodeURIComponent(key)}`;
 }

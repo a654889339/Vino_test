@@ -177,7 +177,7 @@ Page({
 
     const pHc = app.request({ url: '/home-config?all=1' }).catch(() => ({ data: [] }));
     const pGuides = app.request({ url: '/guides' }).catch(() => ({ data: [] }));
-    const pHomepage = app.request({ url: '/homepage' }).catch(() => ({ data: { ids: [] } }));
+    const pHomepage = app.request({ url: '/homepage?lang=' + encodeURIComponent(lang) }).catch(() => ({ data: { ids: [] } }));
 
     Promise.all([pHc, pGuides, pHomepage])
       .then(([hcRes, gRes, hpRes]) => {
@@ -192,11 +192,11 @@ Page({
         });
 
         const headerLogo = items.find(i => i.section === 'headerLogo' && i.status === 'active');
-        const idsRaw = (hpRes && hpRes.data && (hpRes.data.ids || (hpRes.data.data && hpRes.data.data.ids))) || [];
+        const idsRaw = (hpRes && hpRes.data && hpRes.data.ids) || [];
         const ids = Array.isArray(idsRaw) ? idsRaw.map(x => String(x).trim()).filter(Boolean) : [];
         const homeBgList = ids
           .map((id) => {
-            const url = homepageCarouselUrl(id);
+            const url = homepageCarouselUrl(id, lang);
             return { url, thumb: '', displayUrl: url };
           })
           .filter(i => i.url);
