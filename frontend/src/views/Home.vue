@@ -328,7 +328,7 @@ onMounted(async () => {
     const [hcRes, gRes, hpRes] = await Promise.all([
       homeConfigApi.list(),
       guideApi.list().catch(() => ({ data: [] })),
-      fetch('/homepage', { credentials: 'include', cache: 'no-store' })
+      fetch('/api/homepage', { credentials: 'include', cache: 'no-store' })
         .then(r => (r && r.ok ? r.json() : null))
         .catch(() => null),
     ]);
