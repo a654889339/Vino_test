@@ -21,7 +21,9 @@ services:
       retries: 5
 
   vino-backend:
-    build: ./backend
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: vino-backend
     restart: always
     ports:
