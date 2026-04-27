@@ -137,6 +137,7 @@
 </template>
 
 <script setup>
+defineOptions({ name: 'Products' });
 import { ref, computed, onMounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { cartApi, guideApi } from '@/api';

@@ -111,6 +111,7 @@
 </template>
 
 <script setup>
+defineOptions({ name: 'Mine' });
 import { ref, inject, onMounted, computed, watch } from 'vue';
 import { useUserStore } from '@/stores/user';
 import { useRouter } from 'vue-router';

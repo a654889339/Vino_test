@@ -8,7 +8,11 @@
     </div>
   </div>
   <SplashScreen v-if="showSplash" />
-  <router-view />
+  <router-view v-slot="{ Component }">
+    <keep-alive include="Home,Products,Services,Mine,Cart">
+      <component :is="Component" />
+    </keep-alive>
+  </router-view>
   <div v-if="showTabbar && tabbarItems.length" class="app-tabbar-shell">
     <div v-if="tabbarSkinLayer" class="section-skin-layer app-tabbar-skin" :style="tabbarSkinLayer" aria-hidden="true" />
     <van-tabbar route active-color="var(--vino-primary)" class="app-tabbar-bar">

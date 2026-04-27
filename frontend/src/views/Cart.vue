@@ -58,6 +58,7 @@
 </template>
 
 <script setup>
+defineOptions({ name: 'Cart' });
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { showToast } from 'vant';

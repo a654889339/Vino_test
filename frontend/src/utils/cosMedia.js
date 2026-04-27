@@ -481,7 +481,23 @@ export async function getBlobUrlForDisplay(u, opt) {
     }
   }
   const objectUrl = URL.createObjectURL(b);
-  entryByKey.set(abs, { type: 'obj', exp: Date.now() + displayCacheTtlMs, objectUrl, blob: b });
+  let keepBuffer;
+  let keepCt;
+  if (prev && prev.type === 'ab' && prev.buffer) {
+    keepBuffer = prev.buffer;
+    keepCt = prev.contentType;
+  } else if (prev && prev.type === 'obj' && prev.buffer) {
+    keepBuffer = prev.buffer;
+    keepCt = prev.contentType;
+  }
+  entryByKey.set(abs, {
+    type: 'obj',
+    exp: Date.now() + displayCacheTtlMs,
+    objectUrl,
+    blob: b,
+    buffer: keepBuffer,
+    contentType: keepCt || (b && b.type) || 'application/octet-stream',
+  });
   return objectUrl;
 }
 
@@ -499,7 +515,7 @@ export async function fetchCosMediaCached(input, init) {
   const abs = u.startsWith('http') ? u : (typeof location !== 'undefined' ? location.origin + (u.startsWith('/') ? u : `/${u}`) : u);
   prune();
   const hit = entryByKey.get(abs);
-  if (hit && hit.type === 'ab' && hit.exp > Date.now() && hit.buffer) {
+  if (hit && hit.exp > Date.now() && hit.buffer) {
     const ct = hit.contentType || 'application/octet-stream';
     return new Response(hit.buffer, { status: 200, headers: { 'Content-Type': ct } });
   }
@@ -529,7 +545,16 @@ export function revokeIfCachedBlob(maybeObjectUrl) {
       } catch (e2) {
         // ignore
       }
-      entryByKey.delete(k);
+      if (e.buffer) {
+        entryByKey.set(k, {
+          type: 'ab',
+          exp: Date.now() + displayCacheTtlMs,
+          buffer: e.buffer,
+          contentType: e.contentType || 'application/octet-stream',
+        });
+      } else {
+        entryByKey.delete(k);
+      }
       return;
     }
   }

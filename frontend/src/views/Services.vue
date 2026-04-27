@@ -29,6 +29,7 @@
 </template>
 
 <script setup>
+defineOptions({ name: 'Services' });
 import { ref, onMounted } from 'vue';
 import { serviceApi } from '@/api';
 import PageThemeLayer from '@/components/PageThemeLayer.vue';
