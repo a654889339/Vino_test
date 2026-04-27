@@ -1,8 +1,10 @@
 /**
  * 与 Web、微信相同：桶基址与 GET /api/media/cos-config 同构；相对路径与 /uploads/ 兼容与 Web 对齐。
  */
+const { createCosMediaPathCache } = require('../../common/frontend/cos_base/cosMediaPathCache.js');
+
 const DEFAULT_DISPLAY_CACHE_MS = 5 * 60 * 1000;
-const filePathByUrl = new Map();
+const cosDownloadPathCache = createCosMediaPathCache({ ttlMs: DEFAULT_DISPLAY_CACHE_MS });
 
 let cosHostPrefix = '';
 let displayCacheTtlMs = DEFAULT_DISPLAY_CACHE_MS;
@@ -31,6 +33,7 @@ function setCosMediaConfig(cfg) {
   const imgTtl = cfg && cfg.imageDisplayCacheTtlMs;
   displayCacheTtlMs =
     typeof imgTtl === 'number' && imgTtl > 0 ? imgTtl : DEFAULT_DISPLAY_CACHE_MS;
+  cosDownloadPathCache.setTtlMs(displayCacheTtlMs);
 }
 
 function setFrontPageConfig(cfg) {
@@ -351,18 +354,15 @@ function downloadFileCached(opts, api) {
       x.downloadFile({ ...opts, success: (r) => resolve(r.apFilePath || r.tempFilePath), fail: reject });
     });
   }
-  const now = Date.now();
-  const c = filePathByUrl.get(url);
-  if (c && c.exp > now && c.path) {
-    return Promise.resolve(c.path);
-  }
+  const hit = cosDownloadPathCache.getCachedPath(url);
+  if (hit) return Promise.resolve(hit);
   return new Promise((resolve, reject) => {
     x.downloadFile({
       ...opts,
       success: (r) => {
         const p = r.apFilePath || r.tempFilePath;
         if (p) {
-          filePathByUrl.set(url, { exp: now + displayCacheTtlMs, path: p });
+          cosDownloadPathCache.setCachedPath(url, p);
         }
         resolve(p);
       },

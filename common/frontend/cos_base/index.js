@@ -12,3 +12,4 @@ export {
   expandCosRuleConfigPathTemplate,
   buildCosRuleConfigObjectUrl,
 } from './cosRuleConfigClient.js';
+export { createCosMediaProxyFetchCache } from './cosMediaProxyFetchCache.js';

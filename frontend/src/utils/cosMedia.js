@@ -4,6 +4,7 @@
  * - 最后 VITE_COS_PUBLIC_BASE 仅作本地开发兜底。
  */
 import { parseVinoMediaYamlDefaults } from '@cos_base/parseVinoMediaYaml.js';
+import { createCosMediaProxyFetchCache } from '@cos_base/cosMediaProxyFetchCache.js';
 import vinoMediaYamlRaw from '../../../common/config/cos/vino.media.yaml?raw';
 
 const DEFAULT_DISPLAY_CACHE_MS = 5 * 60 * 1000;
@@ -25,14 +26,17 @@ function envCosBase() {
 }
 
 /** 是否为同源 COS 代理 URL（用于 blob/缓存分支） */
-const isMediaCosPath = (s) => {
+function isMediaCosPath(s) {
   if (typeof s !== 'string') return false;
   const t = s.trim();
   if (!t) return false;
   return t.includes('/media/cos?key=') || t.includes('/api/media/cos?key=');
-};
+}
 
-const entryByKey = new Map();
+const proxyMediaCache = createCosMediaProxyFetchCache({
+  ttlMs: DEFAULT_DISPLAY_CACHE_MS,
+  isProxyUrl: isMediaCosPath,
+});
 
 /** 公网基址，由 initCosMediaFromServer（cos-config）或 VITE_ 兜底注入 */
 let cosHostPrefix = '';
@@ -60,6 +64,7 @@ export function setCosMediaConfig(cfg) {
   } else {
     displayCacheTtlMs = DEFAULT_DISPLAY_CACHE_MS;
   }
+  proxyMediaCache.setTtlMs(displayCacheTtlMs);
 }
 
 export function setFrontPageConfig(cfg) {
@@ -441,22 +446,6 @@ export function toAbsoluteMediaUrl(u, opt) {
   return s.startsWith('/') ? location.origin + s : s;
 }
 
-function prune() {
-  const n = Date.now();
-  for (const [k, e] of entryByKey) {
-    if (e && e.exp < n) {
-      if (e.type === 'obj' && e.objectUrl) {
-        try {
-          URL.revokeObjectURL(e.objectUrl);
-        } catch (err) {
-          // ignore
-        }
-      }
-      entryByKey.delete(k);
-    }
-  }
-}
-
 /**
  * 用于 &lt;img>：仅 COS 代理用 blob:；非代理保持绝对 http(s) 直链
  * @param {string} u
@@ -471,97 +460,27 @@ export async function getBlobUrlForDisplay(u, opt) {
     if (typeof location !== 'undefined' && abs.startsWith('/')) return location.origin + abs;
     return abs;
   }
-  const b = await fetchCosMediaBodyAbs(abs);
-  const prev = entryByKey.get(abs);
-  if (prev && prev.type === 'obj' && prev.objectUrl) {
-    try {
-      URL.revokeObjectURL(prev.objectUrl);
-    } catch (err) {
-      // ignore
-    }
-  }
-  const objectUrl = URL.createObjectURL(b);
-  let keepBuffer;
-  let keepCt;
-  if (prev && prev.type === 'ab' && prev.buffer) {
-    keepBuffer = prev.buffer;
-    keepCt = prev.contentType;
-  } else if (prev && prev.type === 'obj' && prev.buffer) {
-    keepBuffer = prev.buffer;
-    keepCt = prev.contentType;
-  }
-  entryByKey.set(abs, {
-    type: 'obj',
-    exp: Date.now() + displayCacheTtlMs,
-    objectUrl,
-    blob: b,
-    buffer: keepBuffer,
-    contentType: keepCt || (b && b.type) || 'application/octet-stream',
-  });
-  return objectUrl;
+  return proxyMediaCache.getBlobUrlForProxyAbs(abs);
 }
 
 /**
- * 带 5 分钟内存缓存的 fetch，仅对最终 URL 含 /media/cos?key= 的 GET 有效
+ * 带内存 TTL 的 fetch，仅对同源 COS 代理路径的 GET 走缓存（基建见 @cos_base/cosMediaProxyFetchCache）
  * @param {string|Request} input
  * @param {RequestInit} [init]
  * @returns {Promise<Response>}
  */
-export async function fetchCosMediaCached(input, init) {
-  const u = typeof input === 'string' ? input : input && input.url;
-  if (typeof u !== 'string' || !isMediaCosPath(u)) {
-    return fetch(input, init);
-  }
-  const abs = u.startsWith('http') ? u : (typeof location !== 'undefined' ? location.origin + (u.startsWith('/') ? u : `/${u}`) : u);
-  prune();
-  const hit = entryByKey.get(abs);
-  if (hit && hit.exp > Date.now() && hit.buffer) {
-    const ct = hit.contentType || 'application/octet-stream';
-    return new Response(hit.buffer, { status: 200, headers: { 'Content-Type': ct } });
-  }
-  const r = await fetch(abs, init);
-  if (!r.ok) return r;
-  const buf = await r.arrayBuffer();
-  const ct = (r.headers && r.headers.get('content-type')) || 'application/octet-stream';
-  entryByKey.set(abs, { type: 'ab', exp: Date.now() + displayCacheTtlMs, buffer: buf, contentType: ct });
-  return new Response(buf.slice(0), { status: 200, headers: { 'Content-Type': ct } });
+export function fetchCosMediaCached(input, init) {
+  return proxyMediaCache.fetchCosMediaCached(input, init);
 }
 
-export async function fetchCosMediaBodyAbs(absUrl) {
-  const r = await fetchCosMediaCached(absUrl, { credentials: 'include' });
-  if (!r.ok) throw new Error(String(r.status));
-  return r.blob();
+export function fetchCosMediaBodyAbs(absUrl) {
+  return proxyMediaCache.fetchCosMediaBodyAbs(absUrl);
 }
 
 /**
  * @param {string} [maybeObjectUrl]
  */
 export function revokeIfCachedBlob(maybeObjectUrl) {
-  if (typeof maybeObjectUrl !== 'string' || !maybeObjectUrl.startsWith('blob:')) return;
-  for (const [k, e] of entryByKey) {
-    if (e && e.type === 'obj' && e.objectUrl === maybeObjectUrl) {
-      try {
-        URL.revokeObjectURL(e.objectUrl);
-      } catch (e2) {
-        // ignore
-      }
-      if (e.buffer) {
-        entryByKey.set(k, {
-          type: 'ab',
-          exp: Date.now() + displayCacheTtlMs,
-          buffer: e.buffer,
-          contentType: e.contentType || 'application/octet-stream',
-        });
-      } else {
-        entryByKey.delete(k);
-      }
-      return;
-    }
-  }
-  try {
-    URL.revokeObjectURL(maybeObjectUrl);
-  } catch (e3) {
-    // ignore
-  }
+  proxyMediaCache.revokeIfCachedBlob(maybeObjectUrl);
 }
 
