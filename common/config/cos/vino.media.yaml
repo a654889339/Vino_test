@@ -40,3 +40,11 @@ frontPageConfig:
   ProductIconTemplate: product/{product_id}/icon_{lang}.png
   ProductCoverTemplate: product/{product_id}/banner_page_{lang}.jpg
   ProductCoverThumbTemplate: product/{product_id}/cover_thumbnail_{lang}.jpg
+
+  # 3D模型
+  Model3d: product/{product_id}/model3d.glb
+  Model3dDecal: product/{product_id}/model3d_decal_{lang}.png
+  Model3dSkyBox: product/{product_id}/model3d_skybox.jpg
+
+  # pdf
+  DescriptionPdf: product/{product_id}/desc_{lang}.pdf

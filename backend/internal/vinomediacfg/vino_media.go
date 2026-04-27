@@ -26,6 +26,10 @@ type File struct {
 		ProductIconTemplate       string `yaml:"ProductIconTemplate"`
 		ProductCoverTemplate      string `yaml:"ProductCoverTemplate"`
 		ProductCoverThumbTemplate string `yaml:"ProductCoverThumbTemplate"`
+		Model3d                  string `yaml:"Model3d"`
+		Model3dDecal             string `yaml:"Model3dDecal"`
+		Model3dSkyBox            string `yaml:"Model3dSkyBox"`
+		DescriptionPdf           string `yaml:"DescriptionPdf"`
 	} `yaml:"frontPageConfig"`
 }
 

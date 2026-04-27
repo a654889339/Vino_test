@@ -187,12 +187,16 @@ func guideUploadFile(c *gin.Context, cfg *config.Config) {
 	gidStr := ""
 	productID := 0
 	assetKind := ""
+	langParam := ""
 	if c.Request.MultipartForm != nil && c.Request.MultipartForm.Value != nil {
 		if v := c.Request.MultipartForm.Value["guideId"]; len(v) > 0 {
 			gidStr = strings.TrimSpace(v[0])
 		}
 		if v := c.Request.MultipartForm.Value["assetKind"]; len(v) > 0 {
 			assetKind = strings.TrimSpace(v[0])
+		}
+		if v := c.Request.MultipartForm.Value["lang"]; len(v) > 0 {
+			langParam = strings.TrimSpace(v[0])
 		}
 	}
 	contentPrefix := "vino/uploads"
@@ -239,9 +243,31 @@ func guideUploadFile(c *gin.Context, cfg *config.Config) {
 	ctx := c.Request.Context()
 	// 3D 预览资源：GLB + 贴花图 + 环境图；文件名固定以便去重覆盖，走无缩略图直传。
 	if isDescriptionPDF {
-		filename = "description.pdf"
+		if productID <= 0 {
+			resp.Err(c, 400, 400, "非法 guideId")
+			return
+		}
+		lang := "zh"
+		if langParam == "en" {
+			lang = "en"
+		}
+		fullKey, err := services.FrontPageProductDescriptionPdfKey(productID, lang)
+		if err != nil {
+			resp.Err(c, 500, 500, "上传失败: "+err.Error())
+			return
+		}
+		wantExt := path.Ext(fullKey)
+		if wantExt != "" && !strings.EqualFold(path.Ext(fh.Filename), wantExt) {
+			resp.Err(c, 400, 400, "文件类型不匹配：应上传 "+wantExt)
+			return
+		}
 		ct = "application/pdf"
-		url, err := services.UploadCOSWithContentPrefix(ctx, buf, filename, ct, contentPrefix)
+		cp, file := services.ContentPrefixAndFileFromKey(fullKey)
+		if cp == "" || file == "" {
+			resp.Err(c, 500, 500, "上传失败: PDF 模板非法")
+			return
+		}
+		url, err := services.UploadCOSWithContentPrefix(ctx, buf, file, ct, cp)
 		if err != nil {
 			resp.Err(c, 500, 500, "上传失败: "+err.Error())
 			return
@@ -250,31 +276,76 @@ func guideUploadFile(c *gin.Context, cfg *config.Config) {
 		return
 	}
 	if isModel3D {
+		if productID <= 0 {
+			resp.Err(c, 400, 400, "非法 guideId")
+			return
+		}
+		lang := "zh"
+		if langParam == "en" {
+			lang = "en"
+		}
+		fullKey := ""
 		switch assetKind {
 		case "model3d":
-			filename = "model3d.glb"
+			k, err := services.FrontPageModel3dKey(productID)
+			if err != nil {
+				resp.Err(c, 500, 500, "上传失败: "+err.Error())
+				return
+			}
+			fullKey = k
+			// 基于模板扩展名强校验（通常为 .glb）
+			wantExt := path.Ext(fullKey)
+			if wantExt != "" && !strings.EqualFold(path.Ext(fh.Filename), wantExt) {
+				resp.Err(c, 400, 400, "文件类型不匹配：应上传 "+wantExt)
+				return
+			}
 			if ct == "" || ct == "application/octet-stream" {
 				ct = "model/gltf-binary"
 			}
 		case "model3d_decal":
-			ext = ".png"
-			filename = "decal.png"
-			if ct == "" || ct == "application/octet-stream" {
-				ct = "image/png"
+			k, err := services.FrontPageModel3dDecalKey(productID, lang)
+			if err != nil {
+				resp.Err(c, 500, 500, "上传失败: "+err.Error())
+				return
 			}
+			fullKey = k
+			if err := cosbase.ValidateUploadMatchesKey(fullKey, fh.Filename, ct); err != nil {
+				resp.Err(c, 400, 400, err.Error())
+				return
+			}
+			contentType, err := cosbase.ImageContentTypeFromKey(fullKey)
+			if err != nil {
+				resp.Err(c, 500, 500, "上传失败: "+err.Error())
+				return
+			}
+			ct = contentType
 		case "model3d_skybox":
-			if ext == "" || ext == ".bin" {
-				ext = ".jpg"
+			k, err := services.FrontPageModel3dSkyBoxKey(productID)
+			if err != nil {
+				resp.Err(c, 500, 500, "上传失败: "+err.Error())
+				return
 			}
-			if !strings.EqualFold(ext, ".jpg") && !strings.EqualFold(ext, ".jpeg") {
-				ext = ".jpg"
+			fullKey = k
+			if err := cosbase.ValidateUploadMatchesKey(fullKey, fh.Filename, ct); err != nil {
+				resp.Err(c, 400, 400, err.Error())
+				return
 			}
-			filename = "model3d_skybox" + ext
-			if ct == "" || strings.HasPrefix(ct, "image/") == false {
-				ct = "image/jpeg"
+			contentType, err := cosbase.ImageContentTypeFromKey(fullKey)
+			if err != nil {
+				resp.Err(c, 500, 500, "上传失败: "+err.Error())
+				return
 			}
+			ct = contentType
+		default:
+			resp.Err(c, 400, 400, "非法 assetKind")
+			return
 		}
-		url, err := services.UploadCOSWithContentPrefix(ctx, buf, filename, ct, contentPrefix)
+		cp, file := services.ContentPrefixAndFileFromKey(fullKey)
+		if cp == "" || file == "" {
+			resp.Err(c, 500, 500, "上传失败: 3D 模板非法")
+			return
+		}
+		url, err := services.UploadCOSWithContentPrefix(ctx, buf, file, ct, cp)
 		if err != nil {
 			resp.Err(c, 500, 500, "上传失败: "+err.Error())
 			return

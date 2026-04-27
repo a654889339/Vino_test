@@ -11,9 +11,13 @@ let displayCacheTtlMs = DEFAULT_DISPLAY_CACHE_MS;
 const DEFAULT_FRONT_PAGE_CONFIG = {
   root: 'front_page_config',
   homepageCarouselTemplate: 'Homepagecarousel/{id}_{lang}.jpg',
-  productIconTemplate: 'product/{product_id}/icon_{lang}.jpg',
+  productIconTemplate: 'product/{product_id}/icon_{lang}.png',
   productCoverTemplate: 'product/{product_id}/banner_page_{lang}.jpg',
   productCoverThumbTemplate: 'product/{product_id}/cover_thumbnail_{lang}.jpg',
+  model3d: 'product/{product_id}/model3d.glb',
+  model3dDecal: 'product/{product_id}/model3d_decal_{lang}.png',
+  model3dSkyBox: 'product/{product_id}/model3d_skybox.jpg',
+  descriptionPdf: 'product/{product_id}/desc_{lang}.pdf',
 };
 let frontPageConfig = { ...DEFAULT_FRONT_PAGE_CONFIG };
 
@@ -38,6 +42,10 @@ function setFrontPageConfig(cfg) {
   const iconTpl = cfg && cfg.productIconTemplate;
   const coverTpl = cfg && cfg.productCoverTemplate;
   const coverThumbTpl = cfg && cfg.productCoverThumbTemplate;
+  const m3Tpl = cfg && cfg.model3d;
+  const m3DecalTpl = cfg && cfg.model3dDecal;
+  const m3SkyTpl = cfg && cfg.model3dSkyBox;
+  const descPdfTpl = cfg && cfg.descriptionPdf;
   frontPageConfig = {
     root,
     homepageCarouselTemplate:
@@ -56,6 +64,22 @@ function setFrontPageConfig(cfg) {
       typeof coverThumbTpl === 'string' && coverThumbTpl.trim()
         ? coverThumbTpl.trim().replace(/^\/+|\/+$/g, '')
         : DEFAULT_FRONT_PAGE_CONFIG.productCoverThumbTemplate,
+    model3d:
+      typeof m3Tpl === 'string' && m3Tpl.trim()
+        ? m3Tpl.trim().replace(/^\/+|\/+$/g, '')
+        : DEFAULT_FRONT_PAGE_CONFIG.model3d,
+    model3dDecal:
+      typeof m3DecalTpl === 'string' && m3DecalTpl.trim()
+        ? m3DecalTpl.trim().replace(/^\/+|\/+$/g, '')
+        : DEFAULT_FRONT_PAGE_CONFIG.model3dDecal,
+    model3dSkyBox:
+      typeof m3SkyTpl === 'string' && m3SkyTpl.trim()
+        ? m3SkyTpl.trim().replace(/^\/+|\/+$/g, '')
+        : DEFAULT_FRONT_PAGE_CONFIG.model3dSkyBox,
+    descriptionPdf:
+      typeof descPdfTpl === 'string' && descPdfTpl.trim()
+        ? descPdfTpl.trim().replace(/^\/+|\/+$/g, '')
+        : DEFAULT_FRONT_PAGE_CONFIG.descriptionPdf,
   };
 }
 
@@ -161,6 +185,10 @@ function fetchCosMediaConfig(apiBase, done) {
             productIconTemplate: d.frontPageConfig.productIconTemplate,
             productCoverTemplate: d.frontPageConfig.productCoverTemplate,
             productCoverThumbTemplate: d.frontPageConfig.productCoverThumbTemplate,
+            model3d: d.frontPageConfig.model3d,
+            model3dDecal: d.frontPageConfig.model3dDecal,
+            model3dSkyBox: d.frontPageConfig.model3dSkyBox,
+            descriptionPdf: d.frontPageConfig.descriptionPdf,
           });
         }
       }
@@ -257,16 +285,16 @@ function guideProductMediaUrl(guideId, role, opt) {
       rel = renderCosKeyTemplate(fp.productIconTemplate, vars);
       break;
     case 'pdf':
-      rel = renderCosKeyTemplate(`product/{product_id}/${productDefaults().pdf || ''}`, { product_id: String(id) });
+      rel = renderCosKeyTemplate(fp.descriptionPdf, vars);
       break;
     case 'model3d':
-      rel = renderCosKeyTemplate(`product/{product_id}/${productDefaults().model3d || ''}`, { product_id: String(id) });
+      rel = renderCosKeyTemplate(fp.model3d, { product_id: String(id) });
       break;
     case 'decal':
-      rel = renderCosKeyTemplate(`product/{product_id}/${productDefaults().decal || ''}`, { product_id: String(id) });
+      rel = renderCosKeyTemplate(fp.model3dDecal, vars);
       break;
     case 'skybox':
-      rel = renderCosKeyTemplate(`product/{product_id}/${productDefaults().skybox || ''}`, { product_id: String(id) });
+      rel = renderCosKeyTemplate(fp.model3dSkyBox, { product_id: String(id) });
       break;
     case 'scan':
       rel = renderCosKeyTemplate(`product/{product_id}/${productDefaults().scan || ''}`, { product_id: String(id) });

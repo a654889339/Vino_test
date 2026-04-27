@@ -356,7 +356,11 @@ func MediaCosConfig(c *gin.Context) {
 			iconTpl := strings.Trim(strings.TrimSpace(f.FrontPageConfig.ProductIconTemplate), "/")
 			coverTpl := strings.Trim(strings.TrimSpace(f.FrontPageConfig.ProductCoverTemplate), "/")
 			coverThumbTpl := strings.Trim(strings.TrimSpace(f.FrontPageConfig.ProductCoverThumbTemplate), "/")
-			if root == "" && logo == "" && cc == "" && carTpl == "" && catTpl == "" && iconTpl == "" && coverTpl == "" && coverThumbTpl == "" {
+			m3 := strings.Trim(strings.TrimSpace(f.FrontPageConfig.Model3d), "/")
+			m3Decal := strings.Trim(strings.TrimSpace(f.FrontPageConfig.Model3dDecal), "/")
+			m3Sky := strings.Trim(strings.TrimSpace(f.FrontPageConfig.Model3dSkyBox), "/")
+			descPdf := strings.Trim(strings.TrimSpace(f.FrontPageConfig.DescriptionPdf), "/")
+			if root == "" && logo == "" && cc == "" && carTpl == "" && catTpl == "" && iconTpl == "" && coverTpl == "" && coverThumbTpl == "" && m3 == "" && m3Decal == "" && m3Sky == "" && descPdf == "" {
 				return nil
 			}
 			return map[string]any{
@@ -368,6 +372,10 @@ func MediaCosConfig(c *gin.Context) {
 				"productIconTemplate":      iconTpl,
 				"productCoverTemplate":     coverTpl,
 				"productCoverThumbTemplate": coverThumbTpl,
+				"model3d":                  m3,
+				"model3dDecal":             m3Decal,
+				"model3dSkyBox":            m3Sky,
+				"descriptionPdf":           descPdf,
 			}
 		}(),
 	})

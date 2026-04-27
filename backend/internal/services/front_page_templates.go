@@ -168,3 +168,67 @@ func FrontPageProductCoverThumbKey(productID int, lang string) (string, error) {
 	return buildFrontPageKey(rel)
 }
 
+func FrontPageModel3dKey(productID int) (string, error) {
+	f := vinomediacfg.Get()
+	if f == nil || f.FrontPageConfig == nil {
+		return "", fmt.Errorf("frontPageConfig 未配置")
+	}
+	rel, err := renderTemplateStrict(
+		f.FrontPageConfig.Model3d,
+		map[string]string{"product_id": fmt.Sprintf("%d", productID)},
+		"product_id",
+	)
+	if err != nil {
+		return "", err
+	}
+	return buildFrontPageKey(rel)
+}
+
+func FrontPageModel3dDecalKey(productID int, lang string) (string, error) {
+	f := vinomediacfg.Get()
+	if f == nil || f.FrontPageConfig == nil {
+		return "", fmt.Errorf("frontPageConfig 未配置")
+	}
+	rel, err := renderTemplateStrict(
+		f.FrontPageConfig.Model3dDecal,
+		map[string]string{"product_id": fmt.Sprintf("%d", productID), "lang": strings.TrimSpace(lang)},
+		"product_id", "lang",
+	)
+	if err != nil {
+		return "", err
+	}
+	return buildFrontPageKey(rel)
+}
+
+func FrontPageModel3dSkyBoxKey(productID int) (string, error) {
+	f := vinomediacfg.Get()
+	if f == nil || f.FrontPageConfig == nil {
+		return "", fmt.Errorf("frontPageConfig 未配置")
+	}
+	rel, err := renderTemplateStrict(
+		f.FrontPageConfig.Model3dSkyBox,
+		map[string]string{"product_id": fmt.Sprintf("%d", productID)},
+		"product_id",
+	)
+	if err != nil {
+		return "", err
+	}
+	return buildFrontPageKey(rel)
+}
+
+func FrontPageProductDescriptionPdfKey(productID int, lang string) (string, error) {
+	f := vinomediacfg.Get()
+	if f == nil || f.FrontPageConfig == nil {
+		return "", fmt.Errorf("frontPageConfig 未配置")
+	}
+	rel, err := renderTemplateStrict(
+		f.FrontPageConfig.DescriptionPdf,
+		map[string]string{"product_id": fmt.Sprintf("%d", productID), "lang": strings.TrimSpace(lang)},
+		"product_id", "lang",
+	)
+	if err != nil {
+		return "", err
+	}
+	return buildFrontPageKey(rel)
+}
+
