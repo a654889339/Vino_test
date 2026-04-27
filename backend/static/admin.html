@@ -944,6 +944,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
               <input id="hpCarouselNewKey" class="form-input" style="width:160px" placeholder="轮播图ID(如 1)" />
               <button class="btn" onclick="addHomepageCarouselKey()" style="background:#2563EB;color:#fff">新增ID</button>
               <label class="btn" style="background:#059669;color:#fff;cursor:pointer;margin:0">上传 PNG<input id="hpCarouselFile" type="file" accept="image/png" style="display:none" onchange="uploadHomepageCarouselForKey()" /></label>
+              <input id="hpCarouselRowFile" type="file" accept="image/png" style="display:none" onchange="uploadHomepageCarouselForRow()" />
               <button class="btn" onclick="refreshHomepageCarouselAdmin()" style="background:var(--primary);color:#fff">刷新</button>
             </div>
           </div>
@@ -4988,6 +4989,7 @@ const HOME_ANIM_SECTIONS = ['splash', 'headerLogo', 'homeBg'];
 let hpCarouselIds = [];
 let hpCarouselCosHost = '';
 let hpCarouselFrontCfg = { root: 'front_page_config', homepageCarousel: 'Homepagecarousel' };
+let hpCarouselUploadKey = '';
 
 function encSeg(s) {
   return encodeURIComponent(String(s == null ? '' : s));
@@ -5050,10 +5052,53 @@ function renderHomepageCarouselAdmin() {
       <td style="font-family:monospace">${escapeHtml(k)}</td>
       <td>${img}</td>
       <td style="white-space:nowrap">
+        <button class="btn btn-sm" onclick="pickHomepageCarouselUpload('${escapeHtml(k)}')" style="background:#059669;color:#fff;margin-right:6px">上传</button>
         <button class="btn btn-sm" onclick="deleteHomepageCarouselKey('${escapeHtml(k)}')" style="background:#DC2626;color:#fff">删除</button>
       </td>
     </tr>`;
   }).join('');
+}
+
+function pickHomepageCarouselUpload(key) {
+  const k = String(key || '').trim();
+  if (!k) return;
+  hpCarouselUploadKey = k;
+  const fileInput = document.getElementById('hpCarouselRowFile');
+  if (fileInput) {
+    fileInput.value = '';
+    fileInput.click();
+  }
+}
+
+async function uploadHomepageCarouselForRow() {
+  const key = String(hpCarouselUploadKey || '').trim();
+  const fileInput = document.getElementById('hpCarouselRowFile');
+  const file = fileInput && fileInput.files ? fileInput.files[0] : null;
+  if (!key) { if (fileInput) fileInput.value=''; return; }
+  if (!file) return;
+  if (!/\\.png$/i.test(file.name || '') && !(file.type || '').toLowerCase().includes('png')) {
+    alert('仅支持 PNG 图片'); if (fileInput) fileInput.value=''; return;
+  }
+  const fd = new FormData();
+  fd.append('file', file);
+  try {
+    const token = localStorage.getItem('vino_token') || '';
+    const r = await fetch(API + '/admin/front-page/homepage-carousel/' + encodeURIComponent(key) + '/upload', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + token },
+      body: fd,
+    });
+    const j = await r.json().catch(() => null);
+    if (!r.ok || !j || j.code !== 0) throw new Error((j && j.message) || String(r.status));
+    if (fileInput) fileInput.value = '';
+    await refreshHomepageCarouselAdmin();
+    alert('上传成功');
+  } catch (e) {
+    alert('上传失败：' + (e && e.message ? e.message : ''));
+    if (fileInput) fileInput.value = '';
+  } finally {
+    hpCarouselUploadKey = '';
+  }
 }
 
 async function addHomepageCarouselKey() {
