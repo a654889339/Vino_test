@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"io"
-	"path"
 	"strconv"
 	"strings"
 
@@ -11,6 +10,7 @@ import (
 	"vino/backend/internal/models"
 	"vino/backend/internal/resp"
 	"vino/backend/internal/services"
+	"shared/cosbase"
 
 	"github.com/gin-gonic/gin"
 )
@@ -145,15 +145,17 @@ func pcUploadImage(c *gin.Context, cfg *config.Config) {
 		resp.Err(c, 500, 500, "读取失败")
 		return
 	}
-	ext := path.Ext(fh.Filename)
 	ct := fh.Header.Get("Content-Type")
-	extLower := strings.ToLower(ext)
-	ctLower := strings.ToLower(strings.TrimSpace(ct))
-	if extLower != ".jpg" && extLower != ".jpeg" && !strings.Contains(ctLower, "jpeg") && !strings.Contains(ctLower, "jpg") {
-		resp.Err(c, 400, 400, "仅支持 JPG 图片")
+	fullKey, err := services.FrontPageCategoryCoverKey(cid, lang)
+	if err != nil {
+		resp.Err(c, 500, 500, "上传失败: "+err.Error())
 		return
 	}
-	fullKey, err := services.FrontPageCategoryCoverKey(cid, lang)
+	if err := cosbase.ValidateUploadMatchesKey(fullKey, fh.Filename, ct); err != nil {
+		resp.Err(c, 400, 400, err.Error())
+		return
+	}
+	contentType, err := cosbase.ImageContentTypeFromKey(fullKey)
 	if err != nil {
 		resp.Err(c, 500, 500, "上传失败: "+err.Error())
 		return
@@ -163,7 +165,7 @@ func pcUploadImage(c *gin.Context, cfg *config.Config) {
 		resp.Err(c, 500, 500, "上传失败: CategoryCoverTemplate 非法")
 		return
 	}
-	urlu, err := services.UploadCOSWithContentPrefix(c.Request.Context(), buf, file, "image/jpeg", contentPrefix)
+	urlu, err := services.UploadCOSWithContentPrefix(c.Request.Context(), buf, file, contentType, contentPrefix)
 	if err != nil {
 		resp.Err(c, 500, 500, "上传失败: "+err.Error())
 		return

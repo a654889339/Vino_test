@@ -4,7 +4,6 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"path"
 	"sort"
 	"strings"
 	"sync"
@@ -13,6 +12,7 @@ import (
 	"vino/backend/internal/models"
 	"vino/backend/internal/resp"
 	"vino/backend/internal/services"
+	"shared/cosbase"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm/clause"
@@ -234,12 +234,6 @@ func AdminHomepageCarouselUpload(c *gin.Context) {
 		resp.Err(c, 400, 1, "请选择图片文件")
 		return
 	}
-	ext := strings.ToLower(path.Ext(fh.Filename))
-	ct := strings.ToLower(strings.TrimSpace(fh.Header.Get("Content-Type")))
-	if ext != ".jpg" && ext != ".jpeg" && !strings.Contains(ct, "jpeg") && !strings.Contains(ct, "jpg") {
-		resp.Err(c, 400, 1, errOnlyJPG.Error())
-		return
-	}
 	f, err := fh.Open()
 	if err != nil {
 		resp.Err(c, 500, 1, "读取文件失败")
@@ -263,12 +257,21 @@ func AdminHomepageCarouselUpload(c *gin.Context) {
 		resp.Err(c, 500, 1, err.Error())
 		return
 	}
+	if err := cosbase.ValidateUploadMatchesKey(fullKey, fh.Filename, fh.Header.Get("Content-Type")); err != nil {
+		resp.Err(c, 400, 1, err.Error())
+		return
+	}
+	contentType, err := cosbase.ImageContentTypeFromKey(fullKey)
+	if err != nil {
+		resp.Err(c, 500, 1, err.Error())
+		return
+	}
 	contentPrefix, file := services.ContentPrefixAndFileFromKey(fullKey)
 	if contentPrefix == "" || file == "" {
 		resp.Err(c, 500, 1, "frontPageConfig 路径模板非法")
 		return
 	}
-	urlu, err := services.UploadCOSWithContentPrefix(c.Request.Context(), buf, file, "image/jpeg", contentPrefix)
+	urlu, err := services.UploadCOSWithContentPrefix(c.Request.Context(), buf, file, contentType, contentPrefix)
 	if err != nil {
 		// If COS isn't configured, surface a clearer message for admin.
 		if !services.CosConfigured() {

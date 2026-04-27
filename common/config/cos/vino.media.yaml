@@ -21,7 +21,7 @@ frontPageConfig:
 
   # 首页Logo（Root 下相对路径模板）
   # 可用占位符：{lang}（zh/en）
-  Logo: logo/{lang}.jpg
+  Logo: logo/{lang}.png
 
   # 探索VINO（Root 下相对路径模板）
   # 可用占位符：{lang}（zh/en）

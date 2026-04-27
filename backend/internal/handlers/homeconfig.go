@@ -18,6 +18,7 @@ import (
 	"vino/backend/internal/models"
 	"vino/backend/internal/resp"
 	"vino/backend/internal/services"
+	"shared/cosbase"
 
 	"github.com/gin-gonic/gin"
 )
@@ -97,12 +98,14 @@ func homeConfigImageUpload(c *gin.Context, randomPrefix string) (urlu, thumb str
 		if role == "image_en" {
 			lang = "en"
 		}
-		extLower := strings.ToLower(strings.TrimSpace(ext))
-		ctLower := strings.ToLower(strings.TrimSpace(ct))
-		if extLower != ".jpg" && extLower != ".jpeg" && !strings.Contains(ctLower, "jpeg") && !strings.Contains(ctLower, "jpg") {
-			return "", "", errors.New("仅支持 JPG 图片")
-		}
 		fullKey, err := services.FrontPageLogoKey(lang)
+		if err != nil {
+			return "", "", err
+		}
+		if err := cosbase.ValidateUploadMatchesKey(fullKey, fh.Filename, ct); err != nil {
+			return "", "", err
+		}
+		contentType, err := cosbase.ImageContentTypeFromKey(fullKey)
 		if err != nil {
 			return "", "", err
 		}
@@ -110,7 +113,7 @@ func homeConfigImageUpload(c *gin.Context, randomPrefix string) (urlu, thumb str
 		if cp == "" || file == "" {
 			return "", "", errors.New("Logo 模板非法")
 		}
-		urlu, err := services.UploadCOSWithContentPrefix(ctx, buf, file, "image/jpeg", cp)
+		urlu, err := services.UploadCOSWithContentPrefix(ctx, buf, file, contentType, cp)
 		return urlu, "", err
 	}
 
@@ -120,12 +123,14 @@ func homeConfigImageUpload(c *gin.Context, randomPrefix string) (urlu, thumb str
 		if role == "image_en" {
 			lang = "en"
 		}
-		extLower := strings.ToLower(strings.TrimSpace(ext))
-		ctLower := strings.ToLower(strings.TrimSpace(ct))
-		if extLower != ".jpg" && extLower != ".jpeg" && !strings.Contains(ctLower, "jpeg") && !strings.Contains(ctLower, "jpg") {
-			return "", "", errors.New("仅支持 JPG 图片")
-		}
 		fullKey, err := services.FrontPageCorporateCultureKey(lang)
+		if err != nil {
+			return "", "", err
+		}
+		if err := cosbase.ValidateUploadMatchesKey(fullKey, fh.Filename, ct); err != nil {
+			return "", "", err
+		}
+		contentType, err := cosbase.ImageContentTypeFromKey(fullKey)
 		if err != nil {
 			return "", "", err
 		}
@@ -133,7 +138,7 @@ func homeConfigImageUpload(c *gin.Context, randomPrefix string) (urlu, thumb str
 		if cp == "" || file == "" {
 			return "", "", errors.New("CorporateCulture 模板非法")
 		}
-		urlu, err := services.UploadCOSWithContentPrefix(ctx, buf, file, "image/jpeg", cp)
+		urlu, err := services.UploadCOSWithContentPrefix(ctx, buf, file, contentType, cp)
 		return urlu, "", err
 	}
 

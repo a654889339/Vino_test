@@ -18,6 +18,7 @@ import (
 	"vino/backend/internal/models"
 	"vino/backend/internal/resp"
 	"vino/backend/internal/services"
+	"shared/cosbase"
 
 	"github.com/gin-gonic/gin"
 	qrcodegen "github.com/skip2/go-qrcode"
@@ -291,13 +292,16 @@ func guideUploadFile(c *gin.Context, cfg *config.Config) {
 			if assetKind == "icon_en" {
 				lang = "en"
 			}
-			extLower := strings.ToLower(ext)
-			ctLower := strings.ToLower(ct)
-			if extLower != ".jpg" && extLower != ".jpeg" && !strings.Contains(ctLower, "jpeg") && !strings.Contains(ctLower, "jpg") {
-				resp.Err(c, 400, 400, "仅支持 JPG 图片")
+			fullKey, err := services.FrontPageProductIconKey(productID, lang)
+			if err != nil {
+				resp.Err(c, 500, 500, "上传失败: "+err.Error())
 				return
 			}
-			fullKey, err := services.FrontPageProductIconKey(productID, lang)
+			if err := cosbase.ValidateUploadMatchesKey(fullKey, fh.Filename, ct); err != nil {
+				resp.Err(c, 400, 400, err.Error())
+				return
+			}
+			contentType, err := cosbase.ImageContentTypeFromKey(fullKey)
 			if err != nil {
 				resp.Err(c, 500, 500, "上传失败: "+err.Error())
 				return
@@ -307,7 +311,7 @@ func guideUploadFile(c *gin.Context, cfg *config.Config) {
 				resp.Err(c, 500, 500, "上传失败: 商品图标模板非法")
 				return
 			}
-			url, err := services.UploadCOSWithContentPrefix(ctx, buf, file, "image/jpeg", cp)
+			url, err := services.UploadCOSWithContentPrefix(ctx, buf, file, contentType, cp)
 			if err != nil {
 				resp.Err(c, 500, 500, "上传失败: "+err.Error())
 				return
@@ -324,12 +328,6 @@ func guideUploadFile(c *gin.Context, cfg *config.Config) {
 			if assetKind == "cover_en" {
 				lang = "en"
 			}
-			extLower := strings.ToLower(ext)
-			ctLower := strings.ToLower(ct)
-			if extLower != ".jpg" && extLower != ".jpeg" && !strings.Contains(ctLower, "jpeg") && !strings.Contains(ctLower, "jpg") {
-				resp.Err(c, 400, 400, "仅支持 JPG 图片")
-				return
-			}
 			coverKey, err := services.FrontPageProductCoverKey(productID, lang)
 			if err != nil {
 				resp.Err(c, 500, 500, "上传失败: "+err.Error())
@@ -340,21 +338,35 @@ func guideUploadFile(c *gin.Context, cfg *config.Config) {
 				resp.Err(c, 500, 500, "上传失败: "+err.Error())
 				return
 			}
+			if err := cosbase.ValidateUploadMatchesKey(coverKey, fh.Filename, ct); err != nil {
+				resp.Err(c, 400, 400, err.Error())
+				return
+			}
+			coverCT, err := cosbase.ImageContentTypeFromKey(coverKey)
+			if err != nil {
+				resp.Err(c, 500, 500, "上传失败: "+err.Error())
+				return
+			}
+			thumbCT, err := cosbase.ImageContentTypeFromKey(thumbKey)
+			if err != nil {
+				resp.Err(c, 500, 500, "上传失败: "+err.Error())
+				return
+			}
 			coverPrefix, coverFile := services.ContentPrefixAndFileFromKey(coverKey)
 			thumbPrefix, thumbFile := services.ContentPrefixAndFileFromKey(thumbKey)
 			if coverPrefix == "" || coverFile == "" || thumbPrefix == "" || thumbFile == "" {
 				resp.Err(c, 500, 500, "上传失败: 商品封面模板非法")
 				return
 			}
-			url, err := services.UploadCOSWithContentPrefix(ctx, buf, coverFile, "image/jpeg", coverPrefix)
+			url, err := services.UploadCOSWithContentPrefix(ctx, buf, coverFile, coverCT, coverPrefix)
 			if err != nil {
 				resp.Err(c, 500, 500, "上传失败: "+err.Error())
 				return
 			}
-			tb, _ := services.GenerateThumbBuffer(buf, "image/jpeg")
+			tb, _ := services.GenerateThumbBuffer(buf, thumbCT)
 			thumbURL := ""
 			if len(tb) > 0 {
-				thumbURL, _ = services.UploadCOSWithContentPrefix(ctx, tb, thumbFile, "image/jpeg", thumbPrefix)
+				thumbURL, _ = services.UploadCOSWithContentPrefix(ctx, tb, thumbFile, thumbCT, thumbPrefix)
 			}
 			resp.OK(c, gin.H{"url": url, "thumbUrl": thumbURL})
 			return
@@ -368,13 +380,16 @@ func guideUploadFile(c *gin.Context, cfg *config.Config) {
 			if assetKind == "cover_thumb_en" {
 				lang = "en"
 			}
-			extLower := strings.ToLower(ext)
-			ctLower := strings.ToLower(ct)
-			if extLower != ".jpg" && extLower != ".jpeg" && !strings.Contains(ctLower, "jpeg") && !strings.Contains(ctLower, "jpg") {
-				resp.Err(c, 400, 400, "仅支持 JPG 图片")
+			thumbKey, err := services.FrontPageProductCoverThumbKey(productID, lang)
+			if err != nil {
+				resp.Err(c, 500, 500, "上传失败: "+err.Error())
 				return
 			}
-			thumbKey, err := services.FrontPageProductCoverThumbKey(productID, lang)
+			if err := cosbase.ValidateUploadMatchesKey(thumbKey, fh.Filename, ct); err != nil {
+				resp.Err(c, 400, 400, err.Error())
+				return
+			}
+			thumbCT, err := cosbase.ImageContentTypeFromKey(thumbKey)
 			if err != nil {
 				resp.Err(c, 500, 500, "上传失败: "+err.Error())
 				return
@@ -384,7 +399,7 @@ func guideUploadFile(c *gin.Context, cfg *config.Config) {
 				resp.Err(c, 500, 500, "上传失败: 商品缩略图模板非法")
 				return
 			}
-			url, err := services.UploadCOSWithContentPrefix(ctx, buf, file, "image/jpeg", cp)
+			url, err := services.UploadCOSWithContentPrefix(ctx, buf, file, thumbCT, cp)
 			if err != nil {
 				resp.Err(c, 500, 500, "上传失败: "+err.Error())
 				return
