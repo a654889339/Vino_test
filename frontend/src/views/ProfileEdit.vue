@@ -86,7 +86,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { showToast } from 'vant';
+import { showToast, showLoadingToast, closeToast } from 'vant';
 import { useUserStore } from '@/stores/user';
 import { authApi } from '@/api';
 import { t } from '@/utils/i18n';
@@ -162,6 +162,11 @@ const onAvatarChange = async (e) => {
   const file = e.target.files?.[0];
   if (!file || !file.type.startsWith('image/')) return;
   e.target.value = '';
+  showLoadingToast({
+    message: t('上传中…', 'Uploading…'),
+    forbidClick: true,
+    duration: 0,
+  });
   try {
     const res = await authApi.uploadAvatar(file);
     const url = res.data?.url;
@@ -174,6 +179,8 @@ const onAvatarChange = async (e) => {
     }
   } catch (err) {
     showToast(err.message || t('上传失败', 'Upload failed'));
+  } finally {
+    closeToast();
   }
 };
 

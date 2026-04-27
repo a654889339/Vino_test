@@ -201,6 +201,7 @@ Page({
       url: app.globalData.baseUrl + '/auth/upload-avatar',
       filePath: tempUrl,
       name: 'avatar',
+      timeout: 120000,
       header: { Authorization: 'Bearer ' + app.globalData.token },
       success: (uploadRes) => {
         wx.hideLoading();

@@ -10,7 +10,10 @@ export const authApi = {
   uploadAvatar: (file) => {
     const fd = new FormData();
     fd.append('avatar', file);
-    return request.post('/auth/avatar', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+    return request.post('/auth/avatar', fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 120000,
+    });
   },
   bindPhone: (data) => request.post('/auth/bind-phone', data),
 };

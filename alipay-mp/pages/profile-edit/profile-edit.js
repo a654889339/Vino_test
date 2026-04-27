@@ -140,6 +140,7 @@ Page({
           fileType: 'image',
           fileName: 'avatar',
           filePath: tempUrl,
+          timeout: 120000,
           header: { Authorization: 'Bearer ' + app.globalData.token },
           success: (uploadRes) => {
             my.hideLoading();
