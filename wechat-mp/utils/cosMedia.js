@@ -38,11 +38,12 @@ function setFrontPageConfig(cfg) {
 
 function homepageCarouselUrl(id) {
   const k = String(id == null ? '' : id).trim();
-  if (!k || !cosHostPrefix) return '';
+  if (!k) return '';
   const root = (frontPageConfig && frontPageConfig.root) || DEFAULT_FRONT_PAGE_CONFIG.root;
   const carousel = (frontPageConfig && frontPageConfig.homepageCarousel) || DEFAULT_FRONT_PAGE_CONFIG.homepageCarousel;
   const key = `${root}/${carousel}/${k}.png`;
-  return `${cosHostPrefix}/${key.split('/').map(encodeURIComponent).join('/')}`;
+  // 小程序统一走后端同源媒体接口（baseUrl 通常已包含 /api）
+  return `/media/cos?key=${encodeURIComponent(key)}`;
 }
 
 function getCosPublicBase() {

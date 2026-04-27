@@ -65,10 +65,11 @@ export function getFrontPageConfig() {
 
 export function homepageCarouselUrl(id) {
   const k = String(id == null ? '' : id).trim();
-  if (!k || !cosHostPrefix) return '';
+  if (!k) return '';
   const { root, homepageCarousel } = frontPageConfig || DEFAULT_FRONT_PAGE_CONFIG;
   const key = `${root}/${homepageCarousel}/${k}.png`;
-  return `${cosHostPrefix}/${key.split('/').map(encodeURIComponent).join('/')}`;
+  // Web 端用同源 /api/media/cos 拉取对象，规避 COS CORS。
+  return `/api/media/cos?key=${encodeURIComponent(key)}`;
 }
 
 /**

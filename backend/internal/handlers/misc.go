@@ -372,10 +372,21 @@ func MediaCatalog(c *gin.Context) {
 	resp.OK(c, data)
 }
 
-// MediaCosStream 原 GET /api/media/cos?key=，已停用；须通过 COS 公网/签名 URL 直取对象。
+// MediaCosStream 同源代理读取 COS 对象（主要用于 Web 规避 CORS）。
+// 仅允许白名单前缀（services.IsKeyAllowedForProxy），避免任意 key 读私有数据。
 func MediaCosStream(c *gin.Context) {
 	c.Header("Cache-Control", "no-store")
-	resp.Err(c, 410, 410, "已禁止经本服务拉流 COS 对象，请使用与桶一致的 HTTPS 公网/签名直链")
+	key := strings.TrimSpace(c.Query("key"))
+	if key == "" {
+		resp.Err(c, 400, 400, "missing key")
+		return
+	}
+	key = strings.TrimLeft(key, "/")
+	if !services.IsKeyAllowedForProxy(key) {
+		resp.Err(c, 403, 403, "key not allowed")
+		return
+	}
+	_ = services.StreamCosObjectToResponse(c.Request.Context(), key, c.Writer)
 }
 
 func AdminGenerateThumbs(c *gin.Context, cfg *config.Config) {
