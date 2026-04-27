@@ -302,18 +302,11 @@ export function resolveMediaUrl(u, opt = {}) {
   if (typeof u !== 'string') u = String(u);
   const t = u.trim();
   if (!t) return '';
+  // 保持 /api/media/cos?key= 同源代理，不再反解成 COS 公网直链（否则 fetch 会遇到 CORS）。
   if (t.includes('/media/cos?key=') || t.includes('/api/media/cos?key=')) {
-    if (!cosHostPrefix) return t;
-    try {
-      const urlObj = new URL(t, 'https://local.invalid');
-      const k = urlObj.searchParams.get('key');
-      if (k) {
-        const dec = decodeURIComponent(k);
-        return `${cosHostPrefix}/${dec.split('/').map(encodeURIComponent).join('/')}`;
-      }
-    } catch (e) {
-      /* ignore */
-    }
+    if (t.startsWith('/')) return t;
+    if (t.startsWith('http://') || t.startsWith('https://')) return t;
+    return '/' + t.replace(/^\/+/, '');
   }
   const { site, media: _m } = splitForWeb(opt.apiBase);
 
