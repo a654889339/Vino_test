@@ -4401,8 +4401,11 @@ async function doCategoryUpload(file) {
   if (!token) return { code: 1, message: '未登录或登录已过期' };
   const cid = document.getElementById('categoryEditId').value;
   if (!cid) return { code: 1, message: '请先保存种类后再上传图片' };
+  const langEl = document.getElementById('categoryLang');
+  const lang = langEl && langEl.value ? String(langEl.value) : 'zh';
   const fd = new FormData();
   fd.append('categoryId', String(cid));
+  fd.append('lang', lang);
   fd.append('file', file);
   const r = await fetch(API + '/product-categories/upload', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: fd });
   return await r.json();

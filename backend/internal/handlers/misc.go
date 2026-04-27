@@ -349,16 +349,22 @@ func MediaCosConfig(c *gin.Context) {
 				return nil
 			}
 			root := strings.Trim(strings.TrimSpace(f.FrontPageConfig.Root), "/")
+			logo := strings.Trim(strings.TrimSpace(f.FrontPageConfig.Logo), "/")
+			cc := strings.Trim(strings.TrimSpace(f.FrontPageConfig.CorporateCulture), "/")
 			carTpl := strings.Trim(strings.TrimSpace(f.FrontPageConfig.HomepageCarouselTemplate), "/")
+			catTpl := strings.Trim(strings.TrimSpace(f.FrontPageConfig.CategoryCoverTemplate), "/")
 			iconTpl := strings.Trim(strings.TrimSpace(f.FrontPageConfig.ProductIconTemplate), "/")
 			coverTpl := strings.Trim(strings.TrimSpace(f.FrontPageConfig.ProductCoverTemplate), "/")
 			coverThumbTpl := strings.Trim(strings.TrimSpace(f.FrontPageConfig.ProductCoverThumbTemplate), "/")
-			if root == "" && carTpl == "" && iconTpl == "" && coverTpl == "" && coverThumbTpl == "" {
+			if root == "" && logo == "" && cc == "" && carTpl == "" && catTpl == "" && iconTpl == "" && coverTpl == "" && coverThumbTpl == "" {
 				return nil
 			}
 			return map[string]any{
 				"root":                    root,
+				"logo":                    logo,
+				"corporateCulture":         cc,
 				"homepageCarouselTemplate": carTpl,
+				"categoryCoverTemplate":    catTpl,
 				"productIconTemplate":      iconTpl,
 				"productCoverTemplate":     coverTpl,
 				"productCoverThumbTemplate": coverThumbTpl,

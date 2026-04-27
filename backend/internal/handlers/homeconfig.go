@@ -90,6 +90,53 @@ func homeConfigImageUpload(c *gin.Context, randomPrefix string) (urlu, thumb str
 		ct = "image/png"
 	}
 	ctx := c.Request.Context()
+
+	// 首页 Logo：按 vino.media.yaml 的 frontPageConfig.Logo 模板写入固定 key（role=image/image_en -> zh/en）。
+	if strings.TrimSpace(sec) == "headerLogo" && (role == "image" || role == "image_en") {
+		lang := "zh"
+		if role == "image_en" {
+			lang = "en"
+		}
+		extLower := strings.ToLower(strings.TrimSpace(ext))
+		ctLower := strings.ToLower(strings.TrimSpace(ct))
+		if extLower != ".jpg" && extLower != ".jpeg" && !strings.Contains(ctLower, "jpeg") && !strings.Contains(ctLower, "jpg") {
+			return "", "", errors.New("仅支持 JPG 图片")
+		}
+		fullKey, err := services.FrontPageLogoKey(lang)
+		if err != nil {
+			return "", "", err
+		}
+		cp, file := services.ContentPrefixAndFileFromKey(fullKey)
+		if cp == "" || file == "" {
+			return "", "", errors.New("Logo 模板非法")
+		}
+		urlu, err := services.UploadCOSWithContentPrefix(ctx, buf, file, "image/jpeg", cp)
+		return urlu, "", err
+	}
+
+	// 探索VINO：按 vino.media.yaml 的 frontPageConfig.CorporateCulture 模板写入固定 key（role=image/image_en -> zh/en）。
+	if strings.TrimSpace(sec) == "exploreVino" && (role == "image" || role == "image_en") {
+		lang := "zh"
+		if role == "image_en" {
+			lang = "en"
+		}
+		extLower := strings.ToLower(strings.TrimSpace(ext))
+		ctLower := strings.ToLower(strings.TrimSpace(ct))
+		if extLower != ".jpg" && extLower != ".jpeg" && !strings.Contains(ctLower, "jpeg") && !strings.Contains(ctLower, "jpg") {
+			return "", "", errors.New("仅支持 JPG 图片")
+		}
+		fullKey, err := services.FrontPageCorporateCultureKey(lang)
+		if err != nil {
+			return "", "", err
+		}
+		cp, file := services.ContentPrefixAndFileFromKey(fullKey)
+		if cp == "" || file == "" {
+			return "", "", errors.New("CorporateCulture 模板非法")
+		}
+		urlu, err := services.UploadCOSWithContentPrefix(ctx, buf, file, "image/jpeg", cp)
+		return urlu, "", err
+	}
+
 	if !flat {
 		if ext == "" {
 			ext = ".png"

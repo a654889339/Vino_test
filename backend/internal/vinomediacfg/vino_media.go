@@ -19,7 +19,10 @@ type File struct {
 	CosProxyAllowedPrefixes []string `yaml:"cosProxyAllowedPrefixes"`
 	FrontPageConfig         *struct {
 		Root                     string `yaml:"Root"`
+		Logo                     string `yaml:"Logo"`
+		CorporateCulture         string `yaml:"CorporateCulture"`
 		HomepageCarouselTemplate  string `yaml:"HomepageCarouselTemplate"`
+		CategoryCoverTemplate     string `yaml:"CategoryCoverTemplate"`
 		ProductIconTemplate       string `yaml:"ProductIconTemplate"`
 		ProductCoverTemplate      string `yaml:"ProductCoverTemplate"`
 		ProductCoverThumbTemplate string `yaml:"ProductCoverThumbTemplate"`

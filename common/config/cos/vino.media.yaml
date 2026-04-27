@@ -19,9 +19,21 @@ productMediaNote: DeviceGuide 等路径见后端 embed catalog 与三端 cosMedi
 frontPageConfig:
   Root: front_page_config
 
+  # 首页Logo（Root 下相对路径模板）
+  # 可用占位符：{lang}（zh/en）
+  Logo: logo/{lang}.jpg
+
+  # 探索VINO（Root 下相对路径模板）
+  # 可用占位符：{lang}（zh/en）
+  CorporateCulture: corporate_culture/{lang}.jpg
+
   # 首页轮播图（Root 下相对路径模板）
   # 可用占位符：{id}（轮播图 id）, {lang}（zh/en）
   HomepageCarouselTemplate: Homepagecarousel/{id}_{lang}.jpg
+
+  # 商品种类媒体（Root 下相对路径模板）
+  # 可用占位符：{category_id}, {lang}（zh/en）
+  CategoryCoverTemplate: category/{category_id}/mainpage_{lang}.jpg
 
   # 商品媒体（Root 下相对路径模板）
   # 可用占位符：{product_id}（device_guides.id）, {lang}（zh/en）

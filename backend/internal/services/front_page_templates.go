@@ -72,6 +72,54 @@ func FrontPageHomepageCarouselKey(id, lang string) (string, error) {
 	return buildFrontPageKey(rel)
 }
 
+func FrontPageLogoKey(lang string) (string, error) {
+	f := vinomediacfg.Get()
+	if f == nil || f.FrontPageConfig == nil {
+		return "", fmt.Errorf("frontPageConfig 未配置")
+	}
+	rel, err := renderTemplateStrict(
+		f.FrontPageConfig.Logo,
+		map[string]string{"lang": strings.TrimSpace(lang)},
+		"lang",
+	)
+	if err != nil {
+		return "", err
+	}
+	return buildFrontPageKey(rel)
+}
+
+func FrontPageCategoryCoverKey(categoryID int, lang string) (string, error) {
+	f := vinomediacfg.Get()
+	if f == nil || f.FrontPageConfig == nil {
+		return "", fmt.Errorf("frontPageConfig 未配置")
+	}
+	rel, err := renderTemplateStrict(
+		f.FrontPageConfig.CategoryCoverTemplate,
+		map[string]string{"category_id": fmt.Sprintf("%d", categoryID), "lang": strings.TrimSpace(lang)},
+		"category_id", "lang",
+	)
+	if err != nil {
+		return "", err
+	}
+	return buildFrontPageKey(rel)
+}
+
+func FrontPageCorporateCultureKey(lang string) (string, error) {
+	f := vinomediacfg.Get()
+	if f == nil || f.FrontPageConfig == nil {
+		return "", fmt.Errorf("frontPageConfig 未配置")
+	}
+	rel, err := renderTemplateStrict(
+		f.FrontPageConfig.CorporateCulture,
+		map[string]string{"lang": strings.TrimSpace(lang)},
+		"lang",
+	)
+	if err != nil {
+		return "", err
+	}
+	return buildFrontPageKey(rel)
+}
+
 func FrontPageProductIconKey(productID int, lang string) (string, error) {
 	f := vinomediacfg.Get()
 	if f == nil || f.FrontPageConfig == nil {

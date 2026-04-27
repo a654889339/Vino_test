@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"io"
 	"path"
 	"strconv"
@@ -15,6 +14,14 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
+
+func normalizeLangZhEn(lang string) (string, bool) {
+	v := strings.TrimSpace(lang)
+	if v != "zh" && v != "en" {
+		return "", false
+	}
+	return v, true
+}
 
 func pcList(c *gin.Context) {
 	page, pageSize := adminListPageParams(c)
@@ -98,14 +105,23 @@ func pcUploadImage(c *gin.Context, cfg *config.Config) {
 		return
 	}
 	cidStr := ""
+	langStr := ""
 	if c.Request.MultipartForm != nil && c.Request.MultipartForm.Value != nil {
 		if v := c.Request.MultipartForm.Value["categoryId"]; len(v) > 0 {
 			cidStr = strings.TrimSpace(v[0])
+		}
+		if v := c.Request.MultipartForm.Value["lang"]; len(v) > 0 {
+			langStr = strings.TrimSpace(v[0])
 		}
 	}
 	cid, err := strconv.Atoi(cidStr)
 	if err != nil || cid <= 0 {
 		resp.Err(c, 400, 400, "请提供有效 categoryId（请先保存种类）")
+		return
+	}
+	lang, ok := normalizeLangZhEn(langStr)
+	if !ok {
+		resp.Err(c, 400, 400, "lang 必须为 zh 或 en")
 		return
 	}
 	var cat models.ProductCategory
@@ -130,18 +146,27 @@ func pcUploadImage(c *gin.Context, cfg *config.Config) {
 		return
 	}
 	ext := path.Ext(fh.Filename)
-	if ext == "" {
-		ext = ".png"
-	}
 	ct := fh.Header.Get("Content-Type")
-	if ct == "" {
-		ct = "image/png"
+	extLower := strings.ToLower(ext)
+	ctLower := strings.ToLower(strings.TrimSpace(ct))
+	if extLower != ".jpg" && extLower != ".jpeg" && !strings.Contains(ctLower, "jpeg") && !strings.Contains(ctLower, "jpg") {
+		resp.Err(c, 400, 400, "仅支持 JPG 图片")
+		return
 	}
-	prefix := fmt.Sprintf("vino/items/type/%d", cid)
-	urlu, thumb, err := services.UploadOriginalAndFlatCoverThumb(c.Request.Context(), buf, "large_image", ext, ct, "cover_thumbnail", 0, prefix)
+	fullKey, err := services.FrontPageCategoryCoverKey(cid, lang)
 	if err != nil {
 		resp.Err(c, 500, 500, "上传失败: "+err.Error())
 		return
 	}
-	resp.OK(c, gin.H{"url": urlu, "thumbUrl": thumb})
+	contentPrefix, file := services.ContentPrefixAndFileFromKey(fullKey)
+	if contentPrefix == "" || file == "" {
+		resp.Err(c, 500, 500, "上传失败: CategoryCoverTemplate 非法")
+		return
+	}
+	urlu, err := services.UploadCOSWithContentPrefix(c.Request.Context(), buf, file, "image/jpeg", contentPrefix)
+	if err != nil {
+		resp.Err(c, 500, 500, "上传失败: "+err.Error())
+		return
+	}
+	resp.OK(c, gin.H{"url": urlu, "thumbUrl": nil})
 }
