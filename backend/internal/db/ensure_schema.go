@@ -28,6 +28,7 @@ func ManagedModelEntities() []any {
 		&models.Service{},
 		&models.ProductCategory{},
 		&models.HomeConfig{},
+		&models.FrontPageConfigHomepageCarousel{},
 		&models.DeviceGuide{},
 		&models.Address{},
 		&models.OutletAddress{},

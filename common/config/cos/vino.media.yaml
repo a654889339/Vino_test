@@ -14,3 +14,8 @@ cosProxyAllowedPrefixes:
   - vino/items/
   - front_page_config/
 productMediaNote: DeviceGuide 等路径见后端 embed catalog 与三端 cosMedia
+
+# FrontPageConfig：首页轮播等（客户端按 Root + 子目录 + id 拼 COS URL 直拉）
+frontPageConfig:
+  Root: front_page_config
+  HomepageCarousel: Homepagecarousel

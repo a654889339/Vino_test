@@ -19,6 +19,7 @@ func RegisterRoutes(engine *gin.Engine, cfg *config.Config) {
 
 	api.GET("/health", Health)
 	api.GET("/app/status", AppStatus)
+	api.GET("/homepage", Homepage)
 
 	// 媒体不经过本服务：/api/media/* 已撤销；客户端从 COS 公网直链与包内 vino.media.yaml、media_asset_catalog 读取约定。
 	api.POST("/analytics/page-view", AnalyticsPageView)
@@ -28,6 +29,15 @@ func RegisterRoutes(engine *gin.Engine, cfg *config.Config) {
 	api.GET("/admin/cart-items", middleware.Auth(cfg), middleware.Admin(), adminListCartItems)
 	api.GET("/admin/goods-order-items", middleware.Auth(cfg), middleware.Admin(), adminListGoodsOrderItems)
 	api.GET("/admin/media-asset-catalog", middleware.Auth(cfg), middleware.Admin(), adminMediaAssetCatalog)
+
+	fp := api.Group("/admin/front-page")
+	fp.Use(middleware.Auth(cfg), middleware.Admin())
+	{
+		fp.GET("/homepage-carousel", AdminHomepageCarouselList)
+		fp.POST("/homepage-carousel", AdminHomepageCarouselAdd)
+		fp.DELETE("/homepage-carousel/:key", AdminHomepageCarouselDelete)
+		fp.POST("/homepage-carousel/:key/upload", AdminHomepageCarouselUpload)
+	}
 
 	auth := api.Group("/auth")
 	{

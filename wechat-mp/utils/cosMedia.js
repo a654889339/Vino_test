@@ -8,6 +8,8 @@ const filePathByUrl = new Map();
 let cosHostPrefix = '';
 let cosProxyAllowedPrefixes = [];
 let displayCacheTtlMs = DEFAULT_DISPLAY_CACHE_MS;
+const DEFAULT_FRONT_PAGE_CONFIG = { root: 'front_page_config', homepageCarousel: 'Homepagecarousel' };
+let frontPageConfig = { ...DEFAULT_FRONT_PAGE_CONFIG };
 
 const isMediaCosPath = (s) => {
   if (typeof s !== 'string') return false;
@@ -21,6 +23,26 @@ function setCosMediaConfig(cfg) {
   const imgTtl = cfg && cfg.imageDisplayCacheTtlMs;
   displayCacheTtlMs =
     typeof imgTtl === 'number' && imgTtl > 0 ? imgTtl : DEFAULT_DISPLAY_CACHE_MS;
+}
+
+function setFrontPageConfig(cfg) {
+  const r = cfg && cfg.root;
+  const h = cfg && cfg.homepageCarousel;
+  const root = typeof r === 'string' && r.trim() ? r.trim().replace(/^\/+|\/+$/g, '') : DEFAULT_FRONT_PAGE_CONFIG.root;
+  const carousel =
+    typeof h === 'string' && h.trim()
+      ? h.trim().replace(/^\/+|\/+$/g, '')
+      : DEFAULT_FRONT_PAGE_CONFIG.homepageCarousel;
+  frontPageConfig = { root, homepageCarousel: carousel };
+}
+
+function homepageCarouselUrl(id) {
+  const k = String(id == null ? '' : id).trim();
+  if (!k || !cosHostPrefix) return '';
+  const root = (frontPageConfig && frontPageConfig.root) || DEFAULT_FRONT_PAGE_CONFIG.root;
+  const carousel = (frontPageConfig && frontPageConfig.homepageCarousel) || DEFAULT_FRONT_PAGE_CONFIG.homepageCarousel;
+  const key = `${root}/${carousel}/${k}.png`;
+  return `${cosHostPrefix}/${key.split('/').map(encodeURIComponent).join('/')}`;
 }
 
 function getCosPublicBase() {
@@ -92,6 +114,12 @@ function fetchCosMediaConfig(apiBase, done) {
         }
         if (d.cosProxyAllowedPrefixes && d.cosProxyAllowedPrefixes.length) {
           cosProxyAllowedPrefixes = d.cosProxyAllowedPrefixes;
+        }
+        if (d.frontPageConfig && typeof d.frontPageConfig === 'object') {
+          setFrontPageConfig({
+            root: d.frontPageConfig.root,
+            homepageCarousel: d.frontPageConfig.homepageCarousel,
+          });
         }
       }
       finish();
@@ -301,4 +329,5 @@ module.exports = {
   fetchCosMediaConfig,
   fetchMediaCatalog,
   guideProductMediaUrl,
+  homepageCarouselUrl,
 };

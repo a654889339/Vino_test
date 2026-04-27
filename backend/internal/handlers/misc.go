@@ -344,6 +344,20 @@ func MediaCosConfig(c *gin.Context) {
 		"cosProxyAllowedPrefixes": prefixes,
 		"mediaConfigTtlMs":        mediaTTL,
 		"imageDisplayCacheTtlMs":  imgTTL,
+		"frontPageConfig": func() any {
+			if f == nil || f.FrontPageConfig == nil {
+				return nil
+			}
+			root := strings.Trim(strings.TrimSpace(f.FrontPageConfig.Root), "/")
+			car := strings.Trim(strings.TrimSpace(f.FrontPageConfig.HomepageCarousel), "/")
+			if root == "" && car == "" {
+				return nil
+			}
+			return map[string]any{
+				"root":             root,
+				"homepageCarousel": car,
+			}
+		}(),
 	})
 }
 

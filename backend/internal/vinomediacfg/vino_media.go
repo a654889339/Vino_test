@@ -17,6 +17,10 @@ type File struct {
 	MediaConfigTtlMs        int      `yaml:"mediaConfigTtlMs"`
 	ImageDisplayCacheTtlMs  int      `yaml:"imageDisplayCacheTtlMs"`
 	CosProxyAllowedPrefixes []string `yaml:"cosProxyAllowedPrefixes"`
+	FrontPageConfig         *struct {
+		Root             string `yaml:"Root"`
+		HomepageCarousel string `yaml:"HomepageCarousel"`
+	} `yaml:"frontPageConfig"`
 }
 
 var (

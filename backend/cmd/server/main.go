@@ -148,6 +148,9 @@ func main() {
 			}
 			return nil
 		}},
+		{Name: "front_page_config.cache_init", Fatal: true, Run: func() error {
+			return handlers.InitFrontPageConfigCache()
+		}},
 		{Name: "db.backfill_cart_items", Fatal: false, Run: func() error {
 			var cartItemRows int64
 			if err := db.DB.Model(&models.CartItem{}).Count(&cartItemRows).Error; err == nil && cartItemRows == 0 {
@@ -251,6 +254,8 @@ func main() {
 	engine.POST("/api/orders/wechat/notify", func(c *gin.Context) { handlers.WechatPayNotify(c, cfg) })
 
 	handlers.RegisterRoutes(engine, cfg)
+	// Homepage is requested by Web/小程序 as a top-level path (not under /api).
+	engine.GET("/homepage", handlers.Homepage)
 
 	uploadsDir := filepath.Join("public", "uploads")
 	if err := os.MkdirAll(uploadsDir, 0o755); err != nil {

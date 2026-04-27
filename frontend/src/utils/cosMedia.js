@@ -36,6 +36,8 @@ const entryByKey = new Map();
 /** 公网基址，由 initCosMediaFromServer（cos-config）或 VITE_ 兜底注入 */
 let cosHostPrefix = '';
 let displayCacheTtlMs = DEFAULT_DISPLAY_CACHE_MS;
+const DEFAULT_FRONT_PAGE_CONFIG = { root: 'front_page_config', homepageCarousel: 'Homepagecarousel' };
+let frontPageConfig = { ...DEFAULT_FRONT_PAGE_CONFIG };
 
 export function setCosMediaConfig(cfg) {
   const h = cfg && cfg.cosHost;
@@ -46,6 +48,27 @@ export function setCosMediaConfig(cfg) {
   } else {
     displayCacheTtlMs = DEFAULT_DISPLAY_CACHE_MS;
   }
+}
+
+export function setFrontPageConfig(cfg) {
+  const r = cfg && cfg.root;
+  const h = cfg && cfg.homepageCarousel;
+  const root = typeof r === 'string' && r.trim() ? r.trim().replace(/^\/+|\/+$/g, '') : DEFAULT_FRONT_PAGE_CONFIG.root;
+  const carousel =
+    typeof h === 'string' && h.trim() ? h.trim().replace(/^\/+|\/+$/g, '') : DEFAULT_FRONT_PAGE_CONFIG.homepageCarousel;
+  frontPageConfig = { root, homepageCarousel: carousel };
+}
+
+export function getFrontPageConfig() {
+  return { ...frontPageConfig };
+}
+
+export function homepageCarouselUrl(id) {
+  const k = String(id == null ? '' : id).trim();
+  if (!k || !cosHostPrefix) return '';
+  const { root, homepageCarousel } = frontPageConfig || DEFAULT_FRONT_PAGE_CONFIG;
+  const key = `${root}/${homepageCarousel}/${k}.png`;
+  return `${cosHostPrefix}/${key.split('/').map(encodeURIComponent).join('/')}`;
 }
 
 /**
@@ -129,6 +152,12 @@ export async function initCosMediaFromServer(optApiBase) {
           setCosMediaConfig({
             cosHost: n,
             imageDisplayCacheTtlMs: typeof imgT === 'number' && imgT > 0 ? imgT : displayCacheTtlMs,
+          });
+        }
+        if (d.frontPageConfig && typeof d.frontPageConfig === 'object') {
+          setFrontPageConfig({
+            root: d.frontPageConfig.root,
+            homepageCarousel: d.frontPageConfig.homepageCarousel,
           });
         }
       }

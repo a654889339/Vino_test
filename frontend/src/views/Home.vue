@@ -239,7 +239,7 @@ import PageThemeLayer from '@/components/PageThemeLayer.vue';
 import LangSwitcher from '@/components/LangSwitcher.vue';
 import { detectLangByIp, t, pick, isEn } from '@/utils/i18n';
 import { resolvePublicUrl } from '@/utils/mediaUrl';
-import { guideProductMediaUrl } from '@/utils/cosMedia.js';
+import { guideProductMediaUrl, homepageCarouselUrl } from '@/utils/cosMedia.js';
 import { buildSectionSkinLayerStyle, buildSectionSkinContainerStyle } from '@/utils/sectionSkin';
 
 const router = useRouter();
@@ -248,6 +248,7 @@ const qrCanvas = ref(null);
 const qrFileInputRef = ref(null);
 const shareUrl = window.location.origin;
 const allItems = ref([]);
+const homepageCarouselIds = ref([]);
 /** 与首页 Vino 宫格合并用：商品管理(DeviceGuide) 当前图标，避免仅依赖 home_config 缓存 */
 const guidesList = ref([]);
 const myProducts = ref([]);
@@ -324,18 +325,24 @@ async function loadMyProducts() {
 onMounted(async () => {
   detectLangByIp();
   try {
-    const [hcRes, gRes] = await Promise.all([
+    const [hcRes, gRes, hpRes] = await Promise.all([
       homeConfigApi.list(),
       guideApi.list().catch(() => ({ data: [] })),
+      fetch('/homepage', { credentials: 'include', cache: 'no-store' })
+        .then(r => (r && r.ok ? r.json() : null))
+        .catch(() => null),
     ]);
     allItems.value = hcRes.data || [];
     guidesList.value = gRes.data || [];
+    const ids = (hpRes && (hpRes.data?.ids || hpRes.ids || hpRes.data)) || [];
+    homepageCarouselIds.value = Array.isArray(ids) ? ids.map(x => String(x).trim()).filter(Boolean) : [];
   } catch {
     try {
       const res = await homeConfigApi.list();
       allItems.value = res.data || [];
     } catch { /* use empty */ }
     guidesList.value = [];
+    homepageCarouselIds.value = [];
   }
   await loadMyProducts();
 });
@@ -423,15 +430,14 @@ const headerLogoUrl = computed(() => {
   return logo ? pick(logo, 'imageUrl') : '';
 });
 const heroBgList = computed(() => {
-  const list = allItems.value.filter(i => i.section === 'homeBg' && i.status === 'active');
-  return (list || [])
-    .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
-    .map(i => ({ url: pick(i, 'imageUrl'), thumb: '' }))
+  const ids = homepageCarouselIds.value || [];
+  return ids
+    .map(id => ({ url: homepageCarouselUrl(id), thumb: '' }))
     .filter(i => i.url);
 });
 const heroBgFallback = computed(() => {
-  const item = allItems.value.find(i => i.section === 'homeBg' && i.status === 'active');
-  return item ? pick(item, 'imageUrl') : '';
+  const ids = homepageCarouselIds.value || [];
+  return ids.length ? homepageCarouselUrl(ids[0]) : '';
 });
 const navSectionTitle = computed(() => {
   const item = allItems.value.find(i => i.section === 'navSectionTitle' && i.status === 'active');

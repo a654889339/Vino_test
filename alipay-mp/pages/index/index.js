@@ -1,6 +1,6 @@
 const app = getApp();
 const { buildSectionSkinContainerStyle } = require('../../utils/sectionSkin.js');
-const { resolveMediaUrl, guideProductMediaUrl } = require('../../utils/cosMedia.js');
+const { resolveMediaUrl, guideProductMediaUrl, homepageCarouselUrl } = require('../../utils/cosMedia.js');
 const i18n = require('../../utils/i18n.js');
 
 function getToken() {
@@ -177,9 +177,10 @@ Page({
 
     const pHc = app.request({ url: '/home-config?all=1' }).catch(() => ({ data: [] }));
     const pGuides = app.request({ url: '/guides' }).catch(() => ({ data: [] }));
+    const pHomepage = app.request({ url: '/homepage' }).catch(() => ({ data: { ids: [] } }));
 
-    Promise.all([pHc, pGuides])
-      .then(([hcRes, gRes]) => {
+    Promise.all([pHc, pGuides, pHomepage])
+      .then(([hcRes, gRes, hpRes]) => {
         const items = hcRes.data || [];
         const guides = gRes.data || [];
         const guidesBySlug = {};
@@ -191,13 +192,12 @@ Page({
         });
 
         const headerLogo = items.find(i => i.section === 'headerLogo' && i.status === 'active');
-        const homeBgItems = items.filter(i => i.section === 'homeBg' && i.status === 'active');
-        const homeBgList = homeBgItems.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
-          .map(i => {
-            const url = toFull(i.imageUrl);
-            const thumb = (i.imageUrlThumb && i.imageUrlThumb.trim()) ? toFull(i.imageUrlThumb.trim()) : '';
-            const displayUrl = url;
-            return { url, thumb, displayUrl };
+        const idsRaw = (hpRes && hpRes.data && (hpRes.data.ids || (hpRes.data.data && hpRes.data.data.ids))) || [];
+        const ids = Array.isArray(idsRaw) ? idsRaw.map(x => String(x).trim()).filter(Boolean) : [];
+        const homeBgList = ids
+          .map((id) => {
+            const url = homepageCarouselUrl(id);
+            return { url, thumb: '', displayUrl: url };
           })
           .filter(i => i.url);
         const singleBg = homeBgList[0] ? homeBgList[0].displayUrl : '';

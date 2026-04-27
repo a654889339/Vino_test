@@ -931,6 +931,30 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <button class="btn" onclick="filterHCAnim('homeBg')" id="hcAnimFilterHomeBg">首页背景</button>
           <button class="btn" onclick="openHCEditorFromAnim()" style="margin-left:auto;background:#059669;color:#fff">+ 新增项目</button>
         </div>
+        <div id="homepageCarouselPanel" style="display:none;border:1px solid #eee;background:#fff;border-radius:12px;padding:14px 14px 8px;margin-bottom:14px">
+          <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:260px">
+              <div style="font-weight:600;margin-bottom:6px">首页轮播图（按 ID 列表）</div>
+              <div style="font-size:13px;color:#666;line-height:1.6">
+                该轮播不再使用 <code>home_configs(section=homeBg)</code>。后台仅维护轮播 <strong>id</strong> 列表（表 <code>frontPageConfig_HomepageCarousel</code>），并将图片上传到 COS 固定路径：<br/>
+                <code>{frontPageConfig.Root}/{frontPageConfig.HomepageCarousel}/{id}.png</code>
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+              <input id="hpCarouselNewKey" class="form-input" style="width:160px" placeholder="轮播图ID(如 1)" />
+              <button class="btn" onclick="addHomepageCarouselKey()" style="background:#2563EB;color:#fff">新增ID</button>
+              <label class="btn" style="background:#059669;color:#fff;cursor:pointer;margin:0">上传 PNG<input id="hpCarouselFile" type="file" accept="image/png" style="display:none" onchange="uploadHomepageCarouselForKey()" /></label>
+              <button class="btn" onclick="refreshHomepageCarouselAdmin()" style="background:var(--primary);color:#fff">刷新</button>
+            </div>
+          </div>
+          <div style="margin-top:10px">
+            <table class="order-table" style="margin:0">
+              <thead><tr><th style="width:140px">ID(key)</th><th>预览</th><th style="width:120px">操作</th></tr></thead>
+              <tbody id="hpCarouselBody"></tbody>
+            </table>
+            <div class="order-empty" id="hpCarouselEmpty" style="display:none">暂无轮播 ID</div>
+          </div>
+        </div>
         <table class="order-table" id="hcAnimTable">
           <thead><tr><th>ID</th><th>板块</th><th>标题</th><th>描述</th><th>图片</th><th>颜色/背景</th><th>排序</th><th>状态</th><th>操作</th></tr></thead>
           <tbody id="hcAnimBody"></tbody>
@@ -4961,6 +4985,131 @@ let hcFilterSection = 'all';
 let hcAnimFilterSection = 'all';
 const HOME_CONFIG_SECTIONS = ['navLg', 'navSm', 'myProducts'];
 const HOME_ANIM_SECTIONS = ['splash', 'headerLogo', 'homeBg'];
+let hpCarouselIds = [];
+let hpCarouselCosHost = '';
+let hpCarouselFrontCfg = { root: 'front_page_config', homepageCarousel: 'Homepagecarousel' };
+
+function encSeg(s) {
+  return encodeURIComponent(String(s == null ? '' : s));
+}
+
+async function ensureHomepageCarouselCosConfig() {
+  if (hpCarouselCosHost && hpCarouselFrontCfg && hpCarouselFrontCfg.root) return;
+  try {
+    const r = await fetch(API + '/media/cos-config', { method: 'GET', headers: { 'Content-Type': 'application/json' }, cache: 'no-store' });
+    const j = await r.json();
+    if (r.ok && j && j.code === 0 && j.data) {
+      const d = j.data;
+      hpCarouselCosHost = (d.cosHost || d.ossPublicBaseDefault || '').trim().replace(/\/$/, '');
+      if (d.frontPageConfig && typeof d.frontPageConfig === 'object') {
+        const root = String(d.frontPageConfig.root || '').trim().replace(/^\/+|\/+$/g, '') || 'front_page_config';
+        const hc = String(d.frontPageConfig.homepageCarousel || '').trim().replace(/^\/+|\/+$/g, '') || 'Homepagecarousel';
+        hpCarouselFrontCfg = { root, homepageCarousel: hc };
+      }
+    }
+  } catch (e) {}
+}
+
+function homepageCarouselUrlByKey(key) {
+  const k = String(key || '').trim();
+  if (!k || !hpCarouselCosHost) return '';
+  const root = (hpCarouselFrontCfg && hpCarouselFrontCfg.root) || 'front_page_config';
+  const hc = (hpCarouselFrontCfg && hpCarouselFrontCfg.homepageCarousel) || 'Homepagecarousel';
+  const parts = [root, hc, k + '.png'].map(encSeg);
+  return hpCarouselCosHost + '/' + parts.join('/');
+}
+
+async function refreshHomepageCarouselAdmin() {
+  await ensureHomepageCarouselCosConfig();
+  try {
+    const res = await api('/admin/front-page/homepage-carousel');
+    const ids = (res && res.ids) || (res && res.data && res.data.ids) || [];
+    hpCarouselIds = Array.isArray(ids) ? ids.map(x => String(x).trim()).filter(Boolean) : [];
+  } catch (e) {
+    hpCarouselIds = [];
+  }
+  renderHomepageCarouselAdmin();
+}
+
+function renderHomepageCarouselAdmin() {
+  const panel = document.getElementById('homepageCarouselPanel');
+  const body = document.getElementById('hpCarouselBody');
+  const empty = document.getElementById('hpCarouselEmpty');
+  if (!panel || !body) return;
+  const list = hpCarouselIds || [];
+  if (!list.length) {
+    body.innerHTML = '';
+    if (empty) empty.style.display = 'block';
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+  body.innerHTML = list.map(k => {
+    const url = homepageCarouselUrlByKey(k);
+    const img = url ? `<img src="${url}" style="max-width:140px;max-height:54px;border-radius:6px;object-fit:cover;border:1px solid #eee;background:#fafafa" />` : '-';
+    return `<tr>
+      <td style="font-family:monospace">${escapeHtml(k)}</td>
+      <td>${img}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-sm" onclick="deleteHomepageCarouselKey('${escapeHtml(k)}')" style="background:#DC2626;color:#fff">删除</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function addHomepageCarouselKey() {
+  const inp = document.getElementById('hpCarouselNewKey');
+  const key = inp ? String(inp.value || '').trim() : '';
+  if (!key) { alert('请输入轮播图ID'); return; }
+  try {
+    await api('/admin/front-page/homepage-carousel', { method: 'POST', body: { key } });
+    if (inp) inp.value = '';
+    await refreshHomepageCarouselAdmin();
+  } catch (e) {
+    alert('新增失败：' + (e && e.message ? e.message : ''));
+  }
+}
+
+async function deleteHomepageCarouselKey(key) {
+  const k = String(key || '').trim();
+  if (!k) return;
+  if (!confirm('确认删除轮播ID：' + k + '？（仅删除ID，不会删除COS文件）')) return;
+  try {
+    await api('/admin/front-page/homepage-carousel/' + encodeURIComponent(k), { method: 'DELETE' });
+    await refreshHomepageCarouselAdmin();
+  } catch (e) {
+    alert('删除失败：' + (e && e.message ? e.message : ''));
+  }
+}
+
+async function uploadHomepageCarouselForKey() {
+  const inp = document.getElementById('hpCarouselNewKey');
+  const fileInput = document.getElementById('hpCarouselFile');
+  const key = inp ? String(inp.value || '').trim() : '';
+  const file = fileInput && fileInput.files ? fileInput.files[0] : null;
+  if (!key) { alert('请先在输入框填写轮播图ID'); if (fileInput) fileInput.value=''; return; }
+  if (!file) return;
+  if (!/\.png$/i.test(file.name || '') && !(file.type || '').toLowerCase().includes('png')) {
+    alert('仅支持 PNG 图片'); if (fileInput) fileInput.value=''; return;
+  }
+  const fd = new FormData();
+  fd.append('file', file);
+  try {
+    const token = localStorage.getItem('vino_token') || '';
+    const r = await fetch(API + '/admin/front-page/homepage-carousel/' + encodeURIComponent(key) + '/upload', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + token },
+      body: fd,
+    });
+    const j = await r.json().catch(() => null);
+    if (!r.ok || !j || j.code !== 0) throw new Error((j && j.message) || String(r.status));
+    if (fileInput) fileInput.value = '';
+    await refreshHomepageCarouselAdmin();
+    alert('上传成功');
+  } catch (e) {
+    alert('上传失败：' + (e && e.message ? e.message : ''));
+    if (fileInput) fileInput.value = '';
+  }
+}
 const PAGE_THEME_PATH_LABELS = { '/': '首页', '/services': '服务', '/products': '产品', '/orders': '订单', '/mine': '我的' };
 const SECTION_LABELS = { banner: '轮播横幅', nav: '快捷导航', navLg: '自助预约(大)', navSm: '自助预约(小)', hotService: '自助服务', recommend: '服务产品', splash: '开场动画', headerLogo: '首页Logo', homeBg: '首页背景', pageTheme: '页面背景', vinoProduct: 'Vino产品', featuredRecommend: '甄选推荐', exploreVino: '探索VINO', navSectionTitle: '自助预约区块标题', hotServiceTitle: '自助服务区块标题', recommendTitle: '服务产品区块标题', myProducts: '我的商品', tabbar: '底部栏', currency: '币种', homeSectionSkin: '栏目外观', homeSectionOffset: '板块整体偏移' };
 /** path → 后台保存用标题 */
@@ -5332,10 +5481,21 @@ function renderHCTable() {
 }
 
 function renderHCAnimTable() {
+  const panel = document.getElementById('homepageCarouselPanel');
+  const table = document.getElementById('hcAnimTable');
+  const empty = document.getElementById('hcAnimEmpty');
+  if (hcAnimFilterSection === 'homeBg') {
+    if (panel) panel.style.display = 'block';
+    if (table) table.style.display = 'none';
+    if (empty) empty.style.display = 'none';
+    refreshHomepageCarouselAdmin();
+    return;
+  }
+  if (panel) panel.style.display = 'none';
+  if (table) table.style.display = '';
   const base = hcAnimFilterSection === 'all' ? allHCItems.filter(i => HOME_ANIM_SECTIONS.includes(i.section)) : allHCItems.filter(i => i.section === hcAnimFilterSection);
   const items = base;
   const tbody = document.getElementById('hcAnimBody');
-  const empty = document.getElementById('hcAnimEmpty');
   if (!tbody) return;
   if (!items.length) { tbody.innerHTML = ''; if (empty) empty.style.display = 'block'; return; }
   if (empty) empty.style.display = 'none';
@@ -5560,6 +5720,11 @@ function openPageThemeEditor(id) {
 
 function openHCEditorFromAnim() {
   currentHCPage = 'homeAnimConfig';
+  if (hcAnimFilterSection === 'homeBg') {
+    const inp = document.getElementById('hpCarouselNewKey');
+    if (inp) inp.focus();
+    return;
+  }
   openHCEditor();
 }
 
