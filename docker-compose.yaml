@@ -80,7 +80,9 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
 
   vino-frontend:
-    build: ./frontend
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
     container_name: vino-frontend
     restart: always
     ports:
