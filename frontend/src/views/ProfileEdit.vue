@@ -7,8 +7,8 @@
         <span class="edit-label">{{ t('profileEdit.changeAvatar') }}</span>
         <label class="edit-avatar-wrap">
           <input type="file" accept="image/*" class="edit-file-input" @change="onAvatarChange" />
-          <img v-if="avatarUrl" :src="avatarUrl" class="avatar-preview" alt="" />
-          <span v-else class="edit-btn-text">{{ t('profileEdit.chooseAvatar') }}</span>
+          <img :src="avatarPreviewSrc" class="avatar-preview" alt="" @error="avatarPreviewBroken = true" />
+          <span v-if="!avatarUrl" class="edit-btn-text">{{ t('profileEdit.chooseAvatar') }}</span>
         </label>
       </div>
       <div class="edit-row">
@@ -90,11 +90,21 @@ import { showToast } from 'vant';
 import { useUserStore } from '@/stores/user';
 import { authApi } from '@/api';
 import { t } from '@/utils/i18n';
+import { resolveMediaUrl } from '@/utils/cosMedia.js';
+import defaultAvatarUrl from '@/assets/default-avatar.svg?url';
 
 const router = useRouter();
 const userStore = useUserStore();
 
 const avatarUrl = ref('');
+const avatarPreviewBroken = ref(false);
+const mediaOpt = { apiBase: import.meta.env.VITE_API_BASE || '' };
+const avatarPreviewSrc = computed(() => {
+  if (avatarPreviewBroken.value) return defaultAvatarUrl;
+  const raw = (avatarUrl.value || '').trim();
+  if (!raw) return defaultAvatarUrl;
+  return resolveMediaUrl(raw, mediaOpt) || defaultAvatarUrl;
+});
 const nickname = ref('');
 const userPhone = ref('');
 const bindPhone = ref('');
@@ -129,7 +139,7 @@ function loadUser() {
 }
 
 onMounted(() => {
-  if (!userStore.isLoggedIn()) {
+  if (!userStore.isLoggedIn) {
     router.replace('/login');
     return;
   }
@@ -144,6 +154,10 @@ watch(() => userStore.userInfo, (u) => {
   }
 }, { deep: true });
 
+watch(avatarUrl, () => {
+  avatarPreviewBroken.value = false;
+});
+
 const onAvatarChange = async (e) => {
   const file = e.target.files?.[0];
   if (!file || !file.type.startsWith('image/')) return;
@@ -155,6 +169,7 @@ const onAvatarChange = async (e) => {
       await authApi.updateProfile({ avatar: url });
       await userStore.fetchProfile();
       avatarUrl.value = url;
+      avatarPreviewBroken.value = false;
       showToast(t('头像已更新', 'Avatar updated'));
     }
   } catch (err) {

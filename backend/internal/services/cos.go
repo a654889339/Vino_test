@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"regexp"
 	"strings"
 
@@ -244,6 +245,33 @@ func ContentPrefixAndFileFromKey(key string) (contentPrefix string, file string)
 	return key[:last], key[last+1:]
 }
 
+// NormalizeImageBufferForKey 将任意可解码图片重编码为与 fullKey 扩展名一致的字节（与 YAML userConfig.Avatar 固定后缀一致，避免 JPEG 上传至 .png 路径时校验失败）。
+func NormalizeImageBufferForKey(buf []byte, fullKey string) ([]byte, error) {
+	if len(buf) == 0 {
+		return nil, fmt.Errorf("empty buffer")
+	}
+	img, err := imaging.Decode(bytes.NewReader(buf))
+	if err != nil {
+		return nil, err
+	}
+	ext := strings.ToLower(path.Ext(strings.TrimSpace(fullKey)))
+	var out bytes.Buffer
+	switch ext {
+	case ".png":
+		if err := png.Encode(&out, img); err != nil {
+			return nil, err
+		}
+		return out.Bytes(), nil
+	case ".jpg", ".jpeg":
+		if err := jpeg.Encode(&out, img, &jpeg.Options{Quality: 88}); err != nil {
+			return nil, err
+		}
+		return out.Bytes(), nil
+	default:
+		return nil, fmt.Errorf("unsupported avatar key extension: %s", ext)
+	}
+}
+
 // URLToKey 从完整 COS URL 解析 object key（与 Node urlToKey 一致）
 func URLToKey(fullURL string) string {
 	if fullURL == "" {
@@ -291,6 +319,9 @@ func isCosOriginalObjectKey(key string) bool {
 		return true
 	}
 	if strings.HasPrefix(key, "front_page_config/") {
+		return true
+	}
+	if strings.HasPrefix(key, "user_config/") {
 		return true
 	}
 	return false

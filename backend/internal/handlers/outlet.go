@@ -320,9 +320,13 @@ func outletUploadAvatar(c *gin.Context, cfg *config.Config) {
 		return
 	}
 	ct := fh.Header.Get("Content-Type")
-	if err := cosbase.ValidateUploadMatchesKey(fullKey, fh.Filename, ct); err != nil {
-		resp.Err(c, 400, 400, err.Error())
-		return
+	if normBuf, errN := services.NormalizeImageBufferForKey(buf, fullKey); errN == nil && len(normBuf) > 0 {
+		buf = normBuf
+	} else {
+		if err := cosbase.ValidateUploadMatchesKey(fullKey, fh.Filename, ct); err != nil {
+			resp.Err(c, 400, 400, err.Error())
+			return
+		}
 	}
 	contentType, err := cosbase.ImageContentTypeFromKey(fullKey)
 	if err != nil {

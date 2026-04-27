@@ -13,8 +13,13 @@
       </button>
       <div class="profile-main">
         <div class="avatar">
-          <img v-if="userStore.isLoggedIn && userStore.userInfo?.avatar" :src="userStore.userInfo.avatar" class="avatar-img" alt="" />
-          <span v-else-if="userStore.isLoggedIn && (userStore.userInfo?.nickname || userStore.userInfo?.username)" class="avatar-initial">{{ (userStore.userInfo?.nickname || userStore.userInfo?.username).charAt(0) }}</span>
+          <img
+            v-if="userStore.isLoggedIn"
+            :src="avatarDisplaySrc"
+            class="avatar-img"
+            alt=""
+            @error="avatarBroken = true"
+          />
           <van-icon v-else name="user-o" size="30" color="#fff" />
         </div>
         <div class="profile-info" v-if="userStore.isLoggedIn">
@@ -106,7 +111,7 @@
 </template>
 
 <script setup>
-import { ref, inject, onMounted, computed } from 'vue';
+import { ref, inject, onMounted, computed, watch } from 'vue';
 import { useUserStore } from '@/stores/user';
 import { useRouter } from 'vue-router';
 import { showToast } from 'vant';
@@ -115,6 +120,7 @@ import PageThemeLayer from '@/components/PageThemeLayer.vue';
 import { copyTextToClipboardSync } from '@/utils/clipboard';
 import { t, isEn, setLang } from '@/utils/i18n';
 import { resolveMediaUrl, guideProductMediaUrl } from '@/utils/cosMedia.js';
+import defaultAvatarUrl from '@/assets/default-avatar.svg?url';
 
 const userStore = useUserStore();
 const router = useRouter();
@@ -195,6 +201,23 @@ const emptyGoodsOrderStats = () => ({
 });
 
 const mediaOpt = { apiBase: import.meta.env.VITE_API_BASE || '' };
+
+const avatarBroken = ref(false);
+const avatarDisplaySrc = computed(() => {
+  if (!userStore.isLoggedIn) return '';
+  if (avatarBroken.value) return defaultAvatarUrl;
+  const raw = (userStore.userInfo?.avatar || '').trim();
+  if (!raw) return defaultAvatarUrl;
+  return resolveMediaUrl(raw, mediaOpt) || defaultAvatarUrl;
+});
+
+watch(
+  () => userStore.userInfo?.avatar,
+  () => {
+    avatarBroken.value = false;
+  },
+);
+
 function fullUrl(url) {
   return resolveMediaUrl(url, mediaOpt);
 }

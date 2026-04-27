@@ -107,7 +107,7 @@ function loadUser() {
 }
 
 onMounted(() => {
-  if (!userStore.isLoggedIn()) {
+  if (!userStore.isLoggedIn) {
     router.replace('/login');
     return;
   }

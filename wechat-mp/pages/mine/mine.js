@@ -2,6 +2,8 @@ const app = getApp();
 const i18n = require('../../utils/i18n.js');
 const { resolveMediaUrl } = require('../../utils/cosMedia.js');
 
+const DEFAULT_AVATAR = '/images/default-avatar.svg';
+
 const GOODS_ORDER_STAT_GROUPS = {
   pendingPay: ['pending'],
   pendingShipment: ['paid'],
@@ -114,9 +116,19 @@ Page({
 
   applyUserData(user) {
     const initial = (user.nickname || user.username || 'V').charAt(0);
-    const avatarUrl = user.avatar || '';
+    const apiBase = (app.globalData.baseUrl || '').replace(/\/$/, '');
+    const raw = (user.avatar && String(user.avatar).trim()) || '';
+    let avatarUrl = DEFAULT_AVATAR;
+    if (raw) {
+      const r = resolveMediaUrl(raw, apiBase);
+      if (r) avatarUrl = r;
+    }
     const maskedPhone = user.phone ? user.phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2') : '';
     this.setData({ userInfo: user, isLoggedIn: true, avatarInitial: initial, avatarUrl, maskedPhone });
+  },
+
+  onAvatarError() {
+    this.setData({ avatarUrl: DEFAULT_AVATAR });
   },
 
   resetGoodsOrderStats() {

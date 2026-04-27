@@ -8,7 +8,7 @@
     </view>
     <view class="profile-main">
       <view class="avatar">
-        <image a:if="{{avatarUrl}}" class="avatar-img" src="{{avatarUrl}}" mode="aspectFill" />
+        <image a:if="{{isLoggedIn}}" class="avatar-img" src="{{avatarUrl}}" mode="aspectFill" onError="onAvatarError" />
         <text a:else class="avatar-text">{{avatarInitial}}</text>
       </view>
       <view class="profile-info">

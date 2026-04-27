@@ -4,11 +4,11 @@
 
     <div class="login-header">
       <img
-        v-if="splashImageUrl && !splashImageError"
-        :src="splashImageUrl"
+        v-if="brandLogoUrl && !brandLogoError"
+        :src="brandLogoUrl"
         alt="VINO"
         class="login-logo-img"
-        @error="splashImageError = true"
+        @error="brandLogoError = true"
       />
       <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 200" class="login-logo">
         <path d="M18 35 L58 35 L100 145 L142 35 L160 35 L108 170 L92 170 Z" fill="#B91C1C"/>
@@ -98,21 +98,27 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, computed, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { showToast } from 'vant';
 import { homeConfigApi, authApi } from '@/api';
-import { pick, t } from '@/utils/i18n';
+import { pick, t, isEn } from '@/utils/i18n';
+import { frontPageLogoUrl } from '@/utils/cosMedia.js';
 
 const router = useRouter();
 const route = useRoute();
 const userStore = useUserStore();
 const loading = ref(false);
-const splashImageUrl = ref('');
 const splashDesc = ref('');
-const splashImageError = ref(false);
+const brandLogoError = ref(false);
 const headerLogoDesc = ref('');
+
+const brandLogoUrl = computed(() => frontPageLogoUrl(isEn.value ? 'en' : 'zh'));
+
+watch(isEn, () => {
+  brandLogoError.value = false;
+});
 
 onMounted(async () => {
   try {
@@ -120,8 +126,6 @@ onMounted(async () => {
     const items = res.data || [];
     const splash = items.find(i => i.section === 'splash' && i.status === 'active');
     if (splash) {
-      const imgUrl = pick(splash, 'imageUrl');
-      if (imgUrl) splashImageUrl.value = imgUrl;
       if (splash.desc) splashDesc.value = splash.desc;
     }
     const headerLogo = items.find(i => i.section === 'headerLogo' && i.status === 'active');

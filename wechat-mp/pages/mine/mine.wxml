@@ -8,7 +8,7 @@
     </view>
     <view class="profile-main">
       <view class="avatar">
-        <image wx:if="{{avatarUrl}}" class="avatar-img" src="{{avatarUrl}}" mode="aspectFill" />
+        <image wx:if="{{isLoggedIn}}" class="avatar-img" src="{{avatarUrl}}" mode="aspectFill" binderror="onAvatarError" />
         <text wx:else class="avatar-text">{{avatarInitial}}</text>
       </view>
       <view class="profile-info">

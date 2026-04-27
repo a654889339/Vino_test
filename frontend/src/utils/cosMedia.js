@@ -39,6 +39,7 @@ let cosHostPrefix = '';
 let displayCacheTtlMs = DEFAULT_DISPLAY_CACHE_MS;
 const DEFAULT_FRONT_PAGE_CONFIG = {
   root: 'front_page_config',
+  logo: 'logo/{lang}.png',
   homepageCarouselTemplate: 'Homepagecarousel/{id}_{lang}.jpg',
   productIconTemplate: 'product/{product_id}/icon_{lang}.png',
   productCoverTemplate: 'product/{product_id}/banner_page_{lang}.jpg',
@@ -62,18 +63,24 @@ export function setCosMediaConfig(cfg) {
 }
 
 export function setFrontPageConfig(cfg) {
-  const r = cfg && cfg.root;
+  const base = { ...DEFAULT_FRONT_PAGE_CONFIG, ...frontPageConfig, ...(cfg && typeof cfg === 'object' ? cfg : {}) };
+  const r = base.root;
   const root = typeof r === 'string' && r.trim() ? r.trim().replace(/^\/+|\/+$/g, '') : DEFAULT_FRONT_PAGE_CONFIG.root;
-  const carTpl = cfg && cfg.homepageCarouselTemplate;
-  const iconTpl = cfg && cfg.productIconTemplate;
-  const coverTpl = cfg && cfg.productCoverTemplate;
-  const coverThumbTpl = cfg && cfg.productCoverThumbTemplate;
-  const m3Tpl = cfg && cfg.model3d;
-  const m3DecalTpl = cfg && cfg.model3dDecal;
-  const m3SkyTpl = cfg && cfg.model3dSkyBox;
-  const descPdfTpl = cfg && cfg.descriptionPdf;
+  const logoTpl = base.logo;
+  const carTpl = base.homepageCarouselTemplate;
+  const iconTpl = base.productIconTemplate;
+  const coverTpl = base.productCoverTemplate;
+  const coverThumbTpl = base.productCoverThumbTemplate;
+  const m3Tpl = base.model3d;
+  const m3DecalTpl = base.model3dDecal;
+  const m3SkyTpl = base.model3dSkyBox;
+  const descPdfTpl = base.descriptionPdf;
   frontPageConfig = {
     root,
+    logo:
+      typeof logoTpl === 'string' && logoTpl.trim()
+        ? logoTpl.trim().replace(/^\/+|\/+$/g, '')
+        : DEFAULT_FRONT_PAGE_CONFIG.logo,
     homepageCarouselTemplate:
       typeof carTpl === 'string' && carTpl.trim()
         ? carTpl.trim().replace(/^\/+|\/+$/g, '')
@@ -122,6 +129,22 @@ export function homepageCarouselUrl(id, lang) {
   if (!rel) return '';
   const key = `${root}/${rel}`.replace(/^\/+/, '');
   // Web 端用同源 /api/media/cos 拉取对象，规避 COS CORS。
+  return `/api/media/cos?key=${encodeURIComponent(key)}`;
+}
+
+/**
+ * 首页 YAML Logo（frontPageConfig.Logo，占位符 {lang}），同源代理 URL。
+ * @param {'zh'|'en'} lang
+ * @returns {string}
+ */
+export function frontPageLogoUrl(lang) {
+  const language = String(lang || '').trim();
+  if (language !== 'zh' && language !== 'en') return '';
+  const fp = frontPageConfig || DEFAULT_FRONT_PAGE_CONFIG;
+  const { root, logo: logoTpl } = fp;
+  const rel = renderCosKeyTemplate(logoTpl || DEFAULT_FRONT_PAGE_CONFIG.logo, { lang: language });
+  if (!rel) return '';
+  const key = `${root || DEFAULT_FRONT_PAGE_CONFIG.root}/${rel}`.replace(/^\/+/, '');
   return `/api/media/cos?key=${encodeURIComponent(key)}`;
 }
 
@@ -222,6 +245,7 @@ export async function initCosMediaFromServer(optApiBase) {
         if (d.frontPageConfig && typeof d.frontPageConfig === 'object') {
           setFrontPageConfig({
             root: d.frontPageConfig.root,
+            logo: d.frontPageConfig.logo,
             homepageCarouselTemplate: d.frontPageConfig.homepageCarouselTemplate,
             productIconTemplate: d.frontPageConfig.productIconTemplate,
             productCoverTemplate: d.frontPageConfig.productCoverTemplate,

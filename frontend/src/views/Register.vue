@@ -13,11 +13,11 @@
 
     <div class="register-header">
       <img
-        v-if="headerLogoUrl && !headerLogoError"
-        :src="headerLogoUrl"
+        v-if="brandLogoUrl && !brandLogoError"
+        :src="brandLogoUrl"
         alt="Logo"
         class="register-logo-img"
-        @error="headerLogoError = true"
+        @error="brandLogoError = true"
       />
       <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 200" class="register-logo">
         <path d="M18 35 L58 35 L100 145 L142 35 L160 35 L108 170 L92 170 Z" fill="#B91C1C"/>
@@ -85,32 +85,23 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onBeforeUnmount, inject, computed } from 'vue';
+import { ref, reactive, onBeforeUnmount, inject, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
-import { authApi, homeConfigApi } from '@/api';
+import { authApi } from '@/api';
 import { showToast } from 'vant';
-import { pick, t } from '@/utils/i18n';
+import { t, isEn } from '@/utils/i18n';
+import { frontPageLogoUrl } from '@/utils/cosMedia.js';
 
 const router = useRouter();
 const userStore = useUserStore();
 const loading = ref(false);
-const headerLogoUrl = ref('');
-const headerLogoError = ref(false);
+const brandLogoError = ref(false);
 
-onMounted(async () => {
-  try {
-    const res = await homeConfigApi.list();
-    const items = res.data || [];
-    const headerLogo = items.find(i => i.section === 'headerLogo' && i.status === 'active');
-    const logoImg = headerLogo ? pick(headerLogo, 'imageUrl') : '';
-    if (logoImg) headerLogoUrl.value = logoImg;
-    else {
-      const splash = items.find(i => i.section === 'splash' && i.status === 'active');
-      const splashImg = splash ? pick(splash, 'imageUrl') : '';
-      if (splashImg) headerLogoUrl.value = splashImg;
-    }
-  } catch (_) {}
+const brandLogoUrl = computed(() => frontPageLogoUrl(isEn.value ? 'en' : 'zh'));
+
+watch(isEn, () => {
+  brandLogoError.value = false;
 });
 const sendingCode = ref(false);
 const countdown = ref(0);
