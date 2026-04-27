@@ -37,6 +37,6 @@ frontPageConfig:
 
   # 商品媒体（Root 下相对路径模板）
   # 可用占位符：{product_id}（device_guides.id）, {lang}（zh/en）
-  ProductIconTemplate: product/{product_id}/icon_{lang}.jpg
+  ProductIconTemplate: product/{product_id}/icon_{lang}.png
   ProductCoverTemplate: product/{product_id}/banner_page_{lang}.jpg
   ProductCoverThumbTemplate: product/{product_id}/cover_thumbnail_{lang}.jpg
