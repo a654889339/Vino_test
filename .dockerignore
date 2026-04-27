@@ -1,10 +1,8 @@
-# 根目录作为 vino-backend 构建上下文时，减小发送体积（勿忽略 backend、common）
+# 根目录作为 vino-backend / vino-frontend（见 compose）构建上下文时减小体积
 .git
 .cursor
 **/node_modules
 **/dist
-frontend
-frontend_outlet
 wechat-mp
 alipay-mp
 backend-node
