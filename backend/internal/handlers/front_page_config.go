@@ -175,7 +175,7 @@ func frontPageHomepageCarouselDeleteKey(k, lang string) error {
 	if err != nil {
 		return err
 	}
-	if err := db.DB.Delete(&models.FrontPageConfigHomepageCarousel{Key: key, Language: language}).Error; err != nil {
+	if err := db.DB.Where("`key` = ? AND `language` = ?", key, language).Delete(&models.FrontPageConfigHomepageCarousel{}).Error; err != nil {
 		return err
 	}
 	frontPageCfgMu.Lock()
