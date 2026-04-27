@@ -6,6 +6,7 @@ COPY frontend/package*.json ./
 RUN npm install
 COPY frontend/ .
 COPY common/config /common/config
+COPY common/frontend/cos_base /common/frontend/cos_base
 RUN npm run build
 
 FROM nginx:alpine
