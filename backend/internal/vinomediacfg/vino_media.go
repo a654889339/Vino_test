@@ -18,8 +18,11 @@ type File struct {
 	ImageDisplayCacheTtlMs  int      `yaml:"imageDisplayCacheTtlMs"`
 	CosProxyAllowedPrefixes []string `yaml:"cosProxyAllowedPrefixes"`
 	FrontPageConfig         *struct {
-		Root             string `yaml:"Root"`
-		HomepageCarousel string `yaml:"HomepageCarousel"`
+		Root                     string `yaml:"Root"`
+		HomepageCarouselTemplate  string `yaml:"HomepageCarouselTemplate"`
+		ProductIconTemplate       string `yaml:"ProductIconTemplate"`
+		ProductCoverTemplate      string `yaml:"ProductCoverTemplate"`
+		ProductCoverThumbTemplate string `yaml:"ProductCoverThumbTemplate"`
 	} `yaml:"frontPageConfig"`
 }
 

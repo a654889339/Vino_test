@@ -349,13 +349,19 @@ func MediaCosConfig(c *gin.Context) {
 				return nil
 			}
 			root := strings.Trim(strings.TrimSpace(f.FrontPageConfig.Root), "/")
-			car := strings.Trim(strings.TrimSpace(f.FrontPageConfig.HomepageCarousel), "/")
-			if root == "" && car == "" {
+			carTpl := strings.Trim(strings.TrimSpace(f.FrontPageConfig.HomepageCarouselTemplate), "/")
+			iconTpl := strings.Trim(strings.TrimSpace(f.FrontPageConfig.ProductIconTemplate), "/")
+			coverTpl := strings.Trim(strings.TrimSpace(f.FrontPageConfig.ProductCoverTemplate), "/")
+			coverThumbTpl := strings.Trim(strings.TrimSpace(f.FrontPageConfig.ProductCoverThumbTemplate), "/")
+			if root == "" && carTpl == "" && iconTpl == "" && coverTpl == "" && coverThumbTpl == "" {
 				return nil
 			}
 			return map[string]any{
-				"root":             root,
-				"homepageCarousel": car,
+				"root":                    root,
+				"homepageCarouselTemplate": carTpl,
+				"productIconTemplate":      iconTpl,
+				"productCoverTemplate":     coverTpl,
+				"productCoverThumbTemplate": coverThumbTpl,
 			}
 		}(),
 	})

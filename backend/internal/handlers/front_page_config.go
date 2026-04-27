@@ -13,7 +13,6 @@ import (
 	"vino/backend/internal/models"
 	"vino/backend/internal/resp"
 	"vino/backend/internal/services"
-	"vino/backend/internal/vinomediacfg"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm/clause"
@@ -44,37 +43,6 @@ func requireFrontPageLang(c *gin.Context) (string, bool) {
 		return "", false
 	}
 	return lang, true
-}
-
-func frontPageCfgRootAndHomepageCarousel() (root, carousel string) {
-	// defaults
-	root = "front_page_config"
-	carousel = "Homepagecarousel"
-	// vino.media.yaml may not contain the fields (older versions)
-	if f := vinomediacfg.Get(); f != nil {
-		if f.FrontPageConfig != nil {
-			if s := strings.TrimSpace(f.FrontPageConfig.Root); s != "" {
-				root = s
-			}
-			if s := strings.TrimSpace(f.FrontPageConfig.HomepageCarousel); s != "" {
-				carousel = s
-			}
-		}
-	}
-	root = strings.Trim(root, "/")
-	carousel = strings.Trim(carousel, "/")
-	return root, carousel
-}
-
-func frontPageHomepageCarouselPrefix() string {
-	root, carousel := frontPageCfgRootAndHomepageCarousel()
-	if root == "" {
-		return ""
-	}
-	if carousel == "" {
-		return root
-	}
-	return root + "/" + carousel
 }
 
 // InitFrontPageConfigCache should be called after DB is connected.
@@ -249,7 +217,7 @@ func AdminHomepageCarouselDelete(c *gin.Context) {
 
 var errOnlyJPG = errors.New("仅支持 JPG 图片")
 
-// AdminHomepageCarouselUpload uploads image to fixed COS key: {Root}/{HomepageCarousel}/{id}_{language}.jpg
+// AdminHomepageCarouselUpload uploads image to fixed COS key defined by vino.media.yaml template.
 func AdminHomepageCarouselUpload(c *gin.Context) {
 	key := strings.TrimSpace(c.Param("key"))
 	if key == "" {
@@ -284,19 +252,23 @@ func AdminHomepageCarouselUpload(c *gin.Context) {
 		return
 	}
 
-	prefix := frontPageHomepageCarouselPrefix()
-	if prefix == "" {
-		resp.Err(c, 500, 1, "frontPageConfig 前缀配置缺失")
-		return
-	}
 	// Ensure id exists in table+memory
 	if err := frontPageHomepageCarouselUpsertKey(key, lang); err != nil {
 		resp.Err(c, 500, 1, err.Error())
 		return
 	}
 
-	filename := key + "_" + lang + ".jpg"
-	urlu, err := services.UploadCOSWithContentPrefix(c.Request.Context(), buf, filename, "image/jpeg", prefix)
+	fullKey, err := services.FrontPageHomepageCarouselKey(key, lang)
+	if err != nil {
+		resp.Err(c, 500, 1, err.Error())
+		return
+	}
+	contentPrefix, file := services.ContentPrefixAndFileFromKey(fullKey)
+	if contentPrefix == "" || file == "" {
+		resp.Err(c, 500, 1, "frontPageConfig 路径模板非法")
+		return
+	}
+	urlu, err := services.UploadCOSWithContentPrefix(c.Request.Context(), buf, file, "image/jpeg", contentPrefix)
 	if err != nil {
 		// If COS isn't configured, surface a clearer message for admin.
 		if !services.CosConfigured() {

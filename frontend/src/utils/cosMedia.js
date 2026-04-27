@@ -36,7 +36,13 @@ const entryByKey = new Map();
 /** 公网基址，由 initCosMediaFromServer（cos-config）或 VITE_ 兜底注入 */
 let cosHostPrefix = '';
 let displayCacheTtlMs = DEFAULT_DISPLAY_CACHE_MS;
-const DEFAULT_FRONT_PAGE_CONFIG = { root: 'front_page_config', homepageCarousel: 'Homepagecarousel' };
+const DEFAULT_FRONT_PAGE_CONFIG = {
+  root: 'front_page_config',
+  homepageCarouselTemplate: 'Homepagecarousel/{id}_{lang}.jpg',
+  productIconTemplate: 'product/{product_id}/icon_{lang}.jpg',
+  productCoverTemplate: 'product/{product_id}/banner_page_{lang}.jpg',
+  productCoverThumbTemplate: 'product/{product_id}/cover_thumbnail_{lang}.jpg',
+};
 let frontPageConfig = { ...DEFAULT_FRONT_PAGE_CONFIG };
 
 export function setCosMediaConfig(cfg) {
@@ -52,11 +58,30 @@ export function setCosMediaConfig(cfg) {
 
 export function setFrontPageConfig(cfg) {
   const r = cfg && cfg.root;
-  const h = cfg && cfg.homepageCarousel;
   const root = typeof r === 'string' && r.trim() ? r.trim().replace(/^\/+|\/+$/g, '') : DEFAULT_FRONT_PAGE_CONFIG.root;
-  const carousel =
-    typeof h === 'string' && h.trim() ? h.trim().replace(/^\/+|\/+$/g, '') : DEFAULT_FRONT_PAGE_CONFIG.homepageCarousel;
-  frontPageConfig = { root, homepageCarousel: carousel };
+  const carTpl = cfg && cfg.homepageCarouselTemplate;
+  const iconTpl = cfg && cfg.productIconTemplate;
+  const coverTpl = cfg && cfg.productCoverTemplate;
+  const coverThumbTpl = cfg && cfg.productCoverThumbTemplate;
+  frontPageConfig = {
+    root,
+    homepageCarouselTemplate:
+      typeof carTpl === 'string' && carTpl.trim()
+        ? carTpl.trim().replace(/^\/+|\/+$/g, '')
+        : DEFAULT_FRONT_PAGE_CONFIG.homepageCarouselTemplate,
+    productIconTemplate:
+      typeof iconTpl === 'string' && iconTpl.trim()
+        ? iconTpl.trim().replace(/^\/+|\/+$/g, '')
+        : DEFAULT_FRONT_PAGE_CONFIG.productIconTemplate,
+    productCoverTemplate:
+      typeof coverTpl === 'string' && coverTpl.trim()
+        ? coverTpl.trim().replace(/^\/+|\/+$/g, '')
+        : DEFAULT_FRONT_PAGE_CONFIG.productCoverTemplate,
+    productCoverThumbTemplate:
+      typeof coverThumbTpl === 'string' && coverThumbTpl.trim()
+        ? coverThumbTpl.trim().replace(/^\/+|\/+$/g, '')
+        : DEFAULT_FRONT_PAGE_CONFIG.productCoverThumbTemplate,
+  };
 }
 
 export function getFrontPageConfig() {
@@ -67,10 +92,23 @@ export function homepageCarouselUrl(id, lang) {
   const k = String(id == null ? '' : id).trim();
   const language = String(lang || '').trim();
   if (!k || (language !== 'zh' && language !== 'en')) return '';
-  const { root, homepageCarousel } = frontPageConfig || DEFAULT_FRONT_PAGE_CONFIG;
-  const key = `${root}/${homepageCarousel}/${k}_${language}.jpg`;
+  const { root, homepageCarouselTemplate } = frontPageConfig || DEFAULT_FRONT_PAGE_CONFIG;
+  const rel = renderCosKeyTemplate(homepageCarouselTemplate, { id: k, lang: language });
+  if (!rel) return '';
+  const key = `${root}/${rel}`.replace(/^\/+/, '');
   // Web 端用同源 /api/media/cos 拉取对象，规避 COS CORS。
   return `/api/media/cos?key=${encodeURIComponent(key)}`;
+}
+
+function renderCosKeyTemplate(tpl, vars) {
+  const t = String(tpl || '').trim().replace(/^\/+|\/+$/g, '');
+  if (!t) return '';
+  let out = t;
+  for (const [k, v] of Object.entries(vars || {})) {
+    out = out.split(`{${k}}`).join(String(v));
+  }
+  if (!out || out.includes('{') || out.includes('}') || out.includes('..') || out.includes('\\')) return '';
+  return out.replace(/^\/+/, '');
 }
 
 /**
@@ -159,7 +197,10 @@ export async function initCosMediaFromServer(optApiBase) {
         if (d.frontPageConfig && typeof d.frontPageConfig === 'object') {
           setFrontPageConfig({
             root: d.frontPageConfig.root,
-            homepageCarousel: d.frontPageConfig.homepageCarousel,
+            homepageCarouselTemplate: d.frontPageConfig.homepageCarouselTemplate,
+            productIconTemplate: d.frontPageConfig.productIconTemplate,
+            productCoverTemplate: d.frontPageConfig.productCoverTemplate,
+            productCoverThumbTemplate: d.frontPageConfig.productCoverThumbTemplate,
           });
         }
       }
@@ -257,38 +298,40 @@ export function guideProductMediaUrl(guideId, role, opt = {}) {
   const id = Number(guideId);
   if (!Number.isFinite(id) || id <= 0) return '';
   const lang = opt.lang === 'en' ? 'en' : 'zh';
-  const d = productDefaults();
-  let file = '';
+  const fp = frontPageConfig || DEFAULT_FRONT_PAGE_CONFIG;
+  const root = fp.root || DEFAULT_FRONT_PAGE_CONFIG.root;
+  const vars = { product_id: String(id), lang };
+  let rel = '';
   switch (role) {
     case 'cover':
-      file = lang === 'en' ? d.cover_en : d.cover;
+      rel = renderCosKeyTemplate(fp.productCoverTemplate, vars);
       break;
     case 'cover_thumb':
-      file = lang === 'en' ? d.cover_thumb_en : d.cover_thumb;
+      rel = renderCosKeyTemplate(fp.productCoverThumbTemplate, vars);
       break;
     case 'icon':
-      file = lang === 'en' ? d.icon_en : d.icon;
+      rel = renderCosKeyTemplate(fp.productIconTemplate, vars);
       break;
     case 'pdf':
-      file = d.pdf;
+      rel = renderCosKeyTemplate(`product/{product_id}/${productDefaults().pdf || ''}`, { product_id: String(id) });
       break;
     case 'model3d':
-      file = d.model3d;
+      rel = renderCosKeyTemplate(`product/{product_id}/${productDefaults().model3d || ''}`, { product_id: String(id) });
       break;
     case 'decal':
-      file = d.decal;
+      rel = renderCosKeyTemplate(`product/{product_id}/${productDefaults().decal || ''}`, { product_id: String(id) });
       break;
     case 'skybox':
-      file = d.skybox;
+      rel = renderCosKeyTemplate(`product/{product_id}/${productDefaults().skybox || ''}`, { product_id: String(id) });
       break;
     case 'scan':
-      file = d.scan;
+      rel = renderCosKeyTemplate(`product/{product_id}/${productDefaults().scan || ''}`, { product_id: String(id) });
       break;
     default:
-      file = '';
+      rel = '';
   }
-  if (!file) return '';
-  const key = `front_page_config/product/${id}/${file}`;
+  if (!rel) return '';
+  const key = `${root}/${rel}`.replace(/^\/+/, '');
   if (!cosHostPrefix) return '';
   return `${cosHostPrefix}/${key.split('/').map(encodeURIComponent).join('/')}`;
 }

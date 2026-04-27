@@ -18,4 +18,13 @@ productMediaNote: DeviceGuide 等路径见后端 embed catalog 与三端 cosMedi
 # FrontPageConfig：首页轮播等（客户端按 Root + 子目录 + id 拼 COS URL 直拉）
 frontPageConfig:
   Root: front_page_config
-  HomepageCarousel: Homepagecarousel
+
+  # 首页轮播图（Root 下相对路径模板）
+  # 可用占位符：{id}（轮播图 id）, {lang}（zh/en）
+  HomepageCarouselTemplate: Homepagecarousel/{id}_{lang}.jpg
+
+  # 商品媒体（Root 下相对路径模板）
+  # 可用占位符：{product_id}（device_guides.id）, {lang}（zh/en）
+  ProductIconTemplate: product/{product_id}/icon_{lang}.jpg
+  ProductCoverTemplate: product/{product_id}/banner_page_{lang}.jpg
+  ProductCoverThumbTemplate: product/{product_id}/cover_thumbnail_{lang}.jpg

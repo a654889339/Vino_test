@@ -136,11 +136,11 @@ func cosClient() (*cos.Client, error) {
 var (
 	thumbKeyGoodsOrTypeLarge     = regexp.MustCompile(`^(vino/items/(?:goods|type)/\d+)/large_image(\.[^/.]+)$`)
 	thumbKeyGoodsOrTypeLargeEn   = regexp.MustCompile(`^(vino/items/(?:goods|type)/\d+)/large_image_en(\.[^/.]+)$`)
-	thumbKeyProductBanner        = regexp.MustCompile(`^(front_page_config/product/\d+)/banner_page(\.[^/.]+)$`)
+	thumbKeyProductBannerZh      = regexp.MustCompile(`^(front_page_config/product/\d+)/banner_page_zh(\.[^/.]+)$`)
 	thumbKeyProductBannerEn      = regexp.MustCompile(`^(front_page_config/product/\d+)/banner_page_en(\.[^/.]+)$`)
 	thumbKeyMainPageImage        = regexp.MustCompile(`^(vino/main_page/[^/]+)/image(\.[^/.]+)$`)
 	thumbKeyMainPageImageEn      = regexp.MustCompile(`^(vino/main_page/[^/]+)/image_en(\.[^/.]+)$`)
-	thumbKeyNoDeriveBasePrefixes = regexp.MustCompile(`^(?:icon|icon_en|scan|cover_thumbnail|cover_thumbnail_en)(?:\.|$)`)
+	thumbKeyNoDeriveBasePrefixes = regexp.MustCompile(`^(?:icon|icon_zh|icon_en|scan|cover_thumbnail|cover_thumbnail_zh|cover_thumbnail_en)(?:\.|$)`)
 	thumbKeyProductLeafNoThumb   = regexp.MustCompile(`(?i)^(model3d\.glb|decal\.png|description\.pdf|model3d_skybox\.(jpg|jpeg|png|webp))$`)
 )
 
@@ -174,8 +174,8 @@ func ThumbKeyFromOriginalKey(key string) string {
 	if m := thumbKeyGoodsOrTypeLargeEn.FindStringSubmatch(key); len(m) == 3 {
 		return m[1] + "/cover_thumbnail_en" + m[2]
 	}
-	if m := thumbKeyProductBanner.FindStringSubmatch(key); len(m) == 3 {
-		return m[1] + "/cover_thumbnail" + m[2]
+	if m := thumbKeyProductBannerZh.FindStringSubmatch(key); len(m) == 3 {
+		return m[1] + "/cover_thumbnail_zh" + m[2]
 	}
 	if m := thumbKeyProductBannerEn.FindStringSubmatch(key); len(m) == 3 {
 		return m[1] + "/cover_thumbnail_en" + m[2]

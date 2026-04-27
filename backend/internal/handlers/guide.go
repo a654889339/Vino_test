@@ -184,6 +184,7 @@ func guideUploadFile(c *gin.Context, cfg *config.Config) {
 		return
 	}
 	gidStr := ""
+	productID := 0
 	assetKind := ""
 	if c.Request.MultipartForm != nil && c.Request.MultipartForm.Value != nil {
 		if v := c.Request.MultipartForm.Value["guideId"]; len(v) > 0 {
@@ -199,6 +200,7 @@ func guideUploadFile(c *gin.Context, cfg *config.Config) {
 			var g models.DeviceGuide
 			if err := db.DB.Select("id").First(&g, gid).Error; err == nil {
 				contentPrefix = fmt.Sprintf("front_page_config/product/%d", gid)
+				productID = gid
 			}
 		}
 	}
@@ -233,16 +235,6 @@ func guideUploadFile(c *gin.Context, cfg *config.Config) {
 	isCoverThumbOnly := isProductPrefix && strings.HasPrefix(ct, "image/") && (assetKind == "cover_thumb" || assetKind == "cover_thumb_en")
 	isModel3D := isProductPrefix && (assetKind == "model3d" || assetKind == "model3d_decal" || assetKind == "model3d_skybox")
 	isDescriptionPDF := isProductPrefix && assetKind == "description" && (strings.Contains(strings.ToLower(ct), "pdf") || strings.EqualFold(ext, ".pdf"))
-	if isIconUpload {
-		if ext == ".bin" {
-			ext = ".png"
-		}
-		if assetKind == "icon_en" {
-			filename = "icon_en" + ext
-		} else {
-			filename = "icon" + ext
-		}
-	}
 	ctx := c.Request.Context()
 	// 3D 预览资源：GLB + 贴花图 + 环境图；文件名固定以便去重覆盖，走无缩略图直传。
 	if isDescriptionPDF {
@@ -291,7 +283,31 @@ func guideUploadFile(c *gin.Context, cfg *config.Config) {
 	}
 	if strings.HasPrefix(ct, "image/") {
 		if isIconUpload {
-			url, err := services.UploadCOSWithContentPrefix(ctx, buf, filename, ct, contentPrefix)
+			if productID <= 0 {
+				resp.Err(c, 400, 400, "非法 guideId")
+				return
+			}
+			lang := "zh"
+			if assetKind == "icon_en" {
+				lang = "en"
+			}
+			extLower := strings.ToLower(ext)
+			ctLower := strings.ToLower(ct)
+			if extLower != ".jpg" && extLower != ".jpeg" && !strings.Contains(ctLower, "jpeg") && !strings.Contains(ctLower, "jpg") {
+				resp.Err(c, 400, 400, "仅支持 JPG 图片")
+				return
+			}
+			fullKey, err := services.FrontPageProductIconKey(productID, lang)
+			if err != nil {
+				resp.Err(c, 500, 500, "上传失败: "+err.Error())
+				return
+			}
+			cp, file := services.ContentPrefixAndFileFromKey(fullKey)
+			if cp == "" || file == "" {
+				resp.Err(c, 500, 500, "上传失败: 商品图标模板非法")
+				return
+			}
+			url, err := services.UploadCOSWithContentPrefix(ctx, buf, file, "image/jpeg", cp)
 			if err != nil {
 				resp.Err(c, 500, 500, "上传失败: "+err.Error())
 				return
@@ -300,30 +316,75 @@ func guideUploadFile(c *gin.Context, cfg *config.Config) {
 			return
 		}
 		if isCoverPair {
-			origStem := "banner_page"
-			thumbStem := "cover_thumbnail"
-			if assetKind == "cover_en" {
-				origStem = "banner_page_en"
-				thumbStem = "cover_thumbnail_en"
+			if productID <= 0 {
+				resp.Err(c, 400, 400, "非法 guideId")
+				return
 			}
-			url, thumb, err := services.UploadOriginalAndFlatCoverThumb(ctx, buf, origStem, ext, ct, thumbStem, 0, contentPrefix)
+			lang := "zh"
+			if assetKind == "cover_en" {
+				lang = "en"
+			}
+			extLower := strings.ToLower(ext)
+			ctLower := strings.ToLower(ct)
+			if extLower != ".jpg" && extLower != ".jpeg" && !strings.Contains(ctLower, "jpeg") && !strings.Contains(ctLower, "jpg") {
+				resp.Err(c, 400, 400, "仅支持 JPG 图片")
+				return
+			}
+			coverKey, err := services.FrontPageProductCoverKey(productID, lang)
 			if err != nil {
 				resp.Err(c, 500, 500, "上传失败: "+err.Error())
 				return
 			}
-			resp.OK(c, gin.H{"url": url, "thumbUrl": thumb})
+			thumbKey, err := services.FrontPageProductCoverThumbKey(productID, lang)
+			if err != nil {
+				resp.Err(c, 500, 500, "上传失败: "+err.Error())
+				return
+			}
+			coverPrefix, coverFile := services.ContentPrefixAndFileFromKey(coverKey)
+			thumbPrefix, thumbFile := services.ContentPrefixAndFileFromKey(thumbKey)
+			if coverPrefix == "" || coverFile == "" || thumbPrefix == "" || thumbFile == "" {
+				resp.Err(c, 500, 500, "上传失败: 商品封面模板非法")
+				return
+			}
+			url, err := services.UploadCOSWithContentPrefix(ctx, buf, coverFile, "image/jpeg", coverPrefix)
+			if err != nil {
+				resp.Err(c, 500, 500, "上传失败: "+err.Error())
+				return
+			}
+			tb, _ := services.GenerateThumbBuffer(buf, "image/jpeg")
+			thumbURL := ""
+			if len(tb) > 0 {
+				thumbURL, _ = services.UploadCOSWithContentPrefix(ctx, tb, thumbFile, "image/jpeg", thumbPrefix)
+			}
+			resp.OK(c, gin.H{"url": url, "thumbUrl": thumbURL})
 			return
 		}
 		if isCoverThumbOnly {
-			stem := "cover_thumbnail"
+			if productID <= 0 {
+				resp.Err(c, 400, 400, "非法 guideId")
+				return
+			}
+			lang := "zh"
 			if assetKind == "cover_thumb_en" {
-				stem = "cover_thumbnail_en"
+				lang = "en"
 			}
-			if ext == "" || ext == ".bin" {
-				ext = ".png"
+			extLower := strings.ToLower(ext)
+			ctLower := strings.ToLower(ct)
+			if extLower != ".jpg" && extLower != ".jpeg" && !strings.Contains(ctLower, "jpeg") && !strings.Contains(ctLower, "jpg") {
+				resp.Err(c, 400, 400, "仅支持 JPG 图片")
+				return
 			}
-			fn := stem + ext
-			url, err := services.UploadCOSWithContentPrefix(ctx, buf, fn, ct, contentPrefix)
+			thumbKey, err := services.FrontPageProductCoverThumbKey(productID, lang)
+			if err != nil {
+				resp.Err(c, 500, 500, "上传失败: "+err.Error())
+				return
+			}
+			cp, file := services.ContentPrefixAndFileFromKey(thumbKey)
+			if cp == "" || file == "" {
+				resp.Err(c, 500, 500, "上传失败: 商品缩略图模板非法")
+				return
+			}
+			url, err := services.UploadCOSWithContentPrefix(ctx, buf, file, "image/jpeg", cp)
 			if err != nil {
 				resp.Err(c, 500, 500, "上传失败: "+err.Error())
 				return
