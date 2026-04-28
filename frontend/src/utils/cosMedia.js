@@ -4,7 +4,6 @@
  * - 最后 VITE_COS_PUBLIC_BASE 仅作本地开发兜底。
  */
 import { parseVinoMediaYamlDefaults } from '@cos_base/parseVinoMediaYaml.js';
-import { createCosMediaProxyFetchCache } from '@cos_base/cosMediaProxyFetchCache.js';
 import vinoMediaYamlRaw from '../../../common/config/cos/vino.media.yaml?raw';
 
 const DEFAULT_DISPLAY_CACHE_MS = 5 * 60 * 1000;
@@ -24,19 +23,6 @@ function envCosBase() {
   }
   return '';
 }
-
-/** 是否为同源 COS 代理 URL（用于 blob/缓存分支） */
-function isMediaCosPath(s) {
-  if (typeof s !== 'string') return false;
-  const t = s.trim();
-  if (!t) return false;
-  return t.includes('/media/cos?key=') || t.includes('/api/media/cos?key=');
-}
-
-const proxyMediaCache = createCosMediaProxyFetchCache({
-  ttlMs: DEFAULT_DISPLAY_CACHE_MS,
-  isProxyUrl: isMediaCosPath,
-});
 
 /** 公网基址，由 initCosMediaFromServer（cos-config）或 VITE_ 兜底注入 */
 let cosHostPrefix = '';
@@ -64,7 +50,6 @@ export function setCosMediaConfig(cfg) {
   } else {
     displayCacheTtlMs = DEFAULT_DISPLAY_CACHE_MS;
   }
-  proxyMediaCache.setTtlMs(displayCacheTtlMs);
 }
 
 export function setFrontPageConfig(cfg) {
@@ -133,8 +118,8 @@ export function homepageCarouselUrl(id, lang) {
   const rel = renderCosKeyTemplate(homepageCarouselTemplate, { id: k, lang: language });
   if (!rel) return '';
   const key = `${root}/${rel}`.replace(/^\/+/, '');
-  // Web 端用同源 /api/media/cos 拉取对象，规避 COS CORS。
-  return `/api/media/cos?key=${encodeURIComponent(key)}`;
+  if (!cosHostPrefix) return '';
+  return `${cosHostPrefix}/${key.split('/').map(encodeURIComponent).join('/')}`;
 }
 
 /**
@@ -150,7 +135,8 @@ export function frontPageLogoUrl(lang) {
   const rel = renderCosKeyTemplate(logoTpl || DEFAULT_FRONT_PAGE_CONFIG.logo, { lang: language });
   if (!rel) return '';
   const key = `${root || DEFAULT_FRONT_PAGE_CONFIG.root}/${rel}`.replace(/^\/+/, '');
-  return `/api/media/cos?key=${encodeURIComponent(key)}`;
+  if (!cosHostPrefix) return '';
+  return `${cosHostPrefix}/${key.split('/').map(encodeURIComponent).join('/')}`;
 }
 
 function renderCosKeyTemplate(tpl, vars) {
@@ -404,12 +390,6 @@ export function resolveMediaUrl(u, opt = {}) {
   if (typeof u !== 'string') u = String(u);
   const t = u.trim();
   if (!t) return '';
-  // 保持 /api/media/cos?key= 同源代理，不再反解成 COS 公网直链（否则 fetch 会遇到 CORS）。
-  if (t.includes('/media/cos?key=') || t.includes('/api/media/cos?key=')) {
-    if (t.startsWith('/')) return t;
-    if (t.startsWith('http://') || t.startsWith('https://')) return t;
-    return '/' + t.replace(/^\/+/, '');
-  }
   const { site, media: _m } = splitForWeb(opt.apiBase);
 
   const ck = cosUrlToKey(t);
@@ -455,12 +435,9 @@ export function toAbsoluteMediaUrl(u, opt) {
 export async function getBlobUrlForDisplay(u, opt) {
   const abs = toAbsoluteMediaUrl(u, opt);
   if (!abs) return '';
-  if (!isMediaCosPath(abs)) {
-    if (abs.startsWith('http')) return abs;
-    if (typeof location !== 'undefined' && abs.startsWith('/')) return location.origin + abs;
-    return abs;
-  }
-  return proxyMediaCache.getBlobUrlForProxyAbs(abs);
+  if (abs.startsWith('http')) return abs;
+  if (typeof location !== 'undefined' && abs.startsWith('/')) return location.origin + abs;
+  return abs;
 }
 
 /**
@@ -470,17 +447,26 @@ export async function getBlobUrlForDisplay(u, opt) {
  * @returns {Promise<Response>}
  */
 export function fetchCosMediaCached(input, init) {
-  return proxyMediaCache.fetchCosMediaCached(input, init);
+  return fetch(input, init);
 }
 
 export function fetchCosMediaBodyAbs(absUrl) {
-  return proxyMediaCache.fetchCosMediaBodyAbs(absUrl);
+  return fetch(absUrl, { credentials: 'include' }).then((r) => {
+    if (!r.ok) throw new Error(String(r.status));
+    return r.blob();
+  });
 }
 
 /**
  * @param {string} [maybeObjectUrl]
  */
 export function revokeIfCachedBlob(maybeObjectUrl) {
-  proxyMediaCache.revokeIfCachedBlob(maybeObjectUrl);
+  if (typeof maybeObjectUrl !== 'string') return;
+  if (!maybeObjectUrl.startsWith('blob:')) return;
+  try {
+    URL.revokeObjectURL(maybeObjectUrl);
+  } catch {
+    /* ignore */
+  }
 }
 

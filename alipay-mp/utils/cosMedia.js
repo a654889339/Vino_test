@@ -104,8 +104,8 @@ function homepageCarouselUrl(id, lang) {
   const rel = renderCosKeyTemplate(fp.homepageCarouselTemplate, { id: k, lang: language });
   if (!rel) return '';
   const key = `${root}/${rel}`.replace(/^\/+/, '');
-  // 小程序统一走后端同源媒体接口（baseUrl 通常已包含 /api）
-  return `/media/cos?key=${encodeURIComponent(key)}`;
+  if (!cosHostPrefix) return '';
+  return `${cosHostPrefix}/${key.split('/').map(encodeURIComponent).join('/')}`;
 }
 
 function getCosPublicBase() {
@@ -311,15 +311,6 @@ function resolveMediaUrl(u, apiBase) {
   if (typeof u !== 'string') u = String(u);
   const t = u.trim();
   if (!t) return '';
-  if (t.includes('/media/cos?key=') || t.includes('/api/media/cos?key=')) {
-    if (t.startsWith('/')) {
-      const { site } = splitForMp(apiBase);
-      return (site || '') + t;
-    }
-    if (t.startsWith('http://') || t.startsWith('https://')) return t;
-    const { site } = splitForMp(apiBase);
-    return (site || '') + '/' + t.replace(/^\/+/, '');
-  }
   const { site } = splitForMp(apiBase);
 
   const ck = cosUrlToKey(t);
