@@ -13,3 +13,9 @@ export {
   buildCosRuleConfigObjectUrl,
 } from './cosRuleConfigClient.js';
 export { createCosMediaProxyFetchCache } from './cosMediaProxyFetchCache.js';
+export {
+  registerMediaCaches,
+  startMediaCacheJanitor,
+  stopMediaCacheJanitor,
+  invalidateCachesForCosArtifact,
+} from './mediaCacheHub.js';

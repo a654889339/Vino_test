@@ -21,6 +21,7 @@ export function createCosMediaProxyFetchCache(options = {}) {
         };
 
   const entryByKey = new Map();
+  let pruneTimer = null;
 
   function setTtlMs(ms) {
     const n = Number(ms);
@@ -41,6 +42,83 @@ export function createCosMediaProxyFetchCache(options = {}) {
         entryByKey.delete(k);
       }
     }
+  }
+
+  function startPeriodicPrune(intervalMs = 30_000) {
+    if (pruneTimer != null) return;
+    if (typeof window === 'undefined') return;
+    const ms = Number(intervalMs) > 0 ? Number(intervalMs) : 30_000;
+    pruneTimer = window.setInterval(() => {
+      prune();
+    }, ms);
+  }
+
+  function stopPeriodicPrune() {
+    if (pruneTimer == null || typeof window === 'undefined') return;
+    window.clearInterval(pruneTimer);
+    pruneTimer = null;
+  }
+
+  function objectKeyFromProxyAbs(abs) {
+    try {
+      const u = new URL(String(abs), typeof window !== 'undefined' ? window.location.origin : 'http://localhost');
+      const k = u.searchParams.get('key');
+      return k ? decodeURIComponent(k) : '';
+    } catch {
+      return '';
+    }
+  }
+
+  function normalizeObjectKey(key) {
+    const t = (key == null ? '' : String(key)).trim();
+    if (!t) return '';
+    return t.replace(/^\/+/, '');
+  }
+
+  function objectKeyFromPublicUrl(publicUrl) {
+    try {
+      const u = new URL(String(publicUrl));
+      return decodeURIComponent((u.pathname || '').replace(/^\/+/, ''));
+    } catch {
+      return '';
+    }
+  }
+
+  function releaseEntry(e) {
+    if (!e) return;
+    if (e.type === 'obj' && e.objectUrl) {
+      try {
+        URL.revokeObjectURL(e.objectUrl);
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
+  function invalidateByAbsProxyUrl(abs) {
+    const key = (abs == null ? '' : String(abs)).trim();
+    if (!key) return;
+    const e = entryByKey.get(key);
+    releaseEntry(e);
+    entryByKey.delete(key);
+  }
+
+  function invalidateByObjectKey(objectKey) {
+    const target = normalizeObjectKey(objectKey);
+    if (!target) return;
+    for (const [k, e] of entryByKey.entries()) {
+      const hitKey = normalizeObjectKey(objectKeyFromProxyAbs(k));
+      if (hitKey && hitKey === target) {
+        releaseEntry(e);
+        entryByKey.delete(k);
+      }
+    }
+  }
+
+  function invalidateByPublicUrl(publicUrl) {
+    const key = objectKeyFromPublicUrl(publicUrl);
+    if (!key) return;
+    invalidateByObjectKey(key);
   }
 
   /**
@@ -141,11 +219,25 @@ export function createCosMediaProxyFetchCache(options = {}) {
     }
   }
 
+  function __resetProxyFetchCacheForTests() {
+    for (const [, e] of entryByKey.entries()) {
+      releaseEntry(e);
+    }
+    entryByKey.clear();
+    stopPeriodicPrune();
+  }
+
   return {
     setTtlMs,
     fetchCosMediaCached,
     fetchCosMediaBodyAbs,
     getBlobUrlForProxyAbs,
     revokeIfCachedBlob,
+    prune,
+    startPeriodicPrune,
+    invalidateByAbsProxyUrl,
+    invalidateByObjectKey,
+    invalidateByPublicUrl,
+    __resetProxyFetchCacheForTests,
   };
 }

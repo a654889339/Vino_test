@@ -48,6 +48,23 @@
 
 ---
 
+## 0.3 媒体资源必须使用 COS/OSS 公网直链（强制）
+
+当任务涉及 **前端/H5** 或 **小程序** 的图片/视频/GLB/PDF 等媒体资源 URL（含首页轮播、Logo、商品主图/贴花/天空盒、用户头像、订单相关素材等）时，必须遵守：
+
+- **必须**返回与使用 **COS/OSS 桶公网直链**：`{ossPublicBase}/{key...}`。
+- **禁止**在客户端生成或依赖任何后端“同源代理”字节转发 URL，包括但不限于：
+  - `/api/media/oss?key=...`、`/api/media/cos?key=...`
+  - `/media/oss?key=...`、`/media/cos?key=...`
+- Web/小程序端的 `cosMedia` / `mediaUrl` / `frontPageLogoUrl` / `homepageCarouselUrl` 等工具函数，最终都应输出 **公网直链**，不得再出现上述代理路径分支。
+
+配套注意：
+
+- **Web**：桶需正确配置 CORS（允许站点域名 GET/HEAD，必要时允许 Range / Content-Type 等）。
+- **小程序**：桶域名需加入微信/支付宝的“合法域名”白名单（request/downloadFile/图片资源域名），并使用可用的 HTTPS 证书。
+
+---
+
 ## 1. 角色与权限
 
 Vino_test 的主用户表 `users` 支持三种角色：

@@ -53,12 +53,34 @@ export function createImageDisplayCache(options) {
     }
   }
 
-  function scheduleSweep() {
+  function startPeriodicSweep(intervalMs = 30_000) {
     if (sweepTimer != null) return;
     if (typeof window === 'undefined') return;
+    const ms = Number(intervalMs) > 0 ? Number(intervalMs) : 30_000;
     sweepTimer = window.setInterval(() => {
       sweepExpired();
-    }, 60_000);
+    }, ms);
+  }
+
+  function stopPeriodicSweep() {
+    if (sweepTimer == null || typeof window === 'undefined') return;
+    window.clearInterval(sweepTimer);
+    sweepTimer = null;
+  }
+
+  function invalidateByUrl(resolvedUrl) {
+    const key = normalizeKey(resolvedUrl);
+    if (!key) return;
+    const hit = store.get(key);
+    if (hit && hit.objectUrl) {
+      try {
+        URL.revokeObjectURL(hit.objectUrl);
+      } catch {
+        /* ignore */
+      }
+    }
+    store.delete(key);
+    inflight.delete(key);
   }
 
   /**
@@ -122,7 +144,7 @@ export function createImageDisplayCache(options) {
           objectUrl,
           expires: Date.now() + ttlMs,
         });
-        scheduleSweep();
+        startPeriodicSweep();
         return objectUrl;
       } catch {
         return s;
@@ -145,11 +167,14 @@ export function createImageDisplayCache(options) {
     }
     store.clear();
     inflight.clear();
-    if (sweepTimer != null && typeof window !== 'undefined') {
-      window.clearInterval(sweepTimer);
-      sweepTimer = null;
-    }
+    stopPeriodicSweep();
   }
 
-  return { getCachedObjectUrl, __resetImageDisplayCacheForTests };
+  return {
+    getCachedObjectUrl,
+    invalidateByUrl,
+    sweepExpired,
+    startPeriodicSweep,
+    __resetImageDisplayCacheForTests,
+  };
 }

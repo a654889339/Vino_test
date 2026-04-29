@@ -13,6 +13,7 @@ function createCosMediaPathCache(options) {
   const o = options || {};
   let ttlMs = Number(o.ttlMs) > 0 ? Number(o.ttlMs) : 300000;
   const map = new Map();
+  let sweepTimer = null;
 
   function setTtlMs(ms) {
     const n = Number(ms);
@@ -35,7 +36,41 @@ function createCosMediaPathCache(options) {
     map.set(url, { exp: Date.now() + ttlMs, path });
   }
 
-  return { setTtlMs, getCachedPath, setCachedPath };
+  function invalidateUrl(url) {
+    if (typeof url !== 'string' || !url) return;
+    map.delete(url);
+  }
+
+  function sweepExpired() {
+    const now = Date.now();
+    for (const [k, c] of map.entries()) {
+      if (!c || c.exp <= now) map.delete(k);
+    }
+  }
+
+  function startPeriodicSweep(intervalMs) {
+    if (sweepTimer != null) return;
+    const ms = Number(intervalMs) > 0 ? Number(intervalMs) : 30000;
+    sweepTimer = setInterval(function () {
+      sweepExpired();
+    }, ms);
+  }
+
+  function stopPeriodicSweep() {
+    if (sweepTimer == null) return;
+    clearInterval(sweepTimer);
+    sweepTimer = null;
+  }
+
+  return {
+    setTtlMs,
+    getCachedPath,
+    setCachedPath,
+    invalidateUrl,
+    sweepExpired,
+    startPeriodicSweep,
+    stopPeriodicSweep,
+  };
 }
 
 module.exports = { createCosMediaPathCache };

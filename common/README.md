@@ -31,9 +31,13 @@ Web（Vite）已通过源码引用 `../common/...` 与 `?raw` 读取 `vino.media
 
 ## 运行时读取顺序（桶公网根）
 
-三端 **`cosMedia`** 约定（**不得**经本服务 `GET /api/media/*` 拉取配置；该路由已撤销）：
+三端 **`cosMedia`** 约定：优先包内静态 YAML，其次各项目后端下发的媒体 JSON（路径见各项目 handler，如 Vino `GET /api/media/cos-config`、R-Melamine `GET /api/media/cosConfig`），与 `mediaConfigTtlMs` 等字段一致。
 
-1. **包内** `common/config/cos/vino.media.yaml` 的 `ossPublicBaseDefault`（Web 构建期 `?raw`；小程序 `readFileSync` 同步进包后路径）；
+1. **包内** `common/config/cos/*.media.yaml` 的 `ossPublicBaseDefault`（Web 构建期 `?raw`；小程序打包进 `common/config/cos/` 后读取）；
 2. Web 仅本地开发：环境变量 **`VITE_COS_PUBLIC_BASE`** 兜底；
-3. 商品等命名约定：Web 构建期嵌入 **`frontend/src/config/media_asset_catalog.json`**（须与 `backend/internal/configdata/media_asset_catalog.json` 同内容，改一方请双改）；小程序自包内 `common/config/cos/media_asset_catalog.json`（`sync-common-to-miniprograms.mjs` 从 **backend** 嵌入文件复制）。
-4. 展示/下载：**仅**桶 **HTTPS 直链**；浏览器/小程序用跨域 `fetch` / `downloadFile`，不经后端转发字节流。
+3. 商品等命名约定：Vino Web 构建期嵌入 **`frontend/src/config/media_asset_catalog.json`**（须与 `backend/internal/configdata/media_asset_catalog.json` 同内容）；小程序自包内 `common/config/cos/media_asset_catalog.json`（由同步脚本从 backend 嵌入文件复制）。
+4. **展示优先路径**：桶 **HTTPS 直链** + `fetch` / `downloadFile`；需要同源代理时再走 `/api/media/oss` 等（详见 [`frontend/cos_base/README.md`](frontend/cos_base/README.md)）。
+
+## COS 相关 TTL（摘要）
+
+完整字段表见 [`config/cos/README.md`](config/cos/README.md) 中的「TTL 字段说明」：`mediaConfigTtlMs`（运行时配置刷新）、`imageDisplayCacheTtlMs`（展示缓存）、`cosRuleConfigCheckTime`（桶内规则 YAML 版本轮询间隔）。

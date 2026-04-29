@@ -35,8 +35,9 @@ export function createMediaRuntimeStore(options) {
     }
   }
 
-  function effectiveTtlMs(merged) {
-    const n = Number(merged?.mediaConfigTtlMs ?? merged?.imageDisplayCacheTtlMs);
+  /** 仅用于「媒体运行时合并配置」有效期：勿与 imageDisplayCacheTtlMs 混用。 */
+  function effectiveMediaConfigTtlMs(merged) {
+    const n = Number(merged?.mediaConfigTtlMs);
     if (n > 0) return n;
     const fb = getFallbackDefaults();
     return Number(fb.mediaConfigTtlMs) || 300000;
@@ -46,10 +47,19 @@ export function createMediaRuntimeStore(options) {
     if (memory) return;
     const s = readSession();
     if (!s) return;
-    const ttl = effectiveTtlMs(s.merged);
+    const ttl = effectiveMediaConfigTtlMs(s.merged);
     if (Date.now() - s.fetchedAt < ttl) {
       memory = { merged: s.merged, fetchedAt: s.fetchedAt };
     }
+  }
+
+  function getCosProxyAllowedPrefixes() {
+    hydrateFromStorage();
+    const fb = getFallbackDefaults();
+    if (memory?.merged?.cosProxyAllowedPrefixes?.length) {
+      return memory.merged.cosProxyAllowedPrefixes;
+    }
+    return fb.cosProxyAllowedPrefixes || [];
   }
 
   function getOssPublicBase() {
@@ -82,7 +92,17 @@ export function createMediaRuntimeStore(options) {
 
   function getMediaConfigTtlMs() {
     hydrateFromStorage();
-    return effectiveTtlMs(memory?.merged || {});
+    return effectiveMediaConfigTtlMs(memory?.merged || {});
+  }
+
+  /** 展示层缓存 TTL（blob / 代理 fetch / 小程序路径等）；与配置刷新节奏独立。 */
+  function getImageDisplayCacheTtlMs() {
+    hydrateFromStorage();
+    const m = memory?.merged || {};
+    const fb = getFallbackDefaults();
+    const n = Number(m.imageDisplayCacheTtlMs);
+    if (n > 0) return n;
+    return Number(fb.imageDisplayCacheTtlMs) || 300000;
   }
 
   function getCosRuleConfigCheckTime() {
@@ -165,10 +185,84 @@ export function createMediaRuntimeStore(options) {
     writeSession(merged, fetchedAt);
   }
 
+  function getFrontPageConfig() {
+    hydrateFromStorage();
+    const defFp = getFallbackDefaults().frontPageConfig;
+    const def =
+      defFp && typeof defFp === 'object'
+        ? {
+            root: String(defFp.root || 'front_page_config').replace(/^\/+|\/+$/g, ''),
+            logo: String(defFp.logo || 'logo/{lang}.png').replace(/^\/+|\/+$/g, ''),
+            productConfig: defFp.productConfig && typeof defFp.productConfig === 'object' ? { ...defFp.productConfig } : null,
+          }
+        : { root: 'front_page_config', logo: 'logo/{lang}.png', productConfig: null };
+    const m = memory?.merged?.frontPageConfig;
+    if (m && typeof m === 'object') {
+      const root =
+        m.root != null && String(m.root).trim() !== ''
+          ? String(m.root).trim().replace(/^\/+|\/+$/g, '')
+          : def.root;
+      const logo =
+        m.logo != null && String(m.logo).trim() !== ''
+          ? String(m.logo).trim().replace(/^\/+|\/+$/g, '')
+          : def.logo;
+      const pcRaw = m.productConfig && typeof m.productConfig === 'object' ? m.productConfig : null;
+      const pcDef = def.productConfig && typeof def.productConfig === 'object' ? def.productConfig : null;
+      const productConfig =
+        pcRaw || pcDef
+          ? {
+              ...(pcDef || {}),
+              ...(pcRaw || {}),
+            }
+          : null;
+      return { root, logo, productConfig };
+    }
+    return { ...def };
+  }
+
+  function getUserConfig() {
+    hydrateFromStorage();
+    const defUc = getFallbackDefaults().userConfig;
+    const def =
+      defUc && typeof defUc === 'object'
+        ? {
+            root: String(defUc.root || '').replace(/^\/+|\/+$/g, ''),
+            avatar: String(defUc.avatar || '').replace(/^\/+|\/+$/g, ''),
+            userProduct: defUc.userProduct && typeof defUc.userProduct === 'object' ? { ...defUc.userProduct } : null,
+          }
+        : { root: '', avatar: '', userProduct: null };
+    const m = memory?.merged?.userConfig;
+    if (m && typeof m === 'object') {
+      const root =
+        m.root != null && String(m.root).trim() !== ''
+          ? String(m.root).trim().replace(/^\/+|\/+$/g, '')
+          : def.root;
+      const avatar =
+        m.avatar != null && String(m.avatar).trim() !== ''
+          ? String(m.avatar).trim().replace(/^\/+|\/+$/g, '')
+          : def.avatar;
+      const upRaw = m.userProduct && typeof m.userProduct === 'object' ? m.userProduct : null;
+      const upDef = def.userProduct && typeof def.userProduct === 'object' ? def.userProduct : null;
+      const userProduct =
+        upRaw || upDef
+          ? {
+              ...(upDef || {}),
+              ...(upRaw || {}),
+            }
+          : null;
+      return { root, avatar, userProduct };
+    }
+    return { ...def };
+  }
+
   return {
+    getCosProxyAllowedPrefixes,
     getOssPublicBase,
+    getFrontPageConfig,
+    getUserConfig,
     getProductMediaRules,
     getMediaConfigTtlMs,
+    getImageDisplayCacheTtlMs,
     getCosRuleConfigCheckTime,
     getProjectId,
     getCosRuleConfigPathTemplate,

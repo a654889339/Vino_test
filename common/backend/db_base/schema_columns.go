@@ -153,11 +153,9 @@ func WriteSchemaColumnsYAML(path string, d *SchemaColumnsDoc) error {
 }
 
 // CompareSchemaColumns 做严格对齐：返回首个不一致错误（适合启动时 fatal）。
-// 只比较 YAML 中声明的表/列集合：
-// - YAML 缺表：允许（便于逐步引入），但如果表在 YAML 中声明则必须存在。
-// - YAML 声明的列必须存在且核心属性一致。
-// - 若 YAML 未声明任何表（tables 为空），则不校验「库中多出的表」，便于契约尚未导出时启动；
-//   需要强白名单时请先运行 schema_export 填满列契约 YAML。
+// 只比较 YAML 中声明的表/列集合：\n
+// - YAML 缺表：允许（便于逐步引入），但如果表在 YAML 中声明则必须存在。\n
+// - YAML 声明的列必须存在且核心属性一致。\n
 func CompareSchemaColumns(expected, actual *SchemaColumnsDoc) error {
 	if expected == nil || actual == nil {
 		return fmt.Errorf("expected/actual is nil")
@@ -176,12 +174,10 @@ func CompareSchemaColumns(expected, actual *SchemaColumnsDoc) error {
 			return fmt.Errorf("missing table: %s", tn)
 		}
 	}
-	// 2) actual must NOT contain extra tables（仅当契约里至少声明了一张表时才做强白名单）
-	if len(expTable) > 0 {
-		for tn := range actTable {
-			if _, ok := expTable[tn]; !ok {
-				return fmt.Errorf("unexpected table: %s", tn)
-			}
+	// 2) actual must NOT contain extra tables
+	for tn := range actTable {
+		if _, ok := expTable[tn]; !ok {
+			return fmt.Errorf("unexpected table: %s", tn)
 		}
 	}
 	// 3) compare columns both directions
