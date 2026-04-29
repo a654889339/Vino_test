@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"log"
 	"net/url"
 	"path"
 	"regexp"
@@ -13,15 +14,15 @@ import (
 	"strings"
 	"time"
 
+	"shared/cosbase"
+	"shared/dbbase"
 	"vino/backend/internal/config"
 	"vino/backend/internal/db"
 	"vino/backend/internal/models"
 	"vino/backend/internal/resp"
 	"vino/backend/internal/services"
-	"shared/cosbase"
 
 	"github.com/gin-gonic/gin"
-	"log"
 )
 
 var homeConfigSectionOrRoleRe = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9_-]{0,63}$`)
@@ -225,16 +226,11 @@ func hcList(c *gin.Context) {
 	// 管理端传 paged=1 时分页；ToC 等不传则保持原数组响应，避免首页/登录只拿到前 50 条。
 	if c.Query("paged") != "1" {
 		var items []models.HomeConfig
-		if err := q.Order("section ASC, sortOrder ASC, id ASC").Find(&items).Error; err != nil {
-			// 自举：若表被误删（1146），自动重建并重试一次
-			if db.IsMySQLTableMissingErr(err) {
-				if err2 := db.EnsureTableExists(&models.HomeConfig{}); err2 == nil {
-					if err3 := q.Order("section ASC, sortOrder ASC, id ASC").Find(&items).Error; err3 == nil {
-						resp.OK(c, buildOut(items))
-						return
-					}
-				}
-			}
+		ensure := func() error { return db.DB.AutoMigrate(&models.HomeConfig{}) }
+		if err := dbbase.RetryOnMissingTable(
+			func() error { return q.Order("section ASC, sortOrder ASC, id ASC").Find(&items).Error },
+			ensure,
+		); err != nil {
 			log.Printf("[Vino] hcList query failed: %v", err)
 			resp.Err(c, 500, 500, "查询失败")
 			return
@@ -243,15 +239,21 @@ func hcList(c *gin.Context) {
 		return
 	}
 	page, pageSize := adminListPageParams(c)
+	ensure := func() error { return db.DB.AutoMigrate(&models.HomeConfig{}) }
 	var total int64
-	if err := q.Count(&total).Error; err != nil {
+	if err := dbbase.RetryOnMissingTable(func() error { return q.Count(&total).Error }, ensure); err != nil {
 		log.Printf("[Vino] hcList count failed: %v", err)
 		resp.Err(c, 500, 500, "统计失败")
 		return
 	}
 	var items []models.HomeConfig
 	offset := (page - 1) * pageSize
-	if err := q.Order("section ASC, sortOrder ASC, id ASC").Limit(pageSize).Offset(offset).Find(&items).Error; err != nil {
+	if err := dbbase.RetryOnMissingTable(
+		func() error {
+			return q.Order("section ASC, sortOrder ASC, id ASC").Limit(pageSize).Offset(offset).Find(&items).Error
+		},
+		ensure,
+	); err != nil {
 		log.Printf("[Vino] hcList paged query failed: %v", err)
 		resp.Err(c, 500, 500, "查询失败")
 		return
@@ -265,16 +267,8 @@ func hcCreate(c *gin.Context) {
 		resp.Err(c, 500, 1, err.Error())
 		return
 	}
-	if err := db.DB.Create(&body).Error; err != nil {
-		// 自举：若表被误删（1146），自动重建并重试一次
-		if db.IsMySQLTableMissingErr(err) {
-			if err2 := db.EnsureTableExists(&models.HomeConfig{}); err2 == nil {
-				if err3 := db.DB.Create(&body).Error; err3 == nil {
-					resp.OK(c, body)
-					return
-				}
-			}
-		}
+	ensure := func() error { return db.DB.AutoMigrate(&models.HomeConfig{}) }
+	if err := dbbase.RetryOnMissingTable(func() error { return db.DB.Create(&body).Error }, ensure); err != nil {
 		resp.Err(c, 500, 1, err.Error())
 		return
 	}
@@ -283,8 +277,9 @@ func hcCreate(c *gin.Context) {
 
 func hcUpdate(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
+	ensure := func() error { return db.DB.AutoMigrate(&models.HomeConfig{}) }
 	var item models.HomeConfig
-	if err := db.DB.First(&item, id).Error; err != nil {
+	if err := dbbase.RetryOnMissingTable(func() error { return db.DB.First(&item, id).Error }, ensure); err != nil {
 		resp.Err(c, 404, 1, "配置不存在")
 		return
 	}
@@ -296,7 +291,7 @@ func hcUpdate(c *gin.Context) {
 	raw, _ := json.Marshal(patch)
 	_ = json.Unmarshal(raw, &item)
 	item.ID = id
-	if err := db.DB.Save(&item).Error; err != nil {
+	if err := dbbase.RetryOnMissingTable(func() error { return db.DB.Save(&item).Error }, ensure); err != nil {
 		resp.Err(c, 500, 1, err.Error())
 		return
 	}
@@ -305,7 +300,8 @@ func hcUpdate(c *gin.Context) {
 
 func hcRemove(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-	if err := db.DB.Delete(&models.HomeConfig{}, id).Error; err != nil {
+	ensure := func() error { return db.DB.AutoMigrate(&models.HomeConfig{}) }
+	if err := dbbase.RetryOnMissingTable(func() error { return db.DB.Delete(&models.HomeConfig{}, id).Error }, ensure); err != nil {
 		resp.Err(c, 500, 1, err.Error())
 		return
 	}

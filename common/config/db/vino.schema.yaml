@@ -17,6 +17,7 @@ tables:
   - services
   - product_categories
   - home_configs
+  - frontPageConfig_HomepageCarousel
   - device_guides
   - addresses
   - outlet_addresses

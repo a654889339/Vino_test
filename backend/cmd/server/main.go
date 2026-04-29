@@ -73,6 +73,13 @@ func resolveSchemaColumnsConfigPath(project string) string {
 	return filepath.Join("..", "common", "config", "db", project+".schema.columns.yaml")
 }
 
+func resolveSchemaTablesConfigPath(project string) string {
+	if p := strings.TrimSpace(os.Getenv("DB_SCHEMA_TABLES_CONFIG")); p != "" {
+		return p
+	}
+	return filepath.Join("..", "common", "config", "db", project+".schema.yaml")
+}
+
 func main() {
 	cfg := config.Load()
 	if err := vinomediacfg.Load(resolveVinoMediaConfigPath()); err != nil {
@@ -106,6 +113,21 @@ func main() {
 
 	if err := dbbase.RunSteps("vino", []dbbase.Step{
 		{Name: "db.connect", Fatal: true, Run: func() error { return db.Connect(cfg) }},
+		{Name: "db.schema.validate_tables", Fatal: true, Run: func() error {
+			expPath := resolveSchemaTablesConfigPath("vino")
+			if _, err := os.Stat(expPath); err != nil {
+				return fmt.Errorf("schema tables yaml missing: %s", expPath)
+			}
+			exp, err := dbbase.LoadSchemaTablesYAML(expPath)
+			if err != nil {
+				return err
+			}
+			used, err := db.ManagedModelTableNames(db.DB)
+			if err != nil {
+				return err
+			}
+			return dbbase.CompareSchemaTableSet(used, exp)
+		}},
 		{Name: "db.schema.validate_columns", Fatal: true, Run: func() error {
 			sqlDB, err := db.DB.DB()
 			if err != nil || sqlDB == nil {

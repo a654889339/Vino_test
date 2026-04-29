@@ -3,6 +3,7 @@ package db
 import (
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 
 	"vino/backend/internal/models"
@@ -44,6 +45,32 @@ func ManagedModelEntities() []any {
 		&models.PageVisitDaily{},
 		&models.I18nText{},
 	}
+}
+
+// ManagedModelTableNames 返回 ManagedModelEntities 对应的“表名集合”（按字典序、去重）。
+// 用于在启动时与 common/config/db/vino.schema.yaml 的 tables 清单做一致性校验，防止“新增/删表忘记登记”。
+func ManagedModelTableNames(d *gorm.DB) ([]string, error) {
+	if d == nil {
+		return nil, fmt.Errorf("db is nil")
+	}
+	set := map[string]struct{}{}
+	for _, m := range ManagedModelEntities() {
+		stmt := &gorm.Statement{DB: d}
+		if err := stmt.Parse(m); err != nil {
+			return nil, fmt.Errorf("parse model %T: %w", m, err)
+		}
+		tn := strings.TrimSpace(stmt.Schema.Table)
+		if tn == "" {
+			continue
+		}
+		set[tn] = struct{}{}
+	}
+	out := make([]string, 0, len(set))
+	for t := range set {
+		out = append(out, t)
+	}
+	sort.Strings(out)
+	return out, nil
 }
 
 var (
