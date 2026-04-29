@@ -21,6 +21,7 @@ import (
 	"shared/cosbase"
 
 	"github.com/gin-gonic/gin"
+	"log"
 )
 
 var homeConfigSectionOrRoleRe = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9_-]{0,63}$`)
@@ -225,6 +226,16 @@ func hcList(c *gin.Context) {
 	if c.Query("paged") != "1" {
 		var items []models.HomeConfig
 		if err := q.Order("section ASC, sortOrder ASC, id ASC").Find(&items).Error; err != nil {
+			// 自举：若表被误删（1146），自动重建并重试一次
+			if db.IsMySQLTableMissingErr(err) {
+				if err2 := db.EnsureTableExists(&models.HomeConfig{}); err2 == nil {
+					if err3 := q.Order("section ASC, sortOrder ASC, id ASC").Find(&items).Error; err3 == nil {
+						resp.OK(c, buildOut(items))
+						return
+					}
+				}
+			}
+			log.Printf("[Vino] hcList query failed: %v", err)
 			resp.Err(c, 500, 500, "查询失败")
 			return
 		}
@@ -234,12 +245,14 @@ func hcList(c *gin.Context) {
 	page, pageSize := adminListPageParams(c)
 	var total int64
 	if err := q.Count(&total).Error; err != nil {
+		log.Printf("[Vino] hcList count failed: %v", err)
 		resp.Err(c, 500, 500, "统计失败")
 		return
 	}
 	var items []models.HomeConfig
 	offset := (page - 1) * pageSize
 	if err := q.Order("section ASC, sortOrder ASC, id ASC").Limit(pageSize).Offset(offset).Find(&items).Error; err != nil {
+		log.Printf("[Vino] hcList paged query failed: %v", err)
 		resp.Err(c, 500, 500, "查询失败")
 		return
 	}
@@ -253,6 +266,15 @@ func hcCreate(c *gin.Context) {
 		return
 	}
 	if err := db.DB.Create(&body).Error; err != nil {
+		// 自举：若表被误删（1146），自动重建并重试一次
+		if db.IsMySQLTableMissingErr(err) {
+			if err2 := db.EnsureTableExists(&models.HomeConfig{}); err2 == nil {
+				if err3 := db.DB.Create(&body).Error; err3 == nil {
+					resp.OK(c, body)
+					return
+				}
+			}
+		}
 		resp.Err(c, 500, 1, err.Error())
 		return
 	}
