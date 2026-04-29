@@ -13,7 +13,7 @@
       <component :is="Component" />
     </keep-alive>
   </router-view>
-  <div v-if="showTabbar && tabbarItems.length" class="app-tabbar-shell">
+  <div v-if="showTabbar && tabbarItems.length" class="app-tabbar-shell" :class="{ 'has-skin': !!tabbarSkinLayer }">
     <div v-if="tabbarSkinLayer" class="section-skin-layer app-tabbar-skin" :style="tabbarSkinLayer" aria-hidden="true" />
     <van-tabbar route active-color="var(--vino-primary)" class="app-tabbar-bar">
       <van-tabbar-item v-for="(item, i) in tabbarItems" :key="item.path || i" :to="item.path" :icon="item.icon">{{ pick(item, 'title') }}</van-tabbar-item>
@@ -164,6 +164,11 @@ async function loadAppStatus() {
 }
 .app-tabbar-shell .app-tabbar-bar {
   pointer-events: auto;
+}
+
+/* 未配置底栏皮肤时，保持默认底栏背景，避免出现“按钮背景透明” */
+.app-tabbar-shell:not(.has-skin) :deep(.van-tabbar) {
+  background: var(--van-tabbar-background, #fff) !important;
 }
 /* 底栏改为相对定位以便与皮肤层同容器叠放；背景透明以露出栏目外观图 */
 :deep(.app-tabbar-bar) {
